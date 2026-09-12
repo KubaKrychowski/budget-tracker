@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 namespace BudgetTracker.Api.Features.Budgets.Services;
 
 /// <summary>
-/// Fizyczne usuwanie skasowanych budżetów razem z dziećmi — mechanika wspólna dla sprzątania
-/// po oknie retencji i dla sprzątania wymuszonego.
+/// Fizyczne usuwanie skasowanych budżetów razem z dziećmi (transakcje, importy, limity, cele
+/// oszczędzania, rezerwacje) — mechanika wspólna dla sprzątania po oknie retencji i wymuszonego.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -58,6 +58,18 @@ public sealed class BudgetPurger(AppDbContext db)
 
         await db.BudgetItems.IgnoreQueryFilters()
             .Where(i => businessIds.Contains(i.BudgetBusinessId))
+            .ExecuteDeleteAsync(ct);
+
+        // ⚠️ Cele i rezerwacje MUSZĄ iść razem z budżetem. Bez tych dwóch zapytań zostawały
+        // wiersze wskazujące na `BusinessId`, którego już nie ma w `Budgets` — nieosiągalne
+        // z aplikacji, bo zasięg ekranów oszczędności czyta istniejące budżety, i nigdy
+        // niesprzątane, bo to jedyne miejsce, które kasuje fizycznie.
+        await db.SavingsGoals.IgnoreQueryFilters()
+            .Where(g => businessIds.Contains(g.BudgetBusinessId))
+            .ExecuteDeleteAsync(ct);
+
+        await db.SavingsReservations.IgnoreQueryFilters()
+            .Where(r => businessIds.Contains(r.BudgetBusinessId))
             .ExecuteDeleteAsync(ct);
 
         await db.Budgets.IgnoreQueryFilters()

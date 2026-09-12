@@ -21,6 +21,12 @@ public sealed class DeleteBudgetCommandHandler(
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await children.SoftDeleteAsync(budget, now, ct);
+
+        // ⚠️ Cele i rezerwacje osobnym wywołaniem, bo RESET ich nie zabiera — patrz
+        // <see cref="BudgetChildren.SoftDeleteSavingsAsync"/>. Ten sam znacznik czasu, inaczej
+        // przywracanie (porównujące znaczniki) wróciłoby bez nich.
+        await children.SoftDeleteSavingsAsync(budget, now, ct);
+
         budget.MarkDeleted(now);
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);

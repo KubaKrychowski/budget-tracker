@@ -91,10 +91,21 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
         _db.AddRange(
             NewTransaction(budget, account, category, batch, -120.50m, 10),
             NewTransaction(budget, account, category, batch, -79.50m, 11));
+
+        // Cel i rezerwacja też są dziećmi budżetu — bez nich testy cyklu życia przechodziłyby
+        // na zbiorze, w którym nie ma czego zgubić (a właśnie gubienie ich było błędem).
+        _db.Add(new SavingsGoal(budget.BusinessId, 1500m, new DateOnly(2026, 9, 1), _clock.GetUtcNow()));
+        _db.Add(new SavingsReservation(
+            budget.BusinessId, $"Rezerwacja {name}", 800m, new DateOnly(2026, 10, 1), 1, _clock.GetUtcNow()));
         await _db.SaveChangesAsync();
 
         return budget;
     }
+
+    /// <summary>Ile celów i rezerwacji budżetu widzi aplikacja (czyli po filtrze globalnym).</summary>
+    private async Task<(int Goals, int Reservations)> LiveSavingsAsync(Budget budget) => (
+        await _db.SavingsGoals.CountAsync(g => g.BudgetBusinessId == budget.BusinessId),
+        await _db.SavingsReservations.CountAsync(r => r.BudgetBusinessId == budget.BusinessId));
 
     private Transaction NewTransaction(
         Budget budget, Account account, Category category, ImportBatch batch, decimal amount, int day) =>
@@ -379,6 +390,91 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
         Assert.Equal(["Zywy"], remaining);
         Assert.Equal(2, await _db.Transactions.IgnoreQueryFilters().CountAsync());
         Assert.Equal(live.BusinessId, (await _db.Budgets.SingleAsync()).BusinessId);
+    }
+
+    // ── Cele oszczędzania i rezerwacje jako dzieci budżetu ─────────────────────────────
+
+    [Fact]
+    public async Task Deleting_a_budget_takes_its_goal_and_reservations_with_it()
+    {
+        // ⚠️ Wcześniej NIE zabierało. Cel zostawał żywy i wskazywał na budżet, którego nie widać,
+        // bo zasięg ekranów oszczędności czyta tylko nieusunięte budżety.
+        var budget = await SeedBudgetAsync();
+        Assert.Equal((1, 1), await LiveSavingsAsync(budget));
+
+        await Delete().HandleAsync(budget.BusinessId, default);
+
+        Assert.Equal((0, 0), await LiveSavingsAsync(budget));
+    }
+
+    [Fact]
+    public async Task Restoring_a_budget_brings_its_goal_and_reservations_back()
+    {
+        // Przywracanie rozpoznaje dzieci po RÓWNOŚCI znacznika usunięcia — cele i rezerwacje
+        // muszą być stemplowane tym samym czasem co budżet, inaczej wracałby bez nich.
+        var budget = await SeedBudgetAsync();
+        await Delete().HandleAsync(budget.BusinessId, default);
+
+        await Restore().HandleAsync(budget.BusinessId, default);
+
+        Assert.Equal((1, 1), await LiveSavingsAsync(budget));
+    }
+
+    [Fact]
+    public async Task Reset_leaves_the_goal_and_reservations_alone()
+    {
+        // ⚠️ Świadoma granica: cel i rezerwacja są ZASADĄ, nie danymi. Reset czyści to, co
+        // wpadło do budżetu (transakcje, importy, limity), a nie to, co o nim postanowiono.
+        var budget = await SeedBudgetAsync();
+
+        await Reset().HandleAsync(budget.BusinessId, default);
+
+        Assert.Equal((1, 1), await LiveSavingsAsync(budget));
+        Assert.Empty(await _db.Transactions.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Purge_removes_the_goal_and_reservations_so_no_orphans_are_left()
+    {
+        // ⚠️ To jedyne miejsce kasujące fizycznie, więc sierota powstała tutaj zostaje na zawsze:
+        // nieosiągalna z aplikacji i niesprzątana przez nic innego.
+        var budget = await SeedBudgetAsync();
+        await Delete().HandleAsync(budget.BusinessId, default);
+        _clock.Advance(TimeSpan.FromDays(31));
+
+        Assert.Equal(1, await Purge().HandleAsync(default));
+
+        Assert.Empty(await _db.SavingsGoals.IgnoreQueryFilters()
+            .Where(g => g.BudgetBusinessId == budget.BusinessId).ToListAsync());
+        Assert.Empty(await _db.SavingsReservations.IgnoreQueryFilters()
+            .Where(r => r.BudgetBusinessId == budget.BusinessId).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Force_purge_removes_the_goal_and_reservations_too()
+    {
+        var budget = await SeedBudgetAsync();
+        await Delete().HandleAsync(budget.BusinessId, default);
+
+        Assert.Equal(1, await ForcePurge().HandleAsync(default));
+
+        Assert.Empty(await _db.SavingsGoals.IgnoreQueryFilters().ToListAsync());
+        Assert.Empty(await _db.SavingsReservations.IgnoreQueryFilters().ToListAsync());
+    }
+
+    [Fact]
+    public async Task Deleting_one_budget_does_not_touch_another_budgets_savings()
+    {
+        // Najważniejszy z tej piątki: „przypisane per budżet" znaczy też, że kasowanie jednego
+        // nie ma prawa ruszyć drugiego. Oba mają cel o tej samej kwocie i ten sam priorytet
+        // rezerwacji, więc rozróżnia je WYŁĄCZNIE BudgetBusinessId.
+        var mine = await SeedBudgetAsync("Moj");
+        var other = await SeedBudgetAsync("Obcy");
+
+        await Delete().HandleAsync(mine.BusinessId, default);
+
+        Assert.Equal((0, 0), await LiveSavingsAsync(mine));
+        Assert.Equal((1, 1), await LiveSavingsAsync(other));
     }
 
     [Fact]
