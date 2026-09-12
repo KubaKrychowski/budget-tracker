@@ -1,8 +1,9 @@
 # Landing page
 
-Strona publiczna opisująca projekt komuś, kto nie jest jego autorem. Issue
-[#12](https://github.com/KubaKrychowski/budget-tracker-2-boards/issues/12),
-plan i uzasadnienia: `plans/landing-page.md`.
+Strona publiczna opisująca projekt komuś, kto nie jest jego autorem. Powstała z issue #12
+na **prywatnej** tablicy projektu — dlatego numery issue w tym pliku nie są linkami i nie
+odnoszą się do zakładki „Issues" tego repozytorium. Plan i uzasadnienia: `plans/landing-page.md`
+(też poza repo).
 
 To jest **prezentacja projektu**, nie landing produktu — aplikacja jest single-user, bez
 rejestracji i bez hostingu, więc „Wypróbuj za darmo" nie miałoby dokąd prowadzić. Jedyne CTA

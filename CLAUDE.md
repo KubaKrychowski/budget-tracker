@@ -207,7 +207,7 @@ Repo jest **monorepo** — backend, frontend i infrastruktura w jednym miejscu, 
 zmiana kontraktu API i jej konsumpcja w UI powinny mieścić się w jednym commicie.
 
 ```
-budget-tracker-2/
+budget-tracker/                    # nazwa repozytorium; lokalny katalog może nazywać się inaczej
 ├── docker-compose.yml             # Postgres 18 — jedyna zależność infrastrukturalna
 ├── global.json                    # przypina SDK .NET 10
 ├── .env / .env.example            # dane dostępowe do bazy (.env poza repo)
