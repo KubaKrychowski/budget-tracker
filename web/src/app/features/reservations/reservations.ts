@@ -22,6 +22,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
+import { parseAmount } from '../../core/parse-amount';
 import {
   ReservationsResponse, SavingsReservation, SettleCandidate,
 } from '../../core/api/models/reservations';
@@ -39,6 +40,9 @@ import {
   styleUrl: './reservations.scss',
 })
 export class Reservations {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly translate = inject(TranslateService);

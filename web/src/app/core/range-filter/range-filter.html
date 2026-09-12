@@ -12,6 +12,7 @@
   <div class="ant-table-filter-dropdown range-filter__panel">
     <div class="range-filter__range">
       <nz-input-number
+        [nzParser]="parseAmount"
         [ngModel]="filter().draftFrom()"
         (ngModelChange)="filter().draftFrom.set($event)"
         [nzPlaceHolder]="'settings.budgets.filter.from' | translate"
@@ -20,6 +21,7 @@
       ></nz-input-number>
       -
       <nz-input-number
+        [nzParser]="parseAmount"
         [ngModel]="filter().draftTo()"
         (ngModelChange)="filter().draftTo.set($event)"
         [nzPlaceHolder]="'settings.budgets.filter.to' | translate"

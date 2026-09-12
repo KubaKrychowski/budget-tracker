@@ -267,6 +267,17 @@
         }
       </section>
     </nz-tab>
+
+    <!-- Ta sama leniwość i ten sam powód co przy „Danych treningowych": `@if` na indeksie
+         zakładki, nie `ng-template[nz-tab]`. Reguł nie trzeba ładować komuś, kto przyszedł
+         do budżetów, a `app-rules` odpytuje dwa endpointy (reguły i kategorie). -->
+    <nz-tab [nzTitle]="'settings.tabs.rules' | translate">
+      <section class="set__section">
+        @if (activeTab() === 2) {
+          <app-rules />
+        }
+      </section>
+    </nz-tab>
   </nz-tabs>
 </div>
 
@@ -306,6 +317,7 @@
       <!-- `nzId`, nie `id`: `id` wylądowałoby na hoście komponentu, a nie na <input>,
            więc <label for> nie miałby czego wskazać. -->
       <nz-input-number
+        [nzParser]="parseAmount"
         nzId="budget-initial-balance"
         [ngModel]="draftInitialBalance()"
         (ngModelChange)="draftInitialBalance.set($event ?? 0)"

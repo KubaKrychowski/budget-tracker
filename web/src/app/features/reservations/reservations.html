@@ -163,6 +163,7 @@
         {{ 'reservations.editor.amount' | translate }}
       </label>
       <nz-input-number
+        [nzParser]="parseAmount"
         id="res-amount"
         class="res__field"
         [ngModel]="draftAmount()"

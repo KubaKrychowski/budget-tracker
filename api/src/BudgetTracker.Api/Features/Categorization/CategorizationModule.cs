@@ -48,6 +48,7 @@ public static class CategorizationModule
 
         services.AddScoped<GetTrainingSetQueryHandler>();
         services.AddScoped<GetCategoryRulesQueryHandler>();
+        services.AddScoped<PreviewCategoryRuleQueryHandler>();
 
         return services;
     }
@@ -91,6 +92,16 @@ public static class CategorizationModule
             Results.Ok(await handler.HandleAsync(ct)))
             .WithName("GetCategoryRules")
             .Produces<IReadOnlyList<CategoryRuleResponseDto>>();
+
+        // Podgląd stoi PRZED zapisem także w trasach, bo tak wygląda kolejność w kreatorze.
+        // Czasownik POST, mimo że nic nie zapisuje: reguła jedzie w ciele, a nie w adresie.
+        app.MapPost("/api/categorization/rules/preview", async (
+            CategoryRuleRequestDto request, PreviewCategoryRuleQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(request, ct)))
+            .WithName("PreviewCategoryRule")
+            .Produces<RulePreviewResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
 
         app.MapPost("/api/categorization/rules", async (
             CategoryRuleRequestDto request, CreateCategoryRuleCommandHandler handler, CancellationToken ct) =>

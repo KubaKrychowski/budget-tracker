@@ -25,6 +25,7 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { CATEGORY_SERIES_COLORS, CHART_COLORS } from '../../core/chart-palette';
 import { SavingsMonth, SavingsResponse } from '../../core/api/models/savings';
 import { ReservationsResponse, SavingsReservation } from '../../core/api/models/reservations';
+import { parseAmount } from '../../core/parse-amount';
 
 /**
  * Miesiące w MIEJSCOWNIKU — używane wyłącznie w zdaniach „w …".
@@ -60,6 +61,9 @@ type ScreenState = 'noGoal' | 'noLargeExpense' | 'proof' | 'missed' | 'plain';
   styleUrl: './savings.scss',
 })
 export class Savings {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

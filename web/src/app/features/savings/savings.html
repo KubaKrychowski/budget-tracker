@@ -389,6 +389,7 @@
         {{ 'savings.modal.amount' | translate }}
       </label>
       <nz-input-number
+        [nzParser]="parseAmount"
         id="savings-amount"
         class="sav__amount-input"
         [ngModel]="draftAmount()"

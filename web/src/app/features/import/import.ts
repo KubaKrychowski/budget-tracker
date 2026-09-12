@@ -31,6 +31,7 @@ import { EditableRow } from './editable-row';
 import { PageHeader } from '../../core/page-header/page-header';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { valueOf } from '../../core/api/resource-value';
+import { parseAmount } from '../../core/parse-amount';
 
 /** Wartość filtra dla wierszy bez kategorii — pusty string myliłby się z „brak wyboru". */
 const NoCategory = '__brak__';
@@ -86,6 +87,9 @@ enum Step {
   styleUrl: './import.scss',
 })
 export class Import {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);

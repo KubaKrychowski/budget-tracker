@@ -1,0 +1,244 @@
+<p class="rul__intro">{{ 'settings.rules.intro' | translate }}</p>
+
+<div class="rul__header">
+  <h3 class="rul__title">{{ 'settings.rules.listTitle' | translate }}</h3>
+  <button nz-button nzType="primary" (click)="openCreate()">
+    {{ 'settings.rules.create' | translate }}
+  </button>
+</div>
+
+<nz-spin [nzSpinning]="loading()">
+  <!-- ⚠️ Paginacja WIDOCZNA, jak w tabeli budżetów. `[nzShowPagination]="false"` tylko CHOWA
+       kontrolkę, a stronicowanie po 10 wierszy zostaje — na realnym zbiorze 148 reguł 138 z nich
+       było nieosiągalnych i nic tego nie sygnalizowało. -->
+  <nz-table
+    #rulesTable
+    [nzData]="rules()"
+    [nzPageSize]="20"
+    nzSize="middle"
+    [nzNoResult]="'settings.rules.empty' | translate"
+  >
+    <thead>
+      <tr>
+        <th nzWidth="110px">{{ 'settings.rules.columns.priority' | translate }}</th>
+        <th>{{ 'settings.rules.columns.pattern' | translate }}</th>
+        <th>{{ 'settings.rules.columns.typePattern' | translate }}</th>
+        <th nzWidth="120px">{{ 'settings.rules.columns.direction' | translate }}</th>
+        <th nzWidth="170px">{{ 'settings.rules.columns.category' | translate }}</th>
+        <th nzWidth="140px" class="rul__right">{{ 'settings.rules.columns.amountRange' | translate }}</th>
+        <th>{{ 'settings.rules.columns.note' | translate }}</th>
+        <th nzWidth="70px" class="rul__right">{{ 'settings.rules.columns.actions' | translate }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (rule of rulesTable.data; track rule.id) {
+        <tr>
+          <td class="tnum">{{ rule.priority }}</td>
+          <td><code class="rul__pattern">{{ rule.pattern ?? ('settings.rules.none' | translate) }}</code></td>
+          <td>
+            <code class="rul__pattern">
+              {{ rule.transactionTypePattern ?? ('settings.rules.none' | translate) }}
+            </code>
+          </td>
+          <td>{{ 'settings.rules.direction.' + rule.direction | translate }}</td>
+          <td><nz-tag>{{ rule.categoryName }}</nz-tag></td>
+          <td class="rul__right tnum">{{ range(rule) ?? ('settings.rules.none' | translate) }}</td>
+          <td class="rul__note">{{ rule.note ?? ('settings.rules.none' | translate) }}</td>
+          <td class="rul__right">
+            <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="rowMenu" nzTrigger="click">
+              <nz-icon nzType="more" />
+            </button>
+            <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+              <ul nz-menu>
+                <li nz-menu-item tabindex="0" (click)="openEdit(rule)" (keydown.enter)="openEdit(rule)">
+                  {{ 'settings.budgets.actions.edit' | translate }}
+                </li>
+                <li nz-menu-item nzDanger tabindex="0" (click)="remove(rule)" (keydown.enter)="remove(rule)">
+                  {{ 'settings.rules.delete.confirm' | translate }}
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</nz-spin>
+
+<nz-modal
+  [nzVisible]="editorOpen()"
+  [nzTitle]="editorTitle() | translate"
+  nzWidth="720px"
+  [nzMaskClosable]="false"
+  (nzOnCancel)="closeEditor()"
+  [nzFooter]="editorFooter"
+>
+  <ng-container *nzModalContent>
+    <div class="rul__form">
+      <label class="rul__field" for="rule-pattern">
+        <span class="rul__label">{{ 'settings.rules.editor.pattern' | translate }}</span>
+        <input
+          id="rule-pattern"
+          nz-input
+          [ngModel]="draft().pattern"
+          (ngModelChange)="patch('pattern', $event)"
+          placeholder="STACJA PALIW|PALIWA"
+        />
+        <span class="rul__hint">{{ 'settings.rules.editor.patternHint' | translate }}</span>
+      </label>
+
+      <label class="rul__field" for="rule-type-pattern">
+        <span class="rul__label">{{ 'settings.rules.editor.typePattern' | translate }}</span>
+        <input
+          id="rule-type-pattern"
+          nz-input
+          [ngModel]="draft().transactionTypePattern"
+          (ngModelChange)="patch('transactionTypePattern', $event)"
+        />
+        <span class="rul__hint">{{ 'settings.rules.editor.typePatternHint' | translate }}</span>
+      </label>
+
+      <div class="rul__row">
+        <label class="rul__field" for="rule-direction">
+          <span class="rul__label">{{ 'settings.rules.editor.direction' | translate }}</span>
+          <nz-select nzId="rule-direction" [ngModel]="draft().direction" (ngModelChange)="patch('direction', $event)">
+            @for (direction of directions; track direction) {
+              <nz-option
+                [nzValue]="direction"
+                [nzLabel]="'settings.rules.direction.' + direction | translate"
+              />
+            }
+          </nz-select>
+        </label>
+
+        <label class="rul__field" for="rule-category">
+          <span class="rul__label">{{ 'settings.rules.editor.category' | translate }}</span>
+          <nz-select
+            nzId="rule-category"
+            nzShowSearch
+            [ngModel]="draft().categoryId"
+            (ngModelChange)="patch('categoryId', $event)"
+          >
+            @for (category of categories(); track category.id) {
+              <nz-option [nzValue]="category.id" [nzLabel]="category.name" />
+            }
+          </nz-select>
+        </label>
+      </div>
+
+      <div class="rul__row">
+        <label class="rul__field" for="rule-priority">
+          <span class="rul__label">{{ 'settings.rules.editor.priority' | translate }}</span>
+          <nz-input-number
+            [nzParser]="parseAmount"
+            nzId="rule-priority"
+            [ngModel]="draft().priority"
+            (ngModelChange)="patch('priority', $event ?? 0)"
+            [nzMin]="1"
+            [nzPrecision]="0"
+          />
+          <span class="rul__hint">{{ 'settings.rules.editor.priorityHint' | translate }}</span>
+        </label>
+
+        <label class="rul__field" for="rule-min">
+          <span class="rul__label">{{ 'settings.rules.editor.minAmount' | translate }}</span>
+          <nz-input-number
+            [nzParser]="parseAmount"
+            nzId="rule-min"
+            [ngModel]="draft().minAmount"
+            (ngModelChange)="patch('minAmount', $event)"
+            [nzMin]="0"
+            [nzPrecision]="2"
+          />
+        </label>
+
+        <label class="rul__field" for="rule-max">
+          <span class="rul__label">{{ 'settings.rules.editor.maxAmount' | translate }}</span>
+          <nz-input-number
+            [nzParser]="parseAmount"
+            nzId="rule-max"
+            [ngModel]="draft().maxAmount"
+            (ngModelChange)="patch('maxAmount', $event)"
+            [nzMin]="0"
+            [nzPrecision]="2"
+          />
+        </label>
+      </div>
+
+      <label class="rul__field" for="rule-note">
+        <span class="rul__label">{{ 'settings.rules.editor.note' | translate }}</span>
+        <input id="rule-note" nz-input [ngModel]="draft().note" (ngModelChange)="patch('note', $event)" />
+      </label>
+
+      <!-- Podgląd trafień: jedyny sposób, żeby nie pisać wyrażeń regularnych na wyczucie. -->
+      <section class="rul__preview">
+        <div class="rul__preview-top">
+          <button
+            nz-button
+            (click)="runPreview()"
+            [nzLoading]="previewing()"
+            [disabled]="draftError() !== null"
+          >
+            {{ 'settings.rules.preview.run' | translate }}
+          </button>
+          <span class="rul__hint">{{ 'settings.rules.preview.hint' | translate }}</span>
+        </div>
+
+        @if (preview(); as result) {
+          @if (result.scannedCount === 0) {
+            <p class="rul__hint">{{ 'settings.rules.preview.noData' | translate }}</p>
+          } @else if (result.matchCount === 0) {
+            <p class="rul__preview-summary">
+              {{ 'settings.rules.preview.noMatches' | translate: { scanned: result.scannedCount } }}
+            </p>
+          } @else {
+            <p class="rul__preview-summary">
+              {{
+                'settings.rules.preview.summary'
+                  | translate: { count: result.matchCount, scanned: result.scannedCount }
+              }}
+            </p>
+            @if (result.shadowedCount > 0) {
+              <p class="rul__preview-shadowed">
+                {{ 'settings.rules.preview.shadowed' | translate: { count: result.shadowedCount } }}
+              </p>
+            }
+            <p class="rul__preview-samples">{{ 'settings.rules.preview.samplesTitle' | translate }}</p>
+            <ul class="rul__matches">
+              @for (match of result.samples; track match.id) {
+                <li class="rul__match">
+                  <span class="rul__match-desc">{{ match.description }}</span>
+                  <span class="rul__match-meta">
+                    @if (match.currentCategoryName) {
+                      {{ 'settings.rules.preview.currentCategory' | translate: { name: match.currentCategoryName } }}
+                    } @else {
+                      {{ 'settings.rules.preview.uncategorized' | translate }}
+                    }
+                  </span>
+                  <span class="rul__match-amount tnum">{{ match.amount }}</span>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </section>
+
+      @if (draftError(); as error) {
+        <nz-alert nzType="error" [nzMessage]="error | translate" />
+      }
+    </div>
+  </ng-container>
+</nz-modal>
+
+<ng-template #editorFooter>
+  <button nz-button (click)="closeEditor()">{{ 'settings.rules.editor.cancel' | translate }}</button>
+  <button
+    nz-button
+    nzType="primary"
+    (click)="save()"
+    [nzLoading]="saving()"
+    [disabled]="draftError() !== null"
+  >
+    {{ 'settings.rules.editor.save' | translate }}
+  </button>
+</ng-template>

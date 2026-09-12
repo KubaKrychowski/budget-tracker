@@ -277,6 +277,7 @@
                   </nz-select>
                   <div class="tx__amount-filter-range">
                     <nz-input-number
+                      [nzParser]="parseAmount"
                       [ngModel]="amountFromDraft()"
                       (ngModelChange)="amountFromDraft.set($event)"
                       [nzPlaceHolder]="'transactions.filters.amountFrom' | translate"
@@ -285,6 +286,7 @@
                     />
                     <span>–</span>
                     <nz-input-number
+                      [nzParser]="parseAmount"
                       [ngModel]="amountToDraft()"
                       (ngModelChange)="amountToDraft.set($event)"
                       [nzPlaceHolder]="'transactions.filters.amountTo' | translate"
@@ -371,6 +373,7 @@
                      zostać puste i zablokować „Zapisz" (patrz errorFor/editHasErrors). -->
                 <td class="tx__right">
                   <nz-input-number
+                    [nzParser]="parseAmount"
                     nzSize="small"
                     [class.tx__invalid]="errorFor(item.id) === 'amount'"
                     [attr.title]="
