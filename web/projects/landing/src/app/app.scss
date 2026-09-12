@@ -1,0 +1,456 @@
+/* =============================================================================
+   Układ landingu.
+
+   Zero hexów — wszystkie kolory przez `--ds-*` (patrz `styles.scss`).
+   Strona jest jednym dokumentem liniowym, więc style też są jednym plikiem;
+   podział na siedem arkuszy po jednym użyciu byłby rusztowaniem na zapas.
+
+   Budżet `anyComponentStyle` jest dla tego projektu podniesiony (12/16 kB zamiast
+   4/8 kB). Domyślna wartość pilnuje, żeby POJEDYNCZY komponent w dużej aplikacji nie
+   puchł — a tu jeden komponent JEST całą stroną, więc ten sam limit mierzyłby coś
+   innego, niż miał mierzyć. Alternatywą było przeniesienie układu do `styles.scss`,
+   czyli oderwanie stylów od szablonu, który opisują.
+   ============================================================================= */
+
+/* Wspólna szerokość treści. 1120px, bo przy szerszej kolumnie wiersz tekstu
+   robi się za długi do czytania, a ta strona jest głównie tekstem. */
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Nagłówek ─────────────────────────────────────────────────────────────── */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--ds-neutral-200);
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 60px;
+  }
+
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__logo {
+    display: block;
+    width: 32px;
+    height: 32px;
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: var(--ds-subtitle-2);
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    /* Primary-700, nie Primary-500: ten drugi daje na bieli 2,25:1 i nie
+       przechodzi AA. Patrz nota o kontraście w `styles.scss`. */
+    color: var(--ds-primary-700);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ── Typografia sekcji ────────────────────────────────────────────────────── */
+
+h1 {
+  margin: 0 0 20px;
+  font-size: var(--ds-heading-2);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: var(--ds-heading-3);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h3 {
+  margin: 0 0 8px;
+  font-size: var(--ds-subtitle-2);
+  font-weight: 600;
+}
+
+p {
+  margin: 0 0 16px;
+}
+
+.lead {
+  font-size: var(--ds-body-1);
+  color: var(--ds-neutral-600);
+}
+
+.section-lead {
+  max-width: 68ch;
+  font-size: var(--ds-body-1);
+  color: var(--ds-neutral-600);
+  margin-bottom: 32px;
+}
+
+.section {
+  padding: 72px 24px;
+}
+
+/* Pasma na przemian — jedyny sygnał, gdzie kończy się jeden argument,
+   a zaczyna następny. Strona nie ma nawigacji po sekcjach. */
+.band {
+  padding: 72px 0;
+  background: var(--ds-neutral-50);
+  border-top: 1px solid var(--ds-neutral-100);
+  border-bottom: 1px solid var(--ds-neutral-100);
+
+  &--accent {
+    background: var(--ds-primary-50);
+    border-color: var(--ds-primary-100);
+  }
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+
+.hero {
+  padding: 64px 0 24px;
+
+  &__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: center;
+    gap: 48px;
+  }
+
+  &__meta {
+    font-size: var(--ds-body-2);
+    color: var(--ds-neutral-600);
+  }
+
+  &__cta {
+    margin-top: 24px;
+  }
+
+  &__shot {
+    margin: 0;
+  }
+}
+
+/* ── Zrzuty ekranu ────────────────────────────────────────────────────────── */
+
+.shot {
+  margin: 32px 0 0;
+
+  img {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 4px;
+  }
+
+  figcaption {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--ds-neutral-600);
+  }
+}
+
+/* ── Trzy zarzuty ─────────────────────────────────────────────────────────── */
+
+.charges {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.charge {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: 4px;
+
+  &__label {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ds-neutral-600);
+  }
+
+  /* Odpowiedź jest wizualnie oddzielona od zarzutu, bo to dwie różne rzeczy:
+     nad kreską stan poprzedni, pod kreską to, co robi produkt. */
+  &__answer {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--ds-neutral-100);
+
+    nz-icon {
+      flex: none;
+      margin-top: 4px;
+      color: var(--ds-primary-700);
+    }
+  }
+}
+
+/* ── Kroki ────────────────────────────────────────────────────────────────── */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  margin: 0 0 40px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+
+  &__no {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--ds-primary-700);
+    color: #fff;
+    font-weight: 600;
+  }
+}
+
+/* ── Wyróżnik ─────────────────────────────────────────────────────────────── */
+
+.quote {
+  margin: 0 0 24px;
+  padding: 24px 28px;
+  background: #fff;
+  border-left: 4px solid var(--ds-primary-600);
+  border-radius: 0 4px 4px 0;
+
+  p {
+    margin: 0;
+    font-size: var(--ds-subtitle-1);
+    font-weight: 600;
+    line-height: 1.35;
+  }
+}
+
+/* ── Czego to nie robi ────────────────────────────────────────────────────── */
+
+.limits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 40px;
+  margin: 0 0 40px;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: 14px;
+  }
+
+  &__mark {
+    flex: none;
+    margin-top: 4px;
+    color: var(--ds-neutral-600);
+  }
+}
+
+/* ── Roadmapa ────────────────────────────────────────────────────────────────
+   Oś czasu, a nie lista punktowana: kolejność JEST tu treścią (każdy etap żywi się
+   danymi z poprzedniego), więc kształt ma to pokazywać. Kropka i pionowa linia
+   rysowane pseudoelementami — bez dodatkowego znacznika w szablonie. */
+
+.road {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.road__item {
+  position: relative;
+  padding: 0 0 32px 40px;
+
+  /* Kropka etapu. Domyślnie pusta — wypełniają ją tylko modyfikatory niżej,
+     więc „nie zrobione” jest stanem podstawowym, a nie wyjątkiem. */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 0;
+    width: 15px;
+    height: 15px;
+    border: 2px solid var(--ds-neutral-300);
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  /* Linia do następnego etapu — nie rysuje się pod ostatnim. */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    bottom: 0;
+    left: 7px;
+    width: 1px;
+    background: var(--ds-neutral-200);
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  &--done::before {
+    border-color: var(--ds-primary-700);
+    background: var(--ds-primary-700);
+  }
+
+  &--next::before {
+    border-color: var(--ds-primary-700);
+  }
+}
+
+.road__status {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ds-neutral-600);
+
+  /* ⚠️ Status przy KAŻDYM punkcie jest tu tym, czym wcześniej była ramka „w planach”:
+     jedynym sygnałem, że dalsze etapy nie istnieją. Nie chować go i nie wygaszać. */
+  .road__item--done & {
+    color: var(--ds-primary-800);
+  }
+}
+
+.road__body p:last-child {
+  margin-bottom: 0;
+  max-width: 72ch;
+  color: var(--ds-neutral-600);
+}
+
+/* ── CTA i stopka ─────────────────────────────────────────────────────────── */
+
+.cta {
+  text-align: center;
+
+  .section-lead {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.foot {
+  padding: 28px 0;
+  background: var(--ds-neutral-900);
+  color: #fff;
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__logo {
+    flex: none;
+    width: 40px;
+    height: 40px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+/* ── Wąskie ekrany ────────────────────────────────────────────────────────────
+   Kolumny wracają do jednego strumienia. Punkt 900px wynika z siatki trzech
+   kart w „zarzutach” — poniżej niej karty robią się węższe niż wiersz tekstu. */
+
+@media (max-width: 900px) {
+  .hero__inner,
+  .charges,
+  .steps,
+  .limits {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero__inner {
+    gap: 32px;
+  }
+
+  h1 {
+    font-size: var(--ds-subtitle-1);
+  }
+
+  h2 {
+    font-size: var(--ds-subtitle-1);
+  }
+
+  .band,
+  .section {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+}
+
+/* ── Kontrast przycisku CTA ───────────────────────────────────────────────────
+   ⚠️ ZNALEZIONE PRZY BUDOWIE, dotyczy też aplikacji.
+
+   Przycisk `primary` w NG-ZORRO to biały tekst na @primary-color, czyli na
+   Primary-500. Ten układ daje kontrast **2,25:1** — poniżej progu WCAG AA dla
+   zwykłego tekstu (4,5:1) i poniżej progu dla dużego (3:1). Kryterium akceptacji
+   #12 wymaga AA, więc landing nie może zostawić tego tak, jak jest.
+
+   Rozwiązanie: CTA stoi na Primary-800 (biały tekst = 8,1:1). To NADAL token
+   z design systemu — nie wymyślam koloru, tylko wybieram odcień, który przechodzi.
+
+   ⚠️ To NIE naprawia problemu w aplikacji: tam każdy przycisk `primary` ma ten
+   sam kontrast. Zmiana @primary-color dotknęłaby całego interfejsu, więc jest
+   decyzją do podjęcia osobno, a nie efektem ubocznym landingu.
+   --------------------------------------------------------------------------- */
+
+a[nz-button][nzType='primary'] {
+  background-color: var(--ds-primary-800);
+  border-color: var(--ds-primary-800);
+
+  &:hover,
+  &:focus {
+    background-color: var(--ds-primary-700);
+    border-color: var(--ds-primary-700);
+  }
+}

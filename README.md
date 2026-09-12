@@ -41,6 +41,20 @@ Frontend (`http://localhost:4200`):
 cd web && npm start
 ```
 
+### Landing page
+
+Strona publiczna opisująca projekt to **osobna aplikacja w tym samym workspace**
+(`web/projects/landing`) — własny build i bundel, ale wspólny motyw NG-ZORRO
+i tokeny design systemu, więc wygląd nie może się rozjechać z aplikacją.
+
+```bash
+cd web && npx ng serve landing --port 4300
+```
+
+Zrzuty ekranu na stronie pochodzą z `DemoSeed` (zmyśleni sprzedawcy), nigdy z Twojej bazy —
+patrz `plans/landing-page.md` i sekcja „Dane" niżej. Jak je odtworzyć, opisuje
+`web/projects/landing/README.md`.
+
 Sprawdzenie, czy baza faktycznie odpowiada — `GET /health/db` zwraca `{"database":"up"}`.
 Jeśli dostajesz błąd połączenia, prawie zawsze znaczy to, że kontener nie chodzi, a nie że kod jest zły.
 

@@ -1,0 +1,57 @@
+/* =============================================================================
+   Style globalne landingu.
+
+   Kolory i rozmiary pochodzą WYŁĄCZNIE z custom properties `--ds-*`, które most
+   w `src/styles/design-tokens.less` wystawia ze zmiennych Less. Zero hexów w tym
+   pliku — CLAUDE.md §7 mówi, że jedyne miejsce z hexami to plik tokenów.
+
+   ⚠️ Kontrast: token „Text/Description” (#78877C) daje na bieli 3,78:1, czyli
+   NIE przechodzi WCAG AA dla zwykłego tekstu (próg 4,5:1). Dlatego tekst
+   drugorzędny na tej stronie stoi na `--ds-neutral-600` (5,70:1), a nie na
+   tokenie opisowym. To nie jest „poprawianie design systemu” — token zostaje
+   nietknięty, landing po prostu nie używa go tam, gdzie by nie przeszedł.
+   ============================================================================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* Rodzina i bazowy rozmiar przychodzą z motywu NG-ZORRO (`theme.less`),
+     który mapuje je z tokenów. Tu tylko to, czego motyw nie ustawia. */
+  color: var(--ds-text-primary);
+  background: #fff;
+  line-height: var(--ds-line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Obrazki nie mogą rozpychać strony w poziomie na wąskim ekranie. */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Odnośnik pomijający nawigację — widoczny dopiero po sfokusowaniu klawiaturą. */
+.skip {
+  position: absolute;
+  left: -9999px;
+  z-index: 10;
+  padding: 12px 20px;
+  background: var(--ds-primary-800);
+  color: #fff;
+
+  &:focus {
+    left: 16px;
+    top: 16px;
+  }
+}
+
+/* Widoczny focus na wszystkim, co interaktywne. Domyślny outline przeglądarki
+   ginie na zielonych tłach, a bez focusa strona jest nie do przejścia klawiaturą. */
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--ds-primary-800);
+  outline-offset: 2px;
+}

@@ -1,0 +1,14 @@
+// =============================================================================
+// Motyw landingu = motyw aplikacji. Bez zmiennych własnych, bez kopii.
+//
+// Landing jest osobnym projektem Angulara (własny build i bundel), ale NIE jest
+// osobnym design systemem. Gdyby miał własne mapowanie tokenów na zmienne
+// NG-ZORRO, rozjechałby się z aplikacją przy pierwszej zmianie w Figmie — a to
+// dokładnie ten koszt, którego osobna aplikacja miała nie generować.
+//
+// Import ciągnie za sobą `styles/design-tokens.less` (jedyne miejsce z hexami,
+// CLAUDE.md §7) razem z mostem `:root` do zwykłego CSS, z którego korzysta
+// `styles.scss` landingu.
+// =============================================================================
+
+@import "../../../src/theme.less";

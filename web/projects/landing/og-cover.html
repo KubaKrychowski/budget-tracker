@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <title>Generator obrazka Open Graph</title>
+  <!--
+    ⚠️ To NIE jest część strony. Plik leży poza `src/` i poza `public/`, więc nic go nie
+    bunduje ani nie serwuje — jest szablonem, z którego generuje się jeden plik:
+    `public/og-cover.png` (1200×630), czyli miniaturę pokazywaną przy wklejeniu linku
+    na Slacka albo LinkedIna.
+
+    Regeneracja (przy uruchomionym dev serverze i API z danymi demo):
+      node <scratchpad>/shoot.mjs <public> '[{"url":"file:///.../og-cover.html",
+        "file":"og-cover.png","width":1200,"height":630,"wait":2500}]'
+
+    ⚠️ Kolor tekstu jest tu WPISANY, wbrew zasadzie „jedyne miejsce z hexami to
+    design-tokens.less” (CLAUDE.md §7). Powód: ten plik otwiera się z dysku, poza
+    procesem budowania Angulara, więc nie ma jak dostać skompilowanych tokenów.
+    Wartość to kopia `@ds-text-primary`. Zmiana tokenu wymaga zmiany także tutaj —
+    dlatego jest tu jedna, a nie cała paleta. Zieleń na obrazku pochodzi ze zrzutu
+    ekranu, nie z CSS-a, więc nie trzeba jej powtarzać.
+  -->
+  <style>
+    @font-face {
+      font-family: 'IBM Plex Sans';
+      src: local('IBM Plex Sans');
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      width: 1200px;
+      height: 630px;
+      margin: 0;
+      padding: 56px 56px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow: hidden;
+      background: #fff;
+      color: #252B27; /* kopia @ds-text-primary — patrz komentarz wyżej */
+      font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.25;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 52px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin: 0;
+      font-size: 24px;
+      opacity: 0.7;
+    }
+
+    .shot {
+      flex: 1;
+      min-height: 0;
+      border-radius: 10px 10px 0 0;
+      overflow: hidden;
+      box-shadow: 0 -2px 40px rgb(0 0 0 / 12%);
+    }
+
+    .shot img {
+      display: block;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Budżet tracker</h1>
+  <p>Import CSV z banku · kategoryzacja regułami i modelem ML · dashboard, który zostaje</p>
+  <div class="shot">
+    <img src="public/screens/dashboard.png" alt="" />
+  </div>
+</body>
+</html>

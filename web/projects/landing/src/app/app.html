@@ -1,0 +1,372 @@
+<a class="skip" href="#tresc">Przejdź do treści</a>
+
+<header class="bar">
+  <div class="wrap bar__inner">
+    <span class="bar__brand">
+      <img class="bar__logo" src="logo.svg" width="32" height="32" alt="" />
+      <span class="bar__name">Budżet tracker</span>
+    </span>
+    <a class="bar__link" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+      <nz-icon nzType="github" />
+      Kod na GitHubie
+    </a>
+  </div>
+</header>
+
+<main id="tresc">
+
+  <!-- ── Hero ──────────────────────────────────────────────────────────────────────────
+       Bez sloganu. Nagłówek ma nazwać PROBLEM, bo to jedyna rzecz na tej stronie, którą
+       czytelnik może rozpoznać jako własną. „Przejmij kontrolę nad finansami” pasuje do
+       dziesięciu innych aplikacji i nie mówi nic. -->
+  <section class="hero">
+    <div class="wrap hero__inner">
+      <div class="hero__text">
+        <h1>Śledzenie wydatków, które nie kończy się na jednorazowej analizie</h1>
+        <p class="lead">
+          Powstało, bo poprzedni sposób — wrzucanie wyciągu w Excelu do AI, kiedy akurat
+          przyjdzie ochota — działał, ale za każdym razem od zera. Tutaj wyciąg wchodzi jako
+          CSV, kategoryzacja dzieje się na miejscu, a historia zostaje.
+        </p>
+        <p class="hero__meta">
+          Projekt jednoosobowy, budowany po godzinach. Ta strona opisuje, co jest w kodzie —
+          i mówi wprost, czego w nim nie ma.
+        </p>
+        <div class="hero__cta">
+          <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+            <nz-icon nzType="github" />
+            Zobacz kod na GitHubie
+          </a>
+        </div>
+      </div>
+
+      <figure class="shot hero__shot">
+        <img
+          src="screens/dashboard.png"
+          width="1400"
+          height="1200"
+          alt="Dashboard aplikacji: kafle z sumą wydatków i przychodów, wykres podziału na kategorie oraz lista ostatnich transakcji."
+        />
+        <figcaption>
+          Dashboard. Wszystkie zrzuty na tej stronie pochodzą z danych demonstracyjnych —
+          nazwy sprzedawców i kwoty są wymyślone.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ── Trzy zarzuty ──────────────────────────────────────────────────────────────────
+       Wprost z CLAUDE.md §1: dzisiejszy workaround kosztuje, jest ulotny i wyłącznie
+       retrospektywny. Trzy zarzuty, każdy z odpowiedzią — i to jest cała propozycja
+       wartości, sformułowana zanim powstała ta strona. -->
+  <section class="band">
+    <div class="wrap">
+      <h2>Co było nie tak z poprzednim sposobem</h2>
+      <p class="section-lead">
+        Konkurentem nie jest tu YNAB ani aplikacja banku, tylko własny nawyk: eksport do
+        Excela i doraźny prompt. Ten nawyk ma trzy konkretne wady i produkt odpowiada na każdą.
+      </p>
+
+      <ol class="charges">
+        <li class="charge">
+          <p class="charge__label">Kosztowało</p>
+          <h3>Każda analiza była nowym wydatkiem</h3>
+          <p>Nowy prompt, nowy koszt — i tak przy każdym pytaniu o te same dane.</p>
+          <p class="charge__answer">
+            <nz-icon nzType="arrow-right" />
+            <span>
+              Kategoryzacja działa <strong>wewnątrz aplikacji</strong>: reguły plus model ML.NET
+              uruchamiany w tym samym procesie co API. Nie ma zewnętrznej usługi, którą trzeba
+              odpytać, żeby zobaczyć własne wydatki.
+            </span>
+          </p>
+        </li>
+
+        <li class="charge">
+          <p class="charge__label">Było ulotne</p>
+          <h3>Między analizami nie zostawało nic</h3>
+          <p>
+            Odpowiedź przeczytana i zamknięta. Następnym razem trzeba było złożyć wszystko
+            od nowa, razem z poprawkami, które raz już się wprowadziło.
+          </p>
+          <p class="charge__answer">
+            <nz-icon nzType="arrow-right" />
+            <span>
+              Historia siedzi w bazie, a <strong>każda ręczna poprawka kategorii wraca jako
+              dane treningowe</strong>. Ta sama pomyłka nie wraca po raz trzeci.
+            </span>
+          </p>
+        </li>
+
+        <li class="charge">
+          <p class="charge__label">Patrzyło tylko wstecz</p>
+          <h3>Mówiło, co się stało — nie, co się stanie</h3>
+          <p>
+            Analiza opisywała zamknięty miesiąc. Pytanie „czy stać mnie na to w przyszłym”
+            zostawało bez odpowiedzi.
+          </p>
+          <p class="charge__answer">
+            <nz-icon nzType="arrow-right" />
+            <span>
+              Cel oszczędnościowy patrzy w przód i mówi, czy wytrzymuje zły miesiąc —
+              <strong>w zakresie opisanym niżej</strong>, razem z tym, czego jeszcze nie liczy.
+            </span>
+          </p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Jak to działa ─────────────────────────────────────────────────────────────────
+       Z prawdziwym progiem i z jawnym „model się myli”. Opis mechanizmu, który przyznaje
+       się do błędów, jest sprawdzalny; opis bez tego jest reklamą. -->
+  <section class="wrap section">
+    <h2>Jak to działa</h2>
+
+    <ol class="steps">
+      <li class="step">
+        <span class="step__no" aria-hidden="true">1</span>
+        <div>
+          <h3>Wgrywasz CSV z banku</h3>
+          <p>
+            Parser jest osobny dla każdego banku i zna jego format z góry, więc nie ma kroku
+            mapowania kolumn. Import jest dwufazowy: najpierw podgląd, który niczego nie
+            zapisuje, potem zapis — już z Twoimi poprawkami, nie z surowego pliku.
+          </p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step__no" aria-hidden="true">2</span>
+        <div>
+          <h3>Reguły łapią oczywiste, model resztę</h3>
+          <p>
+            Najpierw reguły — nazwa sklepu, typ operacji, próg kwoty. Czego nie złapią, dostaje
+            kategorię od modelu razem z jego pewnością. Poniżej progu
+            (domyślnie {{ reviewThreshold }}) transakcja nie dostaje kategorii po cichu,
+            tylko trafia do kolejki <strong>„do przeglądu”</strong>.
+          </p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step__no" aria-hidden="true">3</span>
+        <div>
+          <h3>Poprawiasz, co model pomylił</h3>
+          <p>
+            Korekta jest decyzją człowieka, więc zeruje pewność i nie wraca do kolejki, którą
+            właśnie rozbroiłeś. Trafia za to do zbioru treningowego.
+          </p>
+        </div>
+      </li>
+    </ol>
+
+    <!-- ⚠️ Ta uwaga NIE jest ozdobnikiem uczciwości. Bez niej „97%” czyta się jak obietnica
+         dla cudzego wyciągu, a jest pomiarem na tym samym zbiorze, z którego reguły powstały. -->
+    <nz-alert
+      nzType="info"
+      nzShowIcon
+      nzMessage="Model się myli — i dlatego jest kolejka do przeglądu"
+      nzDescription="Reguły powstały z realnego wyciągu (1340 transakcji, 20 miesięcy) i pokrywały na nim 97% pozycji. To pomiar na tych samych danych, z których je wyprowadzono, więc nie jest obietnicą dla dowolnego innego wyciągu. Model widzi wyłącznie wydatki: wpływy obsługują same reguły, bo klasyfikator zapytany o wypłatę i tak musiałby wskazać którąś z kategorii wydatkowych — z wysoką pewnością i błędnie."
+    />
+  </section>
+
+  <!-- ── Wyróżnik ──────────────────────────────────────────────────────────────────────
+       Jedyna sekcja, której zdania nie pasują do dziesięciu innych aplikacji. Stąd osobne
+       pasmo i cytat wyciągnięty na wierzch. -->
+  <section class="band band--accent">
+    <div class="wrap">
+      <h2>Zdanie, którego nie powie aplikacja banku</h2>
+      <p class="section-lead">
+        Większość narzędzi umie powiedzieć, ile odłożyłeś. To jest inne twierdzenie:
+        czy cel wytrzymuje <em>zły</em> miesiąc.
+      </p>
+
+      <blockquote class="quote">
+        <p>
+          Odłożyłeś 1500,00 zł także w maju 2026 — miesiącu, w którym doszło 2551,00 zł
+          jednorazowych wydatków. Ten cel jest bezpieczny.
+        </p>
+      </blockquote>
+
+      <p>
+        Żeby takie zdanie mogło paść, aplikacja musi wiedzieć nie tylko, ile wpłynęło na
+        oszczędności, ale też które wydatki były jednorazowe — a to oznaczasz ręcznie.
+        Dopóki nie ma ani jednego oznaczonego wydatku, ekran mówi wprost, że dowodu nie ma
+        z czego zbudować, zamiast pokazywać „0 dowodów” jak fakt o Twojej dyscyplinie.
+      </p>
+
+      <figure class="shot">
+        <img
+          src="screens/savings.png"
+          width="1400"
+          height="1200"
+          alt="Ekran celów oszczędzania: baner z dowodem odporności celu, wykres miesięcznych wpłat oraz tabela miesięcy z werdyktami."
+        />
+        <figcaption>Ekran „Cele oszczędzania” na danych demonstracyjnych.</figcaption>
+      </figure>
+
+      <!-- ⚠️ Bez tego akapitu strona obiecywałaby saldo konta, którego kod nie zna. -->
+      <nz-alert
+        nzType="warning"
+        nzShowIcon
+        nzMessage="Stan oszczędności liczy się z kategorii, nie z salda konta"
+        nzDescription="Import nie przypisuje transakcji do konta, więc „odłożone” to suma wpłat minus wypłaty w kategorii „Oszczędności”. Nie obejmuje pieniędzy, które leżały na koncie wcześniej, ani odsetek. Aplikacja mówi to na własnym ekranie i ta strona tego nie zamiata."
+      />
+    </div>
+  </section>
+
+  <!-- ── Czego to nie robi ─────────────────────────────────────────────────────────────
+       Na prezentacji projektu ta sekcja buduje wiarygodność mocniej niż kolejna lista zalet:
+       pokazuje, że granice są znane i wybrane, a nie przemilczane. -->
+  <section class="wrap section">
+    <h2>Czego to nie robi</h2>
+    <p class="section-lead">
+      Część z tych rzeczy została świadomie odrzucona, część jeszcze nie powstała.
+      Rozróżnienie jest istotne, więc jest podane.
+    </p>
+
+    <ul class="limits">
+      <li>
+        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+        <div>
+          <h3>Nie łączy się z bankiem</h3>
+          <p>
+            Integracja przez API została <strong>odrzucona</strong>, nie odłożona. Rdzeniem jest
+            plik CSV eksportowany ręcznie z bankowości.
+          </p>
+        </div>
+      </li>
+      <li>
+        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+        <div>
+          <h3>Nie jest wielouserowe</h3>
+          <p>
+            Nie ma rejestracji ani logowania. Jedna osoba, jedna baza — multi-user jest
+            świadomie odroczony, a nie zapomniany.
+          </p>
+        </div>
+      </li>
+      <li>
+        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+        <div>
+          <h3>Nie zna salda Twojego konta</h3>
+          <p>
+            Liczy przepływy z transakcji, które sam wgrasz. Nie wie o saldzie otwarcia
+            ani o odsetkach.
+          </p>
+        </div>
+      </li>
+      <li>
+        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+        <div>
+          <h3>Nie czyta paragonów</h3>
+          <p>Widzi transakcję, nie jej pozycje. „Zakupy za 240 zł” zostają jedną kwotą.</p>
+        </div>
+      </li>
+    </ul>
+
+  </section>
+
+  <!-- ── Roadmapa ──────────────────────────────────────────────────────────────────────
+       Zastępuje wcześniejszy blok „W planach”. Kryterium akceptacji #12 zostaje spełnione
+       inaczej, ale mocniej: status stoi przy KAŻDYM punkcie, więc nie da się przeczytać
+       planu jako funkcji istniejącej. Kolejność nie jest listą życzeń — wynika z zależności
+       między etapami (CLAUDE.md §2: każdy etap żywi się danymi z poprzedniego) i każdy punkt
+       mówi wprost, dlaczego stoi właśnie tam. -->
+  <section class="band">
+    <div class="wrap">
+      <h2>Roadmapa</h2>
+      <p class="section-lead">
+        Kolejność wynika z zależności, nie z ochoty: każdy etap potrzebuje danych z poprzedniego.
+        Zrobiony jest pierwszy punkt — pozostałe jeszcze nie istnieją.
+      </p>
+
+      <ol class="road">
+        <li class="road__item road__item--done">
+          <div class="road__body">
+            <p class="road__status">Gotowe</p>
+            <h3>Rdzeń: import, kategoryzacja, dashboard</h3>
+            <p>
+              Wyciąg wchodzi jako CSV, reguły i model nadają kategorie, a niepewne trafiają
+              do kolejki przeglądu. Do tego lista transakcji z edycją i akcjami masowymi
+              oraz cel oszczędnościowy z dowodem odporności.
+            </p>
+          </div>
+        </li>
+
+        <li class="road__item road__item--next">
+          <div class="road__body">
+            <p class="road__status">Następne</p>
+            <h3>Limity na kategorie</h3>
+            <p>
+              Limit ma sens dopiero wtedy, gdy jest z czego go ustalić. Postawiony na pustej
+              historii byłby liczbą wziętą z sufitu, a jego przekroczenie mówiłoby więcej
+              o złym limicie niż o wydatkach.
+            </p>
+          </div>
+        </li>
+
+        <li class="road__item">
+          <div class="road__body">
+            <p class="road__status">Później</p>
+            <h3>Wydatki stałe kontra epizodyczne</h3>
+            <p>
+              Czynsz i wakacje to dwie różne rzeczy, a dziś jedno i drugie jest po prostu
+              wydatkiem. Bez tego rozdzielenia każda średnia miesza rachunki, które przyjdą
+              na pewno, z zakupami, które się nie powtórzą.
+            </p>
+          </div>
+        </li>
+
+        <li class="road__item">
+          <div class="road__body">
+            <p class="road__status">Później</p>
+            <h3>Prognozy</h3>
+            <p>
+              Stoją na poprzednim punkcie i bez niego nie mają sensu — prognoza, która nie
+              odróżnia stałego rachunku od jednorazowego zakupu, przewiduje, że w przyszłym
+              miesiącu znowu kupisz pralkę.
+            </p>
+          </div>
+        </li>
+
+        <li class="road__item">
+          <div class="road__body">
+            <p class="road__status">Później</p>
+            <h3>Paragony i pozycje</h3>
+            <p>
+              „Zakupy za 240 zł” rozbite na produkty. Najwięcej pracy z całej listy i najmniej
+              zależności od reszty, więc idzie na koniec, a nie dlatego, że jest najmniej ciekawe.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── CTA ───────────────────────────────────────────────────────────────────────────
+       Jedno i prawdziwe. „Wypróbuj” nie ma dokąd prowadzić: nie ma hostingu, nie ma
+       rejestracji, jest jedna baza z prywatnymi danymi. -->
+  <section class="wrap section cta">
+    <h2>Kod jest otwarty</h2>
+    <p class="section-lead">
+      Nie ma wersji demo ani rejestracji — aplikacja działa lokalnie, dla jednej osoby.
+      Jest za to repozytorium razem z decyzjami projektowymi i ich uzasadnieniami.
+    </p>
+    <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+      <nz-icon nzType="github" />
+      Zobacz kod na GitHubie
+    </a>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__inner">
+      <img class="foot__logo" src="logo.svg" width="40" height="40" alt="" />
+      <p>
+        Budżet tracker — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
+        Zrzuty ekranu pochodzą z danych demonstracyjnych.
+      </p>
+    </div>
+  </div>
+</footer>
