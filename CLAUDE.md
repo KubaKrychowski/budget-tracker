@@ -375,8 +375,8 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > | Operacja | Co robi | Co zostaje |
 > |---|---|---|
 > | **Wyłączenie** (`DisabledAt`) | zamyka budżet na **nowe dane** | wszystko; zarządzanie działa normalnie |
-> | **Reset** | stempluje `DeletedAt` na transakcjach, importach i limitach | budżet z nazwą, walutą, miesiącem i `InitialBalance` |
-> | **Usunięcie** | to co reset **plus** stempel na samym budżecie | wszystko, przez `RetentionDays` |
+> | **Reset** | stempluje `DeletedAt` na transakcjach, importach i limitach | budżet z nazwą, walutą, miesiącem, `InitialBalance` **oraz celem i rezerwacjami** |
+> | **Usunięcie** | to co reset **plus** cele, rezerwacje i stempel na samym budżecie | wszystko, przez `RetentionDays` |
 > | **Przywrócenie** | zdejmuje stempel z budżetu i dzieci skasowanych **razem z nim** | — |
 >
 > - **`DisabledAt` to NIE `DeletedAt`.** Wyłączony budżet jest w pełni widoczny — filtr globalny
@@ -391,8 +391,47 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   pokazuje usunięte jako czwarty stan — bez tego nie byłoby gdzie ich przywrócić.
 > - **Okno retencji jest USTAWIENIEM** (`Budgets:RetentionDays`), nie liczbą w kodzie ani w tekście
 >   tłumaczenia. Front dostaje je razem z listą i wstawia do modala usuwania. Po jego upływie
->   `BudgetPurgeService` kasuje fizycznie — to jedyne miejsce, w którym dane naprawdę znikają,
+>   sprzątanie kasuje fizycznie — `BudgetPurger` to jedyne miejsce, w którym dane naprawdę znikają,
 >   i dlatego idzie przez `ExecuteDelete`, a nie `db.Remove` (to drugie znaczy tu „ostempluj").
+>
+> **REWIZJA — 2026-09-12: dwa wejścia do sprzątania, jedna mechanika.** Mechanika kasowania siedzi
+> w `Features/Budgets/Services/BudgetPurger.cs`, a handlery różnią się WYŁĄCZNIE progiem czasu:
+> - `purge-deleted-budgets` (cron z `Budgets:PurgeCron`) — kasuje to, co przeleżało okno retencji.
+> - `purge-deleted-budgets-now` — kasuje **wszystko oznaczone do usunięcia**, bez czekania.
+>   Istnieje, bo „usuń teraz" jest potrzebne, gdy w budżecie wylądowały dane, których nie wolno
+>   trzymać ani dnia dłużej (import na zły budżet, cudzy wyciąg).
+>
+> ⚠️ To drugie zadanie stoi na **`Cron.Never()`** i nie wolno mu dać harmonogramu. Rejestrujemy je
+> jako cykliczne tylko po to, żeby było widoczne w `/hangfire` z przyciskiem „Trigger now" —
+> Hangfire nie ma innego sposobu pokazania zadania uruchamianego ręcznie. Cron sprowadziłby okno
+> retencji do zera i zamieniłby komunikat z modala usuwania w kłamstwo przy pierwszym przebiegu.
+> W storage widać to wprost: wpis ma cron `0 0 31 2 *` i **nie ma pola `NextExecution`**.
+>
+> ⚠️ Warunek `DeletedAt != null` należy do `BudgetPurger`, nie do handlerów. Gdyby każdy budował
+> własne zapytanie, to jego pominięcie zamieniłoby wymuszone sprzątanie w „skasuj wszystko" —
+> bez ostrzeżenia i bez możliwości cofnięcia. Pilnują tego testy w `BudgetSettingsTests`.
+> Wymuszony przebieg loguje się na poziomie `Warning`, bo pomija obietnicę daną użytkownikowi,
+> a historia przebiegów jest audytem.
+>
+> Konsekwencja, o której trzeba wiedzieć: panel jest dostępny tylko w Development, więc na
+> produkcji nie ma dziś czym tego wyzwolić. Dla narzędzia kasującego dane z pominięciem retencji
+> to właściwość, nie brak — wejście dla użytkownika ma sens dopiero z ekranem, który pyta „na pewno".
+>
+> **REWIZJA — 2026-09-12: cele oszczędzania i rezerwacje są DZIEĆMI budżetu.**
+> `SavingsGoal.BudgetBusinessId` i `SavingsReservation.BudgetBusinessId` przypisują je do budżetu
+> (zwykła kolumna, bez relacji EF, jak przy transakcji), a zasięg ekranów rozstrzyga `SavingsBudgetScope`
+> — ta sama reguła budżetu domyślnego co na dashboardzie i liście transakcji.
+>
+> ⚠️ **Cykl życia budżetu tego nie honorował.** Oba typy powstały PO `BudgetChildren`, więc nikt ich
+> tam nie dopisał: usunięcie budżetu zostawiało żywy cel wskazujący na budżet, którego nie widać,
+> przywrócenie wracało bez niego, a `BudgetPurger` — jedyne miejsce kasujące fizycznie — robił
+> z nich SIEROTY na zawsze. Na bazie deweloperskiej wyszło z tego 1 cel i 12 rezerwacji bez budżetu.
+>
+> ⚠️ **`SoftDeleteAsync` i `SoftDeleteSavingsAsync` są rozdzielone celowo**, bo pierwsza ma dwóch
+> wywołujących o różnych intencjach. Usunięcie woła obie; **RESET woła tylko pierwszą**, bo cel
+> i rezerwacja są ZASADĄ, nie danymi — przeżywają reset tak samo jak nazwa i bilans początkowy.
+> Dopisanie oszczędności do wspólnej metody kasowało cel przy resecie; złapał to
+> `Reset_leaves_the_goal_and_reservations_alone`, a nie przegląd kodu.
 > - **Dashboard nie ukrywa wyłączonych budżetów** — historię ogląda się także po zamknięciu
 >   budżetu. Oznacza je tagiem i gasi kafle dopisujące dane. Ukrycie ich byłoby cichym
 >   skasowaniem widoku na przeszłość.
