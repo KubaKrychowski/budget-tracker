@@ -69,9 +69,11 @@ if (app.Environment.IsDevelopment())
     app.UseCors(devCors);
 
     using var scope = app.Services.CreateScope();
-    await DevSeed.SeedAsync(
-        scope.ServiceProvider.GetRequiredService<AppDbContext>(),
-        scope.ServiceProvider.GetRequiredService<TimeProvider>());
+    var seedDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var seedClock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+
+    if (app.Configuration.GetValue<bool>("Demo:Seed")) await DemoSeed.SeedAsync(seedDb, seedClock);
+    else await DevSeed.SeedAsync(seedDb, seedClock);
 }
 
 app.UseExceptionHandler();
