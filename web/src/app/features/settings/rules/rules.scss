@@ -1,0 +1,136 @@
+/* Te same neutralne co w ustawieniach, imporcie i danych treningowych: #252B27 tekst,
+   #78877C tekst wygaszony, #C0D7C6 obramowanie, #EEF4F0 tło wygaszone, #51C273 akcent.
+   Ostrzeżenie: #D48806 — ten sam odcień, którym Ant oznacza `warning`. */
+
+.rul__intro {
+  margin: 0 0 16px;
+  color: #78877c;
+}
+
+.rul__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rul__title {
+  margin: 0;
+  color: #252b27;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rul__right {
+  text-align: right;
+}
+
+/* Wzorce to wyrażenia regularne — font o stałej szerokości, bo w regexie liczy się każdy znak,
+   a w proporcjonalnym `|` i `l` albo `.` i `,` wyglądają podobnie. */
+.rul__pattern {
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: #eef4f0;
+  color: #252b27;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.rul__note {
+  color: #78877c;
+}
+
+.rul__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rul__field {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rul__row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.rul__label {
+  color: #252b27;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rul__hint {
+  color: #78877c;
+  font-size: 12px;
+}
+
+.rul__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #c0d7c6;
+  border-radius: 4px;
+  background: #eef4f0;
+}
+
+.rul__preview-top {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.rul__preview-summary {
+  margin: 0;
+  color: #252b27;
+  font-weight: 500;
+}
+
+/* Przesłonięcie nie jest błędem, ale jest ostrzeżeniem: reguła łapie, a nie kategoryzuje. */
+.rul__preview-shadowed {
+  margin: 0;
+  color: #d48806;
+}
+
+.rul__preview-samples {
+  margin: 0;
+  color: #78877c;
+  font-size: 13px;
+}
+
+.rul__matches {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rul__match {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: baseline;
+  color: #252b27;
+  font-size: 13px;
+}
+
+.rul__match-desc {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rul__match-meta {
+  color: #78877c;
+  font-size: 12px;
+}

@@ -284,7 +284,8 @@
     "breadcrumb": "Ustawienia",
     "tabs": {
       "budgets": "Budżety",
-      "training": "Dane treningowe"
+      "training": "Dane treningowe",
+      "rules": "Reguły predykatu"
     },
     "training": {
       "caption": "Dane treningowe",
@@ -415,6 +416,65 @@
       "disableConfirm": {
         "header": "Czy na pewno chcesz wyłączyć budżet „{{name}}\"?",
         "description": "Wyłączony budżet nie przyjmuje nowych danych (importu ani transakcji), ale zostaje w pełni widoczny — możesz go dalej edytować, resetować i usuwać."
+      }
+    },
+    "rules": {
+      "intro": "Reguły przypisują kategorię, gdy opis transakcji albo typ operacji pasuje do wzorca. Stosują się w kolejności priorytetu — wygrywa pierwsza dopasowana, dlatego lista jest posortowana priorytetem, a nie nazwą.",
+      "listTitle": "Lista reguł",
+      "create": "Nowa reguła",
+      "empty": "Nie ma jeszcze żadnej reguły.",
+      "columns": {
+        "priority": "Priorytet",
+        "pattern": "Wzorzec opisu",
+        "typePattern": "Typ operacji",
+        "direction": "Kierunek",
+        "category": "Kategoria",
+        "amountRange": "Widełki kwot",
+        "note": "Notatka",
+        "actions": "Akcje"
+      },
+      "none": "—",
+      "editor": {
+        "createTitle": "Nowa reguła",
+        "editTitle": "Edycja reguły",
+        "pattern": "Wzorzec opisu (wyrażenie regularne)",
+        "patternHint": "Dopasowywany do znormalizowanego opisu transakcji, bez uwzględniania wielkości liter.",
+        "typePattern": "Wzorzec typu operacji",
+        "typePatternHint": "Zostaw puste, jeśli reguła ma patrzeć tylko na opis. Przynajmniej jedno z dwóch pól musi być wypełnione.",
+        "direction": "Kierunek",
+        "category": "Kategoria",
+        "priority": "Priorytet",
+        "priorityHint": "Niższa liczba znaczy „sprawdzana wcześniej”.",
+        "minAmount": "Kwota od",
+        "maxAmount": "Kwota do",
+        "note": "Notatka",
+        "save": "Zapisz",
+        "cancel": "Anuluj",
+        "patternRequired": "Wypełnij wzorzec opisu albo wzorzec typu operacji.",
+        "rangeInvalid": "Kwota „do” musi być większa niż „od”.",
+        "categoryRequired": "Wybierz kategorię."
+      },
+      "preview": {
+        "run": "Sprawdź, co złapie",
+        "hint": "Nie zapisuje reguły — liczy na Twoich transakcjach z ostatnich 12 miesięcy.",
+        "summary": "Pasuje {{count}} z {{scanned}} transakcji.",
+        "shadowed": "Z tego {{count}} zabiera reguła o wcześniejszym priorytecie — tych ta reguła nie skategoryzuje.",
+        "noMatches": "Żadna z {{scanned}} transakcji nie pasuje. Sprawdź wzorzec, kierunek i widełki.",
+        "noData": "Nie ma jeszcze transakcji, na których dałoby się to policzyć.",
+        "samplesTitle": "Przykłady:",
+        "currentCategory": "teraz: {{name}}",
+        "uncategorized": "bez kategorii"
+      },
+      "delete": {
+        "title": "Usunąć regułę?",
+        "body": "Reguła „{{rule}}” → {{category}} (priorytet {{priority}}) zniknie z listy i przestanie kategoryzować nowe transakcje.",
+        "note": "Transakcje, które już dostały kategorię z tej reguły, zostają bez zmian — usunięcie reguły niczego nie przelicza wstecz.",
+        "confirm": "Usuń regułę"
+      },
+      "direction": {
+        "Any": "Dowolny",
+        "Expense": "Wydatek",
+        "Income": "Przychód"
       }
     }
   },
