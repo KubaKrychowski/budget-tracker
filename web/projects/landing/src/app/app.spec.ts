@@ -98,7 +98,13 @@ describe('Landing', () => {
     // spełnić, szkodzi bardziej niż jej brak.
     const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
     expect(links.length).toBeGreaterThan(0);
-    expect(links.every((a) => a.getAttribute('href')!.includes('github.com'))).toBe(true);
+
+    // ⚠️ Sprawdzamy KONKRETNY adres, nie samo `github.com`. Słabsza wersja tego warunku
+    // przepuściła adres repozytorium PRYWATNEGO: wszystkie trzy linki były w domenie
+    // github.com i dawały 404 każdemu, kto nie jest autorem — czyli jedyne CTA na stronie
+    // nie prowadziło nigdzie. „Link do kodu" bez publicznego kodu to nie jest link do kodu.
+    const repoUrl = 'https://github.com/KubaKrychowski/budget-tracker';
+    expect(links.every((a) => a.getAttribute('href') === repoUrl)).toBe(true);
 
     expect(text()).not.toContain('Wypróbuj');
     expect(text()).not.toContain('Zarejestruj');

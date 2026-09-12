@@ -36,8 +36,16 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
   styleUrl: './app.scss',
 })
 export class App {
-  /** Jedyne prawdziwe CTA na tej stronie — patrz doc klasy. */
-  protected readonly repoUrl = 'https://github.com/KubaKrychowski/budget-tracker-2';
+  /**
+   * Jedyne prawdziwe CTA na tej stronie — patrz doc klasy.
+   *
+   * ⚠️ Musi wskazywać repozytorium **publiczne**. Do 2026-09-12 stał tu adres repo prywatnego,
+   * czyli jedyny przycisk na stronie dawał każdemu odwiedzającemu 404 — a to psuje dokładnie
+   * to, po co ta strona istnieje. Kod przeniósł się do `budget-tracker`, bo starego repo nie
+   * dało się bezpiecznie upublicznić (historia i `refs/pull/*` przeżywają force-push).
+   * Pilnuje tego `app.spec.ts`: sprawdza konkretny adres, nie samo „jest w domenie github.com".
+   */
+  protected readonly repoUrl = 'https://github.com/KubaKrychowski/budget-tracker';
 
   /**
    * DOMYŚLNY próg pewności, poniżej którego transakcja idzie do przeglądu zamiast dostać kategorię.
