@@ -7,6 +7,7 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { TranslatePipe } from '@ngx-translate/core';
 import { RangeFilterState } from './range-filter-state';
+import { parseAmount } from '../parse-amount';
 
 /**
  * Nagłówek kolumny z filtrem „od–do": etykieta (przez `<ng-content>`) + ikona filtra +
@@ -28,6 +29,9 @@ import { RangeFilterState } from './range-filter-state';
   styleUrl: './range-filter.scss',
 })
 export class RangeFilter {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   readonly filter = input.required<RangeFilterState>();
 
   /** Kwoty mają grosze (2), liczba transakcji jest zawsze całkowita (0). */

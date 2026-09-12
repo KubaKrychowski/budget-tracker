@@ -439,6 +439,25 @@ jest w buildzie, więc polskie znaki diakrytyczne mają pokrycie.
 Krytyczne: **cyfry tabelaryczne** — `font-variant-numeric: tabular-nums` / `font-feature-settings: "tnum"` na kolumnach
 z kwotami, żeby liczby wyrównywały się w pionie. Klasa `.tnum` / `.amount` czeka w `web/src/styles.scss`.
 
+> **REWIZJA — 2026-09-12: każde `nz-input-number` MUSI mieć `[nzParser]="parseAmount"`.**
+> Domyślny parser NG-ZORRO zakłada format en-US: usuwa przecinki jako separator tysięcy
+> i zostawia spacje. Na polskich kwotach daje to dwa błędy, z czego drugi jest groźniejszy:
+> - `6 278,88` → `NaN`, więc wklejenie jest odrzucane i pole wraca do poprzedniej wartości
+>   (na ekranie wygląda to jak wyzerowanie),
+> - `278,88` → **27888**, czyli kwota stukrotnie za duża **bez żadnego objawu**. Nic nie wygląda
+>   na zepsute, a do bazy idzie inna liczba niż na wyciągu.
+>
+> ⚠️ `nzParser` jest zwykłym inputem sygnałowym, **nie `WithConfig`**, więc nie da się tego
+> ustawić globalnie przez `NZ_CONFIG` — każde pole musi dostać atrybut osobno i o tym najłatwiej
+> zapomnieć przy dodawaniu nowego. Dziś wszystkie 10 pól liczbowych w aplikacji to kwoty.
+>
+> Jedyna niejednoznaczność (`6.278` to tysiące czy grosze?) jest rozstrzygnięta jawnie w
+> `decimalSeparatorOf` na korzyść formatu polskiego — przy grupie dokładnie trzech cyfr to
+> tysiące, `6.50` zostaje kwotą dziesiętną. Nie zmieniaj tego bez przeczytania tamtego doca.
+>
+> `parseAmount` zwraca `NaN` dla śmieci — tak NG-ZORRO rozpoznaje „nie ruszaj wartości pola".
+> Zwrócenie `0` zamieniłoby literówkę w cichy zapis zera.
+
 ### Motyw NG-ZORRO ↔ design system
 
 Źródło prawdy dla kolorów i typografii to plik Figma **Design System**

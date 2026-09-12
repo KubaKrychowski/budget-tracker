@@ -32,6 +32,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeader } from '../../core/page-header/page-header';
 import { Training } from './training/training';
 import { valueOf } from '../../core/api/resource-value';
+import { parseAmount } from '../../core/parse-amount';
 
 /**
  * Wartość `?tab=` dla zakładki „Dane treningowe" — jedyna, która trafia do adresu.
@@ -135,6 +136,9 @@ function startOfDay(date: Date): number {
   styleUrl: './settings.scss',
 })
 export class Settings {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 

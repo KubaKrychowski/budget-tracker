@@ -18,6 +18,7 @@ import { CreatedBudget } from '../../core/api/models/created-budget';
 import { PageHeader } from '../../core/page-header/page-header';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { valueOf } from '../../core/api/resource-value';
+import { parseAmount } from '../../core/parse-amount';
 
 /**
  * Kreator budżetu, krok 1 — „Podstawowe informacje" (Figma: `46:1183`).
@@ -38,6 +39,9 @@ import { valueOf } from '../../core/api/resource-value';
   styleUrl: './create-budget.scss',
 })
 export class CreateBudget {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);

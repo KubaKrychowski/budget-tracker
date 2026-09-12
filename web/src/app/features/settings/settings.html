@@ -306,6 +306,7 @@
       <!-- `nzId`, nie `id`: `id` wylądowałoby na hoście komponentu, a nie na <input>,
            więc <label for> nie miałby czego wskazać. -->
       <nz-input-number
+        [nzParser]="parseAmount"
         nzId="budget-initial-balance"
         [ngModel]="draftInitialBalance()"
         (ngModelChange)="draftInitialBalance.set($event ?? 0)"

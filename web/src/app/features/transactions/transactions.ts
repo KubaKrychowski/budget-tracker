@@ -32,6 +32,7 @@ import { TransactionListResponse } from '../../core/api/models/transaction-list-
 import { errorOf, valueOf } from '../../core/api/resource-value';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { DraftRow } from './draft-row';
+import { parseAmount } from '../../core/parse-amount';
 
 /** Wartość selecta kategorii dla wierszy bez kategorii — myliłaby się z „nic nie wybrano". */
 const NoCategory = '__brak__';
@@ -116,6 +117,9 @@ interface SelectionPayload {
   styleUrl: './transactions.scss',
 })
 export class Transactions {
+  /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
+  protected readonly parseAmount = parseAmount;
+
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

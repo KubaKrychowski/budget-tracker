@@ -421,6 +421,7 @@
             <label class="imp__form-field" for="edit-amount">
               <span class="imp__label">{{ 'import.preview.columns.amount' | translate }}</span>
               <nz-input-number
+                [nzParser]="parseAmount"
                 nzId="edit-amount"
                 [ngModel]="draftAmount()"
                 (ngModelChange)="draftAmount.set($event ?? 0)"

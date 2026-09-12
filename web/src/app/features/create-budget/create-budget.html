@@ -54,6 +54,7 @@
             <!-- `nzId`, nie `id`: `id` wylądowałby na hoście <nz-input-number>, a nie na
                  polu w środku, więc `<label for>` wskazywałby element bez fokusu. -->
             <nz-input-number
+              [nzParser]="parseAmount"
               nzId="budget-balance"
               class="cbg__control"
               [ngModel]="initialBalance()"
