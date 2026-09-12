@@ -26,6 +26,7 @@ public static class BudgetsModule
         services.AddScoped<BudgetLookup>();
         services.AddScoped<BudgetChildren>();
         services.AddScoped<BudgetListItemReader>();
+        services.AddScoped<BudgetPurger>();
 
         services.AddScoped<CreateBudgetCommandHandler>();
         services.AddScoped<UpdateBudgetCommandHandler>();
@@ -38,22 +39,41 @@ public static class BudgetsModule
         services.AddScoped<GetAvailableCurrenciesQueryHandler>();
 
         services.AddScoped<PurgeDeletedBudgetsCommandHandler>();
+        services.AddScoped<ForcePurgeDeletedBudgetsCommandHandler>();
         return services;
     }
 
     /// <summary>
-    /// Zadania cykliczne feature'a budżetów: sprzątanie usuniętych po oknie retencji (harmonogram z <see cref="BudgetOptions.PurgeCron"/>).
+    /// Zadania feature'a budżetów: sprzątanie usuniętych po oknie retencji (harmonogram z
+    /// <see cref="BudgetOptions.PurgeCron"/>) i jego wymuszona wersja, bez harmonogramu.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <c>purge-deleted-budgets-now</c> stoi na <c>Cron.Never()</c> ŚWIADOMIE. Rejestrujemy je jako
+    /// zadanie cykliczne nie po to, żeby kiedykolwiek samo ruszyło, tylko żeby było widoczne w panelu
+    /// <c>/hangfire</c> i dało się je odpalić przyciskiem „Trigger now" — Hangfire nie ma innego sposobu
+    /// pokazania zadania uruchamianego ręcznie. Powód, dla którego nie wolno dać mu crona, opisuje
+    /// <see cref="ForcePurgeDeletedBudgetsCommandHandler"/>.
+    ///
+    /// Konsekwencja: panel jest dostępny tylko w Development (CLAUDE.md §4), więc na produkcji nie ma
+    /// czym tego wyzwolić. Dla narzędzia, które kasuje dane z pominięciem obietnicy retencji, to jest
+    /// właściwość, nie brak — pojawi się razem z ekranem, który poprosi człowieka o potwierdzenie.
+    /// </remarks>
     public static WebApplication UseBudgetJobs(this WebApplication app)
     {
         var cron = app.Services.GetRequiredService<IOptions<BudgetOptions>>().Value.PurgeCron;
+        var jobs = app.Services.GetRequiredService<IRecurringJobManager>();
 
-        app.Services.GetRequiredService<IRecurringJobManager>()
-            .AddOrUpdate<PurgeDeletedBudgetsCommandHandler>(
-                "purge-deleted-budgets",
-                handler => handler.HandleAsync(CancellationToken.None),
-                cron,
-                new RecurringJobOptions());
+        jobs.AddOrUpdate<PurgeDeletedBudgetsCommandHandler>(
+            "purge-deleted-budgets",
+            handler => handler.HandleAsync(CancellationToken.None),
+            cron,
+            new RecurringJobOptions());
+
+        jobs.AddOrUpdate<ForcePurgeDeletedBudgetsCommandHandler>(
+            "purge-deleted-budgets-now",
+            handler => handler.HandleAsync(CancellationToken.None),
+            Cron.Never(),
+            new RecurringJobOptions());
 
         return app;
     }

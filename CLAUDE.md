@@ -391,8 +391,31 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   pokazuje usunięte jako czwarty stan — bez tego nie byłoby gdzie ich przywrócić.
 > - **Okno retencji jest USTAWIENIEM** (`Budgets:RetentionDays`), nie liczbą w kodzie ani w tekście
 >   tłumaczenia. Front dostaje je razem z listą i wstawia do modala usuwania. Po jego upływie
->   `BudgetPurgeService` kasuje fizycznie — to jedyne miejsce, w którym dane naprawdę znikają,
+>   sprzątanie kasuje fizycznie — `BudgetPurger` to jedyne miejsce, w którym dane naprawdę znikają,
 >   i dlatego idzie przez `ExecuteDelete`, a nie `db.Remove` (to drugie znaczy tu „ostempluj").
+>
+> **REWIZJA — 2026-09-12: dwa wejścia do sprzątania, jedna mechanika.** Mechanika kasowania siedzi
+> w `Features/Budgets/Services/BudgetPurger.cs`, a handlery różnią się WYŁĄCZNIE progiem czasu:
+> - `purge-deleted-budgets` (cron z `Budgets:PurgeCron`) — kasuje to, co przeleżało okno retencji.
+> - `purge-deleted-budgets-now` — kasuje **wszystko oznaczone do usunięcia**, bez czekania.
+>   Istnieje, bo „usuń teraz" jest potrzebne, gdy w budżecie wylądowały dane, których nie wolno
+>   trzymać ani dnia dłużej (import na zły budżet, cudzy wyciąg).
+>
+> ⚠️ To drugie zadanie stoi na **`Cron.Never()`** i nie wolno mu dać harmonogramu. Rejestrujemy je
+> jako cykliczne tylko po to, żeby było widoczne w `/hangfire` z przyciskiem „Trigger now" —
+> Hangfire nie ma innego sposobu pokazania zadania uruchamianego ręcznie. Cron sprowadziłby okno
+> retencji do zera i zamieniłby komunikat z modala usuwania w kłamstwo przy pierwszym przebiegu.
+> W storage widać to wprost: wpis ma cron `0 0 31 2 *` i **nie ma pola `NextExecution`**.
+>
+> ⚠️ Warunek `DeletedAt != null` należy do `BudgetPurger`, nie do handlerów. Gdyby każdy budował
+> własne zapytanie, to jego pominięcie zamieniłoby wymuszone sprzątanie w „skasuj wszystko" —
+> bez ostrzeżenia i bez możliwości cofnięcia. Pilnują tego testy w `BudgetSettingsTests`.
+> Wymuszony przebieg loguje się na poziomie `Warning`, bo pomija obietnicę daną użytkownikowi,
+> a historia przebiegów jest audytem.
+>
+> Konsekwencja, o której trzeba wiedzieć: panel jest dostępny tylko w Development, więc na
+> produkcji nie ma dziś czym tego wyzwolić. Dla narzędzia kasującego dane z pominięciem retencji
+> to właściwość, nie brak — wejście dla użytkownika ma sens dopiero z ekranem, który pyta „na pewno".
 > - **Dashboard nie ukrywa wyłączonych budżetów** — historię ogląda się także po zamknięciu
 >   budżetu. Oznacza je tagiem i gasi kafle dopisujące dane. Ukrycie ich byłoby cichym
 >   skasowaniem widoku na przeszłość.

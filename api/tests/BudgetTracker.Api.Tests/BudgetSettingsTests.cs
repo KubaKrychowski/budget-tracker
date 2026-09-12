@@ -64,8 +64,12 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
     private DeleteBudgetCommandHandler Delete() => new(_db, Lookup(), Children(), _clock);
     private RestoreBudgetCommandHandler Restore() => new(_db, Lookup(), Children(), Reader());
     private PurgeDeletedBudgetsCommandHandler Purge() => new(
-        _db, Options.Create(_options), _clock,
+        new BudgetPurger(_db), Options.Create(_options), _clock,
         Microsoft.Extensions.Logging.Abstractions.NullLogger<PurgeDeletedBudgetsCommandHandler>.Instance);
+
+    private ForcePurgeDeletedBudgetsCommandHandler ForcePurge() => new(
+        new BudgetPurger(_db),
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<ForcePurgeDeletedBudgetsCommandHandler>.Instance);
 
     /// <summary>
     /// Budżet z pełnym kompletem dzieci — bez nich reset i usunięcie nie miałyby czego ruszyć,
@@ -322,6 +326,70 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
         _clock.Advance(TimeSpan.FromDays(365));
 
         Assert.Equal(0, await Purge().HandleAsync(default));
+        Assert.Single(await _db.Budgets.ToListAsync());
+    }
+
+    // ── Sprzątanie wymuszone (z pominięciem retencji) ──────────────────────────────────
+
+    [Fact]
+    public async Task Force_purge_removes_a_budget_deleted_a_moment_ago()
+    {
+        // Sedno tego zadania: budżet usunięty przed chwilą jest DALEKO wewnątrz okna retencji,
+        // więc zwykłe sprzątanie go nie rusza — i to jest dowód, że wymuszenie faktycznie działa,
+        // a nie że po prostu wywołaliśmy drugą drogę do tego samego progu.
+        var budget = await SeedBudgetAsync("Dopiero usuniety");
+        await Delete().HandleAsync(budget.BusinessId, default);
+
+        Assert.Equal(0, await Purge().HandleAsync(default));
+
+        Assert.Equal(1, await ForcePurge().HandleAsync(default));
+
+        Assert.Empty(await _db.Budgets.IgnoreQueryFilters().ToListAsync());
+    }
+
+    [Fact]
+    public async Task Force_purge_takes_the_children_with_it()
+    {
+        // Bez tego w bazie zostają transakcje bez budżetu — a to jest gorsze niż nieposprzątany
+        // budżet, bo dashboard filtruje po BudgetBusinessId i takie wiersze stają się niewidoczne,
+        // nie znikające. Przy danych, których nie wolno trzymać, „niewidoczne" nie wystarcza.
+        var budget = await SeedBudgetAsync("Z dziecmi");
+        await Delete().HandleAsync(budget.BusinessId, default);
+
+        await ForcePurge().HandleAsync(default);
+
+        Assert.Empty(await _db.Transactions.IgnoreQueryFilters().ToListAsync());
+        Assert.Empty(await _db.ImportBatches.IgnoreQueryFilters().ToListAsync());
+        Assert.Empty(await _db.BudgetItems.IgnoreQueryFilters().ToListAsync());
+    }
+
+    [Fact]
+    public async Task Force_purge_never_touches_a_live_budget()
+    {
+        // ⚠️ Najważniejszy z tych testów. Wymuszenie pomija CZEKANIE, a nie krok „usuń budżet".
+        // Gdyby warunek `DeletedAt != null` kiedyś wypadł z zapytania, to zadanie zamieniłoby się
+        // w „skasuj wszystko" — bez komunikatu, bez potwierdzenia i bez możliwości cofnięcia.
+        var live = await SeedBudgetAsync("Zywy");
+        var deleted = await SeedBudgetAsync("Usuniety");
+        await Delete().HandleAsync(deleted.BusinessId, default);
+
+        Assert.Equal(1, await ForcePurge().HandleAsync(default));
+
+        var remaining = await _db.Budgets.IgnoreQueryFilters().Select(b => b.Name).ToListAsync();
+        Assert.Equal(["Zywy"], remaining);
+        Assert.Equal(2, await _db.Transactions.IgnoreQueryFilters().CountAsync());
+        Assert.Equal(live.BusinessId, (await _db.Budgets.SingleAsync()).BusinessId);
+    }
+
+    [Fact]
+    public async Task Force_purge_on_a_clean_database_does_nothing()
+    {
+        // Idempotencja: Hangfire ponawia zadanie po błędzie, a przycisk „Trigger now" da się
+        // kliknąć dwa razy. Drugi przebieg ma zwrócić zero, nie wywalić się na pustym zbiorze.
+        await SeedBudgetAsync("Zywy");
+
+        Assert.Equal(0, await ForcePurge().HandleAsync(default));
+        Assert.Equal(0, await ForcePurge().HandleAsync(default));
         Assert.Single(await _db.Budgets.ToListAsync());
     }
 }
