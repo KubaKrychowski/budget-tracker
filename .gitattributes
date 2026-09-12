@@ -1,0 +1,10 @@
+# Jedna normalizacja końców linii — bez tego każdy commit z Windows szumi ostrzeżeniami.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.zip binary
+
+# Fixture wyciągu jest w CP1250 i testuje właśnie odczyt tego kodowania.
+# Musi wrócić z repo bajt w bajt, więc żadnej normalizacji końców linii.
+api/tests/BudgetTracker.Api.Tests/testdata/*.csv binary

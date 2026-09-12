@@ -1,0 +1,203 @@
+/* Neutralne wprost z design systemu (patrz import.scss):
+   #252B27 tekst, #78877C tekst wygaszony, #C0D7C6 obramowanie, #E44E44 wydatek. */
+
+.tx {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 32px 24px;
+
+  /* Breadcrumb i kafle — ten sam wygląd co na dashboardzie (dashboard.scss),
+     bo makieta powtarza tu dokładnie te sekcje. */
+  &__crumbs {
+    padding: 4px 0;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
+  &__summary-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__caption {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  &__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 64px;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  /* Kolor niesie tu znaczenie: wydatek w dół na czerwono, wpływ w górę na zielono. */
+  &__metric-down {
+    color: #e44e44;
+  }
+
+  &__metric-up {
+    color: #51c273;
+  }
+
+  /* Makieta (Figma 125:9044): szukajka i akcje rozepchnięte na boki, padding 16px 8px. */
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px 8px;
+  }
+
+  /* Szukajka i wybór budżetów trzymają się razem po lewej — to jedna grupa „skąd są te dane". */
+  &__toolbar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__search {
+    width: 232px;   /* szerokość Search-Boxa z makiety */
+  }
+
+  /* Szerszy od szukajki, bo nazwy budżetów bywają długie, a tagów potrafi być kilka. */
+  &__budgets {
+    min-width: 260px;
+  }
+
+  /* Ostrzeżenie o sumowaniu kilku budżetów — ma być czytelne, ale nie krzyczeć. */
+  &__budgets-note {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 13px;
+    color: #8c8c8c;
+  }
+
+  &__toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* „Masowe ustawienie kategorii" — fiolet z makiety, poza paletą motywu NG-ZORRO. */
+  &__btn-category:not([disabled]) {
+    background: #8075cd;
+    border-color: #8075cd;
+
+    &:hover,
+    &:focus {
+      background: #6f63c4;
+      border-color: #6f63c4;
+    }
+  }
+
+  &__summary {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  /* Belka pod tabelą — „Frame 63" z makiety (Figma 128:15433): pełna szerokość strony
+     (stąd ujemne marginesy, bo `.tx` ma własne 32px), padding 10/32, dolna kreska,
+     bez tła i zaokrągleń. */
+  &__row-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 8px -32px 0;
+    padding: 10px 32px;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  &__row-bar-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;   /* makieta: Frame 65, gap 4 */
+    color: #000;
+
+    nz-icon {
+      color: #3284c4;
+      font-size: 14px;
+    }
+  }
+
+  &__row-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;   /* makieta: Frame 64, gap 16 */
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  &__center {
+    text-align: center;
+  }
+
+  /* Dropdown filtra „Kwota" (kierunek + zakres) — sam wygląd co RangeFilter
+     w ustawieniach (core/range-filter), tylko z dodatkowym selectem kierunku. */
+  &__amount-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 8px;
+    width: 220px;
+
+    nz-input-number {
+      width: 100%;
+    }
+  }
+
+  &__amount-filter-direction {
+    width: 100%;
+  }
+
+  &__amount-filter-range {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__amount-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Pole blokujące zapis — czerwona ramka zamiast samego wygaszonego przycisku,
+     żeby dało się od razu zobaczyć, KTÓRY wiersz stoi na przeszkodzie. */
+  &__invalid {
+    border-color: #e44e44 !important;
+
+    &.ant-input-number,
+    .ant-input-number-input {
+      border-color: #e44e44 !important;
+    }
+  }
+
+  &__row-bar-error {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #e44e44;
+
+    nz-icon {
+      font-size: 14px;
+    }
+  }
+}

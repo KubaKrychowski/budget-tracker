@@ -1,0 +1,45 @@
+/* Te same neutralne co reszta apki (patrz settings.scss): #252B27 tekst, #78877C
+   tekst wygaszony. Modal ma własny tytuł „Potwierdź operację" w pasku nagłówka
+   (nzTitle w serwisie) — to, co tu, jest wyłącznie treścią pod nim. */
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__header {
+    margin: 0;
+    font-size: 16px;
+    color: #252b27;
+  }
+
+  &__description {
+    margin: 0;
+    color: #78877c;
+    font-size: 14px;
+  }
+
+  &__key {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__key-label {
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+}
+
+.dialog-description {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

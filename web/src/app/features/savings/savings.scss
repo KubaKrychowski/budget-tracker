@@ -1,0 +1,157 @@
+.sav {
+  padding: 16px 24px 48px;
+
+  &__banner {
+    margin: 16px 0;
+  }
+
+  &__cta {
+    margin-top: 12px;
+  }
+
+  &__caption {
+    margin: 24px 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Kafle podsumowania — cztery, rozciągnięte równo; przy wąskim ekranie zawijają się. */
+  &__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+
+    > * {
+      flex: 1 1 180px;
+    }
+  }
+
+  &__hint {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #8c8c8c;
+  }
+
+  /*
+   * Dwie kolumny z makiety: szersza z historią, węższa ze zobowiązaniami.
+   * `minmax(0, …)` w obu torach, bo bez tego wykres ApexCharts rozpycha kolumnę ponad
+   * siatkę — element siatki ma domyślnie `min-width: auto`, a wykres mierzy się z rodzica.
+   */
+  &__cols {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+    margin-top: 8px;
+  }
+
+  &__col {
+    min-width: 0;
+  }
+
+  /* Poniżej tej szerokości kolumny przestają się mieścić i wracają do jednego strumienia. */
+  @media (max-width: 1100px) {
+    &__cols {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Karta „Twój cel" — kwota po lewej, akcje po prawej. */
+  &__goal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid #d9e8dd;
+    border-radius: 8px;
+  }
+
+  &__goal-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #78877c;
+  }
+
+  &__goal-amount {
+    margin: 4px 0;
+    font-size: 28px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * Propozycja podniesienia celu — wyciszona względem kwoty celu.
+   * ⚠️ Wizualna różnica jest tu celowa: dowód i kwota celu to fakty, a to jest ekstrapolacja.
+   * Podana z tą samą mocą co fakt zaczęłaby żyć własnym życiem.
+   */
+  &__suggestion {
+    margin: 8px 0 0;
+    max-width: 60ch;
+    font-size: 13px;
+    color: #78877c;
+  }
+
+  &__goal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  &__actions {
+    white-space: nowrap;
+  }
+
+  /* Kafel rezerwacji — ta sama ramka co karta celu, bo obie mówią o tym samym koncie. */
+  &__reservations {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid #d9e8dd;
+    border-radius: 8px;
+  }
+
+  &__res-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  &__res-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* „Wszystkie rezerwacje ›" — na makiecie odnośnik w rogu karty, nie przycisk. */
+  &__res-link {
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  /* Przycisk dodawania stoi w prawym dolnym rogu karty, tak jak na makiecie. */
+  &__res-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  &__amount-input {
+    width: 100%;
+  }
+}

@@ -1,0 +1,592 @@
+{
+  "app": {
+    "title": "BudgetTracker",
+    "version": "v.2.0",
+    "searchPlaceholder": "Wpisz nazwę akcji do wykonania",
+    "dashboard": "Dashboard"
+  },
+  "actions": {
+    "addTransaction": "Dodaj transakcje",
+    "createBudget": "Utwórz budżet",
+    "transactionList": "Lista transakcji",
+    "reviewQueue": "Do przeglądu",
+    "importStatement": "Zaimportuj wyciąg",
+    "notImplemented": "„{{label}}” — ta funkcja powstanie w kolejnym zadaniu.",
+    "savings": "Cele oszczędzania"
+  },
+  "dashboard": {
+    "breadcrumb": "Dashboard",
+    "quickActions": "Szybkie akcje",
+    "configuration": "Konfiguracja",
+    "summary": "Podsumowanie",
+    "budgetLabel": "Budżet:",
+    "budgetPlaceholder": "Wybierz budżet",
+    "periodLabel": "Okres:",
+    "currency": "PLN",
+    "error": {
+      "loadFailed": "Nie udało się pobrać danych. Sprawdź, czy API działa ({{endpoint}}).",
+      "retry": "Spróbuj ponownie"
+    },
+    "empty": {
+      "noBudgetTitle": "Brak dostępnego budżetu",
+      "noBudgetDescription": "Przejdź do akcji Utwórz budżet aby móc dodawać transakcje.",
+      "noTransactionsTitle": "Nie ma jeszcze żadnych transakcji",
+      "noTransactionsDescription": "Zaimportuj wyciąg CSV z banku — transakcje zostaną automatycznie podzielone na kategorie, a te, co do których model nie ma pewności, trafią do przeglądu.",
+      "importCta": "Zaimportuj pierwszy wyciąg",
+      "noExpensesInPeriod": "Brak wydatków w wybranym okresie"
+    },
+    "metrics": {
+      "totalExpenses": "Suma zaimportowanych wydatków",
+      "totalIncome": "Suma zaimportowanych przychodów",
+      "budgetBalance": "Aktualny stan budżetu",
+      "topCategory": "Najdroższa kategoria: {{name}}",
+      "largestExpense": "Największy wydatek w okresie",
+      "none": "—"
+    },
+    "charts": {
+      "byCategory": "Podział wydatków na kategorie",
+      "budgetProgress": "Stan budżetu",
+      "expensesSeries": "Wydatki",
+      "balanceSeries": "Stan budżetu"
+    },
+    "budgetDisabledTag": "Wyłączony"
+  },
+  "enums": {
+    "transactionStatus": {
+      "Imported": "Zaimportowana",
+      "AutoCategorized": "Skategoryzowana automatycznie",
+      "PendingReview": "Do przeglądu",
+      "ManuallyCategorized": "Skategoryzowana ręcznie",
+      "Confirmed": "Zatwierdzona"
+    },
+    "accountType": {
+      "Bank": "Konto bankowe",
+      "LunchCard": "Karta lunchowa",
+      "Cash": "Gotówka"
+    }
+  },
+  "banks": {
+    "pko": "PKO Bank Polski S.A."
+  },
+  "import": {
+    "title": "Importowanie danych transakcji",
+    "next": "Dalej",
+    "steps": {
+      "source": {
+        "title": "Konto",
+        "description": "Wybierz konto w aplikacji, na które zostaną naliczone transakcje."
+      },
+      "file": {
+        "title": "Plik CSV",
+        "description": "Wybierz plik z historią transakcji w Twojej aplikacji bankowej."
+      },
+      "preview": {
+        "title": "Podgląd",
+        "description": "Sprawdź wczytane transakcje i kategorie."
+      },
+      "done": {
+        "title": "Gotowe",
+        "description": "Podsumowanie importu."
+      }
+    },
+    "source": {
+      "heading": "Import pliku CSV",
+      "caption": "Zacznij od wskazania konta, z którego pochodzi wyciąg. Na tej podstawie odczytamy plik we właściwym formacie — nie musisz nic ustawiać ręcznie.",
+      "origin": "Źródło",
+      "result": "Wynik",
+      "bank": "Bank z którego pochodzi wyciąg",
+      "bankPlaceholder": "Bank",
+      "budget": "Budżet",
+      "budgetPlaceholder": "Budżet na który zostaną zapisane zmiany",
+      "noBudget": {
+        "title": "Brak budżetu w aplikacji",
+        "body": "Musisz utworzyć budżet, aby móc wykonać import z banku.",
+        "cta": "Utwórz budżet"
+      }
+    },
+    "file": {
+      "heading": "Plik z wyciągiem",
+      "caption": "Wgraj plik CSV wyeksportowany z bankowości. Nic nie zapisujemy — najpierw pokażemy, co z niego odczytaliśmy.",
+      "drop": "Kliknij albo przeciągnij plik w to miejsce",
+      "hint": "Jeden plik CSV. Format rozpoznajemy po wybranym banku.",
+      "working": "Czytamy plik i dobieramy kategorie…"
+    },
+    "preview": {
+      "heading": "Podgląd transakcji",
+      "caption": "Zobacz, jak odczytaliśmy Twoje transakcje i jakie kategorie im nadaliśmy. Te, których nie byliśmy pewni, oznaczyliśmy jako „do weryfikacji\" — możesz je poprawić teraz albo później. Nic nie zapisujemy, dopóki nie potwierdzisz.",
+      "search": "Szukaj",
+      "removeSelected": "Usuń zaznaczone",
+      "removeConfirm": "Usunąć zaznaczone wiersze ({{count}})? Nie trafią do importu.",
+      "counts": "Do zapisania: {{willImport}} · do weryfikacji: {{pending}} · duplikatów: {{duplicates}}",
+      "pickCategory": "Wybierz kategorię",
+      "save": "Zapisz import",
+      "empty": "Nie został żaden wiersz do zaimportowania.",
+      "columns": {
+        "date": "Data",
+        "category": "Kategoria",
+        "name": "Nazwa",
+        "amount": "Kwota",
+        "status": "Status",
+        "accuracy": "Trafność",
+        "actions": "Akcje"
+      },
+      "status": {
+        "ok": "Poprawne",
+        "review": "Do weryfikacji",
+        "duplicate": "Duplikat"
+      },
+      "noCategory": "Bez kategorii",
+      "edit": "Edytuj",
+      "remove": "Usuń",
+      "editTitle": "Edycja transakcji",
+      "editName": "Nazwa transakcji",
+      "editDate": "Data transakcji",
+      "editSave": "Zapisz",
+      "editCancel": "Anuluj",
+      "accept": "Akceptuj podpowiedź",
+      "acceptSelected": "Akceptuj zaznaczone ({{count}})",
+      "acceptConfirm": "Przyjąć podpowiedzi dla {{count}} wierszy? Kategorie zostaną te same, ale to Ty będziesz ich autorem — wiersze wyjdą z kolejki i douczą model."
+    },
+    "done": {
+      "heading": "Podsumowanie",
+      "caption": "Twój budżet jest gotowy. Od teraz przy każdym wydatku zobaczysz, ile zostało Ci w danej kategorii.",
+      "budgetBalance": "Aktualny stan budżetu",
+      "totalExpenses": "Suma zaimportowanych wydatków",
+      "totalIncome": "Suma zaimportowanych przychodów",
+      "period": "Okres importu naliczeń",
+      "count": "Ilość zaimportowanych transakcji",
+      "accuracy": "Średnia trafność kategoryzacji",
+      "pendingReview": "{{count}} transakcji czeka na weryfikację kategorii.",
+      "duplicates": "Pominięto {{count}} pozycji, które już były w bazie.",
+      "finish": "Zakończ"
+    },
+    "back": "Wstecz"
+  },
+  "transactions": {
+    "title": "Lista transakcji",
+    "summary": "{{total}} transakcji · suma: {{sum}} PLN",
+    "filters": {
+      "search": "Szukaj po opisie",
+      "category": "Kategoria",
+      "uncategorized": "Bez kategorii",
+      "status": "Status",
+      "directionAll": "Wszystkie",
+      "directionExpense": "Wydatki",
+      "directionIncome": "Przychody",
+      "amountFrom": "Kwota od",
+      "amountTo": "Kwota do",
+      "clear": "Wyczyść filtry",
+      "budgets": "Budżety",
+      "budgetsNote": "Wybrano kilka budżetów. Jeśli ten sam wyciąg trafił do więcej niż jednego, kafle policzą te same pieniądze wielokrotnie."
+    },
+    "columns": {
+      "date": "Data",
+      "description": "Opis",
+      "category": "Kategoria",
+      "status": "Status",
+      "largeExpense": "Duży wydatek",
+      "amount": "Kwota",
+      "actions": "Akcje"
+    },
+    "selection": {
+      "count": "Zaznaczono: {{count}}",
+      "selectAllMatching": "Zaznacz wszystkie {{count}} pasujących",
+      "edit": "Edytuj zaznaczone",
+      "editDisabledHint": "Edycja inline działa tylko dla zaznaczenia na stronie, nie dla całego pasującego zestawu.",
+      "setCategory": "Masowe ustawienie kategorii",
+      "markLargeExpense": "Oznacz jako duży wydatek",
+      "unmarkLargeExpense": "Odznacz duży wydatek",
+      "delete": "Usuń zaznaczone"
+    },
+    "metrics": {
+      "totalExpenses": "Suma wyfiltrowanych wydatków",
+      "totalIncome": "Suma wyfiltrowanych przychodów",
+      "largestExpense": "Największy wyfiltrowany wydatek"
+    },
+    "rowMenu": {
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "markLargeExpense": "Oznacz jako duży wydatek",
+      "unmarkLargeExpense": "Odznacz duży wydatek"
+    },
+    "edit": {
+      "modified": "Zmodyfikowano {{count}} wierszy",
+      "cancel": "Odrzuć",
+      "save": "Zapisz",
+      "descriptionRequired": "Opis jest wymagany.",
+      "amountRequired": "Podaj kwotę.",
+      "fixErrors": "Popraw zaznaczone pola",
+      "saved": "Zapisano zmiany w {{count}} wierszach."
+    },
+    "empty": {
+      "noBudget": {
+        "title": "Brak dostępnego budżetu",
+        "description": "Przejdź do akcji Utwórz budżet, aby móc dodawać i przeglądać transakcje."
+      },
+      "noTransactions": {
+        "title": "Nie ma jeszcze żadnych transakcji",
+        "description": "Zaimportuj wyciąg CSV z banku, żeby zobaczyć tu transakcje."
+      },
+      "noFilterResults": {
+        "title": "Żadna transakcja nie pasuje do wybranych filtrów.",
+        "cta": "Wyczyść filtry"
+      }
+    },
+    "bulkDelete": {
+      "confirm": "Usunąć zaznaczone transakcje ({{count}})?",
+      "success": "Usunięto {{count}} transakcji."
+    },
+    "bulkLargeExpense": {
+      "success": "Zaktualizowano {{count}} transakcji."
+    },
+    "bulkSetCategory": {
+      "title": "Masowe ustawianie kategorii",
+      "info": "Po akceptacji {{count}} transakcji ulegnie zmianie. W razie potrzeby w ustawieniach możesz wykonać przeuczenie modelu na nowych kategoriach.",
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "success": "Ustawiono kategorię dla {{count}} transakcji."
+    },
+    "discardEdits": {
+      "header": "Porzucić niezapisane zmiany?",
+      "description": "Zmiana strony, filtra albo sortowania odrzuci edytowane, niezapisane wiersze."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać transakcji",
+      "retry": "Spróbuj ponownie"
+    }
+  },
+  "currencies": {
+    "PLN": "PLN - Polski Złoty"
+  },
+  "createBudget": {
+    "title": "Tworzenie budżetu",
+    "finish": "Zakończ",
+    "caption": "Ustawmy Twój miesięczny budżet. Na podstawie Twoich dotychczasowych wydatków podpowiemy limity dla każdej kategorii — nie musisz zaczynać od zera.",
+    "basics": "Dane podstawowe",
+    "name": "Nazwa budżetu",
+    "namePlaceholder": "Nazwa",
+    "currency": "Waluta",
+    "created": "Budżet „{{name}}\" został utworzony.",
+    "steps": {
+      "basics": {
+        "title": "Podstawowe informacje",
+        "description": "Skonfiguruj parametry budżetu aby móc naliczać na nim transakcje"
+      }
+    },
+    "initialBalance": "Bilans początkowy",
+    "initialBalancePlaceholder": "np. 2500,00",
+    "back": "Wstecz"
+  },
+  "settings": {
+    "title": "Ustawienia aplikacji",
+    "intro": "Tutaj skonfigurujesz konta, z których importujesz wyciągi, oraz kategorie i reguły, według których porządkujemy Twoje transakcje.",
+    "openSettings": "Ustawienia",
+    "breadcrumb": "Ustawienia",
+    "tabs": {
+      "budgets": "Budżety",
+      "training": "Dane treningowe"
+    },
+    "training": {
+      "caption": "Dane treningowe",
+      "description": "Model uczy się z pliku bazowego i z Twoich poprawek kategorii. Tutaj widzisz, z czego dokładnie się uczy, i możesz go douczyć.",
+      "composition": {
+        "fromFile": "Z pliku bazowego",
+        "fromCorrections": "Z Twoich poprawek",
+        "total": "Razem w zbiorze",
+        "corrected": "{{count}} Twoich poprawek zmieniło kategorię przykładom, które już były w zbiorze. Zbiór od tego nie rośnie, ale model nauczy się z nich czegoś innego niż dotąd.",
+        "duplicates": "Pominięto {{count}} poprawek, które są już w pliku bazowym z tą samą kategorią — inaczej te same przykłady liczyłyby się dwa razy."
+      },
+      "newCorrections": "Od ostatniego treningu przybyło {{count}} poprawek. Model jeszcze ich nie widział.",
+      "upToDate": "Model uczył się na wszystkich dotychczasowych poprawkach.",
+      "train": "Doucz model",
+      "trainSuccess": "Model douczony na {{rows}} przykładach.",
+      "recategorize": "Przelicz kategorie",
+      "recategorizeSuccess": "Przeliczono {{examined}} transakcji, kategorię zmieniło {{recategorized}}.",
+      "recategorizeConfirm": {
+        "header": "Przeliczyć kategorie istniejących transakcji?",
+        "description": "Aktualny model i reguły zostaną zastosowane do transakcji, które są już w bazie. Kategorie nadane przez Ciebie ręcznie oraz potwierdzone zostaną nietknięte. Transakcje, co do których model nie ma zdania, wrócą do kolejki przeglądu."
+      },
+      "recategorizeReport": {
+        "title": "Kategorie przeliczone",
+        "body": "Sprawdzono {{examined}} transakcji: {{recategorized}} zmieniło kategorię, z czego {{movedToReview}} wróciło do kolejki przeglądu."
+      },
+      "report": {
+        "title": "Trening zakończony",
+        "body": "{{rows}} przykładów, {{categories}} kategorii. Trafność ogólna {{micro}}, trafność uśredniona po kategoriach {{macro}}."
+      },
+      "metricsCaveat": "Trafności są orientacyjne, nie są bramką jakości. Każdy trening dzieli inny zbiór na uczący i testowy, bo zbiór rośnie — wynik wyższy niż poprzednio nie znaczy sam z siebie „lepszy model”.",
+      "pendingReview": "W kolejce do przeglądu czeka {{count}} transakcji.",
+      "goToReview": "Przejrzyj je",
+      "distribution": {
+        "caption": "Rozkład po kategoriach",
+        "category": "Kategoria",
+        "examples": "Przykładów",
+        "share": "Udział",
+        "emptyWarning": "{{count}} kategorii nie ma ani jednego przykładu — model nigdy ich nie wskaże."
+      },
+      "history": {
+        "caption": "Historia treningów",
+        "trainedAt": "Data treningu",
+        "rows": "Przykładów",
+        "micro": "Trafność",
+        "macro": "Uśredniona",
+        "state": "Stan",
+        "active": "Aktywny",
+        "restore": "Przywróć",
+        "empty": "Nie było jeszcze żadnego treningu z tego ekranu."
+      },
+      "restoreConfirm": {
+        "header": "Przywrócić tę wersję modelu?",
+        "description": "Aktywny model zostanie podmieniony. Żadna wersja nie znika, więc możesz wrócić w drugą stronę."
+      },
+      "restoreSuccess": "Przywrócono wskazaną wersję modelu."
+    },
+    "budgets": {
+      "caption": "Lista budżetów",
+      "description": "Budżet to zbiór zasad, na których pracują procesy wokół zaimportowanych transakcji. Tutaj nim zarządzasz.",
+      "empty": "Nie masz jeszcze żadnego budżetu.",
+      "error": "Nie udało się wykonać operacji. Sprawdź połączenie i spróbuj ponownie.",
+      "columns": {
+        "name": "Nazwa",
+        "balance": "Balans",
+        "initialBalance": "Balans początkowy",
+        "monthlyLimit": "Miesięczny limit wydatków",
+        "createdAt": "Data utworzenia",
+        "transactionCount": "Ilość transakcji",
+        "status": "Status",
+        "actions": "Akcje"
+      },
+      "status": {
+        "active": "Aktywny",
+        "disabled": "Wyłączony",
+        "deleted": "Usunięty"
+      },
+      "actions": {
+        "edit": "Edytuj",
+        "disable": "Wyłącz",
+        "enable": "Włącz",
+        "reset": "Zresetuj",
+        "delete": "Usuń",
+        "restore": "Przywróć"
+      },
+      "edit": {
+        "title": "Edycja budżetu",
+        "name": "Nazwa",
+        "initialBalance": "Balans początkowy",
+        "balance": "Balans",
+        "balanceHint": "Wyliczany z balansu początkowego i transakcji — nie da się go ustawić wprost.",
+        "recalculationTitle": "Zmiana balansu początkowego przeliczy cały budżet",
+        "recalculation": "Balans na każdy dzień liczy się od tej wartości, więc przesunie się cały wykres, a nie jedna liczba.",
+        "save": "Zapisz",
+        "cancel": "Anuluj"
+      },
+      "reset": {
+        "title": "Reset budżetu",
+        "lead": "Czy na pewno chcesz zresetować budżet „{{name}}\"?",
+        "effects": {
+          "transactions": "Usunięciem przypisanych transakcji",
+          "limits": "Usunięciem limitów budżetu",
+          "balance": "Przypisaniem balansu początkowego"
+        },
+        "confirm": "Potwierdź",
+        "cancel": "Anuluj"
+      },
+      "delete": {
+        "confirm": "Usuń",
+        "cancel": "Anuluj",
+        "header": "Czy na pewno chcesz usunąć budżet: {{name}}?",
+        "description": "Po usunięciu operacja będzie odwracalna przez {{days}} dni. Później budżet zostanie bezpowrotnie skasowany z systemu."
+      },
+      "toast": {
+        "updated": "Budżet został pomyślnie zapisany",
+        "disabled": "Budżet został pomyślnie wyłączony",
+        "enabled": "Budżet został pomyślnie włączony",
+        "reset": "Budżet został pomyślnie zresetowany",
+        "deleted": "Budżet został pomyślnie usunięty",
+        "restored": "Budżet został pomyślnie przywrócony"
+      },
+      "filter": {
+        "search": "Szukaj",
+        "reset": "Wyczyść",
+        "from": "Od",
+        "to": "Do",
+        "namePlaceholder": "Szukaj po nazwie"
+      },
+      "disableConfirm": {
+        "header": "Czy na pewno chcesz wyłączyć budżet „{{name}}\"?",
+        "description": "Wyłączony budżet nie przyjmuje nowych danych (importu ani transakcji), ale zostaje w pełni widoczny — możesz go dalej edytować, resetować i usuwać."
+      }
+    }
+  },
+  "confirmDialog": {
+    "title": "Potwierdź operację",
+    "confirm": "Potwierdź",
+    "cancel": "Anuluj"
+  },
+  "common": {
+    "back": "Wróć do dashboardu"
+  },
+  "errors": {
+    "network": "Nie udało się połączyć z serwerem. Spróbuj ponownie."
+  },
+  "savings": {
+    "title": "Cele oszczędzania",
+    "summary": "Podsumowanie",
+    "setGoal": "Ustaw cel",
+    "changeGoal": "Zmień cel",
+    "endGoal": "Zrezygnuj z celu",
+    "yourGoal": "Twój cel",
+    "goalSince": "obowiązuje od: {{month}}",
+    "goalSaved": "Cel zapisany.",
+    "goalEnded": "Cel zakończony. Historia dowodów zostaje.",
+    "oneOffCleared": "Zdjęto oznaczenie jednorazowego wydatku.",
+    "raiseGoal": "Podnieś cel do {{amount}} zł",
+    "raiseSuggestion": "Masz {{count}} miesiące z dowodem. W miesiącach z jednorazowymi wydatkami budżet uniósł dodatkowo ok. {{headroom}} zł ponad cel.",
+    "metrics": {
+      "thisMonth": "Odłożone w tym miesiącu",
+      "goal": "Miesięczny cel",
+      "proofMonths": "Miesiące z dowodem",
+      "thisYear": "Odłożone w tym roku"
+    },
+    "chart": {
+      "caption": "Ile odłożyłeś w miesiącu",
+      "legend": "Słupek = odłożone w miesiącu · linia = Twój cel · kropka = miesiąc z jednorazowym wydatkiem",
+      "noGoalHint": "Ustaw cel, żeby zobaczyć próg na wykresie.",
+      "deposited": "Odłożone",
+      "goal": "Cel"
+    },
+    "states": {
+      "noGoal": {
+        "title": "Nie masz jeszcze celu oszczędnościowego.",
+        "body": "Ustaw kwotę, którą chcesz odkładać co miesiąc — dopiero wtedy mogę powiedzieć, czy ją utrzymujesz mimo jednorazowych wydatków."
+      },
+      "noLargeExpense": {
+        "title": "Nie oznaczyłeś żadnego jednorazowego wydatku.",
+        "body": "Bez nich nie odróżnię trudnego miesiąca od zwykłego, więc dowód nie powstanie. Oznacz je na liście transakcji.",
+        "cta": "Przejdź do listy transakcji"
+      },
+      "proof": {
+        "title": "Odłożyłeś {{amount}} zł także w {{month}} — miesiącu, w którym doszło {{oneOff}} zł jednorazowych wydatków.",
+        "body": "Ten cel jest bezpieczny. Liczba miesięcy z dowodem: {{count}}."
+      },
+      "missed": {
+        "title": "W {{month}} zabrakło {{missing}} zł do celu.",
+        "body": "Doszło {{oneOff}} zł jednorazowych wydatków. To informacja, nie ocena — dowód powstaje w miesiącu, w którym cel mimo nich wychodzi."
+      }
+    },
+    "noSavingsSeen": {
+      "title": "Nie widzę żadnych wpłat na oszczędności.",
+      "body": "Odkładanie rozpoznaję po kategorii „Oszczędności\". Jeśli Twój przelew ma inny opis, nie zostanie policzony — sprawdź kategorię na liście transakcji."
+    },
+    "months": {
+      "caption": "Miesiące",
+      "month": "Miesiąc",
+      "deposited": "Odłożone",
+      "withdrawn": "Wypłacone",
+      "goal": "Cel",
+      "oneOff": "Jednorazowe",
+      "verdict": "Werdykt",
+      "notOneOff": "To nie był jednorazowy wydatek",
+      "showInTransactions": "Pokaż w transakcjach",
+      "empty": "Nie ma jeszcze żadnych transakcji w tym budżecie."
+    },
+    "verdict": {
+      "proof": "Dowód",
+      "goalMet": "Cel osiągnięty",
+      "missed": "Nieosiągnięty",
+      "noGoal": "Bez celu",
+      "inProgress": "W toku"
+    },
+    "modal": {
+      "title": "Ustaw cel oszczędnościowy",
+      "amount": "Kwota miesięczna",
+      "save": "Zapisz cel",
+      "floorNote": "Cel jest podłogą, nie pułapem — sprawdzam, czy odłożyłeś CO NAJMNIEJ tyle.",
+      "historyNote": "Zmiana kwoty nie nadpisuje historii: poprzedni cel kończy się datą, a starsze dowody dalej odnoszą się do tamtej kwoty. Podniesienie obowiązuje od tego miesiąca, obniżenie od następnego.",
+      "startedOn": "Obowiązuje od",
+      "startedOnNote": "Dotyczy tylko pierwszego celu — dzięki temu dotychczasowe miesiące też dostaną werdykt. Późniejsze zmiany kwoty datuje już sama aplikacja."
+    },
+    "endConfirm": {
+      "header": "Zrezygnować z celu?",
+      "description": "Cel zostanie zakończony datą, nie skasowany — dowody z przeszłości dalej będą odnosić się do kwoty, która wtedy obowiązywała."
+    },
+    "clearOneOffConfirm": {
+      "header": "Zdjąć oznaczenie jednorazowego wydatku?",
+      "description": "Z {{month}} zniknie oznaczenie z {{count}} transakcji. Miesiąc, który był dowodem wyłącznie dzięki nim, przestanie nim być."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać oszczędności"
+    }
+  },
+  "reservations": {
+    "title": "Wszystkie rezerwacje",
+    "tileTitle": "Rezerwacje na ten rok",
+    "tileEmpty": "Nie masz jeszcze żadnych rezerwacji. Nazwij nadchodzący wydatek, a odłożę na niego miejsce w oszczędnościach.",
+    "freeFunds": "Wolne środki: {{amount}} zł",
+    "summary": "{{reserved}} zł zarezerwowane · {{settled}} zł rozliczone · wolne środki {{free}} zł",
+    "summaryOver": "{{reserved}} zł zarezerwowane · {{settled}} zł rozliczone · brak wolnych środków",
+    "balanceNote": "Stan konta oszczędnościowego: {{balance}} zł. Liczę go jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek.",
+    "coveredBy": "Przy obecnym celu miesięcznym resztę rezerwacji uzbierasz do: {{month}}.",
+    "add": "Dodaj rezerwację",
+    "showAll": "Wszystkie rezerwacje",
+    "settle": "Rozlicz",
+    "unsettle": "Cofnij rozliczenie",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "saved": "Rezerwacja zapisana.",
+    "deleted": "Rezerwacja usunięta. Wolne środki wracają.",
+    "settled": "Rezerwacja rozliczona.",
+    "unsettled": "Rozliczenie cofnięte.",
+    "empty": "Nie ma jeszcze żadnych rezerwacji.",
+    "columns": {
+      "name": "Nazwa",
+      "amount": "Kwota",
+      "due": "Termin",
+      "collected": "Uzbierane",
+      "status": "Status"
+    },
+    "status": {
+      "collecting": "Zbiera",
+      "overdue": "Po terminie",
+      "settled": "Rozliczona"
+    },
+    "overReserved": {
+      "title": "Rezerwacje przekraczają stan konta o {{amount}} zł.",
+      "body": "To nie jest błąd — zarezerwowałeś więcej, niż masz odłożone. Rezerwacja z najbliższym terminem zbiera pierwsza, dalsze czekają na resztę."
+    },
+    "editor": {
+      "addTitle": "Dodaj rezerwację",
+      "editTitle": "Edytuj rezerwację",
+      "saveEdit": "Zapisz",
+      "name": "Nazwa",
+      "namePlaceholder": "Ubezpieczenie OC",
+      "amount": "Kwota",
+      "due": "Termin",
+      "queueNote": "Rezerwacje zbierają się po kolei — najbliższy termin pierwszy. Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych."
+    },
+    "settleModal": {
+      "title": "Czy to było: {{name}}?",
+      "pick": "Wskaż wypłatę z konta oszczędnościowego, która zamknęła tę rezerwację.",
+      "noCandidates": "Nie widzę żadnej nierozliczonej wypłaty z oszczędności w tym budżecie. Rozliczenie zawsze wskazuje realną transakcję — bez niej rezerwacje byłyby listą życzeń.",
+      "confirm": "Tak, rozlicz",
+      "cancel": "To co innego",
+      "freeFundsNote": "Rozliczenie zamknie tę rezerwację i zdejmie ją z kolejki zbierania, ale NIE zwiększy wolnych środków — koperta jest roczna, więc kwota zostaje zaklepana na cały rok.",
+      "manualNote": "Nigdy nie rozliczam automatycznie — pomyłka tutaj zamyka kopertę, której nikt nie opłacił, a tego nikt nie zauważy."
+    },
+    "deleteConfirm": {
+      "header": "Usunąć rezerwację „{{name}}\"?",
+      "description": "Kwota przestanie obciążać wolne środki, a kolejka zbierania przesunie się na pozostałe rezerwacje."
+    },
+    "unsettleConfirm": {
+      "header": "Cofnąć rozliczenie „{{name}}\"?",
+      "description": "Rezerwacja wróci do kolejki zbierania, a wskazana wypłata znów będzie dostępna dla innej rezerwacji. Wolne środki się nie zmienią."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać rezerwacji"
+    },
+    "tileSummary": "{{reserved}} zł zarezerwowane · {{settled}} zł już rozliczone",
+    "collected": "Uzbierane",
+    "freeFundsBody": "Stan konta oszczędnościowego {{balance}} zł − {{reserved}} zł rezerwacji.",
+    "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek."
+  }
+}

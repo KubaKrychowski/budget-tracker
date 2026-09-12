@@ -1,0 +1,27 @@
+/* Ten sam wygląd co pozostałe panele filtrów w `settings.scss` (wyszukiwarka nazwy,
+   zakres dat) — trzymany tu osobno, bo to teraz osobny komponent, nie ten sam plik. */
+.range-filter {
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 8px;
+    width: 200px;
+
+    nz-input-number {
+      width: 100%;
+    }
+  }
+
+  &__range {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}

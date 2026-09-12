@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
+  <data name="Category_Uncategorized" xml:space="preserve"><value>Uncategorized</value></data>
+  <data name="Error_PeriodToBeforeFrom" xml:space="preserve"><value>Parameter 'to' cannot be earlier than 'from'.</value></data>
+  <data name="Import_EmptyFile" xml:space="preserve"><value>The file is empty.</value></data>
+  <data name="Import_UnrecognizedFormat" xml:space="preserve"><value>This file does not look like a statement from the selected bank.</value></data>
+  <data name="Import_NoRows" xml:space="preserve"><value>No transactions could be read from the file.</value></data>
+  <data name="Import_FileTooLarge" xml:space="preserve"><value>The file is too large (limit: 10 MB).</value></data>
+  <data name="Import_UnknownBank" xml:space="preserve"><value>Unknown bank — no parser available for it.</value></data>
+  <data name="Import_UnknownBudget" xml:space="preserve"><value>The selected budget no longer exists.</value></data>
+  <data name="Import_BudgetDisabled" xml:space="preserve"><value>This budget is switched off and does not accept new data.</value></data>
+  <data name="Budget_NameRequired" xml:space="preserve"><value>Give the budget a name.</value></data>
+  <data name="Budget_UnsupportedCurrency" xml:space="preserve"><value>That currency is not supported.</value></data>
+  <data name="Transaction_DescriptionRequired" xml:space="preserve"><value>Give the transaction a description.</value></data>
+  <data name="Transaction_DescriptionTooLong" xml:space="preserve"><value>The description is too long (limit: 500 characters).</value></data>
+  <data name="Training_Busy" xml:space="preserve"><value>An import is running. Training would categorise half of it with the old model and half with the new one, so it has to wait.</value></data>
+  <data name="Training_NoData" xml:space="preserve"><value>There is nothing to train on — no base file and no qualifying corrections.</value></data>
+  <data name="Training_UnknownModel" xml:space="preserve"><value>That model version is no longer on disk.</value></data>
+  <data name="Savings_AmountInvalid" xml:space="preserve"><value>The goal must be greater than zero — “saving 0” is not a goal, it is the absence of one.</value></data>
+  <data name="Reservation_NameRequired" xml:space="preserve"><value>Give the reservation a name — an amount without one is not an envelope.</value></data>
+  <data name="Reservation_AmountInvalid" xml:space="preserve"><value>The reservation amount must be greater than zero.</value></data>
+  <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>This transaction cannot settle the reservation. It has to be a withdrawal from savings in the same budget, not already used to settle another one.</value></data>
+  <data name="Reservation_AlreadySettled" xml:space="preserve"><value>This reservation is already settled. Undo the settlement first if you picked the wrong transaction.</value></data>
+  <data name="Request_Invalid" xml:space="preserve"><value>The request was invalid — usually a broken parameter in the address (a date or a filter). Clear the filters and try again.</value></data>
+  <data name="Rule_PatternRequired" xml:space="preserve"><value>A rule must look at the description or the operation type. With neither, it would match every transaction.</value></data>
+  <data name="Rule_PatternInvalid" xml:space="preserve"><value>The pattern is not a valid regular expression.</value></data>
+  <data name="Rule_AmountRangeInvalid" xml:space="preserve"><value>The lower bound must be smaller than the upper one — with equal bounds the rule matches nothing.</value></data>
+</root>

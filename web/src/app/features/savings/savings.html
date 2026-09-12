@@ -1,0 +1,425 @@
+<section class="sav">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ 'savings.title' | translate }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <!-- Stan błędu PIERWSZY i osobny od pustych stanów — „nie widzę wpłat" i „nie wiadomo, co
+       widzę" to dwie różne wiadomości. Patrz core/api/resource-value.ts. -->
+  @if (failure(); as problem) {
+    <nz-alert
+      nzType="error"
+      nzShowIcon
+      [nzMessage]="'savings.errors.loadFailed' | translate"
+      [nzDescription]="failureBody"
+    >
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">
+          {{ 'transactions.errors.retry' | translate }}
+        </button>
+      </ng-template>
+    </nz-alert>
+  } @else {
+    <nz-spin [nzSpinning]="loading() || busy()">
+
+      <!-- ── Baner ──────────────────────────────────────────────────────────────────────
+           Ekran istnieje po to, żeby udowodnić JEDNO zdanie. Bez niego zostają same liczby,
+           a liczby same z siebie nie zdejmują stresu. -->
+      @switch (state()) {
+        @case ('noGoal') {
+          <nz-alert
+            class="sav__banner"
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'savings.states.noGoal.title' | translate"
+            [nzDescription]="noGoalBody"
+          >
+            <ng-template #noGoalBody>
+              {{ 'savings.states.noGoal.body' | translate }}
+              <br />
+              <button nz-button nzType="primary" class="sav__cta" (click)="openGoalModal()">
+                {{ 'savings.setGoal' | translate }}
+              </button>
+            </ng-template>
+          </nz-alert>
+        }
+        @case ('noLargeExpense') {
+          <!-- Stan WEJŚCIA w funkcję, nie przypadek brzegowy: flaga „jednorazowy" jest ręczna,
+               więc na zimnym starcie jest ich zero i dowód nie ma jak powstać. -->
+          <nz-alert
+            class="sav__banner"
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="'savings.states.noLargeExpense.title' | translate"
+            [nzDescription]="noFlagBody"
+          >
+            <ng-template #noFlagBody>
+              {{ 'savings.states.noLargeExpense.body' | translate }}
+              <br />
+              <a nz-button nzType="primary" class="sav__cta" routerLink="/transactions">
+                {{ 'savings.states.noLargeExpense.cta' | translate }}
+              </a>
+            </ng-template>
+          </nz-alert>
+        }
+        @case ('proof') {
+          @if (latestProof(); as proof) {
+            <nz-alert
+              class="sav__banner"
+              nzType="success"
+              nzShowIcon
+              [nzMessage]="'savings.states.proof.title' | translate: {
+                amount: money(proof.goal),
+                month: monthLabelIn(proof.month),
+                oneOff: money(proof.oneOffTotal)
+              }"
+              [nzDescription]="'savings.states.proof.body' | translate: {
+                count: data()?.proofCount ?? 0
+              }"
+            />
+          }
+        }
+        @case ('missed') {
+          @if (lastMissed(); as missed) {
+            <!-- ⚠️ „To informacja, nie ocena" — i tekst musi to utrzymać. Ekran, który
+                 ocenia niedobór, przestaje być narzędziem, a staje się wyrzutem. -->
+            <nz-alert
+              class="sav__banner"
+              nzType="info"
+              nzShowIcon
+              [nzMessage]="'savings.states.missed.title' | translate: {
+                month: monthLabelIn(missed.month),
+                missing: money((missed.goal ?? 0) - missed.deposited)
+              }"
+              [nzDescription]="'savings.states.missed.body' | translate: {
+                oneOff: money(missed.oneOffTotal)
+              }"
+            />
+          }
+        }
+      }
+
+      @if (warnNoSavingsSeen()) {
+        <!-- Przed #10 odkładanie rozpoznaje kategoria, nie konto — przelew opisany inaczej
+             nie zostanie policzony. Zero bez tego zdania byłoby faktem, którego nikt nie sprawdził. -->
+        <nz-alert
+          class="sav__banner"
+          nzType="warning"
+          nzShowIcon
+          [nzMessage]="'savings.noSavingsSeen.title' | translate"
+          [nzDescription]="'savings.noSavingsSeen.body' | translate"
+        />
+      }
+
+      <!-- ── Podsumowanie ───────────────────────────────────────────────────────────────-->
+      <h2 class="sav__caption">{{ 'savings.summary' | translate }}</h2>
+      <div class="sav__metrics">
+        <nz-statistic
+          [nzTitle]="'savings.metrics.thisMonth' | translate"
+          [nzValue]="current()?.goal
+            ? (money(current()?.deposited) + ' / ' + money(current()?.goal))
+            : money(current()?.deposited)"
+          [nzSuffix]="'dashboard.currency' | translate" />
+        <nz-statistic
+          [nzTitle]="'savings.metrics.goal' | translate"
+          [nzValue]="goal() ? money(goal()?.amount) : '—'"
+          [nzSuffix]="goal() ? ('dashboard.currency' | translate) : ''" />
+        <nz-statistic
+          [nzTitle]="'savings.metrics.proofMonths' | translate"
+          [nzValue]="(data()?.proofCount ?? 0) + ' / ' + months().length" />
+        <nz-statistic
+          [nzTitle]="'savings.metrics.thisYear' | translate"
+          [nzValue]="money(data()?.depositedThisYear)"
+          [nzSuffix]="'dashboard.currency' | translate" />
+      </div>
+
+
+      <!-- ── Dwie kolumny (makieta 147:96) ──────────────────────────────────────────────
+           Po lewej to, co opisuje PRZESZŁOŚĆ (wykres i tabela miesięcy), po prawej to,
+           co opisuje ZOBOWIĄZANIA na przyszłość (cel i rezerwacje). Podział nie jest
+           kosmetyczny: karta celu i kafel rezerwacji mówią o tym samym koncie, więc muszą
+           stać obok siebie, a nie być rozdzielone tabelą na kilkanaście wierszy.
+           Przy wąskim ekranie kolumny zwijają się w jedną. -->
+      <div class="sav__cols">
+        <div class="sav__col">
+        <!-- ── Wykres ─────────────────────────────────────────────────────────────────────
+             Oś Y to kwota ODŁOŻONA w miesiącu, nie bilans konta. Próg = cel, jako SCHODEK —
+             patrz doc przy `chart` w komponencie. -->
+        @if (months().length > 0) {
+          <h2 class="sav__caption">{{ 'savings.chart.caption' | translate }}</h2>
+          <p class="sav__hint">
+            {{ (goal() ? 'savings.chart.legend' : 'savings.chart.noGoalHint') | translate }}
+          </p>
+          <apx-chart
+            [series]="chart().series"
+            [chart]="chart().chart"
+            [colors]="chart().colors"
+            [stroke]="chart().stroke"
+            [markers]="chart().markers"
+            [xaxis]="chart().xaxis"
+            [yaxis]="chart().yaxis"
+            [legend]="chart().legend"
+            [dataLabels]="chart().dataLabels"
+          />
+        }
+
+
+        <!-- ── Tabela miesięcy ────────────────────────────────────────────────────────────
+             Sedno ekranu: zdanie o odporności bez widocznych miesięcy, które je potwierdzają,
+             jest tylko hasłem. -->
+        <h2 class="sav__caption">{{ 'savings.months.caption' | translate }}</h2>
+
+        @if (months().length === 0) {
+          <nz-empty [nzNotFoundContent]="'savings.months.empty' | translate" />
+        } @else {
+          <nz-table #monthsTable [nzData]="months()" [nzShowPagination]="false" nzSize="small">
+            <thead>
+              <tr>
+                <th>{{ 'savings.months.month' | translate }}</th>
+                <th class="sav__right">{{ 'savings.months.deposited' | translate }}</th>
+                <th class="sav__right">{{ 'savings.months.withdrawn' | translate }}</th>
+                <th class="sav__right">{{ 'savings.months.goal' | translate }}</th>
+                <th class="sav__right">{{ 'savings.months.oneOff' | translate }}</th>
+                <th>{{ 'savings.months.verdict' | translate }}</th>
+                <th>{{ 'transactions.columns.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of monthsTable.data; track m.month) {
+                <tr>
+                  <td>{{ monthLabel(m.month) }}</td>
+                  <td class="sav__right amount">{{ money(m.deposited) }}</td>
+                  <!-- Wypłata NIE jest odejmowana od wpłat — jest widoczna obok, żeby dało się
+                       odróżnić uzasadnioną wypłatę od przelewu tam i z powrotem. -->
+                  <td class="sav__right amount">{{ m.withdrawn > 0 ? money(m.withdrawn) : '—' }}</td>
+                  <td class="sav__right amount">{{ m.goal === null ? '—' : money(m.goal) }}</td>
+                  <td class="sav__right amount">{{ m.oneOffCount > 0 ? money(m.oneOffTotal) : '—' }}</td>
+                  <td>
+                    <!-- ⚠️ Miesiąc, który TRWA, nie dostaje werdyktu „nieosiągnięty" — 5. dnia
+                         nic jeszcze nie zabrakło. Dowód wolno postawić od razu (jest już prawdą),
+                         ale porażki nie ma jeszcze czego ogłaszać. -->
+                    @if (isCurrent(m) && m.verdict === 'GoalMissed') {
+                      <nz-tag nzColor="processing">{{ 'savings.verdict.inProgress' | translate }}</nz-tag>
+                    } @else {
+                      @switch (m.verdict) {
+                        @case ('Proof') {
+                          <nz-tag nzColor="success">{{ 'savings.verdict.proof' | translate }}</nz-tag>
+                        }
+                        @case ('GoalMet') {
+                          <nz-tag nzColor="default">{{ 'savings.verdict.goalMet' | translate }}</nz-tag>
+                        }
+                        @case ('GoalMissed') {
+                          <nz-tag nzColor="warning">{{ 'savings.verdict.missed' | translate }}</nz-tag>
+                        }
+                        @default {
+                          <span class="sav__hint">{{ 'savings.verdict.noGoal' | translate }}</span>
+                        }
+                      }
+                    }
+                  </td>
+                  <td class="sav__actions">
+                    <!-- Dokładnie DWIE akcje. Edycji kwoty ani opisu tu nie ma — to robota listy
+                         transakcji, a dwa miejsca zapisujące to samo pole rozjadą się. -->
+                    @if (m.oneOffCount > 0) {
+                      <button nz-button nzType="link" nzSize="small" (click)="clearOneOff(m)">
+                        {{ 'savings.months.notOneOff' | translate }}
+                      </button>
+                    }
+                    <button nz-button nzType="link" nzSize="small" (click)="showInTransactions(m)">
+                      {{ 'savings.months.showInTransactions' | translate }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+        }
+        </div>
+
+        <div class="sav__col">
+        <!-- ── Karta celu ─────────────────────────────────────────────────────────────────-->
+        @if (goal(); as active) {
+          <div class="sav__goal">
+            <div>
+              <h3 class="sav__goal-title">{{ 'savings.yourGoal' | translate }}</h3>
+              <p class="sav__goal-amount">
+                {{ money(active.amount) }} {{ 'dashboard.currency' | translate }}
+              </p>
+              <p class="sav__hint">
+                {{ 'savings.goalSince' | translate: { month: monthLabel(active.startedOn) } }}
+              </p>
+              @if (data()?.raiseSuggestion; as suggestion) {
+                <!-- ⚠️ Osobne zdanie od dowodu i osobny przycisk. Dowód opisuje przeszłość
+                     i jest faktem; to jest ekstrapolacja. Zlanie ich zamieniłoby fakt w zachętę. -->
+                <p class="sav__suggestion">
+                  {{ 'savings.raiseSuggestion' | translate: {
+                       count: data()?.proofCount ?? 0,
+                       headroom: money(suggestion.headroom)
+                     } }}
+                </p>
+              }
+            </div>
+            <div class="sav__goal-actions">
+              <button nz-button (click)="openGoalModal()">
+                {{ 'savings.changeGoal' | translate }}
+              </button>
+              @if (data()?.raiseSuggestion; as suggestion) {
+                <button nz-button nzType="primary" (click)="raiseGoal()">
+                  {{ 'savings.raiseGoal' | translate: { amount: money(suggestion.suggestedAmount) } }}
+                </button>
+              }
+              <button nz-button nzType="link" nzDanger (click)="endGoal()">
+                {{ 'savings.endGoal' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+
+
+        <!-- ── Kafel rezerwacji (makieta 147:96) ──────────────────────────────────────────
+             Domyka lukę, którą zostawił cel: „wolne środki" nie miały definicji. Bez rezerwacji
+             ta liczba pokazywałaby całe oszczędności jako dostępne — w tym pieniądze przypisane
+             już na ubezpieczenie. -->
+        @if (reservations(); as res) {
+          <div class="sav__reservations">
+            <div class="sav__res-head">
+              <div>
+                <h3 class="sav__res-title">{{ 'reservations.tileTitle' | translate }}</h3>
+                <p class="sav__hint">
+                  {{ 'reservations.tileSummary' | translate: {
+                       reserved: wholeMoney(res.reservedTotal),
+                       settled: wholeMoney(res.settledTotal)
+                     } }}
+                </p>
+              </div>
+              <a class="sav__res-link" routerLink="/savings/reservations">
+                {{ 'reservations.showAll' | translate }} ›
+              </a>
+            </div>
+
+            @if (reservationRows().length === 0) {
+              <p class="sav__hint">{{ 'reservations.tileEmpty' | translate }}</p>
+            } @else {
+              <!-- ⚠️ JEDEN wykres o pierścieniach współśrodkowych, nie rząd osobnych kółek.
+                   Ten kształt jest treścią: rezerwacje dzielą JEDNĄ pulę, a osobne kółka
+                   pokazywałyby je jako niepowiązane paski. Legenda i etykieta w środku
+                   („Uzbierane · 1 800 z 5 000 zł") są wprost z makiety 147:96. -->
+              <apx-chart
+                [series]="reservationChart().series"
+                [chart]="reservationChart().chart"
+                [labels]="reservationChart().labels"
+                [colors]="reservationChart().colors"
+                [plotOptions]="reservationChart().plotOptions"
+                [legend]="reservationChart().legend"
+                [stroke]="reservationChart().stroke"
+              />
+            }
+
+            @if (overReserved(); as excess) {
+              <!-- ⚠️ Ujemne wolne środki jako osobny stan, nie minus w kaflu — „wolne środki
+                   -600 zł" to zdanie wewnętrznie sprzeczne i czyta się jak błąd aplikacji. -->
+              <nz-alert
+                nzType="warning"
+                [nzMessage]="'reservations.overReserved.title' | translate: { amount: money(excess) }"
+                [nzDescription]="'reservations.overReserved.body' | translate"
+              />
+            } @else {
+              <nz-alert
+                nzType="info"
+                [nzMessage]="'reservations.freeFunds' | translate: { amount: wholeMoney(res.freeFunds) }"
+                [nzDescription]="freeFundsBody"
+              >
+                <ng-template #freeFundsBody>
+                  {{ 'reservations.freeFundsBody' | translate: {
+                       balance: wholeMoney(res.accountBalance),
+                       reserved: wholeMoney(res.reservedTotal)
+                     } }}
+                  @if (res.coveredBy; as covered) {
+                    {{ 'reservations.coveredBy' | translate: { month: monthLabel(covered) } }}
+                  }
+                </ng-template>
+              </nz-alert>
+            }
+
+            <!-- Zastrzeżenie o fallbacku zostaje POD alertem, a nie w nim: makieta podaje stan
+                 konta jak fakt, a przed #10 to jest liczba z kategorii, nie saldo. Ukrycie tego
+                 byłoby stwierdzeniem, którego nikt nie sprawdził. -->
+            <p class="sav__hint">{{ 'reservations.balanceCaveat' | translate }}</p>
+
+            <div class="sav__res-actions">
+              <!-- Modal dodawania żyje na ekranie listy — dwie kopie tego formularza
+                   rozjechałyby się przy pierwszej poprawce. Stąd `?add=1`. -->
+              <a
+                nz-button
+                nzType="primary"
+                routerLink="/savings/reservations"
+                [queryParams]="{ add: 1 }"
+              >
+                <!-- `plus-circle`, bo tylko taki wariant jest w APP_ICONS — makieta ma tu ikonę,
+                     a dokładanie drugiego kształtu „plusa" do rejestru rozmnażałoby ikony. -->
+                <nz-icon nzType="plus-circle" />
+                {{ 'reservations.add' | translate }}
+              </a>
+            </div>
+          </div>
+        }
+
+        </div>
+      </div>
+
+    </nz-spin>
+  }
+
+  <!-- ── Modal celu ───────────────────────────────────────────────────────────────────-->
+  <nz-modal
+    [nzVisible]="goalModalOpen()"
+    [nzTitle]="'savings.modal.title' | translate"
+    (nzOnCancel)="goalModalOpen.set(false)"
+    (nzOnOk)="saveGoal()"
+    [nzOkText]="'savings.modal.save' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="(draftAmount() ?? 0) <= 0"
+  >
+    <ng-container *nzModalContent>
+      <label class="sav__label" for="savings-amount">
+        {{ 'savings.modal.amount' | translate }}
+      </label>
+      <nz-input-number
+        id="savings-amount"
+        class="sav__amount-input"
+        [ngModel]="draftAmount()"
+        (ngModelChange)="draftAmount.set($event)"
+        [nzMin]="1"
+        [nzStep]="100"
+      />
+
+      <!-- „Obowiązuje od" TYLKO przy pierwszym celu — przy zmianie serwer i tak wylicza datę
+           sam, więc kontrolka byłaby atrapą. Zamiast niej modal mówi wtedy, co się stanie. -->
+      @if (goal() === null && earliestMonth() !== null) {
+        <label class="sav__label" for="savings-from">
+          {{ 'savings.modal.startedOn' | translate }}
+        </label>
+        <select
+          id="savings-from"
+          class="sav__amount-input"
+          [ngModel]="draftStartedOn()"
+          (ngModelChange)="draftStartedOn.set($event)"
+        >
+          @for (m of months(); track m.month) {
+            <option [value]="m.month">{{ monthLabel(m.month) }}</option>
+          }
+        </select>
+        <p class="sav__hint">{{ 'savings.modal.startedOnNote' | translate }}</p>
+      }
+
+      <!-- Oba zdania MUSZĄ tu zostać: to jedyne miejsce, w którym da się wyjaśnić obie reguły
+           w momencie, w którym mają znaczenie. -->
+      <p class="sav__hint">{{ 'savings.modal.floorNote' | translate }}</p>
+      <p class="sav__hint">{{ 'savings.modal.historyNote' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+</section>

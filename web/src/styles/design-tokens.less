@@ -1,0 +1,131 @@
+// =============================================================================
+// Tokeny wyciagniete z Figmy: "Design System"
+// https://www.figma.com/design/10vPHd0SjYP23dPMaPcYrG/Design-System
+// Zrodlo: strona "🎨 Colors" (palety + tokeny semantyczne) i "🅰 Typography".
+// Nie edytuj recznie pod wplywem pojedynczego widoku — popraw w Figmie i zsynchronizuj.
+// =============================================================================
+
+// --- Primary (zielen) --------------------------------------------------------
+@ds-primary-50:  #ECFDEF;
+@ds-primary-100: #D4FCDB;
+@ds-primary-200: #A4F9B7;
+@ds-primary-300: #66F08F;
+@ds-primary-400: #5BD880;
+@ds-primary-500: #51C273;
+@ds-primary-600: #419F5F;
+@ds-primary-700: #307A4A;
+@ds-primary-800: #235E39;
+@ds-primary-900: #1B4C2D;
+@ds-primary-950: #0C2C18;
+
+// --- Secondary (fiolet) ------------------------------------------------------
+@ds-secondary-50:  #F8F7FC;
+@ds-secondary-100: #EFEEF9;
+@ds-secondary-200: #DFDDF2;
+@ds-secondary-300: #C7C5E9;
+@ds-secondary-400: #938ECD;
+@ds-secondary-500: #8075CD;
+@ds-secondary-600: #6851C2;
+@ds-secondary-700: #5742A4;
+@ds-secondary-800: #463485;
+@ds-secondary-900: #3A2A6F;
+@ds-secondary-950: #201643;
+
+// --- Info (blekit) -----------------------------------------------------------
+@ds-info-50:  #F3F9FE;
+@ds-info-100: #E4F1FC;
+@ds-info-200: #CCE4FA;
+@ds-info-300: #A7D1F6;
+@ds-info-400: #71B7F1;
+@ds-info-500: #3E9FEA;
+@ds-info-600: #3284C4;
+@ds-info-700: #26699F;
+@ds-info-800: #1D5381;
+@ds-info-900: #16446B;
+@ds-info-950: #092740;
+
+// --- Warn (bursztyn) ---------------------------------------------------------
+@ds-warn-50:  #FEF7EC;
+@ds-warn-100: #FDEDD5;
+@ds-warn-200: #FCDCAF;
+@ds-warn-300: #FAC574;
+@ds-warn-400: #EFAC39;
+@ds-warn-500: #DA9B33;
+@ds-warn-600: #BA7E28;
+@ds-warn-700: #945D1D;
+@ds-warn-800: #764714;
+@ds-warn-900: #62390F;
+@ds-warn-950: #382005;
+
+// --- Error (czerwien) --------------------------------------------------------
+@ds-error-50:  #FDF6F5;
+@ds-error-100: #FBEBE8;
+@ds-error-200: #F7D6D2;
+@ds-error-300: #F1B8B0;
+@ds-error-400: #DC796F;
+@ds-error-500: #E44E44;
+@ds-error-600: #C04036;
+@ds-error-700: #9F342A;
+@ds-error-800: #822920;
+@ds-error-900: #6D2119;
+@ds-error-950: #41100B;
+
+// --- Neutral (szarosc podbita zielenia) --------------------------------------
+@ds-neutral-50:  #F7FAF8;
+@ds-neutral-100: #EDF4EF;
+@ds-neutral-200: #D9E8DD;
+@ds-neutral-300: #C0D7C6;
+@ds-neutral-400: #A1B4A6;
+@ds-neutral-500: #78877C;
+@ds-neutral-600: #5C685F;
+@ds-neutral-700: #48524B;
+@ds-neutral-800: #333A35;
+@ds-neutral-900: #252B27;
+@ds-neutral-950: #121613;
+
+// --- Tokeny semantyczne (osobne ramki na stronie Colors) ---------------------
+@ds-text-primary:      #252B27;  // = neutral-900
+@ds-text-description:  #78877C;  // = neutral-500
+@ds-text-disabled:     #C0D7C6;  // = neutral-300
+@ds-stroke-disabled:   #EDF4EF;  // = neutral-100
+
+@ds-input-bg:          #FFFFFF;
+@ds-input-value:       #252B27;
+@ds-input-stroke:      #D9E8DD;  // = neutral-200
+@ds-input-shadow-focus:#5BD880;  // = primary-400
+
+// UWAGA: ponizsze cztery to czyste szarosci, spoza palety Neutral (ktora jest
+// zazieleniona). Tak sa zdefiniowane w Figmie — przepisane wiernie, nie "poprawione".
+@ds-input-disabled-bg:          #EEEEEE;
+@ds-input-disabled-stroke:      #DFDFDF;
+@ds-input-disabled-value:       #B9B9B9;
+@ds-input-disabled-placeholder: #D9D9D9;
+
+// --- Typografia (strona 🅰 Typography) ---------------------------------------
+@ds-font-family: 'IBM Plex Sans';
+@ds-line-height: 1.3;
+
+@ds-heading-1: 60px;  // 600
+@ds-heading-2: 48px;  // 600
+@ds-heading-3: 40px;  // 600
+@ds-subtitle-1: 28px; // 600
+@ds-subtitle-2: 18px; // 600
+@ds-body-1: 18px;     // 400 / 600
+@ds-body-2: 16px;     // 400 / 600
+
+@ds-weight-regular: 400;
+@ds-weight-semibold: 600;
+
+// --- Most do zwykłego CSS/Sass -------------------------------------------------
+// Zmienne Less powyżej istnieją TYLKO w czasie kompilacji tego pliku — `styles.scss`
+// (Sass) i zwykłe pliki .css nie mają jak ich odczytać, bo to inny język i inny
+// przebieg budowania (patrz angular.json: `theme.less` kompiluje się PRZED `styles.scss`,
+// ale wynikiem obu jest zwykły CSS, bez świadomości o sobie nawzajem).
+//
+// Custom property CSS to jedyny sposób, żeby wartość zdefiniowana TUTAJ (jedyne
+// miejsce z hexami) była użyteczna także poza Less. Dopisuj kolejne w miarę potrzeby —
+// nie całą paletę na zapas, tylko to, czego realnie użyto poza motywem NG-ZORRO.
+:root {
+  --ds-error-500: @ds-error-500;
+  --ds-error-400: @ds-error-400;
+}

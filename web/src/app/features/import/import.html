@@ -1,0 +1,566 @@
+<app-page-header [title]="'import.title' | translate" />
+
+<div class="imp__body">
+  <!-- Makieta: stepper PIONOWY, po lewej, z opisami pod tytułami. -->
+  <nz-steps [nzCurrent]="step()" nzDirection="vertical" nzSize="small" class="imp__steps">
+    <nz-step
+      [nzTitle]="'import.steps.source.title' | translate"
+      [nzDescription]="'import.steps.source.description' | translate"
+    ></nz-step>
+    <nz-step
+      [nzTitle]="'import.steps.file.title' | translate"
+      [nzDescription]="'import.steps.file.description' | translate"
+      [nzStatus]="fileStepStatus()"
+    ></nz-step>
+    <nz-step
+      [nzTitle]="'import.steps.preview.title' | translate"
+      [nzDescription]="'import.steps.preview.description' | translate"
+    ></nz-step>
+    <nz-step
+      [nzTitle]="'import.steps.done.title' | translate"
+      [nzDescription]="'import.steps.done.description' | translate"
+    ></nz-step>
+  </nz-steps>
+
+  <section class="imp__panel">
+    @if (error(); as message) {
+      <nz-alert nzType="error" [nzMessage]="message" nzShowIcon class="imp__alert"></nz-alert>
+    }
+
+    <!-- ── Krok 1: konto ───────────────────────────────────────────────────────────── -->
+    @if (step() === Step.Source) {
+      <div class="imp__intro">
+        <h2 class="imp__heading">{{ 'import.source.heading' | translate }}</h2>
+        <p class="imp__caption">{{ 'import.source.caption' | translate }}</p>
+      </div>
+
+      <nz-spin [nzSpinning]="sourcesLoading()">
+        @if (noBudgets()) {
+          <nz-alert
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="'import.source.noBudget.title' | translate"
+            [nzDescription]="noBudgetBody"
+            class="imp__alert"
+          ></nz-alert>
+          <ng-template #noBudgetBody>
+            <p class="imp__caption">{{ 'import.source.noBudget.body' | translate }}</p>
+            <button nz-button nzType="link" routerLink="/create-budget">
+              {{ 'import.source.noBudget.cta' | translate }}
+            </button>
+          </ng-template>
+        }
+
+        <div class="imp__group">
+          <h3 class="imp__group-title">{{ 'import.source.origin' | translate }}</h3>
+          <div class="control-row">
+            {{ 'import.source.bank' | translate }}
+
+            <nz-select
+              class="source-control"
+              nzId="import-bank"
+              [ngModel]="bank()"
+              (ngModelChange)="bank.set($event)"
+              [nzPlaceHolder]="'import.source.bankPlaceholder' | translate"
+            >
+              @for (key of sources()?.banks ?? []; track key) {
+                <nz-option [nzValue]="key" [nzLabel]="'banks.' + key | translate"></nz-option>
+              }
+            </nz-select>
+          </div>
+
+        </div>
+
+        <div class="imp__group">
+          <h3 class="imp__group-title">{{ 'import.source.result' | translate }}</h3>
+          <div class="control-row">
+            {{ 'import.source.budgetPlaceholder' | translate }}
+
+            <!-- nzDropdownMatchSelectWidth=false: pole ma stałą, wąską szerokość z makiety
+                 (224px), ale nazwa budżetu jest dowolnej długości (user ją wybiera) — przy
+                 dopasowaniu do szerokości pola dłuższe opcje ucinały się z poziomym paskiem
+                 przewijania w liście. Rozwijana lista sama dopasowuje się do treści. -->
+            <nz-select
+              class="budget-control"
+              nzId="import-budget"
+              [ngModel]="budgetId()"
+              (ngModelChange)="budgetId.set($event)"
+              [nzDisabled]="noBudgets()"
+              [nzPlaceHolder]="'import.source.budget' | translate"
+              [nzDropdownMatchSelectWidth]="false"
+            >
+              @for (budget of sources()?.budgets ?? []; track budget.id) {
+                <nz-option
+                  [nzValue]="budget.id"
+                  [nzLabel]="budget.name + ' · ' + day(budget.month)"
+                ></nz-option>
+              }
+            </nz-select>
+          </div>
+        </div>
+      </nz-spin>
+
+      <footer class="imp__actions">
+        <button nz-button (click)="finish()">{{ 'import.back' | translate }}</button>
+        <button nz-button nzType="primary" [disabled]="!canLeaveSource()" (click)="step.set(Step.File)">
+          {{ 'import.next' | translate }}
+        </button>
+      </footer>
+    }
+
+    <!-- ── Krok 2: plik CSV ────────────────────────────────────────────────────────── -->
+    @if (step() === Step.File) {
+      <div class="imp__intro">
+        <h2 class="imp__heading">{{ 'import.file.heading' | translate }}</h2>
+        <p class="imp__caption">{{ 'import.file.caption' | translate }}</p>
+      </div>
+
+      <nz-spin [nzSpinning]="busy()" [nzTip]="'import.file.working' | translate">
+        <nz-upload
+          nzType="drag"
+          nzAccept=".csv"
+          [nzMultiple]="false"
+          [nzBeforeUpload]="captureFile"
+          [nzShowUploadList]="false"
+        >
+          <p class="ant-upload-drag-icon"><nz-icon nzType="inbox"></nz-icon></p>
+          <p class="ant-upload-text">{{ 'import.file.drop' | translate }}</p>
+          <p class="ant-upload-hint">{{ 'import.file.hint' | translate }}</p>
+        </nz-upload>
+      </nz-spin>
+
+      <footer class="imp__actions">
+        <button nz-button (click)="goBack()" [disabled]="busy()">
+          {{ 'import.back' | translate }}
+        </button>
+      </footer>
+    }
+
+    <!-- ── Krok 3: podgląd ─────────────────────────────────────────────────────────── -->
+    @if (step() === Step.Preview) {
+      <div class="imp__intro">
+        <h2 class="imp__heading">{{ 'import.preview.heading' | translate }}</h2>
+        <p class="imp__caption">{{ 'import.preview.caption' | translate }}</p>
+      </div>
+
+      <div class="imp__toolbar">
+        <!-- NG-ZORRO 22: `nz-input-wrapper` + dyrektywa `nzInputPrefix` (patrz app.html). -->
+        <nz-input-wrapper class="imp__search">
+          <nz-icon nzInputPrefix nzType="search" />
+          <input
+            nz-input
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            [placeholder]="'import.preview.search' | translate"
+          />
+        </nz-input-wrapper>
+
+        <!-- Hurtowe przyjęcie podpowiedzi. Licznik w etykiecie liczy WYŁĄCZNIE wiersze,
+             na które ta akcja zadziała — zaznaczenie zwykle obejmuje też takie, które są
+             już poprawne albo nie mają czego akceptować, a przycisk obiecujący „20", gdy
+             zmieni 3, byłby gorszy niż brak licznika. -->
+        <button
+          nz-button
+          nzType="primary"
+          [disabled]="acceptableCount() === 0"
+          nz-popconfirm
+          [nzPopconfirmTitle]="'import.preview.acceptConfirm' | translate: { count: acceptableCount() }"
+          (nzOnConfirm)="acceptSelected()"
+        >
+          <nz-icon nzType="check" />
+          {{ 'import.preview.acceptSelected' | translate: { count: acceptableCount() } }}
+        </button>
+
+        <!-- Makieta: przycisk podstawowy w wariancie danger, z ikoną kosza. -->
+        <button
+          nz-button
+          nzType="primary"
+          nzDanger
+          [disabled]="selected().size === 0"
+          nz-popconfirm
+          [nzPopconfirmTitle]="'import.preview.removeConfirm' | translate: { count: selected().size }"
+          (nzOnConfirm)="removeSelected()"
+        >
+          <nz-icon nzType="delete" />
+          {{ 'import.preview.removeSelected' | translate }}
+        </button>
+
+        <span class="imp__counts">
+          {{ 'import.preview.counts' | translate: {
+            willImport: willImport(),
+            pending: pendingReview(),
+            duplicates: duplicates()
+          } }}
+        </span>
+      </div>
+
+      <nz-table
+        #previewTable
+        [nzData]="visibleRows()"
+        [nzPageSize]="10"
+        [nzScroll]="{ x: '1000px' }"
+        nzSize="small"
+      >
+        <thead>
+          <tr>
+            <th
+              nzWidth="48px"
+              [nzChecked]="allVisibleSelected()"
+              (nzCheckedChange)="toggleAllVisible($event)"
+            ></th>
+            <th nzWidth="110px" [nzSortFn]="sortByDate">
+              {{ 'import.preview.columns.date' | translate }}
+            </th>
+            <!-- Kolumny są FILTROWALNE i SORTOWALNE. Filtrujemy tam, gdzie zbiór wartości
+                 jest skończony: kategoria i status — lista wyboru NG-ZORRO ma tam sens.
+                 Sortowanie działa wszędzie, bo porównanie ma sens na każdym typie danych. -->
+            <th
+              nzWidth="190px"
+              [nzSortFn]="sortByCategory"
+              [nzFilters]="categoryFilters()"
+              [nzFilterFn]="filterByCategory"
+              [nzFilterMultiple]="true"
+            >
+              {{ 'import.preview.columns.category' | translate }}
+            </th>
+            <th [nzSortFn]="sortByName">{{ 'import.preview.columns.name' | translate }}</th>
+            <th nzWidth="130px" class="imp__right" [nzSortFn]="sortByAmount">
+              {{ 'import.preview.columns.amount' | translate }}
+            </th>
+            <th
+              nzWidth="150px"
+              [nzSortFn]="sortByStatus"
+              [nzFilters]="statusFilters()"
+              [nzFilterFn]="filterByStatus"
+              [nzFilterMultiple]="true"
+            >
+              {{ 'import.preview.columns.status' | translate }}
+            </th>
+            <th nzWidth="100px" class="imp__right" [nzSortFn]="sortByConfidence">
+              {{ 'import.preview.columns.accuracy' | translate }}
+            </th>
+            <th nzWidth="80px" class="imp__center">
+              {{ 'import.preview.columns.actions' | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of previewTable.data; track row.index) {
+            <tr [class.imp__row--duplicate]="row.duplicate">
+              <td
+                [nzChecked]="selected().has(row.index)"
+                (nzCheckedChange)="toggleRow(row.index, $event)"
+              ></td>
+              <td>{{ day(row.date) }}</td>
+              <!-- Select wprost w komórce: poprawka kategorii bez wchodzenia w modal
+                   edycji (wcześniej to była TYLKO nazwa — Components/Table-Column/Text
+                   z makiety — ale zmuszało do „Edytuj" nawet przy samej korekcie kategorii,
+                   czyli tego, co dzieje się najczęściej w kroku 3). Duplikat i tak nie
+                   zostanie zapisany, więc zostaje tekstem, nie polem do edycji. -->
+              <td>
+                @if (row.duplicate) {
+                  {{ row.categoryName ?? '—' }}
+                } @else {
+                  <!-- nzDropdownMatchSelectWidth=false: kolumna jest wąska (190px, ustalona
+                       z makietą), ale nazwy kategorii są dowolnej długości (np. „Przelewy na
+                       telefon") — przy dopasowaniu do szerokości komórki lista opcji ucinała
+                       tekst i dostawała poziomy scroll (ten sam mechanizm co przy .budget-control
+                       w kroku 1). Rozwijana lista sama dopasowuje się do najdłuższej opcji. -->
+                  <nz-select
+                    class="imp__category-cell"
+                    nzSize="small"
+                    nzAllowClear
+                    nzShowSearch
+                    [ngModel]="row.categoryId"
+                    (ngModelChange)="updateCategory(row, $event)"
+                    [nzPlaceHolder]="'import.preview.pickCategory' | translate"
+                    [nzDropdownMatchSelectWidth]="false"
+                  >
+                    @for (category of sources()?.categories ?? []; track category.id) {
+                      <nz-option [nzValue]="category.id" [nzLabel]="category.name"></nz-option>
+                    }
+                  </nz-select>
+                }
+              </td>
+              <td [title]="row.description">{{ row.description }}</td>
+              <td class="imp__right amount">{{ money(row.amount) }} PLN</td>
+              <!-- Makieta: Components/Table-Cell/Status → Badge/Status → Badge/Dot,
+                   czyli kropka statusu (nz-badge), a NIE etykieta nz-tag. -->
+              <!-- ⚠️ Status liczy `rowStatus()`, a NIE warunek wpisany tutaj. Wcześniej ta
+                   komórka miała własną kopię reguły („ma kategorię = poprawne") i przy zmianie
+                   reguły w kodzie plakietka została przy starej: wiersze z pewnością 31%
+                   pokazywały się jako „Poprawne", choć filtr i sortowanie wiedziały już swoje.
+                   Jedno źródło, nawet kosztem wywołania metody w szablonie. -->
+              <td>
+                @switch (rowStatus(row)) {
+                  @case ('duplicate') {
+                    <nz-badge
+                      nzStatus="default"
+                      [nzText]="'import.preview.status.duplicate' | translate"
+                    ></nz-badge>
+                  }
+                  @case ('ok') {
+                    <nz-badge
+                      nzStatus="success"
+                      [nzText]="'import.preview.status.ok' | translate"
+                    ></nz-badge>
+                  }
+                  @default {
+                    <nz-badge
+                      nzStatus="processing"
+                      [nzText]="'import.preview.status.review' | translate"
+                    ></nz-badge>
+                  }
+                }
+              </td>
+              <td class="imp__right amount">{{ confidence(row.confidence) }}</td>
+
+              <!-- Menu wiersza wg makiety: „Edytuj" otwiera modal edycji, „Usuń" wyrzuca
+                   wiersz z importu. Duplikat i tak nie zostanie zapisany, więc nie ma
+                   czego edytować. -->
+              <td class="imp__center">
+                @if (!row.duplicate) {
+                  <button
+                    nz-button
+                    nzType="text"
+                    nz-dropdown
+                    [nzDropdownMenu]="rowMenu"
+                    nzTrigger="click"
+                    (click)="menuRow.set(row)"
+                    [attr.aria-label]="'import.preview.columns.actions' | translate"
+                  >
+                    <nz-icon nzType="more" />
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+
+      <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+        <!-- `tabindex` i obsługa Entera: pozycje menu NG-ZORRO reagują tylko na klik,
+             więc bez tego menu jest nieosiągalne z klawiatury. -->
+        <ul nz-menu>
+          <!-- „Akceptuj" pokazuje się TYLKO tam, gdzie ma co akceptować: wiersz czeka na
+               weryfikację i ma już podpowiedzianą kategorię. Bez tej pozycji jedyną drogą
+               przyjęcia podpowiedzi byłoby wybranie z listy tej samej kategorii, która już
+               w wierszu jest — czyli klikanie, żeby nic nie zmienić. -->
+          @if (canAccept()) {
+            <li
+              nz-menu-item
+              tabindex="0"
+              (click)="acceptSuggestion()"
+              (keydown.enter)="acceptSuggestion()"
+            >
+              {{ 'import.preview.accept' | translate }}
+            </li>
+          }
+          <li
+            nz-menu-item
+            tabindex="0"
+            (click)="openEdit()"
+            (keydown.enter)="openEdit()"
+          >
+            {{ 'import.preview.edit' | translate }}
+          </li>
+          <li
+            nz-menu-item
+            nzDanger
+            tabindex="0"
+            (click)="removeRow()"
+            (keydown.enter)="removeRow()"
+          >
+            {{ 'import.preview.remove' | translate }}
+          </li>
+        </ul>
+      </nz-dropdown-menu>
+
+      @if (rows().length === 0) {
+        <nz-empty [nzNotFoundContent]="'import.preview.empty' | translate"></nz-empty>
+      }
+
+      <!-- „Edycja transakcji" z makiety: nazwa, kategoria, kwota z dopiskiem PLN i data. -->
+      <nz-modal
+        [nzVisible]="editRow() !== null"
+        [nzTitle]="'import.preview.editTitle' | translate"
+        (nzOnCancel)="cancelEdit()"
+        (nzOnOk)="saveEdit()"
+        [nzOkText]="'import.preview.editSave' | translate"
+        [nzCancelText]="'import.preview.editCancel' | translate"
+        [nzOkDisabled]="draftName().trim().length === 0"
+      >
+        <div *nzModalContent class="imp__form">
+          <label class="imp__form-field" for="edit-name">
+            <span class="imp__label">{{ 'import.preview.editName' | translate }}</span>
+            <input
+              id="edit-name"
+              nz-input
+              [ngModel]="draftName()"
+              (ngModelChange)="draftName.set($event)"
+            />
+          </label>
+
+          <label class="imp__form-field" for="edit-category">
+            <span class="imp__label">{{ 'import.preview.columns.category' | translate }}</span>
+            <nz-select
+              nzId="edit-category"
+              nzAllowClear
+              nzShowSearch
+              [ngModel]="draftCategoryId()"
+              (ngModelChange)="draftCategoryId.set($event)"
+              [nzPlaceHolder]="'import.preview.pickCategory' | translate"
+            >
+              @for (category of sources()?.categories ?? []; track category.id) {
+                <nz-option [nzValue]="category.id" [nzLabel]="category.name"></nz-option>
+              }
+            </nz-select>
+          </label>
+
+          <div class="imp__form-row">
+            <label class="imp__form-field" for="edit-amount">
+              <span class="imp__label">{{ 'import.preview.columns.amount' | translate }}</span>
+              <nz-input-number
+                nzId="edit-amount"
+                [ngModel]="draftAmount()"
+                (ngModelChange)="draftAmount.set($event ?? 0)"
+                [nzPrecision]="2"
+                [nzStep]="10"
+              ></nz-input-number>
+            </label>
+
+            <label class="imp__form-field" for="edit-date">
+              <span class="imp__label">{{ 'import.preview.editDate' | translate }}</span>
+              <nz-date-picker
+                nzId="edit-date"
+                nzFormat="dd.MM.yyyy"
+                [ngModel]="draftDate()"
+                (ngModelChange)="draftDate.set($event)"
+              ></nz-date-picker>
+            </label>
+          </div>
+        </div>
+      </nz-modal>
+
+      <footer class="imp__actions">
+        <button nz-button (click)="goBack()" [disabled]="busy()">
+          {{ 'import.back' | translate }}
+        </button>
+        <button
+          nz-button
+          nzType="primary"
+          [nzLoading]="busy()"
+          [disabled]="keptRowsCount() === 0"
+          (click)="commit()"
+        >
+          {{ 'import.next' | translate }}
+        </button>
+      </footer>
+    }
+
+    <!-- ── Krok 4: gotowe ──────────────────────────────────────────────────────────── -->
+    @if (step() === Step.Done && summary(); as s) {
+      <div class="imp__intro">
+        <h2 class="imp__heading">{{ 'import.done.heading' | translate }}</h2>
+        <p class="imp__caption">{{ 'import.done.caption' | translate }}</p>
+      </div>
+
+      <!-- Makieta używa komponentu Statistic (nz-statistic), a sumy wydatków i przychodów
+           mają ikonę-prefiks: strzałkę w dół i w górę (arrows-down / arrows-up, 24 px). -->
+      <div class="imp__stats">
+        <!-- `nzValueTemplate`, nie `nzValue`: nz-statistic rozbija wartość na część
+             całkowitą i dziesiętną po pierwszym separatorze, więc zakres dat
+             „31.08.2026 – 30.09.2026" pokazywał się jako „31.08". Kwoty idą tą samą
+             drogą, żeby format z `money()` docierał do ekranu nietknięty. -->
+        <div class="imp__stat">
+          <nz-statistic
+            [nzTitle]="'import.done.budgetBalance' | translate"
+            [nzValueTemplate]="balanceValue"
+          ></nz-statistic>
+          <ng-template #balanceValue>
+            <span [style.color]="s.budgetBalance < 0 ? colors.negative : colors.neutral">
+              {{ money(s.budgetBalance) }} PLN
+            </span>
+          </ng-template>
+        </div>
+
+        <div class="imp__stat">
+          <nz-statistic
+            [nzTitle]="'import.done.totalExpenses' | translate"
+            [nzValueTemplate]="expensesValue"
+          ></nz-statistic>
+          <ng-template #expensesValue>
+            <span [style.color]="colors.negative">
+              <nz-icon nzType="arrow-down" class="imp__stat-icon" />
+              {{ money(s.totalExpenses) }} PLN
+            </span>
+          </ng-template>
+        </div>
+
+        <div class="imp__stat">
+          <nz-statistic
+            [nzTitle]="'import.done.totalIncome' | translate"
+            [nzValueTemplate]="incomeValue"
+          ></nz-statistic>
+          <ng-template #incomeValue>
+            <span [style.color]="colors.positive">
+              <nz-icon nzType="arrow-up" class="imp__stat-icon" />
+              {{ money(s.totalIncome) }} PLN
+            </span>
+          </ng-template>
+        </div>
+
+        <div class="imp__stat">
+          <nz-statistic
+            [nzTitle]="'import.done.period' | translate"
+            [nzValueTemplate]="periodValue"
+          ></nz-statistic>
+          <ng-template #periodValue>
+            @if (s.periodFrom && s.periodTo) {
+              {{ day(s.periodFrom) }} – {{ day(s.periodTo) }}
+            } @else {
+              —
+            }
+          </ng-template>
+        </div>
+
+        <div class="imp__stat">
+          <nz-statistic
+            [nzTitle]="'import.done.count' | translate"
+            [nzValue]="s.imported + s.pendingReview"
+          ></nz-statistic>
+        </div>
+
+        <div class="imp__stat">
+          <nz-statistic
+            [nzTitle]="'import.done.accuracy' | translate"
+            [nzValueTemplate]="accuracyValue"
+          ></nz-statistic>
+          <ng-template #accuracyValue>{{ confidence(s.averageConfidence) }}</ng-template>
+        </div>
+      </div>
+
+      @if (s.pendingReview > 0) {
+        <nz-alert
+          nzType="info"
+          nzShowIcon
+          [nzMessage]="'import.done.pendingReview' | translate: { count: s.pendingReview }"
+          class="imp__alert"
+        ></nz-alert>
+      }
+
+      @if (s.skippedDuplicates > 0) {
+        <p class="imp__caption">
+          {{ 'import.done.duplicates' | translate: { count: s.skippedDuplicates } }}
+        </p>
+      }
+
+      <footer class="imp__actions">
+        <button nz-button (click)="goBack()">{{ 'import.back' | translate }}</button>
+        <button nz-button nzType="primary" (click)="finish()">
+          {{ 'import.done.finish' | translate }}
+        </button>
+      </footer>
+    }
+  </section>
+</div>

@@ -1,0 +1,229 @@
+/* Odstępy i obramowania wg makiety Dashboard (gap 24, padding 32, Neutral-300/200). */
+
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 32px;
+
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
+  &__crumbs {
+    padding: 4px 0;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  &__caption {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  /* Makieta: „Szybkie akcje" i „Konfiguracja" siedza w ramce #C0D7C6, radius 8, padding 8. */
+  &__boxed {
+    padding: 8px;
+    border: 1px solid #c0d7c6;
+    border-radius: 8px;
+  }
+
+  &__skeleton-metric {
+    width: 335px;
+  }
+
+  // UWAGA: gap na .dash NIE dziala na te sekcje — siedza wewnatrz .ant-spin-container,
+  // ktory nz-spin renderuje jako display:block bez gapa. Stad marginesy na samych
+  // sekcjach, ktore sa naszymi elementami i normalnie sie scopuja.
+  &__section,
+  &__charts {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    color: #9f342a;
+    background: #fbebe8;
+    border: 1px solid #f1b8b0;
+    border-radius: 2px;
+  }
+
+  &__tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  &__config {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    flex-direction: column;
+
+  }
+
+  &__field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 340px;
+  }
+
+  &__control {
+    width: 255px;
+  }
+
+  &__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 64px;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  &__charts {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  &__chart {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;          /* bez tego wykres rozpycha flexa i psuje układ */
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__recent-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+
+
+}
+
+.card {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #d9e8dd;
+  border-radius: 2px;
+  box-shadow: 0 3px 8px rgb(34 34 34 / 24%);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #c0d7c6;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    border-color: #51c273;
+    box-shadow: 0 2px 6px rgb(81 194 115 / 25%);
+  }
+
+  &__icon {
+    font-size: 32px;
+    line-height: 1;
+    color: #51c273;
+  }
+
+  &--disabled {
+    cursor: not-allowed;
+    background: #f7faf8;
+    border-color: #dfdfdf;
+
+    &:hover {
+      border-color: #dfdfdf;
+      box-shadow: none;
+    }
+
+    .tile__icon,
+    .tile__label {
+      color: #b9b9b9;
+    }
+
+    // Obrazka nie przemalujemy `color`, wiec wygaszamy go filtrem.
+    .tile__icon-img {
+      filter: grayscale(1);
+      opacity: 0.45;
+    }
+  }
+
+  &__icon-img {
+    display: block;
+  }
+
+  &__label {
+    font-size: 12px;
+    line-height: 1.3;
+    color: #51c273;
+  }
+}
+
+.metric {
+  &__down { color: #e44e44; }
+  &__up { color: #51c273; }
+}
+
+.recent {
+  display: grid;
+  grid-template-columns: 110px 1fr 160px 140px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf4ef;
+
+  &:last-child { border-bottom: 0; }
+
+  &__date { color: #78877c; }
+  &__cat { color: #78877c; }
+
+  &__amount {
+    text-align: right;
+    color: #252b27;
+
+    &--in { color: #307a4a; }
+  }
+}
+
+.alert-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .dash__charts { flex-direction: column; }
+}
+
+@media (max-width: 768px) {
+  .dash { padding: 0 16px; }
+  .recent { grid-template-columns: 1fr auto; }
+  .recent__cat { display: none; }
+}

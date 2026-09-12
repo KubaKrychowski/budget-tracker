@@ -1,0 +1,85 @@
+.res {
+  padding: 16px 24px 48px;
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  &__summary {
+    margin: 4px 0 0;
+    color: #595959;
+  }
+
+  &__banner {
+    margin: 16px 0;
+  }
+
+  &__hint {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #8c8c8c;
+  }
+
+  /* Ostrzeżenia w modalach — ten sam pomarańcz co w makiecie (170:1727). */
+  &__warning {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #d46b08;
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  &__percent {
+    margin-left: 8px;
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+
+  &__actions {
+    white-space: nowrap;
+  }
+
+  /*
+   * Rozliczona rezerwacja jest WYGASZONA, nie ukryta.
+   * ⚠️ Zostaje w tabeli, bo dalej liczy się do wolnych środków — koperta jest roczna.
+   * Ukrycie jej sprawiłoby, że suma w nagłówku nie zgadzałaby się z widocznymi wierszami.
+   */
+  &__row--settled {
+    opacity: 0.55;
+  }
+
+  &__label {
+    display: block;
+    margin: 12px 0 4px;
+    font-weight: 600;
+  }
+
+  &__field {
+    width: 100%;
+  }
+
+  &__candidate {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 0;
+    cursor: pointer;
+  }
+
+  &__candidate-line {
+    font-variant-numeric: tabular-nums;
+  }
+}

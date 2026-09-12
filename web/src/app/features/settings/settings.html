@@ -1,0 +1,350 @@
+<app-page-header [title]="'settings.title' | translate" />
+
+<div class="set__body">
+  <!-- `set__crumbs`, nie `dash__crumbs` — ta druga klasa nie ma tu żadnej stylizacji,
+       bo jest zdefiniowana (i scope'owana) w dashboard.scss, do innego komponentu. -->
+  <nz-breadcrumb class="set__crumbs">
+    <nz-breadcrumb-item>
+      {{ 'settings.breadcrumb' | translate }}
+    </nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <p class="set__intro">{{ 'settings.intro' | translate }}</p>
+
+  <!-- `nzSelectedIndex` jest tu WARTOŚCIĄ POCZĄTKOWĄ, nie wiązaniem dwustronnym. Zakładkami
+       przełącza sama tabela; my tylko SŁUCHAMY, która jest otwarta, bo od tego zależy leniwe
+       zamontowanie „Danych treningowych" (patrz `activeTab` i `@if` niżej). Oddawanie indeksu
+       z powrotem na wejście nie dołożyłoby niczego poza drugim źródłem prawdy. -->
+  <nz-tabs [nzSelectedIndex]="initialTab" (nzSelectedIndexChange)="onTabChange($event)">
+    <nz-tab [nzTitle]="'settings.tabs.budgets' | translate">
+      <section class="set__section">
+        <h2 class="set__caption">{{ 'settings.budgets.caption' | translate }}</h2>
+        <p class="set__description">{{ 'settings.budgets.description' | translate }}</p>
+
+        @if (error(); as message) {
+          <nz-alert nzType="error" [nzMessage]="message" nzShowIcon></nz-alert>
+        }
+
+        <!-- Siatka bezpieczeństwa dla bardzo wąskich ekranów: kolumny rozciągają się na
+             szerokość ekranu, ale poniżej pewnej szerokości treść (np. status + akcje)
+             i tak nie zmieści się bez zawijania na kilka linii. Wtedy scrolluje się TEN
+             kontener, a nie cała strona (bez tego przeglądarka rozciągała <body>). -->
+        <div class="set__table-wrapper">
+        <nz-spin [nzSpinning]="loading() || busy()">
+          <!-- BEZ nzScroll: przy poziomym scrollu antd wymusza table-layout: fixed
+               (bo kolumny muszą mieć stałą szerokość, żeby wirtualny scroll się nie gubił),
+               a to jest dokładnie to, czego user nie chce — wolał kolumny reagujące
+               na szerokość ekranu od poziomego paska przewijania. Bez nzScroll tabela
+               wraca do table-layout: auto: każda kolumna liczy się z zawartości nagłówka
+               i wierszy, a NADMIAR miejsca (tabela ma width:100%) przeglądarka rozdziela
+               między kolumny proporcjonalnie — to jest ta „dynamiczna szerokość". -->
+          <nz-table
+            #budgetTable
+            [nzData]="filteredBudgets()"
+            [nzPageSize]="10"
+            nzSize="small"
+          >
+            <thead>
+              <tr>
+                <!-- Zaznaczanie i akcje mają zawartość o STAŁYM rozmiarze (checkbox,
+                     jedna ikona) — zostają wąskie i nie biorą udziału w rozdziale miejsca. -->
+                <th
+                  nzWidth="48px"
+                  [nzChecked]="allSelected()"
+                  (nzCheckedChange)="toggleAll($event)"
+                ></th>
+                <!-- Wszystkie kolumny poza zaznaczaniem i akcjami są SORTOWALNE i FILTROWALNE.
+                     Filtr dopasowuje się do rodzaju danych (wyszukiwarka / zakres „od–do" /
+                     lista checkboxów) — patrz komentarz przy `filteredBudgets` w settings.ts. -->
+                <th [nzSortFn]="sortByName" nzCustomFilter>
+                  {{ 'settings.budgets.columns.name' | translate }}
+                  <nz-filter-trigger
+                    [nzVisible]="nameFilter.visible()"
+                    (nzVisibleChange)="nameFilter.visible.set($event)"
+                    [nzActive]="nameFilter.active()"
+                    [nzDropdownMenu]="nameFilterMenu"
+                  >
+                    <nz-icon nzType="filter" nzTheme="fill" />
+                  </nz-filter-trigger>
+                </th>
+                <th class="set__right" [nzSortFn]="sortByBalance" nzCustomFilter>
+                  <app-range-filter [filter]="balanceFilter">
+                    {{ 'settings.budgets.columns.balance' | translate }}
+                  </app-range-filter>
+                </th>
+                <th class="set__right" [nzSortFn]="sortByInitialBalance" nzCustomFilter>
+                  <app-range-filter [filter]="initialBalanceFilter">
+                    {{ 'settings.budgets.columns.initialBalance' | translate }}
+                  </app-range-filter>
+                </th>
+                <th class="set__right" [nzSortFn]="sortByMonthlyLimit" nzCustomFilter>
+                  <app-range-filter [filter]="monthlyLimitFilter">
+                    {{ 'settings.budgets.columns.monthlyLimit' | translate }}
+                  </app-range-filter>
+                </th>
+                <th [nzSortFn]="sortByCreatedAt" nzCustomFilter>
+                  {{ 'settings.budgets.columns.createdAt' | translate }}
+                  <nz-filter-trigger
+                    [nzVisible]="createdAtFilter.visible()"
+                    (nzVisibleChange)="createdAtFilter.visible.set($event)"
+                    [nzActive]="createdAtFilter.active()"
+                    [nzDropdownMenu]="createdAtFilterMenu"
+                  >
+                    <nz-icon nzType="filter" nzTheme="fill" />
+                  </nz-filter-trigger>
+                </th>
+                <th class="set__right" [nzSortFn]="sortByTransactionCount" nzCustomFilter>
+                  <!-- Liczba transakcji jest zawsze całkowita i nieujemna. -->
+                  <app-range-filter [filter]="transactionCountFilter" [precision]="0" [min]="0">
+                    {{ 'settings.budgets.columns.transactionCount' | translate }}
+                  </app-range-filter>
+                </th>
+                <!-- Status zostaje przy wbudowanym mechanizmie nz-table (`nzFilters`) —
+                     ma z góry znany, stały zbiór trzech wartości, więc lista checkboxów
+                     pasuje lepiej niż wyszukiwarka czy zakres. -->
+                <th
+                  [nzSortFn]="sortByStatus"
+                  [nzFilters]="statusFilters()"
+                  [nzFilterFn]="filterByStatus"
+                  [nzFilterMultiple]="true"
+                >
+                  {{ 'settings.budgets.columns.status' | translate }}
+                </th>
+                <th nzWidth="80px" class="set__center">
+                  {{ 'settings.budgets.columns.actions' | translate }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of budgetTable.data; track row.id) {
+                <tr [class.set__row--deleted]="row.status === 'deleted'">
+                  <td
+                    [nzChecked]="selected().has(row.id)"
+                    (nzCheckedChange)="toggleRow(row.id, $event)"
+                  ></td>
+                  <td [title]="row.name">{{ row.name }}</td>
+                  <td class="set__right amount">{{ money(row.balance) }} {{ row.currency }}</td>
+                  <td class="set__right amount">
+                    {{ money(row.initialBalance) }} {{ row.currency }}
+                  </td>
+                  <!-- Limity są dziś liczone z pozycji per kategoria, a UI do nich nie istnieje,
+                       więc kolumna pokazuje zero. Czy to ma być osobne pole budżetu —
+                       rozstrzyga issue #5. -->
+                  <td class="set__right amount">
+                    {{ money(row.monthlyLimit) }} {{ row.currency }}
+                  </td>
+                  <td>{{ day(row.createdAt) }}</td>
+                  <td class="set__right amount">{{ row.transactionCount }}</td>
+                  <!-- Kropka statusu (nz-badge), tak samo jak w podglądzie importu. -->
+                  <td>
+                    @switch (row.status) {
+                      @case ('active') {
+                        <nz-badge
+                          nzStatus="success"
+                          [nzText]="'settings.budgets.status.active' | translate"
+                        ></nz-badge>
+                      }
+                      @case ('disabled') {
+                        <nz-badge
+                          nzStatus="warning"
+                          [nzText]="'settings.budgets.status.disabled' | translate"
+                        ></nz-badge>
+                      }
+                      @default {
+                        <nz-badge
+                          nzStatus="default"
+                          [nzText]="'settings.budgets.status.deleted' | translate"
+                        ></nz-badge>
+                      }
+                    }
+                  </td>
+                  <td class="set__center">
+                    <button
+                      nz-button
+                      nzType="text"
+                      nz-dropdown
+                      [nzDropdownMenu]="rowMenu"
+                      nzTrigger="click"
+                      (click)="menuRow.set(row)"
+                      [attr.aria-label]="'settings.budgets.columns.actions' | translate"
+                    >
+                      <nz-icon nzType="more" />
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </nz-table>
+        </nz-spin>
+        </div>
+
+        <!-- ── Panele filtrów (nzCustomFilter) ─────────────────────────────────────────
+             Wzorzec z oficjalnego przykładu NG-ZORRO: pole/pola robocze + „Szukaj" stosuje
+             filtr, „Wyczyść" zeruje. Filtr działa dopiero po kliknięciu, nie przy każdym
+             wpisanym znaku. -->
+        <nz-dropdown-menu #nameFilterMenu="nzDropdownMenu">
+          <div class="ant-table-filter-dropdown set__filter-panel">
+            <input
+              nz-input
+              [ngModel]="nameFilter.draft()"
+              (ngModelChange)="nameFilter.draft.set($event)"
+              [placeholder]="'settings.budgets.filter.namePlaceholder' | translate"
+              (keydown.enter)="nameFilter.search()"
+            />
+            <div class="set__filter-actions">
+              <button nz-button nzSize="small" (click)="nameFilter.reset()">
+                {{ 'settings.budgets.filter.reset' | translate }}
+              </button>
+
+              <button nz-button nzType="primary" nzSize="small" (click)="nameFilter.search()">
+                {{ 'settings.budgets.filter.search' | translate }}
+              </button>
+            </div>
+          </div>
+        </nz-dropdown-menu>
+
+        <!-- Jeden nz-range-picker, nie dwa osobne datepickery. -->
+        <nz-dropdown-menu #createdAtFilterMenu="nzDropdownMenu">
+          <div class="ant-table-filter-dropdown set__filter-panel date-filter">
+            <nz-range-picker
+              nzFormat="dd.MM.yyyy"
+              [ngModel]="createdAtFilter.draftRange()"
+              (ngModelChange)="createdAtFilter.draftRange.set($event)"
+            ></nz-range-picker>
+            <div class="set__filter-actions">
+              <button nz-button nzSize="small" (click)="createdAtFilter.reset()">
+                {{ 'settings.budgets.filter.reset' | translate }}
+              </button>
+
+              <button nz-button nzType="primary" nzSize="small" (click)="createdAtFilter.search()">
+                {{ 'settings.budgets.filter.search' | translate }}
+              </button>
+            </div>
+          </div>
+        </nz-dropdown-menu>
+
+        <!-- Pozycje menu przychodzą z `menuItems()`: usunięty budżet ma tylko „Przywróć",
+             a „Wyłącz" zamienia się we „Włącz". `tabindex` i obsługa Entera, bo pozycje
+             menu NG-ZORRO reagują wyłącznie na klik. -->
+        <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+          <ul nz-menu>
+            @for (item of menuItems(); track item.action) {
+              <li
+                nz-menu-item
+                [nzDanger]="item.danger"
+                tabindex="0"
+                (click)="runMenu(item.action)"
+                (keydown.enter)="runMenu(item.action)"
+              >
+                {{ 'settings.budgets.actions.' + item.action | translate }}
+              </li>
+            }
+          </ul>
+        </nz-dropdown-menu>
+
+        @if (!loading() && budgets().length === 0) {
+          <nz-empty [nzNotFoundContent]="'settings.budgets.empty' | translate"></nz-empty>
+        }
+      </section>
+    </nz-tab>
+
+    <!-- Zawartość w osobnym komponencie: to inny slice domeny (kategoryzacja) niż budżety,
+         a `Settings` ma już swoje ~500 linii. Dzielą wyłącznie miejsce na ekranie.
+
+         `@if` na indeksie zakładki, a NIE `ng-template[nz-tab]`: ta druga droga sprawiała,
+         że nieaktywny panel przestawał się chować (`display: block` na obu naraz), więc lista
+         budżetów renderowała się pod danymi treningowymi. Warunek robi to samo — komponent
+         powstaje dopiero po wejściu w zakładkę — bez ruszania sposobu, w jaki tabela zakładek
+         pokazuje panele.
+
+         Powód leniwości: `app-training` odpytuje `/api/categorization/training-set`, a to
+         składa zbiór z pliku (1224 wiersze) i bazy. Nie ma po co robić tego komuś, kto
+         przyszedł do budżetów. -->
+    <nz-tab [nzTitle]="'settings.tabs.training' | translate">
+      <section class="set__section">
+        @if (activeTab() === 1) {
+          <app-training />
+        }
+      </section>
+    </nz-tab>
+  </nz-tabs>
+</div>
+
+<!-- ── Modal edycji ───────────────────────────────────────────────────────────────────── -->
+<nz-modal
+  [nzVisible]="dialog() === 'edit'"
+  [nzTitle]="'settings.budgets.edit.title' | translate"
+  (nzOnCancel)="closeDialog()"
+  (nzOnOk)="saveEdit()"
+  [nzOkText]="'settings.budgets.edit.save' | translate"
+  [nzCancelText]="'settings.budgets.edit.cancel' | translate"
+  [nzOkDisabled]="!canSaveEdit()"
+  [nzOkLoading]="busy()"
+>
+  <div *nzModalContent class="set__form">
+    @if (initialBalanceChanged()) {
+      <nz-alert
+        nzType="warning"
+        nzShowIcon
+        [nzMessage]="'settings.budgets.edit.recalculationTitle' | translate"
+        [nzDescription]="'settings.budgets.edit.recalculation' | translate"
+      ></nz-alert>
+    }
+
+    <label class="set__form-field" for="budget-name">
+      <span class="set__label">{{ 'settings.budgets.edit.name' | translate }}</span>
+      <input
+        id="budget-name"
+        nz-input
+        [ngModel]="draftName()"
+        (ngModelChange)="draftName.set($event)"
+      />
+    </label>
+
+    <label class="set__form-field" for="budget-initial-balance">
+      <span class="set__label">{{ 'settings.budgets.edit.initialBalance' | translate }}</span>
+      <!-- `nzId`, nie `id`: `id` wylądowałoby na hoście komponentu, a nie na <input>,
+           więc <label for> nie miałby czego wskazać. -->
+      <nz-input-number
+        nzId="budget-initial-balance"
+        [ngModel]="draftInitialBalance()"
+        (ngModelChange)="draftInitialBalance.set($event ?? 0)"
+        [nzPrecision]="2"
+        [nzStep]="100"
+      ></nz-input-number>
+    </label>
+
+    <!-- Bilans bieżący jest WYLICZANY (bilans początkowy + suma transakcji), więc nie da się
+         go „ustawić". Pokazujemy go tylko po to, żeby było widać, dokąd przesunie się po
+         zmianie punktu startu. -->
+    <div class="set__form-field">
+      <span class="set__label">{{ 'settings.budgets.edit.balance' | translate }}</span>
+      <input nz-input disabled [value]="money(previewBalance())" />
+      <span class="set__hint">{{ 'settings.budgets.edit.balanceHint' | translate }}</span>
+    </div>
+  </div>
+</nz-modal>
+
+<!-- ── Modal resetu ───────────────────────────────────────────────────────────────────── -->
+<nz-modal
+  [nzVisible]="dialog() === 'reset'"
+  [nzTitle]="'settings.budgets.reset.title' | translate"
+  (nzOnCancel)="closeDialog()"
+  (nzOnOk)="confirmReset()"
+  [nzOkText]="'settings.budgets.reset.confirm' | translate"
+  [nzCancelText]="'settings.budgets.reset.cancel' | translate"
+  [nzOkLoading]="busy()"
+>
+  <div *nzModalContent class="set__form">
+    <p>{{ 'settings.budgets.reset.lead' | translate: { name: target()?.name } }}</p>
+    <ul class="set__consequences">
+      <li>{{ 'settings.budgets.reset.effects.transactions' | translate }}</li>
+      <li>{{ 'settings.budgets.reset.effects.limits' | translate }}</li>
+      <li>{{ 'settings.budgets.reset.effects.balance' | translate }}</li>
+    </ul>
+  </div>
+</nz-modal>
+
+<!-- Usunięcie (i wyłączenie, w menu wiersza) idą przez ConfirmDialogService — jeden
+     wspólny modal dla całej apki, bez własnego <nz-modal> tutaj. -->
+

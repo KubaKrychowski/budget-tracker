@@ -1,0 +1,246 @@
+<section class="trn">
+  <h2 class="trn__caption">{{ 'settings.training.caption' | translate }}</h2>
+  <p class="trn__description">{{ 'settings.training.description' | translate }}</p>
+
+  <nz-spin [nzSpinning]="loading() || busy()">
+    @if (data(); as d) {
+      <!-- ── Skład zbioru ────────────────────────────────────────────────────────────
+           Rozbicie na źródła jest sensem tej zakładki: odpowiada na „czy moje poprawki
+           w ogóle się liczą", którego przed tą zmianą nie dało się zadać. -->
+      <div class="trn__metrics">
+        <nz-statistic
+          [nzTitle]="'settings.training.composition.fromFile' | translate"
+          [nzValue]="d.composition.fromFile" />
+        <nz-statistic
+          [nzTitle]="'settings.training.composition.fromCorrections' | translate"
+          [nzValue]="d.composition.fromCorrections"
+          [nzValueStyle]="{ color: '#51c273' }" />
+        <nz-statistic
+          [nzTitle]="'settings.training.composition.total' | translate"
+          [nzValue]="d.composition.total" />
+      </div>
+
+      @if (d.composition.corrected > 0) {
+        <!-- Te przykłady były w zbiorze od początku, więc nie widać ich w żadnej z trzech
+             liczb wyżej — a to właśnie one niosą „model nauczy się czegoś INNEGO". -->
+        <p class="trn__note trn__note--strong">
+          {{ 'settings.training.composition.corrected'
+             | translate: { count: d.composition.corrected } }}
+        </p>
+      }
+
+      @if (d.composition.duplicates > 0) {
+        <!-- Bez tego zdania „plik 1224 + poprawki 12 = razem 1230" wygląda na błąd. -->
+        <p class="trn__note">
+          {{ 'settings.training.composition.duplicates'
+             | translate: { count: d.composition.duplicates } }}
+        </p>
+      }
+
+      <!-- ── Zachęta do douczenia ────────────────────────────────────────────────────
+           Retrening jest świadomie ręczny — ekran ma zachęcać liczbą, nie odpalać się sam. -->
+      <div class="trn__actions">
+        @if (d.correctionsSinceLastTraining > 0) {
+          <nz-alert
+            class="trn__grow"
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'settings.training.newCorrections'
+              | translate: { count: d.correctionsSinceLastTraining }" />
+        } @else {
+          <nz-alert
+            class="trn__grow"
+            nzType="success"
+            nzShowIcon
+            [nzMessage]="'settings.training.upToDate' | translate" />
+        }
+
+        <button nz-button nzType="primary" [disabled]="busy()" (click)="train()">
+          <nz-icon nzType="experiment" /> {{ 'settings.training.train' | translate }}
+        </button>
+
+        <!-- ⚠️ OSOBNY przycisk, nie krok treningu. Trening produkuje model, to przepisuje
+             kategorie w bazie — bez tego douczanie nie ruszało ani jednego istniejącego
+             wiersza, bo kategoryzacja odpalała się wyłącznie przy imporcie. -->
+        <button nz-button [disabled]="busy()" (click)="recategorize()">
+          <nz-icon nzType="sync" /> {{ 'settings.training.recategorize' | translate }}
+        </button>
+      </div>
+
+      @if (lastRecategorization(); as run) {
+        <nz-alert
+          nzType="info"
+          nzShowIcon
+          [nzMessage]="'settings.training.recategorizeReport.title' | translate"
+          [nzDescription]="recategorizeBody">
+          <ng-template #recategorizeBody>
+            {{ 'settings.training.recategorizeReport.body' | translate: {
+                 examined: run.examined,
+                 recategorized: run.recategorized,
+                 movedToReview: run.movedToReview
+               } }}
+          </ng-template>
+        </nz-alert>
+      }
+
+      @if (lastRun(); as run) {
+        <nz-alert
+          nzType="success"
+          nzShowIcon
+          [nzMessage]="'settings.training.report.title' | translate"
+          [nzDescription]="reportBody">
+          <ng-template #reportBody>
+            {{ 'settings.training.report.body' | translate: {
+                 rows: run.rows,
+                 categories: run.categories,
+                 micro: percent(run.microAccuracy),
+                 macro: percent(run.macroAccuracy)
+               } }}
+          </ng-template>
+        </nz-alert>
+      }
+
+      <!-- ⚠️ Ostrzeżenie o metrykach NIE jest drobnym drukiem. TrainTestSplit ma ustalone
+           ziarno, ale dzieli inny zbiór przy każdym treningu, bo zbiór rośnie — więc 0,91
+           po 0,89 nie znaczy „lepszy model". -->
+      @if (d.metricsAreIndicative) {
+        <nz-alert
+          nzType="warning"
+          nzShowIcon
+          [nzMessage]="'settings.training.metricsCaveat' | translate" />
+      }
+
+      <!-- ── Kolejka do przeglądu ────────────────────────────────────────────────────
+           Paliwo, którego jeszcze nie zebrano — i naturalne przejście na listę transakcji. -->
+      <div class="trn__review">
+        <span>
+          {{ 'settings.training.pendingReview' | translate: { count: d.pendingReview } }}
+        </span>
+        @if (d.pendingReview > 0) {
+          <!-- ⚠️ `origin`, NIE `from`: lista transakcji ma już parametr `from` i jest nim
+               POCZĄTEK ZAKRESU DAT. `?from=training` szło więc do API jako data, nie wiązało
+               się do `DateOnly` i cała lista kończyła się odpowiedzią 400. Ten parametr nie
+               jest filtrem — mówi tylko, skąd użytkownik przyszedł, żeby breadcrumb odesłał
+               go tutaj, a nie na dashboard. -->
+          <a
+            nz-button
+            nzType="link"
+            routerLink="/transactions"
+            [queryParams]="{ status: 'PendingReview', origin: 'training' }"
+          >
+            {{ 'settings.training.goToReview' | translate }}
+          </a>
+        }
+      </div>
+
+      <!-- ── Rozkład po kategoriach ──────────────────────────────────────────────────-->
+      <h3 class="trn__subcaption">{{ 'settings.training.distribution.caption' | translate }}</h3>
+
+      @if (emptyCategories().length > 0) {
+        <!-- Kategorie z zerem to inny stan jakościowy niż „mało": model nigdy ich nie wskaże. -->
+        <nz-alert
+          nzType="warning"
+          nzShowIcon
+          [nzMessage]="'settings.training.distribution.emptyWarning'
+            | translate: { count: emptyCategories().length }"
+          [nzDescription]="emptyList">
+          <ng-template #emptyList>
+            <div class="trn__tags">
+              @for (c of emptyCategories(); track c.name) {
+                <nz-tag nzColor="warning">{{ c.name }}</nz-tag>
+              }
+            </div>
+          </ng-template>
+        </nz-alert>
+      }
+
+      <nz-table
+        #categoryTable
+        [nzData]="categories()"
+        [nzShowPagination]="false"
+        nzSize="small"
+      >
+        <thead>
+          <tr>
+            <th>{{ 'settings.training.distribution.category' | translate }}</th>
+            <th nzWidth="120px" class="trn__right">
+              {{ 'settings.training.distribution.examples' | translate }}
+            </th>
+            <th nzWidth="40%">{{ 'settings.training.distribution.share' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of categoryTable.data; track c.name) {
+            <tr [class.trn__row-empty]="c.count === 0">
+              <td>{{ c.name }}</td>
+              <td class="trn__right amount">{{ c.count }}</td>
+              <td>
+                <div class="trn__bar-track">
+                  <div class="trn__bar" [style.width]="barWidth(c.count)"></div>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+
+      <!-- ── Historia treningów ──────────────────────────────────────────────────────
+           Powrót do wcześniejszego modelu jest tu jedynym powodem, dla którego trening
+           przestał nadpisywać plik w miejscu. -->
+      <h3 class="trn__subcaption">{{ 'settings.training.history.caption' | translate }}</h3>
+
+      @if (models().length === 0) {
+        <p class="trn__note">{{ 'settings.training.history.empty' | translate }}</p>
+      } @else {
+        <nz-table #modelTable [nzData]="models()" [nzShowPagination]="false" nzSize="small">
+          <thead>
+            <tr>
+              <th>{{ 'settings.training.history.trainedAt' | translate }}</th>
+              <th nzWidth="110px" class="trn__right">
+                {{ 'settings.training.history.rows' | translate }}
+              </th>
+              <th nzWidth="110px" class="trn__right">
+                {{ 'settings.training.history.micro' | translate }}
+              </th>
+              <th nzWidth="110px" class="trn__right">
+                {{ 'settings.training.history.macro' | translate }}
+              </th>
+              <th nzWidth="180px">{{ 'settings.training.history.state' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of modelTable.data; track m.version) {
+              <tr>
+                <td>{{ moment(m.createdAt) }}</td>
+                <td class="trn__right amount">{{ m.report?.rows ?? '—' }}</td>
+                <td class="trn__right amount">
+                  {{ m.report ? percent(m.report.microAccuracy) : '—' }}
+                </td>
+                <td class="trn__right amount">
+                  {{ m.report ? percent(m.report.macroAccuracy) : '—' }}
+                </td>
+                <td>
+                  @if (m.isActive) {
+                    <nz-tag nzColor="success">
+                      {{ 'settings.training.history.active' | translate }}
+                    </nz-tag>
+                  } @else {
+                    <button
+                      nz-button
+                      nzType="link"
+                      nzSize="small"
+                      [disabled]="busy()"
+                      (click)="restore(m)"
+                    >
+                      <nz-icon nzType="undo" /> {{ 'settings.training.history.restore' | translate }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+      }
+    }
+  </nz-spin>
+</section>

@@ -1,0 +1,83 @@
+/* Globalne style. NG-ZORRO ładuje się z angular.json (ng-zorro-antd.min.css). */
+
+/* CLAUDE.md §7: font NIE jest jeszcze wybrany (kandydaci: IBM Plex Sans / Inter).
+   Do czasu decyzji zostaje stack systemowy — nie przesądzam za Ciebie. */
+
+/* CLAUDE.md §7 oznacza to jako krytyczne: cyfry tabelaryczne, żeby kwoty
+   wyrównywały się w pionie w kolumnie. Klasa do nałożenia na komórki z kwotami. */
+.tnum,
+.amount {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  text-align: right;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Design system: Input/Shadow-focus = #5BD880 (Primary-400).
+
+   Tego jednego tokenu NIE da sie ustawic zmienna Less. Mixin .active() w
+   ng-zorro (input/style/mixin.less:26) liczy pierscien jako
+   fade(@borderColor, @outline-fade), gdzie @borderColor to @primary-color —
+   z pominieciem @primary-color-outline. Stad jawna regula ponizej.
+   Jesli kiedys ng-zorro przejdzie na @primary-color-outline, mozna to usunac.
+   --------------------------------------------------------------------------- */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: 0 0 0 2px rgba(91, 216, 128, 0.2);
+}
+
+.ant-select-item-option-content {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ant-alert-description {
+  color: #78877C;
+}
+
+.ant-steps-item-title {
+  font-weight: 600;
+}
+
+.ant-steps-item-description {
+  color: #78877C !important;
+  font-size: 14px !important;
+}
+
+.ant-dropdown-menu-item {
+  padding: 8px 16px;
+}
+
+.ant-modal-body {
+  padding: 8px 16px;
+}
+
+.ant-modal-header {
+  padding: 16px;
+
+  .ant-modal-title {
+    font-weight: 600;
+  }
+}
+
+// Error-500 z design-tokens.less, przez custom property CSS (`--ds-error-500`) —
+// to jedyny most między tym plikiem (Sass) a tokenami zdefiniowanymi w Less. Sama
+// wartość hex mieszka WYŁĄCZNIE w design-tokens.less; tu nic nie jest zdublowane.
+.button-danger {
+  background-color: var(--ds-error-500);
+  border-color: var(--ds-error-500);
+
+  &:hover {
+    background-color: var(--ds-error-400);
+    border-color: var(--ds-error-400);
+  }
+}

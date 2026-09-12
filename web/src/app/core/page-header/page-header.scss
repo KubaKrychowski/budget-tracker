@@ -1,0 +1,28 @@
+/* Kolory wprost z makiet (import/ustawienia/tworzenie budżetu): #252B27 tekst,
+   #C0D7C6 obramowanie, #51C273 akcent — te same we wszystkich trzech, stąd
+   wspólny komponent zamiast trzech kopii tego samego. */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 32px;
+  border-bottom: 1px solid #c0d7c6;
+
+  &__back {
+    display: inline-flex;
+    color: #252b27;
+
+    &:hover {
+      color: #51c273;
+    }
+  }
+
+  /* Makieta: H4/medium, 20px. */
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #252b27;
+  }
+}

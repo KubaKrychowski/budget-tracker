@@ -1,0 +1,120 @@
+/* Kolory, odstępy i typografia wprost z makiety „Tworzenie nowego budżetu - step 1"
+   (Figma: Dashboard, ramka 46:1183).
+   #252B27 tekst, #78877C tekst wygaszony, #C0D7C6 obramowanie, #51C273 akcent. */
+
+.cbg {
+  &__crumbs {
+    padding: 4px 32px;
+  }
+
+  // Pasek „strzałka + tytuł" mieszka teraz w `app-page-header` (core/page-header) —
+  // to samo CSS wcześniej żyło tu jako `&__header`/`&__back`/`&__title`, identycznie
+  // w trzech miejscach (import/ustawienia/tworzenie budżetu).
+  &__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 32px 24px;
+  }
+
+  /* Stepper pionowy, po lewej — inaczej niż domyślny poziomy z NG-ZORRO. */
+  &__steps {
+    flex: 0 0 240px;
+    padding-top: 8px;
+  }
+
+  &__panel {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  &__alert {
+    max-width: 800px;
+  }
+
+  /* Makieta: Control-Caption — IBM Plex Sans 400 / 12px. */
+  &__caption {
+    max-width: 640px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #78877c;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;   /* makieta: Frame 11, gap 4 */
+  }
+
+  /* Makieta: Input-Caption — IBM Plex Sans 600 / 12px. */
+  &__group-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;   /* makieta: Frame 13, gap 12 */
+    max-width: 600px;
+  }
+
+  /* Makieta: etykieta i kontrolka w JEDNYM wierszu, rozsunięte na krańce. */
+  &__field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  &__label {
+    font-size: 12px;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  /* Makieta: kontrolki mają stałą szerokość 225 px. */
+  &__control {
+    width: 225px;
+    flex: 0 0 225px;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 8px;
+    max-width: 600px;
+  }
+}
+
+/* Wąski ekran: stepper nad treścią, a etykieta nad kontrolką — przy 225 px kontrolki
+   wiersz label/kontrolka przestaje się mieścić. */
+@media (max-width: 900px) {
+  .cbg__body {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .cbg__steps {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .cbg__field {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cbg__control {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}

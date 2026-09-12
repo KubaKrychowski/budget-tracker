@@ -1,0 +1,136 @@
+/* Kolory i odstępy wprost z makiety „Ustawienia" (Figma: Dashboard, strona 98:2530,
+   ramka 100:15114). Te same neutralne co w imporcie: #252B27 tekst, #78877C tekst
+   wygaszony, #C0D7C6 obramowanie, #51C273 akcent. */
+
+.set {
+  // Pasek „strzałka + tytuł" na górze mieszka teraz w `app-page-header`
+  // (core/page-header) — to samo CSS wcześniej żyło tu jako `&__header`/`&__back`/
+  // `&__title`, identycznie w trzech miejscach. Zostaje sam `&__crumbs`.
+  &__crumbs {
+    padding: 4px 32px;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 32px 24px;
+    min-width: 0;
+  }
+
+  &__intro {
+    margin: 0;
+    max-width: 760px;
+    color: #78877c;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 8px;
+    min-width: 0;   /* bez tego szeroka tabela rozpycha flexa zamiast się scrollować */
+  }
+
+  /* Makieta: Body-1-Semibold, IBM Plex Sans 600 / 18px. */
+  &__caption {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  &__description {
+    margin: 0;
+    color: #78877c;
+  }
+
+  /* Kontener tabeli scrolluje się w poziomie SAM, jeśli treść (status + akcje) nie
+     zmieści się nawet po zawinięciu tekstu — bez tego przeglądarka rozciąga <body>
+     i cała strona (nagłówek, oddech wokół) jedzie w bok razem z tabelą. */
+  &__table-wrapper {
+    overflow-x: auto;
+    min-width: 0;
+  }
+
+  /* Panel filtra (`nzCustomFilter`): pole/pola robocze + „Szukaj"/„Wyczyść". Ta sama
+     szerokość co inputy NG-ZORRO domyślnie proponują w swoim przykładzie custom-filter. */
+  &__filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    width: 200px;
+
+    input, nz-input-number, nz-range-picker {
+      width: 100%;
+    }
+  }
+
+  &__filter-range {
+    display: flex;
+    gap: 16px;
+  }
+
+  &__filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  &__center {
+    text-align: center;
+  }
+
+  /* Usunięty budżet zostaje na liście (to jedyne miejsce, które go widzi), ale ma być
+     wyraźnie mniej ważny od żywych — inaczej lista sugerowałaby, że nic się nie stało. */
+  &__row--deleted {
+    color: #78877c;
+    background: #f7faf8;
+  }
+
+  /* ── Modale ─────────────────────────────────────────────────────────────────────── */
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    /* NG-ZORRO renderuje input-number jako komponent — bez tego zwęża się do domyślnej
+       szerokości i nie trzyma linii z pozostałymi polami. */
+    nz-input-number {
+      width: 100%;
+    }
+  }
+
+  &__label {
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__hint {
+    color: #78877c;
+    font-size: 12px;
+  }
+
+  &__consequences {
+    margin: 0;
+    padding-left: 20px;
+    color: #252b27;
+  }
+}
+
+.date-filter {
+  width: 350px;
+}

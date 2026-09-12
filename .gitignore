@@ -1,0 +1,41 @@
+# Claude Code — lokalne rusztowanie workflow, nie treść repo
+.claude/
+docs/
+plans/
+
+# Sekrety / konfiguracja lokalna
+.env
+*.local.json
+appsettings.Development.local.json
+
+# IDE
+.idea/
+.vs/
+*.suo
+*.user
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+*.log
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# ML.NET — wytrenowany model to artefakt, nie źródło
+*.zip
+!**/testdata/**/*.zip
+
+# Dane osobiste — wyciągi bankowe NIGDY do repo
+data/
+*.csv
+!**/testdata/**/*.csv
+
+# OS
+.DS_Store
+Thumbs.db

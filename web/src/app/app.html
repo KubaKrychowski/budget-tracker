@@ -1,0 +1,58 @@
+<header class="app-header">
+  <!-- Logo prowadzi na stronę główną. Jako <a routerLink>, nie <div (click)>: link jest
+       natywnie fokusowalny i reaguje na Enter, więc nie trzeba dokładać tabindex, role
+       ani obsługi klawiatury, żeby dało się tu wejść bez myszy. -->
+  <a routerLink="/" class="app-header__brand">
+    <img class="app-header__logo" src="icons/logo.svg" width="48" height="48" alt="BudgetTracker" />
+    <span class="app-header__names">
+      <span class="app-header__title">{{ 'app.title' | translate }}</span>
+      <span class="app-header__version">{{ 'app.version' | translate }}</span>
+    </span>
+  </a>
+
+  <!-- NG-ZORRO 22 usunęło `nz-input-group` z [nzPrefix]. Zamiennikiem jest
+       `nz-input-wrapper` z dyrektywą `nzInputPrefix` na samej ikonie. -->
+  <nz-input-wrapper class="app-header__search">
+    <nz-icon nzInputPrefix nzType="search" class="app-header__search-icon" />
+    <input
+      nz-input
+      [placeholder]="'app.searchPlaceholder' | translate"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      [nzAutocomplete]="actionAuto"
+    />
+  </nz-input-wrapper>
+
+  <nz-autocomplete #actionAuto>
+    @for (action of suggestions(); track action.key) {
+      <!-- selectionChange emituje TAKŻE przy samym otwarciu listy, gdy komponent
+           oznacza opcje jako aktywne. Bez filtra isUserInput komunikaty wyskakiwały
+           dla wszystkich podpowiedzi od razu po wejściu w pole. -->
+      <nz-auto-option
+        [nzValue]="action.labelKey | translate"
+        [nzDisabled]="!action.route"
+        (selectionChange)="select($event, action)"
+      >
+        <!-- alt="" celowo: nazwa akcji stoi zaraz obok, więc ikona jest dekoracją.
+             Opis powtórzyłby czytnikowi ekranu ten sam tekst dwa razy. -->
+        <img class="app-header__action-icon" [src]="action.svg" alt="" />
+        {{ action.labelKey | translate }}
+      </nz-auto-option>
+    }
+  </nz-autocomplete>
+
+  <!-- Zębatka z makiety ustawień. Jako <a routerLink>, nie <button>: to nawigacja,
+       więc ma działać środkowym klikiem i „otwórz w nowej karcie" jak każdy link. -->
+  <a
+    routerLink="/settings"
+    class="app-header__settings"
+    [attr.aria-label]="'settings.openSettings' | translate"
+    [title]="'settings.openSettings' | translate"
+  >
+    <nz-icon nzType="setting" />
+  </a>
+</header>
+
+<main class="app-main">
+  <router-outlet />
+</main>

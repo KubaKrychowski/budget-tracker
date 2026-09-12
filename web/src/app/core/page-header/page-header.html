@@ -1,0 +1,10 @@
+<header class="page-header">
+  <a
+    class="page-header__back"
+    [routerLink]="backTo()"
+    [attr.aria-label]="'common.back' | translate"
+  >
+    <nz-icon nzType="arrow-left"></nz-icon>
+  </a>
+  <h1 class="page-header__title">{{ title() }}</h1>
+</header>

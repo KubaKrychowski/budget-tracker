@@ -1,0 +1,98 @@
+/* Te same neutralne co w ustawieniach i imporcie: #252B27 tekst, #78877C tekst wygaszony,
+   #C0D7C6 obramowanie, #51C273 akcent. */
+
+.trn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+
+  &__caption {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__subcaption {
+    margin: 12px 0 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__description,
+  &__note {
+    margin: 0;
+    max-width: 760px;
+    color: #78877c;
+  }
+
+  /* Przeetykietowane poprawki to jedyna liczba, ktorej nie widac w kaflach — stad mocniejszy
+     kolor niz reszta przypisow. */
+  &__note--strong {
+    color: #252b27;
+  }
+
+  /* Ten sam układ kafli co „Podsumowanie" na dashboardzie i liście transakcji —
+     trzy liczby obok siebie, zawijające się na wąskim ekranie. */
+  &__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 48px;
+    padding: 12px 0;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Alert zajmuje wolne miejsce, przycisk zostaje przy prawej krawędzi. */
+  &__grow {
+    flex: 1 1 320px;
+  }
+
+  &__review {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #252b27;
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  /* Kategoria bez ani jednego przykładu — wygaszona, bo model nigdy jej nie wskaże. */
+  &__row-empty td {
+    color: #78877c;
+  }
+
+  /* Słupek udziału: proporcja do najliczniejszej kategorii. Liczba jest obok, więc
+     słupek ma tylko pokazać skalę nierównowagi jednym spojrzeniem. */
+  &__bar-track {
+    height: 8px;
+    border-radius: 4px;
+    background: #eef4f0;
+    overflow: hidden;
+  }
+
+  &__bar {
+    height: 100%;
+    border-radius: 4px;
+    background: #51c273;
+    min-width: 2px;
+    transition: width 0.2s ease;
+  }
+}

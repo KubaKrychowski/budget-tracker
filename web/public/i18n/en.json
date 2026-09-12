@@ -1,0 +1,592 @@
+{
+  "app": {
+    "title": "BudgetTracker",
+    "version": "v.2.0",
+    "searchPlaceholder": "Type the name of an action to run",
+    "dashboard": "Dashboard"
+  },
+  "actions": {
+    "addTransaction": "Add transaction",
+    "createBudget": "Create budget",
+    "transactionList": "Transaction list",
+    "reviewQueue": "Pending review",
+    "importStatement": "Import statement",
+    "notImplemented": "“{{label}}” — this feature is coming in a later task.",
+    "savings": "Savings goals"
+  },
+  "dashboard": {
+    "breadcrumb": "Dashboard",
+    "quickActions": "Quick actions",
+    "configuration": "Configuration",
+    "summary": "Summary",
+    "budgetLabel": "Budget:",
+    "budgetPlaceholder": "Select a budget",
+    "periodLabel": "Period:",
+    "currency": "PLN",
+    "error": {
+      "loadFailed": "Could not load the data. Check that the API is running ({{endpoint}}).",
+      "retry": "Try again"
+    },
+    "empty": {
+      "noBudgetTitle": "No budget available",
+      "noBudgetDescription": "Go to Create budget to be able to add transactions.",
+      "noTransactionsTitle": "No transactions yet",
+      "noTransactionsDescription": "Import a CSV statement from your bank — transactions will be categorized automatically, and the uncertain ones will go to review.",
+      "importCta": "Import your first statement",
+      "noExpensesInPeriod": "No expenses in the selected period"
+    },
+    "metrics": {
+      "totalExpenses": "Total imported expenses",
+      "totalIncome": "Total imported income",
+      "budgetBalance": "Current budget balance",
+      "topCategory": "Most expensive category: {{name}}",
+      "largestExpense": "Largest expense in period",
+      "none": "—"
+    },
+    "charts": {
+      "byCategory": "Expenses by category",
+      "budgetProgress": "Budget status",
+      "expensesSeries": "Expenses",
+      "balanceSeries": "Budget balance"
+    },
+    "budgetDisabledTag": "Switched off"
+  },
+  "enums": {
+    "transactionStatus": {
+      "Imported": "Imported",
+      "AutoCategorized": "Auto-categorized",
+      "PendingReview": "Pending review",
+      "ManuallyCategorized": "Manually categorized",
+      "Confirmed": "Confirmed"
+    },
+    "accountType": {
+      "Bank": "Bank account",
+      "LunchCard": "Lunch card",
+      "Cash": "Cash"
+    }
+  },
+  "banks": {
+    "pko": "PKO Bank Polski S.A."
+  },
+  "import": {
+    "title": "Import transaction data",
+    "next": "Next",
+    "steps": {
+      "source": {
+        "title": "Account",
+        "description": "Choose the account the transactions will be booked to."
+      },
+      "file": {
+        "title": "CSV file",
+        "description": "Choose the statement exported from your banking app."
+      },
+      "preview": {
+        "title": "Preview",
+        "description": "Check the imported transactions and their categories."
+      },
+      "done": {
+        "title": "Done",
+        "description": "Import summary."
+      }
+    },
+    "source": {
+      "heading": "CSV file import",
+      "caption": "Start by picking the account the statement came from. We read the file in the matching format — you do not have to configure anything.",
+      "origin": "Source",
+      "result": "Target",
+      "bank": "Bank",
+      "bankPlaceholder": "The bank the statement came from",
+      "budget": "Budget",
+      "budgetPlaceholder": "The budget the changes will be saved to",
+      "noBudget": {
+        "title": "No budget in the application",
+        "body": "You need to create a budget before you can import from a bank.",
+        "cta": "Create a budget"
+      }
+    },
+    "file": {
+      "heading": "Statement file",
+      "caption": "Upload the CSV exported from your bank. Nothing is saved yet — we will first show you what we read from it.",
+      "drop": "Click or drag the file here",
+      "hint": "A single CSV file. The format follows from the bank you picked.",
+      "working": "Reading the file and assigning categories…"
+    },
+    "preview": {
+      "heading": "Transaction preview",
+      "caption": "See how we read your transactions and which categories we gave them. The ones we were unsure about are marked \"needs review\" — fix them now or later. Nothing is saved until you confirm.",
+      "search": "Search",
+      "removeSelected": "Remove selected",
+      "removeConfirm": "Remove the selected rows ({{count}})? They will not be imported.",
+      "counts": "To save: {{willImport}} · needs review: {{pending}} · duplicates: {{duplicates}}",
+      "pickCategory": "Pick a category",
+      "save": "Save import",
+      "empty": "No rows left to import.",
+      "columns": {
+        "date": "Date",
+        "category": "Category",
+        "name": "Name",
+        "amount": "Amount",
+        "status": "Status",
+        "accuracy": "Accuracy",
+        "actions": "Actions"
+      },
+      "status": {
+        "ok": "Correct",
+        "review": "Needs review",
+        "duplicate": "Duplicate"
+      },
+      "noCategory": "No category",
+      "edit": "Edit",
+      "remove": "Remove",
+      "editTitle": "Edit transaction",
+      "editName": "Transaction name",
+      "editDate": "Transaction date",
+      "editSave": "Save",
+      "editCancel": "Cancel",
+      "accept": "Accept suggestion",
+      "acceptSelected": "Accept selected ({{count}})",
+      "acceptConfirm": "Accept the suggestions for {{count}} rows? The categories stay the same, but you become their author — the rows leave the queue and will train the model."
+    },
+    "done": {
+      "heading": "Summary",
+      "caption": "Your budget is ready. From now on every expense shows how much is left in its category.",
+      "budgetBalance": "Current budget balance",
+      "totalExpenses": "Total imported expenses",
+      "totalIncome": "Total imported income",
+      "period": "Imported period",
+      "count": "Imported transactions",
+      "accuracy": "Average categorisation accuracy",
+      "pendingReview": "{{count}} transactions are waiting for category review.",
+      "duplicates": "Skipped {{count}} rows that were already in the database.",
+      "finish": "Finish"
+    },
+    "back": "Back"
+  },
+  "transactions": {
+    "title": "Transaction list",
+    "summary": "{{total}} transactions · total: {{sum}} PLN",
+    "filters": {
+      "search": "Search by description",
+      "category": "Category",
+      "uncategorized": "No category",
+      "status": "Status",
+      "directionAll": "All",
+      "directionExpense": "Expenses",
+      "directionIncome": "Income",
+      "amountFrom": "Amount from",
+      "amountTo": "Amount to",
+      "clear": "Clear filters",
+      "budgets": "Budgets",
+      "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once."
+    },
+    "columns": {
+      "date": "Date",
+      "description": "Description",
+      "category": "Category",
+      "status": "Status",
+      "largeExpense": "Large expense",
+      "amount": "Amount",
+      "actions": "Actions"
+    },
+    "selection": {
+      "count": "Selected: {{count}}",
+      "selectAllMatching": "Select all {{count}} matching",
+      "edit": "Edit selected",
+      "editDisabledHint": "Inline editing only works for the on-page selection, not for the whole matching set.",
+      "setCategory": "Bulk category assignment",
+      "markLargeExpense": "Mark as large expense",
+      "unmarkLargeExpense": "Unmark large expense",
+      "delete": "Delete selected"
+    },
+    "metrics": {
+      "totalExpenses": "Total filtered expenses",
+      "totalIncome": "Total filtered income",
+      "largestExpense": "Largest filtered expense"
+    },
+    "rowMenu": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "markLargeExpense": "Mark as large expense",
+      "unmarkLargeExpense": "Unmark large expense"
+    },
+    "edit": {
+      "modified": "{{count}} rows modified",
+      "cancel": "Discard",
+      "save": "Save",
+      "descriptionRequired": "Description is required.",
+      "amountRequired": "Enter an amount.",
+      "fixErrors": "Fix the highlighted fields",
+      "saved": "Saved changes to {{count}} rows."
+    },
+    "empty": {
+      "noBudget": {
+        "title": "No budget available",
+        "description": "Go to Create budget to be able to add and browse transactions."
+      },
+      "noTransactions": {
+        "title": "No transactions yet",
+        "description": "Import a CSV statement from your bank to see transactions here."
+      },
+      "noFilterResults": {
+        "title": "No transaction matches the selected filters.",
+        "cta": "Clear filters"
+      }
+    },
+    "bulkDelete": {
+      "confirm": "Delete the selected transactions ({{count}})?",
+      "success": "Deleted {{count}} transactions."
+    },
+    "bulkLargeExpense": {
+      "success": "Updated {{count}} transactions."
+    },
+    "bulkSetCategory": {
+      "title": "Bulk category assignment",
+      "info": "Once accepted, {{count}} transactions will change. If needed, you can retrain the model on the new categories in settings.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "success": "Set the category for {{count}} transactions."
+    },
+    "discardEdits": {
+      "header": "Discard unsaved changes?",
+      "description": "Changing the page, a filter, or the sort order will discard the edited, unsaved rows."
+    },
+    "errors": {
+      "loadFailed": "Could not load the transactions",
+      "retry": "Try again"
+    }
+  },
+  "currencies": {
+    "PLN": "PLN - Polish Zloty"
+  },
+  "createBudget": {
+    "title": "Create a budget",
+    "finish": "Finish",
+    "caption": "Let us set up your monthly budget. We will suggest a limit for each category based on what you have spent so far — you do not have to start from zero.",
+    "basics": "Basic details",
+    "name": "Budget name",
+    "namePlaceholder": "Name",
+    "currency": "Currency",
+    "created": "Budget \"{{name}}\" has been created.",
+    "steps": {
+      "basics": {
+        "title": "Basic information",
+        "description": "Set the budget parameters so transactions can be booked against it"
+      }
+    },
+    "initialBalance": "Opening balance",
+    "initialBalancePlaceholder": "e.g. 2500.00",
+    "back": "Back"
+  },
+  "settings": {
+    "title": "Application settings",
+    "intro": "Set up the accounts you import statements from, plus the categories and rules we use to sort your transactions.",
+    "openSettings": "Settings",
+    "tabs": {
+      "budgets": "Budgets",
+      "training": "Training data"
+    },
+    "training": {
+      "caption": "Training data",
+      "description": "The model learns from the base file and from your category corrections. Here you can see exactly what it learns from, and retrain it.",
+      "composition": {
+        "fromFile": "From the base file",
+        "fromCorrections": "From your corrections",
+        "total": "Total in the set",
+        "corrected": "{{count}} of your corrections changed the category of examples already in the set. The set does not grow, but the model will learn something different from them.",
+        "duplicates": "Skipped {{count}} corrections already present in the base file with the same category — otherwise the same examples would count twice."
+      },
+      "newCorrections": "{{count}} corrections since the last training. The model has not seen them yet.",
+      "upToDate": "The model has learned from every correction so far.",
+      "train": "Retrain model",
+      "trainSuccess": "Model retrained on {{rows}} examples.",
+      "recategorize": "Recategorise transactions",
+      "recategorizeSuccess": "Checked {{examined}} transactions, {{recategorized}} changed category.",
+      "recategorizeConfirm": {
+        "header": "Recategorise existing transactions?",
+        "description": "The current model and rules will be applied to transactions already in the database. Categories you set manually, and confirmed ones, are left untouched. Transactions the model has no opinion about go back to the review queue."
+      },
+      "recategorizeReport": {
+        "title": "Categories recalculated",
+        "body": "Checked {{examined}} transactions: {{recategorized}} changed category, {{movedToReview}} of which went back to the review queue."
+      },
+      "report": {
+        "title": "Training finished",
+        "body": "{{rows}} examples, {{categories}} categories. Overall accuracy {{micro}}, per-category average {{macro}}."
+      },
+      "metricsCaveat": "Accuracies are indicative, not a quality gate. Every training splits a different set into train and test because the set grows — a higher number than last time does not by itself mean a better model.",
+      "pendingReview": "{{count}} transactions are waiting for review.",
+      "goToReview": "Review them",
+      "distribution": {
+        "caption": "Distribution by category",
+        "category": "Category",
+        "examples": "Examples",
+        "share": "Share",
+        "emptyWarning": "{{count}} categories have no examples at all — the model will never pick them."
+      },
+      "history": {
+        "caption": "Training history",
+        "trainedAt": "Trained at",
+        "rows": "Examples",
+        "micro": "Accuracy",
+        "macro": "Averaged",
+        "state": "State",
+        "active": "Active",
+        "restore": "Restore",
+        "empty": "No training has been run from this screen yet."
+      },
+      "restoreConfirm": {
+        "header": "Restore this model version?",
+        "description": "The active model will be swapped. No version is removed, so you can go back the other way."
+      },
+      "restoreSuccess": "The selected model version is now active."
+    },
+    "budgets": {
+      "caption": "Budget list",
+      "description": "A budget is the rule set the processes around imported transactions work on. Manage it here.",
+      "empty": "You do not have any budget yet.",
+      "error": "The operation failed. Check your connection and try again.",
+      "columns": {
+        "name": "Name",
+        "balance": "Balance",
+        "initialBalance": "Opening balance",
+        "monthlyLimit": "Monthly spending limit",
+        "createdAt": "Created on",
+        "transactionCount": "Transactions",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Switched off",
+        "deleted": "Deleted"
+      },
+      "actions": {
+        "edit": "Edit",
+        "disable": "Switch off",
+        "enable": "Switch on",
+        "reset": "Reset",
+        "delete": "Delete",
+        "restore": "Restore"
+      },
+      "edit": {
+        "title": "Edit budget",
+        "name": "Name",
+        "initialBalance": "Opening balance",
+        "balance": "Balance",
+        "balanceHint": "Derived from the opening balance and the transactions — it cannot be set directly.",
+        "recalculationTitle": "Changing the opening balance recalculates the whole budget",
+        "recalculation": "The balance for every day is counted from this value, so the entire chart shifts, not a single number.",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "reset": {
+        "title": "Reset budget",
+        "lead": "Reset the budget \"{{name}}\"?",
+        "effects": {
+          "transactions": "Removing the assigned transactions",
+          "limits": "Removing the budget limits",
+          "balance": "Restoring the opening balance"
+        },
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+      },
+      "delete": {
+        "prompt": "Type the name to confirm",
+        "confirm": "Delete",
+        "cancel": "Cancel",
+        "header": "Are you sure you want to delete the budget \"{{name}}\"?",
+        "description": "After deletion this stays reversible for {{days}} days. After that the budget is gone from the system for good."
+      },
+      "toast": {
+        "updated": "Budget saved",
+        "disabled": "Budget switched off",
+        "enabled": "Budget switched on",
+        "reset": "Budget reset",
+        "deleted": "Budget deleted",
+        "restored": "Budget restored"
+      },
+      "filter": {
+        "search": "Search",
+        "reset": "Reset",
+        "from": "From",
+        "to": "To",
+        "namePlaceholder": "Search by name"
+      },
+      "disableConfirm": {
+        "header": "Are you sure you want to switch off the budget \"{{name}}\"?",
+        "description": "A switched-off budget stops accepting new data (imports and transactions), but stays fully visible — you can still edit, reset, and delete it."
+      }
+    }
+  },
+  "confirmDialog": {
+    "title": "Confirm operation",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "common": {
+    "back": "Back to the dashboard"
+  },
+  "errors": {
+    "network": "Could not reach the server. Please try again."
+  },
+  "savings": {
+    "title": "Savings goals",
+    "summary": "Summary",
+    "setGoal": "Set a goal",
+    "changeGoal": "Change goal",
+    "endGoal": "Drop the goal",
+    "yourGoal": "Your goal",
+    "goalSince": "in force since {{month}}",
+    "goalSaved": "Goal saved.",
+    "goalEnded": "Goal ended. The history of proofs stays.",
+    "oneOffCleared": "One-off marking removed.",
+    "raiseGoal": "Raise the goal to {{amount}}",
+    "raiseSuggestion": "You have {{count}} months with a proof. In months with one-off expenses the budget carried roughly {{headroom}} above the goal.",
+    "metrics": {
+      "thisMonth": "Saved this month",
+      "goal": "Monthly goal",
+      "proofMonths": "Months with a proof",
+      "thisYear": "Saved this year"
+    },
+    "chart": {
+      "caption": "How much you saved each month",
+      "legend": "Bar = saved that month · line = your goal · dot = month with a one-off expense",
+      "noGoalHint": "Set a goal to see the threshold on the chart.",
+      "deposited": "Saved",
+      "goal": "Goal"
+    },
+    "states": {
+      "noGoal": {
+        "title": "You have not set a savings goal yet.",
+        "body": "Set the amount you want to put aside every month — only then can I tell you whether you keep it up despite one-off expenses."
+      },
+      "noLargeExpense": {
+        "title": "You have not marked any one-off expense.",
+        "body": "Without them I cannot tell a hard month from an ordinary one, so no proof can appear. Mark them in the transaction list.",
+        "cta": "Go to the transaction list"
+      },
+      "proof": {
+        "title": "You saved {{amount}} in {{month}} too — a month with {{oneOff}} of one-off expenses.",
+        "body": "This goal is safe. Months with a proof: {{count}}."
+      },
+      "missed": {
+        "title": "{{month}} fell {{missing}} short of the goal.",
+        "body": "There were {{oneOff}} of one-off expenses. This is information, not a judgement — a proof appears in a month where the goal holds despite them."
+      }
+    },
+    "noSavingsSeen": {
+      "title": "I cannot see any savings deposits.",
+      "body": "Saving is recognised by the “Oszczędności” category. If your transfer is described differently it will not be counted — check the category in the transaction list."
+    },
+    "months": {
+      "caption": "Months",
+      "month": "Month",
+      "deposited": "Saved",
+      "withdrawn": "Withdrawn",
+      "goal": "Goal",
+      "oneOff": "One-off",
+      "verdict": "Verdict",
+      "notOneOff": "This was not a one-off expense",
+      "showInTransactions": "Show in transactions",
+      "empty": "No transactions in this budget yet."
+    },
+    "verdict": {
+      "proof": "Proof",
+      "goalMet": "Goal met",
+      "missed": "Missed",
+      "noGoal": "No goal",
+      "inProgress": "In progress"
+    },
+    "modal": {
+      "title": "Set a savings goal",
+      "amount": "Monthly amount",
+      "save": "Save goal",
+      "floorNote": "The goal is a floor, not a ceiling — I check whether you saved AT LEAST that much.",
+      "historyNote": "Changing the amount does not overwrite history: the previous goal ends with a date and older proofs still refer to it. Raising applies from this month, lowering from the next.",
+      "startedOn": "In force from",
+      "startedOnNote": "Only for the first goal — this is what gives your past months a verdict. Later changes are dated by the app itself."
+    },
+    "endConfirm": {
+      "header": "Drop the goal?",
+      "description": "The goal is ended with a date, not deleted — past proofs will still refer to the amount that was in force back then."
+    },
+    "clearOneOffConfirm": {
+      "header": "Remove the one-off marking?",
+      "description": "{{count}} transactions in {{month}} will lose the marking. A month that was a proof only thanks to them will stop being one."
+    },
+    "errors": {
+      "loadFailed": "Could not load the savings data"
+    }
+  },
+  "reservations": {
+    "title": "All reservations",
+    "tileTitle": "Reservations for this year",
+    "tileEmpty": "No reservations yet. Name an upcoming expense and I will set money aside for it.",
+    "freeFunds": "Free funds: {{amount}} PLN",
+    "summary": "{{reserved}} PLN reserved · {{settled}} PLN settled · free funds {{free}} PLN",
+    "summaryOver": "{{reserved}} PLN reserved · {{settled}} PLN settled · no free funds",
+    "balanceNote": "Savings account balance: {{balance}} PLN. Computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest.",
+    "coveredBy": "At your current monthly goal the rest will be collected by {{month}}.",
+    "add": "Add reservation",
+    "showAll": "All reservations",
+    "settle": "Settle",
+    "unsettle": "Undo settlement",
+    "edit": "Edit",
+    "delete": "Delete",
+    "saved": "Reservation saved.",
+    "deleted": "Reservation deleted. Free funds are back.",
+    "settled": "Reservation settled.",
+    "unsettled": "Settlement undone.",
+    "empty": "No reservations yet.",
+    "columns": {
+      "name": "Name",
+      "amount": "Amount",
+      "due": "Due",
+      "collected": "Collected",
+      "status": "Status"
+    },
+    "status": {
+      "collecting": "Collecting",
+      "overdue": "Overdue",
+      "settled": "Settled"
+    },
+    "overReserved": {
+      "title": "Reservations exceed the account balance by {{amount}} PLN.",
+      "body": "This is not an error — you reserved more than you have saved. The nearest deadline collects first, the rest wait for what is left."
+    },
+    "editor": {
+      "addTitle": "Add reservation",
+      "editTitle": "Edit reservation",
+      "saveEdit": "Save",
+      "name": "Name",
+      "namePlaceholder": "Car insurance",
+      "amount": "Amount",
+      "due": "Due",
+      "queueNote": "Reservations collect in order — nearest deadline first. Adding one with an earlier deadline WILL SHIFT THE QUEUE and take progress away from the others."
+    },
+    "settleModal": {
+      "title": "Was this: {{name}}?",
+      "pick": "Pick the withdrawal from the savings account that closed this reservation.",
+      "noCandidates": "I see no unsettled savings withdrawal in this budget. Settling always points at a real transaction — without one, reservations would be a wish list.",
+      "confirm": "Yes, settle",
+      "cancel": "It was something else",
+      "freeFundsNote": "Settling closes this reservation and takes it out of the collection queue, but it does NOT increase free funds — the envelope is annual, so the amount stays committed for the whole year.",
+      "manualNote": "I never settle automatically — a mistake here closes an envelope nobody paid, and nobody would notice."
+    },
+    "deleteConfirm": {
+      "header": "Delete reservation “{{name}}”?",
+      "description": "The amount will stop weighing on free funds and the collection queue will shift to the remaining reservations."
+    },
+    "unsettleConfirm": {
+      "header": "Undo settlement of “{{name}}”?",
+      "description": "The reservation goes back into the collection queue and the chosen withdrawal becomes available again. Free funds will not change."
+    },
+    "errors": {
+      "loadFailed": "Could not load reservations"
+    },
+    "tileSummary": "{{reserved}} PLN reserved · {{settled}} PLN already settled",
+    "collected": "Collected",
+    "freeFundsBody": "Savings account balance {{balance}} PLN − {{reserved}} PLN of reservations.",
+    "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest."
+  }
+}

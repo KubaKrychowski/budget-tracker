@@ -1,0 +1,233 @@
+<section class="res">
+  <!-- Breadcrumb to ŚCIEŻKA POWROTU, nie mapa nawigacji (CLAUDE.md §10). Wejście tu prowadzi
+       zwykle z ekranu oszczędności, więc tam wraca — a dashboard jest ekranem matką. -->
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>
+      <a routerLink="/savings">{{ 'savings.title' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ 'reservations.title' | translate }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  @if (failure(); as problem) {
+    <nz-alert
+      nzType="error"
+      nzShowIcon
+      [nzMessage]="'reservations.errors.loadFailed' | translate"
+      [nzDescription]="failureBody"
+    >
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">
+          {{ 'transactions.errors.retry' | translate }}
+        </button>
+      </ng-template>
+    </nz-alert>
+  } @else {
+    <nz-spin [nzSpinning]="loading() || busy()">
+      <header class="res__head">
+        <div>
+          <h1 class="res__title">{{ 'reservations.title' | translate }}</h1>
+          <!-- ⚠️ Przy ujemnych wolnych środkach nagłówek NIE drukuje kwoty. „Wolne środki
+               -600,00 zł" to zdanie wewnętrznie sprzeczne — ujemnych wolnych środków nie ma,
+               jest za to nadmiar rezerwacji, i to mówi baner niżej. -->
+          <p class="res__summary">
+            {{ (overReserved() === null
+                  ? 'reservations.summary'
+                  : 'reservations.summaryOver') | translate: {
+                 reserved: money(data()?.reservedTotal),
+                 settled: money(data()?.settledTotal),
+                 free: money(data()?.freeFunds)
+               } }}
+          </p>
+        </div>
+        <button nz-button nzType="primary" (click)="openEditor(null)">
+          {{ 'reservations.add' | translate }}
+        </button>
+      </header>
+
+      <!-- ⚠️ Ujemne wolne środki jako OSOBNY stan, nie minus w nagłówku: liczba ze znakiem
+           minus przy etykiecie „wolne środki" czyta się jak błąd aplikacji. -->
+      @if (overReserved(); as excess) {
+        <nz-alert
+          class="res__banner"
+          nzType="warning"
+          nzShowIcon
+          [nzMessage]="'reservations.overReserved.title' | translate: { amount: money(excess) }"
+          [nzDescription]="'reservations.overReserved.body' | translate"
+        />
+      }
+
+      <!-- Przed #10 stan konta to fallback po kategorii, a nie saldo — i ekran musi to
+           powiedzieć, zamiast podawać liczbę, której nikt nie sprawdził. -->
+      <p class="res__hint">
+        {{ 'reservations.balanceNote' | translate: { balance: money(data()?.accountBalance) } }}
+      </p>
+
+      @if (data()?.coveredBy; as covered) {
+        <p class="res__hint">
+          {{ 'reservations.coveredBy' | translate: { month: monthLabel(covered) } }}
+        </p>
+      }
+
+      @if (rows().length === 0) {
+        <nz-empty [nzNotFoundContent]="'reservations.empty' | translate" />
+      } @else {
+        <nz-table #table [nzData]="rows()" [nzShowPagination]="false" nzSize="small">
+          <thead>
+            <tr>
+              <th>{{ 'reservations.columns.name' | translate }}</th>
+              <th class="res__right">{{ 'reservations.columns.amount' | translate }}</th>
+              <th>{{ 'reservations.columns.due' | translate }}</th>
+              <th class="res__right">{{ 'reservations.columns.collected' | translate }}</th>
+              <th>{{ 'reservations.columns.status' | translate }}</th>
+              <th>{{ 'transactions.columns.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of table.data; track r.id) {
+              <tr [class.res__row--settled]="r.status === 'Settled'">
+                <td>{{ r.name }}</td>
+                <td class="res__right amount">{{ money(r.amount) }}</td>
+                <td>{{ monthLabel(r.dueMonth) }}</td>
+                <td class="res__right amount">
+                  {{ money(r.collected) }}
+                  <span class="res__percent">{{ percent(r) }}%</span>
+                </td>
+                <td>
+                  @switch (r.status) {
+                    @case ('Settled') {
+                      <nz-tag nzColor="default">{{ 'reservations.status.settled' | translate }}</nz-tag>
+                    }
+                    @case ('Overdue') {
+                      <!-- ⚠️ Osobny status, bo taka rezerwacja zaniża wolne środki
+                           w nieskończoność, a zamknie ją tylko pamięć użytkownika. -->
+                      <nz-tag nzColor="warning">{{ 'reservations.status.overdue' | translate }}</nz-tag>
+                    }
+                    @default {
+                      <nz-tag nzColor="processing">{{ 'reservations.status.collecting' | translate }}</nz-tag>
+                    }
+                  }
+                </td>
+                <td class="res__actions">
+                  @if (r.status === 'Settled') {
+                    <button nz-button nzType="link" nzSize="small" (click)="unsettle(r)">
+                      {{ 'reservations.unsettle' | translate }}
+                    </button>
+                  } @else {
+                    <button nz-button nzType="link" nzSize="small" (click)="openSettle(r)">
+                      {{ 'reservations.settle' | translate }}
+                    </button>
+                  }
+                  <button nz-button nzType="link" nzSize="small" (click)="openEditor(r)">
+                    {{ 'reservations.edit' | translate }}
+                  </button>
+                  <button nz-button nzType="link" nzSize="small" nzDanger (click)="remove(r)">
+                    {{ 'reservations.delete' | translate }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+      }
+    </nz-spin>
+  }
+
+  <!-- ── Modal: dodaj / edytuj (makieta 170:1707) ────────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="editorOpen()"
+    [nzTitle]="(editing() ? 'reservations.editor.editTitle' : 'reservations.editor.addTitle') | translate"
+    (nzOnCancel)="editorOpen.set(false)"
+    (nzOnOk)="save()"
+    [nzOkText]="(editing() ? 'reservations.editor.saveEdit' : 'reservations.add') | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="!canSave()"
+  >
+    <ng-container *nzModalContent>
+      <label class="res__label" for="res-name">
+        {{ 'reservations.editor.name' | translate }}
+      </label>
+      <input
+        id="res-name"
+        nz-input
+        [ngModel]="draftName()"
+        (ngModelChange)="draftName.set($event)"
+        [placeholder]="'reservations.editor.namePlaceholder' | translate"
+      />
+
+      <label class="res__label" for="res-amount">
+        {{ 'reservations.editor.amount' | translate }}
+      </label>
+      <nz-input-number
+        id="res-amount"
+        class="res__field"
+        [ngModel]="draftAmount()"
+        (ngModelChange)="draftAmount.set($event)"
+        [nzMin]="1"
+        [nzStep]="100"
+      />
+
+      <label class="res__label" for="res-due">
+        {{ 'reservations.editor.due' | translate }}
+      </label>
+      <!-- Termin jest MIESIĘCZNY — wybór dnia sugerowałby dokładność, której ta liczba nie ma. -->
+      <nz-date-picker
+        id="res-due"
+        class="res__field"
+        nzMode="month"
+        [ngModel]="draftDue()"
+        (ngModelChange)="draftDue.set($event)"
+      />
+
+      <!-- ⚠️ To zdanie MUSI paść PRZED zapisem. Dołożenie rezerwacji z bliższym terminem
+           odbiera uzbierane tym dalszym — arytmetycznie poprawne, na ekranie wygląda jak
+           utrata postępu. Tekst jest w makiecie. -->
+      <p class="res__warning">{{ 'reservations.editor.queueNote' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+
+  <!-- ── Modal: rozlicz (makieta 170:1727) ───────────────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="settleOpen()"
+    [nzTitle]="'reservations.settleModal.title' | translate: { name: settling()?.name }"
+    (nzOnCancel)="settleOpen.set(false)"
+    (nzOnOk)="settle()"
+    [nzOkText]="'reservations.settleModal.confirm' | translate"
+    [nzCancelText]="'reservations.settleModal.cancel' | translate"
+    [nzOkDisabled]="chosenCandidate() === null"
+  >
+    <ng-container *nzModalContent>
+      @if (candidates().length === 0) {
+        <p>{{ 'reservations.settleModal.noCandidates' | translate }}</p>
+      } @else {
+        <p class="res__hint">{{ 'reservations.settleModal.pick' | translate }}</p>
+        @for (c of candidates(); track c.id) {
+          <label class="res__candidate">
+            <input
+              type="radio"
+              name="settle-candidate"
+              [value]="c.id"
+              [checked]="chosenCandidate() === c.id"
+              (change)="chosenCandidate.set(c.id)"
+            />
+            <span class="res__candidate-line">
+              {{ dateLabel(c.date) }} — {{ money(c.amount) }}
+              {{ 'dashboard.currency' | translate }} · {{ c.description }}
+            </span>
+          </label>
+        }
+      }
+
+      <!-- ⚠️ Dwa zdania, które muszą tu zostać. Pierwsze prostuje najczęstsze nieporozumienie:
+           rozliczenie NIE zwalnia wolnych środków (koperta jest roczna) — bez tego użytkownik
+           rozliczy ubezpieczenie, zobaczy zero zmiany i uzna to za błąd. Drugie tłumaczy,
+           dlaczego nic nie dzieje się automatycznie. -->
+      <p class="res__hint">{{ 'reservations.settleModal.freeFundsNote' | translate }}</p>
+      <p class="res__warning">{{ 'reservations.settleModal.manualNote' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+</section>

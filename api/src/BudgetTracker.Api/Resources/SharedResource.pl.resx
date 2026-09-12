@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
+  <data name="Category_Uncategorized" xml:space="preserve"><value>Bez kategorii</value></data>
+  <data name="Error_PeriodToBeforeFrom" xml:space="preserve"><value>Parametr 'to' nie może być wcześniejszy niż 'from'.</value></data>
+  <data name="Import_EmptyFile" xml:space="preserve"><value>Plik jest pusty.</value></data>
+  <data name="Import_UnrecognizedFormat" xml:space="preserve"><value>Ten plik nie wygląda na wyciąg z wybranego banku.</value></data>
+  <data name="Import_NoRows" xml:space="preserve"><value>Nie udało się odczytać z pliku żadnej transakcji.</value></data>
+  <data name="Import_FileTooLarge" xml:space="preserve"><value>Plik jest za duży (limit: 10 MB).</value></data>
+  <data name="Import_UnknownBank" xml:space="preserve"><value>Nieznany bank — nie ma dla niego parsera.</value></data>
+  <data name="Import_UnknownBudget" xml:space="preserve"><value>Wybrany budżet już nie istnieje.</value></data>
+  <data name="Import_BudgetDisabled" xml:space="preserve"><value>Ten budżet jest wyłączony i nie przyjmuje nowych danych.</value></data>
+  <data name="Budget_NameRequired" xml:space="preserve"><value>Podaj nazwę budżetu.</value></data>
+  <data name="Budget_UnsupportedCurrency" xml:space="preserve"><value>Ta waluta nie jest obsługiwana.</value></data>
+  <data name="Transaction_DescriptionRequired" xml:space="preserve"><value>Podaj opis transakcji.</value></data>
+  <data name="Transaction_DescriptionTooLong" xml:space="preserve"><value>Opis jest za długi (limit: 500 znaków).</value></data>
+  <data name="Training_Busy" xml:space="preserve"><value>Trwa import. Trening skategoryzowałby połowę wyciągu starym modelem, a połowę nowym, więc musi poczekać.</value></data>
+  <data name="Training_NoData" xml:space="preserve"><value>Nie ma z czego uczyć modelu — brakuje i pliku bazowego, i kwalifikujących się poprawek.</value></data>
+  <data name="Training_UnknownModel" xml:space="preserve"><value>Tej wersji modelu już nie ma na dysku.</value></data>
+  <data name="Savings_AmountInvalid" xml:space="preserve"><value>Kwota celu musi być większa od zera — „odkładam 0 zł" to nie cel, tylko jego brak.</value></data>
+  <data name="Reservation_NameRequired" xml:space="preserve"><value>Nazwij rezerwację — kwota bez nazwy nie jest kopertą, tylko liczbą bez adresata.</value></data>
+  <data name="Reservation_AmountInvalid" xml:space="preserve"><value>Kwota rezerwacji musi być większa od zera.</value></data>
+  <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>Ta transakcja nie rozliczy rezerwacji. Musi być wypłatą z oszczędności w tym samym budżecie i nie może zamykać już innej rezerwacji.</value></data>
+  <data name="Reservation_AlreadySettled" xml:space="preserve"><value>Ta rezerwacja jest już rozliczona. Jeśli wskazałeś złą transakcję, najpierw cofnij rozliczenie.</value></data>
+  <data name="Request_Invalid" xml:space="preserve"><value>Żądanie było nieprawidłowe — najczęściej winny jest zepsuty parametr w adresie (np. data albo filtr). Wyczyść filtry i spróbuj ponownie.</value></data>
+  <data name="Rule_PatternRequired" xml:space="preserve"><value>Reguła musi patrzeć na opis albo na typ operacji. Bez żadnego z nich pasowałaby do każdej transakcji.</value></data>
+  <data name="Rule_PatternInvalid" xml:space="preserve"><value>Wzorzec nie jest poprawnym wyrażeniem regularnym.</value></data>
+  <data name="Rule_AmountRangeInvalid" xml:space="preserve"><value>Kwota od musi być mniejsza niż kwota do — przy równych widełkach reguła nie dopasuje niczego.</value></data>
+</root>

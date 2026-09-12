@@ -1,0 +1,218 @@
+<div class="dash">
+  <nz-breadcrumb class="dash__crumbs">
+    <nz-breadcrumb-item>
+      <img class="dash__crumb-icon" src="icons/dashboard-azure.svg" alt="" width="20" height="20" />
+      {{ 'dashboard.breadcrumb' | translate }}
+    </nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  @if (failed()) {
+    <div class="dash__error">
+      <nz-icon nzType="warning" nzTheme="outline" />
+      {{ 'dashboard.error.loadFailed' | translate: { endpoint: '/health/db' } }}
+      <button nz-button nzType="link" (click)="reload()">
+        {{ 'dashboard.error.retry' | translate }}
+      </button>
+    </div>
+  }
+
+  <nz-spin [nzSpinning]="loading()">
+
+    <section class="dash__section dash__boxed">
+      <h2 class="dash__caption">{{ 'dashboard.quickActions' | translate }}</h2>
+      <div class="dash__tiles">
+        @for (action of quickActions; track action.key) {
+          <button
+            type="button"
+            class="tile"
+            [class.tile--disabled]="isActionDisabled(action)"
+            [disabled]="isActionDisabled(action)"
+            (click)="runAction(action)">
+            <!-- Ikona z design systemu, gdy dostarczona; inaczej fallback na NG-ZORRO. -->
+            @if (action.svg) {
+              <img class="tile__icon-img" [src]="action.svg" alt="" width="32" height="32" />
+            } @else {
+              <nz-icon [nzType]="action.icon" nzTheme="outline" class="tile__icon" />
+            }
+            <span class="tile__label">{{ action.labelKey | translate }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="dash__section dash__boxed">
+      <h2 class="dash__caption">{{ 'dashboard.configuration' | translate }}</h2>
+
+      <div class="alert-wrapper">
+        @if (noBudget()) {
+          <nz-alert
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="'dashboard.empty.noBudgetTitle' | translate"
+            [nzDescription]="'dashboard.empty.noBudgetDescription' | translate" />
+        } @else if (noTransactions()) {
+          <!-- Stanu „budżet jest, zero transakcji" nie ma w makiecie (zgłoszone w issue).
+               Typ `info`, nie `warning` — to normalny pierwszy krok, a nie problem do naprawienia. -->
+          <nz-alert
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'dashboard.empty.noTransactionsTitle' | translate"
+            [nzDescription]="'dashboard.empty.noTransactionsDescription' | translate"
+            [nzAction]="firstImportAction" />
+          <ng-template #firstImportAction>
+            <button nz-button nzType="primary" (click)="runAction(importAction)">
+              <nz-icon nzType="upload" /> {{ 'dashboard.empty.importCta' | translate }}
+            </button>
+          </ng-template>
+        }
+
+        <div class="dash__config">
+          <div class="dash__field">
+            <span>{{ 'dashboard.budgetLabel' | translate }}</span>
+            <nz-select
+              class="dash__control"
+              [nzPlaceHolder]="'dashboard.budgetPlaceholder' | translate"
+              [nzDisabled]="noBudget()"
+              [ngModel]="selectedBudgetId()"
+              (ngModelChange)="onBudgetChange($event)">
+              @for (b of data()?.budgets ?? []; track b.id) {
+                <nz-option [nzValue]="b.id" [nzLabel]="b.name" nzCustomContent>
+                  {{ b.name }}
+                  @if (b.disabled) {
+                    <nz-tag nzColor="warning">
+                      {{ 'dashboard.budgetDisabledTag' | translate }}
+                    </nz-tag>
+                  }
+                </nz-option>
+              }
+            </nz-select>
+
+            <!-- Znacznik POZA lista: `nzCustomContent` dotyczy tylko rozwinietej listy,
+                 wiec bez tego wybrany wylaczony budzet wygladalby jak kazdy inny. -->
+            @if (selectedBudgetDisabled()) {
+              <nz-tag nzColor="warning">{{ 'dashboard.budgetDisabledTag' | translate }}</nz-tag>
+            }
+          </div>
+
+          <div class="dash__field">
+            <span>{{ 'dashboard.periodLabel' | translate }}</span>
+            <nz-range-picker
+              [nzDisabled]="!selectedBudgetId()"
+              class="dash__control"
+              [ngModel]="noBudget() ? null : range()"
+              (ngModelChange)="onRangeChange($event)" />
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="dash__section">
+      <h2 class="dash__caption">{{ 'dashboard.summary' | translate }}</h2>
+
+      @if (isBlank()) {
+        <div class="dash__metrics dash__metrics--skeleton">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <nz-skeleton
+              class="dash__skeleton-metric"
+              [nzActive]="true"
+              [nzTitle]="false"
+              [nzParagraph]="{ rows: 2, width: ['60%', '100%'] }" />
+          }
+        </div>
+      } @else {
+        <div class="dash__metrics">
+          <nz-statistic
+            [nzTitle]="'dashboard.metrics.totalExpenses' | translate"
+            [nzValue]="money(data()?.metrics?.totalExpenses)"
+            [nzSuffix]="'dashboard.currency' | translate"
+            [nzPrefix]="expenseIcon"
+            [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+          <ng-template #expenseIcon><nz-icon nzType="arrow-down" class="metric__down" /></ng-template>
+
+          <nz-statistic
+            [nzTitle]="'dashboard.metrics.totalIncome' | translate"
+            [nzValue]="money(data()?.metrics?.totalIncome)"
+            [nzSuffix]="'dashboard.currency' | translate"
+            [nzPrefix]="incomeIcon"
+            [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+          <ng-template #incomeIcon><nz-icon nzType="arrow-up" class="metric__up" /></ng-template>
+
+          <nz-statistic
+            [nzTitle]="'dashboard.metrics.budgetBalance' | translate"
+            [nzValue]="money(data()?.metrics?.budgetBalance)"
+            [nzSuffix]="'dashboard.currency' | translate"
+            [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+
+          <nz-statistic
+            [nzTitle]="
+              'dashboard.metrics.topCategory'
+                | translate: { name: data()?.metrics?.topCategoryName ?? ('dashboard.metrics.none' | translate) }
+            "
+            [nzValue]="money(data()?.metrics?.topCategoryAmount)"
+            [nzSuffix]="'dashboard.currency' | translate"
+            [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+
+          <nz-statistic
+            [nzTitle]="'dashboard.metrics.largestExpense' | translate"
+            [nzValue]="money(data()?.metrics?.largestExpenseAmount)"
+            [nzSuffix]="'dashboard.currency' | translate"
+            [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+        </div>
+      }
+    </section>
+
+    <div class="dash__charts">
+      <section class="dash__chart">
+        <h2 class="dash__caption">{{ 'dashboard.charts.byCategory' | translate }}</h2>
+        <div class="card">
+          @if (isBlank()) {
+            <nz-skeleton [nzActive]="true" [nzTitle]="false" [nzParagraph]="{ rows: 6 }" />
+          } @else if (hasDataInPeriod()) {
+            <apx-chart
+              [series]="categoryChart().series"
+              [chart]="categoryChart().chart"
+              [plotOptions]="categoryChart().plotOptions"
+              [colors]="categoryChart().colors"
+              [legend]="categoryChart().legend"
+              [dataLabels]="categoryChart().dataLabels"
+              [xaxis]="categoryChart().xaxis"
+              [yaxis]="categoryChart().yaxis"
+              [tooltip]="categoryChart().tooltip"
+              [grid]="categoryChart().grid" />
+          } @else {
+            <nz-empty [nzNotFoundContent]="'dashboard.empty.noExpensesInPeriod' | translate" />
+          }
+        </div>
+      </section>
+
+      <section class="dash__chart">
+        <!-- Zoom/pan/reset: ikonki apexowego toolbara nad wykresem (patrz budgetChart w
+             dashboard.ts) — na życzenie usera zamiast własnego przycisku „cofnij zaznaczenie". -->
+        <h2 class="dash__caption">{{ 'dashboard.charts.budgetProgress' | translate }}</h2>
+        <div class="card">
+          @if (isBlank()) {
+            <nz-skeleton [nzActive]="true" [nzTitle]="false" [nzParagraph]="{ rows: 6 }" />
+          } @else {
+            <apx-chart
+              #budgetChartComponent
+              [series]="budgetChart().series"
+              [chart]="budgetChart().chart"
+              [colors]="budgetChart().colors"
+              [stroke]="budgetChart().stroke"
+              [fill]="budgetChart().fill"
+              [dataLabels]="budgetChart().dataLabels"
+              [xaxis]="budgetChart().xaxis"
+              [yaxis]="budgetChart().yaxis"
+              [tooltip]="budgetChart().tooltip"
+              [grid]="budgetChart().grid" />
+          }
+        </div>
+      </section>
+    </div>
+
+    <!-- Sekcja „Ostatnie transakcje" USUNIĘTA na życzenie (2026-09-01). Nie ma jej
+         w makiecie; kryteria akceptacji issue jej wymagają, więc jeśli wróci, kod
+         jest w historii, a endpoint nadal zwraca `recentTransactions`. -->
+  </nz-spin>
+</div>

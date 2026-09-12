@@ -1,0 +1,198 @@
+/* Kolory i odstępy wprost z makiety „Importowanie transakcji z excela"
+   (Figma: Dashboard, ramki 36:1034 / 32:112 / 32:1082 / 56:8930).
+   Neutralne: #252B27 tekst, #78877C tekst wygaszony, #C0D7C6 obramowanie,
+   #D9E8DD obramowanie pól, #51C273 akcent. */
+
+.imp {
+  // Pasek „strzałka + tytuł" mieszka teraz w `app-page-header` (core/page-header) —
+  // to samo CSS wcześniej żyło tu jako `&__header`/`&__back`/`&__title`, identycznie
+  // w trzech miejscach (import/ustawienia/tworzenie budżetu).
+  &__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 32px 24px;
+  }
+
+  /* Stepper jest pionowy i stoi po lewej — inaczej niż domyślny poziomy z NG-ZORRO. */
+  &__steps {
+    flex: 0 0 240px;
+    padding-top: 8px;
+  }
+
+  &__panel {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;   /* bez tego szeroka tabela rozpycha flexa zamiast się scrollować */
+  }
+
+  &__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Makieta: Body-1-Semibold, IBM Plex Sans 600 / 18px. */
+  &__heading {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  /* Makieta: Control-Caption, 12px. */
+  &__caption {
+    max-width: 640px;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.3;
+    color: #78877c;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  &__group-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #252b27;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 600px;   /* szerokość pól z makiety */
+  }
+
+  &__label {
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  &__alert {
+    max-width: 800px;
+  }
+
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__search {
+    width: 280px;
+  }
+
+  &__counts {
+    margin-left: auto;
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  &__category {
+    width: 100%;
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  &__center {
+    text-align: center;
+  }
+
+  /* Modal „Edycja transakcji" — pola jedno pod drugim, kwota i data w parze. */
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__form-field {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &__form-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  /* Duplikat nie zostanie zapisany — wygaszamy go, żeby nie mylił się z resztą. */
+  &__row--duplicate {
+    color: #78877c;
+    background: #f7faf8;
+  }
+
+  /* Krok 4 makiety: komponenty Statistic w siatce. Ramka i typografia wartosci
+     pochodza z nz-statistic, wiec tu zostaje tylko uklad. */
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 0;
+  }
+
+  &__stat {
+    padding: 16px;
+    border: 1px solid #c0d7c6;
+    border-radius: 8px;
+  }
+
+  /* Strzalka-prefiks przy sumach: makieta uzywa arrows-down / arrows-up 24 px. */
+  &__stat-icon {
+    font-size: 20px;
+    margin-right: 4px;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 8px;
+  }
+}
+
+/* Wąski ekran: stepper nad treścią, nie obok. Mobile służy do podglądu (CLAUDE.md §7). */
+@media (max-width: 900px) {
+  .imp__body {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .imp__steps {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+.control-row {
+  display: flex;
+  width: 600px;
+  justify-content: space-between;
+
+  .source-control, .budget-control {
+    width: 224px;
+  }
+}
+
+// Select w komórce „Kategoria" ma wypełnić całą szerokość kolumny (jak reszta
+// pól NG-ZORRO w tej apce) — bez tego zwęża się do swojej domyślnej szerokości
+// i nie trzyma linii z resztą tabeli.
+.imp__category-cell {
+  width: 100%;
+}

@@ -1,0 +1,40 @@
+<ng-content />
+<nz-filter-trigger
+  [nzVisible]="filter().visible()"
+  (nzVisibleChange)="filter().visible.set($event)"
+  [nzActive]="filter().active()"
+  [nzDropdownMenu]="menu"
+>
+  <nz-icon nzType="filter" nzTheme="fill" />
+</nz-filter-trigger>
+
+<nz-dropdown-menu #menu="nzDropdownMenu">
+  <div class="ant-table-filter-dropdown range-filter__panel">
+    <div class="range-filter__range">
+      <nz-input-number
+        [ngModel]="filter().draftFrom()"
+        (ngModelChange)="filter().draftFrom.set($event)"
+        [nzPlaceHolder]="'settings.budgets.filter.from' | translate"
+        [nzPrecision]="precision()"
+        [nzMin]="min()"
+      ></nz-input-number>
+      -
+      <nz-input-number
+        [ngModel]="filter().draftTo()"
+        (ngModelChange)="filter().draftTo.set($event)"
+        [nzPlaceHolder]="'settings.budgets.filter.to' | translate"
+        [nzPrecision]="precision()"
+        [nzMin]="min()"
+      ></nz-input-number>
+    </div>
+    <div class="range-filter__actions">
+      <button nz-button nzSize="small" (click)="filter().reset()">
+        {{ 'settings.budgets.filter.reset' | translate }}
+
+      </button>
+      <button nz-button nzType="primary" nzSize="small" (click)="filter().search()">
+        {{ 'settings.budgets.filter.search' | translate }}
+      </button>
+    </div>
+  </div>
+</nz-dropdown-menu>

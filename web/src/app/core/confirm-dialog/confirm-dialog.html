@@ -1,0 +1,27 @@
+<div class="confirm-dialog">
+  <div class="dialog-description">
+    <p class="confirm-dialog__header">{{ data.header }}</p>
+
+    @if (data.description) {
+      <p class="confirm-dialog__description">{{ data.description }}</p>
+    }
+  </div>
+
+  @if (data.confirmKey !== undefined) {
+      <input
+        id="confirm-dialog-key"
+        nz-input
+        [ngModel]="typedKey()"
+        (ngModelChange)="typedKey.set($event)"
+        [placeholder]="data.confirmKey"
+        (keydown.enter)="confirm()"
+      />
+  }
+</div>
+
+<div class="confirm-dialog__actions">
+  <button nz-button (click)="cancel()">{{ cancelText() }}</button>
+  <button [class.button-danger]="data.confirmKey" nz-button nzType="primary" [disabled]="confirmDisabled()" (click)="confirm()">
+    {{ confirmText() }}
+  </button>
+</div>
