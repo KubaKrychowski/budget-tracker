@@ -96,11 +96,18 @@ public sealed class MlCategorizerTests : IAsyncLifetime
         return rows;
     }
 
-    private MlCategorizer Categorizer() => new(_db, Options.Create(new CategorizationOptions
+    private MlCategorizer Categorizer()
     {
-        ModelPath = _modelPath,
-        TrainingDataPath = Path.Combine(_dir, "nieistotne.csv"),
-    }));
+        // Plik zbioru celowo nie istnieje: bez danych treningowych bramka liczy każde znane słowo,
+        // czyli dokładnie to zachowanie, którego pilnują testy w tej klasie. Rozlane słowa sprawdza
+        // osobno MlCategorizerBoilerplateTests.
+        var options = Options.Create(new CategorizationOptions
+        {
+            ModelPath = _modelPath,
+            TrainingDataPath = Path.Combine(_dir, "nieistotne.csv"),
+        });
+        return new(_db, options, new TrainingSetBuilder(_db, options));
+    }
 
     /// <summary>
     /// MUTACJA W FORMIE TESTU: dowodzi, że bez bramki ten sam wiersz wchodziłby automatycznie.
