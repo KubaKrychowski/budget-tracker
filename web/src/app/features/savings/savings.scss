@@ -1,6 +1,11 @@
 .sav {
   padding: 16px 24px 48px;
 
+  /* Ten sam układ co ikona okruszka na liście transakcji — ikona siedzi na linii tekstu. */
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
   &__banner {
     margin: 16px 0;
   }
