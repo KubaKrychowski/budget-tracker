@@ -1,4 +1,5 @@
 import { Component, HostListener, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -59,7 +60,20 @@ export class Dashboard {
    * Typ `string`, bo to `BusinessId` (Guid) — jedyny publiczny identyfikator budżetu
    * (patrz `BudgetOption.id`), nie klucz z bazy.
    */
-  private readonly budgetId = signal<string | null>(null);
+  private readonly activeBudget = inject(ActiveBudget);
+
+  private readonly budgetId = signal<string | null>(this.activeBudget.ids()[0] ?? null);
+
+  /**
+   * Budżet przypięty na dashboardzie (wybrany ręcznie albo rozstrzygnięty przy pierwszym wczytaniu)
+   * staje się budżetem w widoku dla pozostałych ekranów. Dashboard jest jedynym ekranem, który
+   * trzymał wybór wyłącznie w pamięci komponentu — stąd issue #16. Start z `ActiveBudget` sprawia,
+   * że powrót na dashboard (okruszki, logo) pokazuje ten sam budżet, zamiast wracać do domyślnego.
+   */
+  private readonly publishBudget = effect(() => {
+    const id = this.budgetId();
+    if (id !== null) this.activeBudget.set([id]);
+  });
 
   /**
    * Zapytanie jest funkcją sygnałów — zmiana zakresu albo budżetu sama je przeładowuje.

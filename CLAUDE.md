@@ -497,6 +497,24 @@ z kwotami, żeby liczby wyrównywały się w pionie. Klasa `.tnum` / `.amount` c
 > `parseAmount` zwraca `NaN` dla śmieci — tak NG-ZORRO rozpoznaje „nie ruszaj wartości pola".
 > Zwrócenie `0` zamieniłoby literówkę w cichy zapis zera.
 
+> **REWIZJA — 2026-09-13: budżet w widoku (`core/active-budget.ts`, issue #16).**
+> Budżet między ekranami jeździ w adresie (`?budgetId`), ale NIE każde wejście go niesie: wyszukiwarka
+> akcji w nagłówku, okruszki i linki wewnątrz ekranów nawigują gołą trasą, a dashboard trzymał wybór
+> tylko w pamięci komponentu. Skutek: wybierasz budżet na dashboardzie, klikasz „Cele oszczędzania"
+> i widzisz budżet domyślny. Przy kilku budżetach z tym samym miesiącem domyślny to ostatnio UTWORZONY,
+> więc świeży, pusty budżet przejmował każdy ekran.
+>
+> **Reguła: adres wygrywa, gdy coś mówi; gdy milczy — obowiązuje `ActiveBudget`.** Ekran zależny od budżetu
+> czyta `activeBudget.resolve(budżetyZAdresu)`, a gdy dostaje `budgetId` w adresie albo użytkownik zmienia
+> wybór, publikuje go przez `activeBudget.set(...)`. Usunięcie budżetu woła `forget`.
+>
+> ⚠️ Celowo NIE dopisujemy `budgetId` do każdego linku. Pięć miejsc już o tym zapomniało (nagłówek,
+> oszczędności → rezerwacje ×2, oszczędności → transakcje, rezerwacje → oszczędności), a szóste zapomni
+> przy następnym ekranie. Fallback w miejscu ODCZYTU nie da się pominąć — ale nowy ekran MUSI go użyć.
+>
+> Stan żyje w pamięci karty: przeładowanie wraca do budżetu domyślnego jak dotąd. To, czy domyślny
+> powinien uwzględniać pusty, świeżo utworzony budżet, jest osobną, otwartą decyzją.
+
 ### Motyw NG-ZORRO ↔ design system
 
 Źródło prawdy dla kolorów i typografii to plik Figma **Design System**
