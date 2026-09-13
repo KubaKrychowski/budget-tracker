@@ -158,7 +158,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
         b.Entity<BudgetItem>(e =>
         {
-            e.HasIndex(x => new { x.BudgetBusinessId, x.CategoryId }).IsUnique().HasFilter(AliveOnly);
+            // Unikalność PER MIESIĄC STARTU, nie per kategoria: z historią limitów ta sama kategoria
+            // ma w budżecie wiele wierszy — po jednym na każdą zmianę kwoty.
+            e.HasIndex(x => new { x.BudgetBusinessId, x.CategoryId, x.ValidFrom }).IsUnique().HasFilter(AliveOnly);
             e.HasOne<Category>().WithMany()
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
         });

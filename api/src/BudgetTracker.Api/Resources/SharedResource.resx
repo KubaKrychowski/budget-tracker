@@ -21,6 +21,10 @@
   <data name="Training_NoData" xml:space="preserve"><value>There is nothing to train on — no base file and no qualifying corrections.</value></data>
   <data name="Training_UnknownModel" xml:space="preserve"><value>That model version is no longer on disk.</value></data>
   <data name="Savings_AmountInvalid" xml:space="preserve"><value>The goal must be greater than zero — “saving 0” is not a goal, it is the absence of one.</value></data>
+  <data name="Limit_AmountInvalid" xml:space="preserve"><value>The limit must be greater than zero.</value></data>
+  <data name="Limit_WarningThresholdInvalid" xml:space="preserve"><value>The warning threshold must be between 1 and 100% of the limit.</value></data>
+  <data name="Limit_CategoryInvalid" xml:space="preserve"><value>A spending limit cannot be set on this category — it does not exist or it is an income category.</value></data>
+  <data name="Limit_HistoryLocked" xml:space="preserve"><value>Limits change from the current month on — closed months keep the limit that applied to them.</value></data>
   <data name="Reservation_NameRequired" xml:space="preserve"><value>Give the reservation a name — an amount without one is not an envelope.</value></data>
   <data name="Reservation_AmountInvalid" xml:space="preserve"><value>The reservation amount must be greater than zero.</value></data>
   <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>This transaction cannot settle the reservation. It has to be a withdrawal from savings in the same budget, not already used to settle another one.</value></data>

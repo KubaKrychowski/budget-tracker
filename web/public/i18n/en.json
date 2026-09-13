@@ -12,7 +12,8 @@
     "reviewQueue": "Pending review",
     "importStatement": "Import statement",
     "notImplemented": "“{{label}}” — this feature is coming in a later task.",
-    "savings": "Savings goals"
+    "savings": "Savings goals",
+    "limits": "Spending limits"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -261,7 +262,7 @@
   "createBudget": {
     "title": "Create a budget",
     "finish": "Finish",
-    "caption": "Let us set up your monthly budget. We will suggest a limit for each category based on what you have spent so far — you do not have to start from zero.",
+    "caption": "Let us set up your monthly budget. You will set category limits afterwards on the “Spending limits” screen.",
     "basics": "Basic details",
     "name": "Budget name",
     "namePlaceholder": "Name",
@@ -588,5 +589,76 @@
     "collected": "Collected",
     "freeFundsBody": "Savings account balance {{balance}} PLN − {{reserved}} PLN of reservations.",
     "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest."
+  },
+  "limits": {
+    "title": "Spending limits",
+    "summary": "Summary",
+    "add": "Add limit",
+    "change": "Change",
+    "remove": "Remove",
+    "saved": "Limit saved.",
+    "removed": "Limit removed. The category has no limit from the current month on.",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "currentMonth": "Current month",
+    "banner": {
+      "noLimits": "This budget has no limits yet.",
+      "noLimitsClosed": "{{month}} — the budget had no limits in this month.",
+      "noLimitsBody": "You set a limit for a spending category. Next to it you can see where the money goes this month — a good starting point, but you pick the amount.",
+      "overOne": "{{name}} is over its limit: {{spent}} of {{limit}}.",
+      "overMany": "{{count}} categories are over their limit.",
+      "allFine": "Every category is within its limit.",
+      "closedFine": "{{month}} — closed month. Every category stayed within its limit.",
+      "closedBody": "Showing the limits that applied in that month — not today's.",
+      "uncategorized": "Expenses without a category ({{count}}, {{amount}} in total) do not count towards any limit until they get one."
+    },
+    "metrics": {
+      "spentInLimited": "Spent in limited categories",
+      "limitTotal": "Monthly budget limit",
+      "overLimit": "Categories over limit",
+      "spentOutside": "Spent outside limits"
+    },
+    "table": {
+      "title": "Category limits",
+      "hint": "The limit applies every month in this budget · spent = categorised expenses in the selected month, including large ones",
+      "readOnlyHint": "A past month is read-only — limits change from the current month on",
+      "empty": "No limits in this month",
+      "category": "Category",
+      "limit": "Limit",
+      "spent": "Spent",
+      "remaining": "Left",
+      "usage": "Usage · line = warning threshold",
+      "total": "Total",
+      "overBy": "{{percent}}% · {{amount}} over",
+      "nextLimit": "from {{month}}: {{amount}}",
+      "thresholdLabel": "Warning threshold: {{threshold}}%"
+    },
+    "unlimited": {
+      "title": "Spending without a limit",
+      "hint": "Categories with expenses this month that have no limit",
+      "empty": "Every category with expenses has a limit.",
+      "set": "Set limit",
+      "note": "These {{amount}} are not part of the monthly budget limit — the budget limit is the sum of category limits, nothing more.",
+      "contextNote": "This month's amounts, for context only — no limit is suggested."
+    },
+    "editor": {
+      "addTitle": "Set limit",
+      "editTitle": "Change limit",
+      "save": "Save limit",
+      "ceilingNote": "A limit is a CEILING on a category's monthly spending — every expense counts, including large ones. The warning threshold changes the bar colour before the limit is exceeded.",
+      "historyNote": "A change does not rewrite history: the previous limit ends a month earlier and past months keep that amount. The monthly budget limit will be {{total}}.",
+      "category": "Category",
+      "categoryPlaceholder": "Pick a category",
+      "amount": "Monthly limit",
+      "threshold": "Warn from (% of limit)",
+      "validFrom": "Applies from"
+    },
+    "removeConfirm": {
+      "header": "Remove the “{{name}}” limit?",
+      "description": "{{limit}} a month · {{spent}} spent this month. Transactions stay as they are — the category moves to “Spending without a limit” and the monthly budget limit drops to {{total}}. Past months keep this limit."
+    },
+    "errors": {
+      "loadFailed": "Could not load limits"
+    }
   }
 }

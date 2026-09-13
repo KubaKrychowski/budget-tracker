@@ -60,6 +60,15 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     route: '/savings',
     quickAction: false,
   },
+  {
+    key: 'limits',
+    labelKey: 'actions.limits',
+    // Własna ikona sekcji (wskaźnik). `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.
+    icon: 'pie-chart',
+    svg: 'icons/limity-wydatkow-azure.svg',
+    route: '/limits',
+    quickAction: false,
+  },
 ];
 
 /**

@@ -12,7 +12,8 @@
     "reviewQueue": "Do przeglądu",
     "importStatement": "Zaimportuj wyciąg",
     "notImplemented": "„{{label}}” — ta funkcja powstanie w kolejnym zadaniu.",
-    "savings": "Cele oszczędzania"
+    "savings": "Cele oszczędzania",
+    "limits": "Limity wydatków"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -261,7 +262,7 @@
   "createBudget": {
     "title": "Tworzenie budżetu",
     "finish": "Zakończ",
-    "caption": "Ustawmy Twój miesięczny budżet. Na podstawie Twoich dotychczasowych wydatków podpowiemy limity dla każdej kategorii — nie musisz zaczynać od zera.",
+    "caption": "Ustawmy Twój miesięczny budżet. Limity dla kategorii ustawisz potem na ekranie „Limity wydatków”.",
     "basics": "Dane podstawowe",
     "name": "Nazwa budżetu",
     "namePlaceholder": "Nazwa",
@@ -651,5 +652,76 @@
     "collected": "Uzbierane",
     "freeFundsBody": "Stan konta oszczędnościowego {{balance}} zł − {{reserved}} zł rezerwacji.",
     "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek."
+  },
+  "limits": {
+    "title": "Limity wydatków",
+    "summary": "Podsumowanie",
+    "add": "Dodaj limit",
+    "change": "Zmień",
+    "remove": "Usuń",
+    "saved": "Limit zapisany.",
+    "removed": "Limit usunięty. Kategoria nie ma już limitu od bieżącego miesiąca.",
+    "prevMonth": "Poprzedni miesiąc",
+    "nextMonth": "Następny miesiąc",
+    "currentMonth": "Bieżący miesiąc",
+    "banner": {
+      "noLimits": "Ten budżet nie ma jeszcze limitów.",
+      "noLimitsClosed": "{{month}} — w tym miesiącu budżet nie miał żadnych limitów.",
+      "noLimitsBody": "Limit ustawiasz dla kategorii wydatkowej. Obok widzisz, na co w tym miesiącu idą pieniądze — to dobry punkt wyjścia, ale kwotę wybierasz sam.",
+      "overOne": "Ponad limitem: {{name}} — {{spent}} zł z {{limit}} zł.",
+      "overMany": "Kategorie ponad limitem: {{count}}.",
+      "allFine": "Wszystkie kategorie mieszczą się w limicie.",
+      "closedFine": "{{month}} — miesiąc zamknięty. Wszystkie kategorie zmieściły się w limicie.",
+      "closedBody": "Pokazuję limity, które obowiązywały w tamtym miesiącu — nie dzisiejsze.",
+      "uncategorized": "Wydatki bez kategorii ({{count}}, razem {{amount}} zł) nie liczą się do żadnego limitu, dopóki nie dostaną kategorii."
+    },
+    "metrics": {
+      "spentInLimited": "Wydane w kategoriach z limitem",
+      "limitTotal": "Miesięczny limit budżetu",
+      "overLimit": "Kategorie ponad limitem",
+      "spentOutside": "Wydane poza limitami"
+    },
+    "table": {
+      "title": "Limity kategorii",
+      "hint": "Limit obowiązuje co miesiąc w tym budżecie · wydane = wydatki z kategorią w wybranym miesiącu, także oznaczone jako duże",
+      "readOnlyHint": "Miniony miesiąc jest tylko do odczytu — limity zmienia się od bieżącego miesiąca w przód",
+      "empty": "Brak limitów w tym miesiącu",
+      "category": "Kategoria",
+      "limit": "Limit",
+      "spent": "Wydane",
+      "remaining": "Pozostało",
+      "usage": "Wykorzystanie · kreska = próg ostrzeżenia",
+      "total": "Razem",
+      "overBy": "{{percent}}% · {{amount}} zł ponad",
+      "nextLimit": "od {{month}}: {{amount}} zł",
+      "thresholdLabel": "Próg ostrzeżenia: {{threshold}}%"
+    },
+    "unlimited": {
+      "title": "Wydatki bez limitu",
+      "hint": "Kategorie z wydatkami w tym miesiącu, które nie mają limitu",
+      "empty": "Każda kategoria z wydatkami ma limit.",
+      "set": "Ustaw limit",
+      "note": "Te {{amount}} zł nie wchodzi do miesięcznego limitu budżetu — limit budżetu to suma limitów kategorii, nic więcej.",
+      "contextNote": "Kwoty z tego miesiąca, tylko jako kontekst — nie podpowiadam limitu."
+    },
+    "editor": {
+      "addTitle": "Ustaw limit",
+      "editTitle": "Zmień limit",
+      "save": "Zapisz limit",
+      "ceilingNote": "Limit to SUFIT wydatków kategorii w miesiącu — liczą się wszystkie wydatki, także oznaczone jako duże. Próg ostrzeżenia zmienia kolor paska, zanim limit zostanie przekroczony.",
+      "historyNote": "Zmiana nie nadpisuje historii: poprzedni limit kończy się miesiąc wcześniej, a minione miesiące dalej liczą się z tamtą kwotą. Miesięczny limit budżetu wyniesie {{total}} zł.",
+      "category": "Kategoria",
+      "categoryPlaceholder": "Wybierz kategorię",
+      "amount": "Miesięczny limit",
+      "threshold": "Ostrzegaj od (% limitu)",
+      "validFrom": "Obowiązuje od"
+    },
+    "removeConfirm": {
+      "header": "Usunąć limit „{{name}}”?",
+      "description": "{{limit}} zł miesięcznie · w tym miesiącu wydane {{spent}} zł. Transakcje zostają bez zmian — kategoria przejdzie do „Wydatki bez limitu”, a miesięczny limit budżetu spadnie do {{total}} zł. Minione miesiące zostają z tym limitem."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać limitów"
+    }
   }
 }
