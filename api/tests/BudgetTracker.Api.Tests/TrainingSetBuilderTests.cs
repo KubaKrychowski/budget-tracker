@@ -23,7 +23,7 @@ namespace BudgetTracker.Api.Tests;
 public sealed class TrainingSetBuilderTests : IAsyncLifetime
 {
     private const string TestConnection =
-        "Host=localhost;Port=5432;Database=budgettracker_test;Username=budget;Password=budget_dev_only";
+        "Host=localhost;Port=5432;Database=budgettracker_trainingset_test;Username=budget;Password=budget_dev_only";
 
     private AppDbContext _db = null!;
     private string _dataDirectory = null!;
@@ -39,7 +39,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(TimeProvider.System))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         var jedzenie = new Category("Jedzenie");
@@ -58,7 +58,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
         if (Directory.Exists(_dataDirectory)) Directory.Delete(_dataDirectory, recursive: true);
     }

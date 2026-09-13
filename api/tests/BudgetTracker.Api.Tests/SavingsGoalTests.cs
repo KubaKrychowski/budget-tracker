@@ -43,7 +43,7 @@ public sealed class SavingsGoalTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(_clock))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         // Nazwa MUSI się zgadzać z `SavingsCategory.Name` — to jest dziś jedyny
@@ -72,7 +72,7 @@ public sealed class SavingsGoalTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
     }
 

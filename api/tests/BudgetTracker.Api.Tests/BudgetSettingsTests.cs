@@ -33,13 +33,13 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _db = NewContext();
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
     }
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
     }
 

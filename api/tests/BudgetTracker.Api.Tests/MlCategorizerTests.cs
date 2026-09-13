@@ -45,7 +45,7 @@ public sealed class MlCategorizerTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(TimeProvider.System))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         // Nazwy kategorii MUSZĄ zgadzać się z etykietami zbioru — model mówi nazwami,
@@ -62,7 +62,7 @@ public sealed class MlCategorizerTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
         if (Directory.Exists(_dir)) Directory.Delete(_dir, recursive: true);
     }

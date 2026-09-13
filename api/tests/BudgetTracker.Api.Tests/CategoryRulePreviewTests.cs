@@ -39,7 +39,7 @@ public sealed class CategoryRulePreviewTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(_clock))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         await BaselineSeed.SeedAsync(_db);
@@ -55,7 +55,7 @@ public sealed class CategoryRulePreviewTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
     }
 

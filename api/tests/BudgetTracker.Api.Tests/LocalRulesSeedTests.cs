@@ -39,7 +39,7 @@ public sealed class LocalRulesSeedTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(TimeProvider.System))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         await BaselineSeed.SeedAsync(_db);
@@ -48,7 +48,7 @@ public sealed class LocalRulesSeedTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         if (File.Exists(_path)) File.Delete(_path);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
     }
 
