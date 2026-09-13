@@ -84,6 +84,23 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         await _db.DisposeAsync();
     }
 
+    // ── Przełącznik budżetu ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Response_carries_budget_options_even_without_reservations()
+    {
+        // Pusta lista rezerwacji to właśnie ten moment, w którym ktoś szuka innego budżetu.
+        var other = new Budget("Wariant", new DateOnly(2025, 6, 1), 0m, default);
+        _db.Budgets.Add(other);
+        await _db.SaveChangesAsync();
+
+        var response = await GetHandler().HandleAsync(null, default);
+
+        Assert.Empty(response.Reservations);
+        Assert.Equal([_budgetId, other.BusinessId], response.Budgets.Select(b => b.Id));
+        Assert.Equal(_budgetId, Assert.Single(response.SelectedBudgetIds));
+    }
+
     // ── Kolejka zbierania ────────────────────────────────────────────────────────────────
 
     [Fact]

@@ -32,11 +32,12 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
         var today = scope.Today();
         var currentMonth = SavingsMonths.FirstDayOf(today);
 
-        var selected = await scope.ResolveAsync(budgetIds, today, ct);
+        var budgets = await scope.OptionsAsync(ct);
+        var selected = SavingsBudgetScope.Resolve(budgets, budgetIds, today);
         if (selected.Count == 0)
         {
             return new SavingsResponseDto(
-                null, [], EmptyMonth(currentMonth, null), 0, 0m, null, false, false, []);
+                null, [], EmptyMonth(currentMonth, null), 0, 0m, null, false, false, [], budgets);
         }
 
         var goals = await db.SavingsGoals
@@ -72,7 +73,8 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
             RaiseSuggestion: Suggest(proofs, active),
             HasAnyLargeExpense: months.Any(m => m.OneOffCount > 0),
             HasAnySavings: months.Any(m => m.Deposited > 0),
-            SelectedBudgetIds: selected);
+            SelectedBudgetIds: selected,
+            Budgets: budgets);
     }
 
     /// <summary>

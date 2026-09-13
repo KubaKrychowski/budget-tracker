@@ -20,6 +20,7 @@ namespace BudgetTracker.Api.Features.Savings.Contracts;
 /// najczęściej, że przelew nie wpadł w kategorię „Oszczędności" — ekran ma o tym powiedzieć,
 /// zamiast pokazywać zero jako fakt (patrz ryzyko „przed #10" w planie).
 /// </param>
+/// <param name="Budgets">Budżety do przełącznika nad ekranem — patrz <see cref="SavingsBudgetOptionResponseDto"/>.</param>
 public sealed record SavingsResponseDto(
     SavingsGoalResponseDto? Goal,
     IReadOnlyList<SavingsMonthResponseDto> Months,
@@ -29,4 +30,5 @@ public sealed record SavingsResponseDto(
     RaiseGoalSuggestionResponseDto? RaiseSuggestion,
     bool HasAnyLargeExpense,
     bool HasAnySavings,
-    IReadOnlyList<Guid> SelectedBudgetIds);
+    IReadOnlyList<Guid> SelectedBudgetIds,
+    IReadOnlyList<SavingsBudgetOptionResponseDto> Budgets);

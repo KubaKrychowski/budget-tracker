@@ -12,6 +12,8 @@ import { ReservationsResponse } from '../../core/api/models/reservations';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogOptions } from '../../core/confirm-dialog/confirm-dialog-options';
 import { ActiveBudget } from '../../core/active-budget';
+import { By } from '@angular/platform-browser';
+import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 import { Savings } from './savings';
 
 class FakeConfirmDialogService {
@@ -61,6 +63,10 @@ describe('Savings', () => {
     hasAnyLargeExpense: true,
     hasAnySavings: true,
     selectedBudgetIds: ['b1'],
+    budgets: [
+      { id: 'b1', name: 'Budżet domowy', month: '2026-11-01', disabled: false },
+      { id: 'b2', name: 'Wariant', month: '2026-10-01', disabled: false },
+    ],
     ...over,
   });
 
@@ -80,6 +86,7 @@ describe('Savings', () => {
     freeFunds: 0,
     coveredBy: null,
     selectedBudgetIds: ['b1'],
+    budgets: [],
   };
 
   const settle = async (
@@ -206,6 +213,39 @@ describe('Savings', () => {
     savings.forEach((r) => r.flush(response()));
     http.match((r) => r.url === '/api/savings/reservations').forEach((r) => r.flush(reservations));
     await fixture.whenStable();
+  });
+
+  // ── Przełącznik budżetu ──────────────────────────────────────────────────────────────
+
+  it('bez budgetId w adresie przełącznik pokazuje budżet, który wybrał SERWER', async () => {
+    // Serwer bierze wtedy budżet domyślny — przełącznik ma pokazać właśnie jego, a nie pustkę,
+    // bo „Wybierz budżet" przy wyliczonych już liczbach sugerowałoby, że nic nie jest wybrane.
+    await settle(response({ selectedBudgetIds: ['b2'] }));
+
+    const switcher = fixture.debugElement.query(By.directive(BudgetSwitcher));
+    expect(switcher.componentInstance.selectedId()).toBe('b2');
+  });
+
+  it('wybór innego budżetu przelicza cel i kafel rezerwacji na nowym budżecie', async () => {
+    await settle();
+
+    fixture.debugElement.query(By.directive(BudgetSwitcher)).componentInstance.budgetChange.emit('b2');
+    // Nie `whenStable()`: nowe żądania jeszcze wiszą, więc czekanie na stabilność nigdy by się nie skończyło.
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+
+    const savings = http.match((r) => r.url === '/api/savings');
+    const reservationsRequests = http.match((r) => r.url === '/api/savings/reservations');
+    expect(savings.at(-1)?.request.params.getAll('budgetId')).toEqual(['b2']);
+    expect(reservationsRequests.at(-1)?.request.params.getAll('budgetId')).toEqual(['b2']);
+
+    // Przełącznik NIE znika w trakcie przeładowania — zostaje ostatnia znana lista.
+    expect(fixture.debugElement.query(By.directive(BudgetSwitcher))).not.toBeNull();
+
+    savings.forEach((r) => r.flush(response({ selectedBudgetIds: ['b2'] })));
+    reservationsRequests.forEach((r) => r.flush(reservations));
+    await fixture.whenStable();
+    expect(TestBed.inject(ActiveBudget).ids()).toEqual(['b2']);
   });
 
   // ── Stany ekranu ─────────────────────────────────────────────────────────────────────

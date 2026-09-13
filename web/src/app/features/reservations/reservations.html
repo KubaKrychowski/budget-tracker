@@ -27,6 +27,14 @@
       </ng-template>
     </nz-alert>
   } @else {
+    <!-- Ten sam przełącznik co na ekranie celów — oba ekrany liczą na jednym budżecie. -->
+    @if (lastData(); as d) {
+      <app-budget-switcher
+        [budgets]="d.budgets"
+        [selectedId]="d.selectedBudgetIds[0] ?? null"
+        (budgetChange)="switchBudget($event)" />
+    }
+
     <nz-spin [nzSpinning]="loading() || busy()">
       <header class="res__head">
         <div>

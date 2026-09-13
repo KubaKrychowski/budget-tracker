@@ -13,6 +13,9 @@ import {
 } from '../../core/api/models/reservations';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogOptions } from '../../core/confirm-dialog/confirm-dialog-options';
+import { By } from '@angular/platform-browser';
+import { ActiveBudget } from '../../core/active-budget';
+import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 import { Reservations } from './reservations';
 
 class FakeConfirmDialogService {
@@ -64,6 +67,10 @@ describe('Reservations', () => {
     freeFunds: 4400,
     coveredBy: null,
     selectedBudgetIds: ['b1'],
+    budgets: [
+      { id: 'b1', name: 'Budżet domowy', month: '2026-11-01', disabled: false },
+      { id: 'b2', name: 'Wariant', month: '2026-10-01', disabled: true },
+    ],
     ...over,
   });
 
@@ -167,6 +174,43 @@ describe('Reservations', () => {
   afterEach(() => {
     http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush({}); });
     http.verify({ ignoreCancelled: true });
+  });
+
+  // ── Przełącznik budżetu ──────────────────────────────────────────────────────────────
+
+  it('pokazuje przełącznik budżetu z budżetem, na którym policzono listę', async () => {
+    await start();
+    await settleList();
+
+    const switcher = fixture.debugElement.query(By.directive(BudgetSwitcher));
+    expect(switcher).not.toBeNull();
+    expect(switcher.componentInstance.selectedId()).toBe('b1');
+    expect(switcher.componentInstance.budgets().map((b: { name: string }) => b.name))
+      .toEqual(['Budżet domowy', 'Wariant']);
+  });
+
+  it('wybór innego budżetu zmienia ADRES i przelicza listę na nowym budżecie', async () => {
+    // ⚠️ Wybór musi iść przez adres: `budgetId` w adresie wygrywa z `ActiveBudget`, więc
+    // ustawienie samego `ActiveBudget` zostawiłoby listę na poprzednim budżecie.
+    await start(true);
+    await settleList();
+
+    const switcher = fixture.debugElement.query(By.directive(BudgetSwitcher));
+    switcher.componentInstance.budgetChange.emit('b2');
+    // Nie `whenStable()`: nowe żądanie jeszcze wisi, więc czekanie na stabilność nigdy by się nie skończyło.
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    expect(router.parseUrl(router.url).queryParamMap.getAll('budgetId')).toEqual(['b2']);
+    // Reszta adresu zostaje — `?add=1` nie może zniknąć przy okazji.
+    expect(router.parseUrl(router.url).queryParamMap.get('add')).toBe('1');
+
+    const next = http.match((r) => r.url === '/api/savings/reservations');
+    expect(next.at(-1)?.request.params.getAll('budgetId')).toEqual(['b2']);
+    next.forEach((r) => r.flush(response({ selectedBudgetIds: ['b2'] })));
+    await fixture.whenStable();
+    expect(TestBed.inject(ActiveBudget).ids()).toEqual(['b2']);
   });
 
   // ── Wolne środki ─────────────────────────────────────────────────────────────────────

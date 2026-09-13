@@ -475,6 +475,22 @@ public sealed class SavingsGoalTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Odpowiedz_niesie_budzety_do_przelacznika_takze_wylaczone()
+    {
+        // Bez tej listy ekran nie ma własnego wyboru budżetu — zmienić go dało się tylko z dashboardu.
+        var disabled = new Budget("Zamknięty", new DateOnly(2025, 12, 1), 0m, default);
+        disabled.Disable(_clock.GetUtcNow());
+        _db.Budgets.Add(disabled);
+        await _db.SaveChangesAsync();
+
+        var response = await GetHandler().HandleAsync([_budgetId], default);
+
+        Assert.Equal(["Podstawowy", "Zamknięty"], response.Budgets.Select(b => b.Name));
+        Assert.True(response.Budgets.Single(b => b.Id == disabled.BusinessId).Disabled);
+        Assert.Equal(_budgetId, Assert.Single(response.SelectedBudgetIds));
+    }
+
+    [Fact]
     public async Task Nieznany_budzet_to_404_a_nie_ciche_przejscie_na_domyslny()
     {
         await Assert.ThrowsAsync<BudgetNotFoundException>(

@@ -1,3 +1,5 @@
+import { BudgetOption } from './budget-option';
+
 /** Odpowiednik ReservationStatus z BudgetTracker.Api.Features.Savings.Consts — trzy statusy z makiety. */
 export type ReservationStatus = 'Collecting' | 'Overdue' | 'Settled';
 
@@ -47,6 +49,8 @@ export interface ReservationsResponse {
    */
   readonly coveredBy: string | null;
   readonly selectedBudgetIds: string[];
+  /** Budżety do przełącznika nad listą — wyłączone też, z tagiem. */
+  readonly budgets: BudgetOption[];
 }
 
 /** Kandydat do rozliczenia — „czy to było ubezpieczenie?". */

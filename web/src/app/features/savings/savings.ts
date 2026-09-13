@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
@@ -27,6 +27,7 @@ import { CATEGORY_SERIES_COLORS, CHART_COLORS } from '../../core/chart-palette';
 import { SavingsMonth, SavingsResponse } from '../../core/api/models/savings';
 import { ReservationsResponse, SavingsReservation } from '../../core/api/models/reservations';
 import { parseAmount } from '../../core/parse-amount';
+import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 
 /**
  * Miesiące w MIEJSCOWNIKU — używane wyłącznie w zdaniach „w …".
@@ -52,7 +53,7 @@ type ScreenState = 'noGoal' | 'noLargeExpense' | 'proof' | 'missed' | 'plain';
 @Component({
   selector: 'app-savings',
   imports: [
-    CommonModule, FormsModule, RouterLink, NgApexchartsModule,
+    CommonModule, FormsModule, RouterLink, NgApexchartsModule, BudgetSwitcher,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzEmptyModule, NzIconModule,
     NzInputNumberModule, NzModalModule, NzSpinModule, NzStatisticModule,
     NzTableModule, NzTagModule,
@@ -87,8 +88,8 @@ export class Savings {
 
   /**
    * Budżety, na których liczy ten ekran: z adresu, a gdy adres milczy — ten, który użytkownik ma
-   * w widoku (`ActiveBudget`). Ekran nie ma własnego wyboru budżetu, więc bez tego każde wejście
-   * bez `budgetId` (nagłówek, okruszki) pokazywało budżet domyślny zamiast wybranego — issue #16.
+   * w widoku (`ActiveBudget`). Bez tego każde wejście bez `budgetId` (nagłówek, okruszki) pokazywało
+   * budżet domyślny zamiast wybranego — issue #16.
    */
   protected readonly budgetIds = computed(() => [...this.activeBudget.resolve(this.budgetIdsFromUrl())]);
 
@@ -97,6 +98,15 @@ export class Savings {
     const fromUrl = this.budgetIdsFromUrl();
     if (fromUrl.length > 0) this.activeBudget.set(fromUrl);
   });
+
+  /** Wybór z przełącznika idzie do ADRESU — patrz `BudgetSwitcher`, dlaczego nie wprost do `ActiveBudget`. */
+  protected switchBudget(id: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { budgetId: id },
+      queryParamsHandling: 'merge',
+    });
+  }
 
   private readonly resource = httpResource<SavingsResponse>(() => ({
     url: '/api/savings',
@@ -113,6 +123,18 @@ export class Savings {
   protected readonly busy = signal(false);
 
   protected readonly data = computed(() => this.value() ?? null);
+
+  /**
+   * Ostatnia odpowiedź, która przyszła — WYŁĄCZNIE dla przełącznika budżetu.
+   *
+   * Po wyborze innego budżetu zasób ładuje od nowa i `data()` na chwilę jest puste. Bez tej pamięci
+   * przełącznik znikałby dokładnie w chwili, w której się go użyło, a układ podskakiwał.
+   */
+  protected readonly lastData = linkedSignal<SavingsResponse | null, SavingsResponse | null>({
+    source: this.data,
+    computation: (next, prev) => next ?? prev?.value ?? null,
+  });
+
   protected readonly months = computed(() => this.data()?.months ?? []);
   protected readonly goal = computed(() => this.data()?.goal ?? null);
 
