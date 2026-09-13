@@ -21,7 +21,7 @@ namespace BudgetTracker.Api.Tests;
 public sealed class TransactionsFeatureTests : IAsyncLifetime
 {
     private const string TestConnection =
-        "Host=localhost;Port=5432;Database=budgettracker_test;Username=budget;Password=budget_dev_only";
+        "Host=localhost;Port=5432;Database=budgettracker_transactions_test;Username=budget;Password=budget_dev_only";
 
     private AppDbContext _db = null!;
     private FakeTimeProvider _clock = null!;
@@ -39,7 +39,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(TimeProvider.System))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         var jedzenie = new Category("Jedzenie");
@@ -79,7 +79,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
     }
 
@@ -254,7 +254,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
             .UseNpgsql(TestConnection)
             .AddInterceptors(new SoftDeleteInterceptor(TimeProvider.System))
             .Options);
-        await freshDb.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await freshDb.Database.EnsureCreatedAsync();
 
         var handler = ListHandler(freshDb);

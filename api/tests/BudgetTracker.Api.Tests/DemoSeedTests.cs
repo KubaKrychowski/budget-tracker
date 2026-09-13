@@ -35,7 +35,7 @@ public sealed class DemoSeedTests : IAsyncLifetime
             .AddInterceptors(new SoftDeleteInterceptor(_clock))
             .Options;
         _db = new AppDbContext(options);
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.ResetAsync(TestConnection);
         await _db.Database.EnsureCreatedAsync();
 
         // Seed korzysta z taksonomii produkcyjnej, tak samo jak DevSeed.
@@ -44,7 +44,7 @@ public sealed class DemoSeedTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _db.Database.EnsureDeletedAsync();
+        await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
     }
 
