@@ -11,6 +11,7 @@ import { SavingsMonth, SavingsResponse } from '../../core/api/models/savings';
 import { ReservationsResponse } from '../../core/api/models/reservations';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogOptions } from '../../core/confirm-dialog/confirm-dialog-options';
+import { ActiveBudget } from '../../core/active-budget';
 import { Savings } from './savings';
 
 class FakeConfirmDialogService {
@@ -173,6 +174,38 @@ describe('Savings', () => {
   afterEach(() => {
     http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush({}); });
     http.verify({ ignoreCancelled: true });
+  });
+
+  // ── Budżet w widoku (issue #16) ──────────────────────────────────────────────────────
+
+  it('bez budgetId w adresie liczy na budżecie, który użytkownik ma w widoku', async () => {
+    // ⚠️ Regresja #16: wejście z wyszukiwarki w nagłówku nie niesie budgetId. Wcześniej ekran
+    // pytał wtedy o budżet domyślny — a przy kilku budżetach z tym samym miesiącem to ostatnio
+    // UTWORZONY, więc świeży, pusty budżet zastępował ten wybrany na dashboardzie.
+    TestBed.inject(ActiveBudget).set(['budzet-z-dashboardu']);
+
+    fixture.detectChanges();
+    const savings = http.match((r) => r.url === '/api/savings');
+    const reservationsRequests = http.match((r) => r.url === '/api/savings/reservations');
+
+    expect(savings.length).toBe(1);
+    expect(savings[0].request.params.getAll('budgetId')).toEqual(['budzet-z-dashboardu']);
+    expect(reservationsRequests[0]?.request.params.getAll('budgetId')).toEqual(['budzet-z-dashboardu']);
+
+    savings.forEach((r) => r.flush(response()));
+    reservationsRequests.forEach((r) => r.flush(reservations));
+    await fixture.whenStable();
+  });
+
+  it('bez budżetu w widoku i w adresie zostawia wybór backendowi', async () => {
+    fixture.detectChanges();
+    const savings = http.match((r) => r.url === '/api/savings');
+
+    expect(savings[0].request.params.has('budgetId')).toBe(false);
+
+    savings.forEach((r) => r.flush(response()));
+    http.match((r) => r.url === '/api/savings/reservations').forEach((r) => r.flush(reservations));
+    await fixture.whenStable();
   });
 
   // ── Stany ekranu ─────────────────────────────────────────────────────────────────────

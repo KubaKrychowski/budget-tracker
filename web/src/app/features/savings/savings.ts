@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -79,8 +80,23 @@ export class Savings {
     initialValue: this.route.snapshot.queryParamMap,
   });
 
-  /** Ta sama nazwa parametru co na liście transakcji — adres ma znaczyć na obu ekranach to samo. */
-  protected readonly budgetIds = computed(() => this.queryParams().getAll('budgetId'));
+  private readonly activeBudget = inject(ActiveBudget);
+
+  /** Budżety z adresu — ta sama nazwa parametru co na liście transakcji. */
+  private readonly budgetIdsFromUrl = computed(() => this.queryParams().getAll('budgetId'));
+
+  /**
+   * Budżety, na których liczy ten ekran: z adresu, a gdy adres milczy — ten, który użytkownik ma
+   * w widoku (`ActiveBudget`). Ekran nie ma własnego wyboru budżetu, więc bez tego każde wejście
+   * bez `budgetId` (nagłówek, okruszki) pokazywało budżet domyślny zamiast wybranego — issue #16.
+   */
+  protected readonly budgetIds = computed(() => [...this.activeBudget.resolve(this.budgetIdsFromUrl())]);
+
+  /** Wejście z `?budgetId` (np. z listy transakcji) ustawia budżet w widoku dla kolejnych ekranów. */
+  private readonly publishBudgetFromUrl = effect(() => {
+    const fromUrl = this.budgetIdsFromUrl();
+    if (fromUrl.length > 0) this.activeBudget.set(fromUrl);
+  });
 
   private readonly resource = httpResource<SavingsResponse>(() => ({
     url: '/api/savings',

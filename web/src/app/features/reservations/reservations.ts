@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -54,8 +55,18 @@ export class Reservations {
     initialValue: this.route.snapshot.queryParamMap,
   });
 
-  /** Ta sama nazwa parametru co na liście transakcji i na ekranie oszczędności. */
-  protected readonly budgetIds = computed(() => this.queryParams().getAll('budgetId'));
+  private readonly activeBudget = inject(ActiveBudget);
+
+  /** Budżety z adresu — ta sama nazwa parametru co na liście transakcji i na ekranie oszczędności. */
+  private readonly budgetIdsFromUrl = computed(() => this.queryParams().getAll('budgetId'));
+
+  /** Z adresu, a gdy milczy — budżet z widoku. Uzasadnienie przy `ActiveBudget` (issue #16). */
+  protected readonly budgetIds = computed(() => [...this.activeBudget.resolve(this.budgetIdsFromUrl())]);
+
+  private readonly publishBudgetFromUrl = effect(() => {
+    const fromUrl = this.budgetIdsFromUrl();
+    if (fromUrl.length > 0) this.activeBudget.set(fromUrl);
+  });
 
   private readonly resource = httpResource<ReservationsResponse>(() => ({
     url: '/api/savings/reservations',

@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -137,12 +138,29 @@ export class Transactions {
     initialValue: this.route.snapshot.queryParamMap,
   });
 
+  private readonly activeBudget = inject(ActiveBudget);
+
   /**
    * Budżety wybrane w multiselekcie. Nazwa parametru została w liczbie pojedynczej
    * (`?budgetId=…&budgetId=…`), żeby stare adresy z jednym budżetem — odnośniki z dashboardu,
    * zakładki użytkownika — działały dalej bez zmian.
    */
-  protected readonly budgetIds = computed(() => this.queryParams().getAll('budgetId'));
+  private readonly budgetIdsFromUrl = computed(() => this.queryParams().getAll('budgetId'));
+
+  /**
+   * ⚠️ Wyjątek od „URL jest jedynym źródłem prawdy" — i tylko dla budżetu. Gdy adres NIE podaje
+   * budżetu, lista liczy na budżecie z widoku (`ActiveBudget`), a nie na domyślnym z backendu.
+   * Inaczej wejście z nagłówka albo z ekranu oszczędności pokazywało transakcje innego budżetu niż
+   * ten, który użytkownik właśnie oglądał (issue #16). Adres z `budgetId` dalej wygrywa, więc
+   * zakładki i udostępnione linki działają jak dotąd.
+   */
+  protected readonly budgetIds = computed(() => [...this.activeBudget.resolve(this.budgetIdsFromUrl())]);
+
+  /** Zmiana filtra budżetów (zapisywana do adresu) ustawia budżet w widoku dla kolejnych ekranów. */
+  private readonly publishBudgetFromUrl = effect(() => {
+    const fromUrl = this.budgetIdsFromUrl();
+    if (fromUrl.length > 0) this.activeBudget.set(fromUrl);
+  });
   protected readonly from = computed(() => this.queryParams().get('from'));
   protected readonly to = computed(() => this.queryParams().get('to'));
   protected readonly categoryId = computed(() => this.queryParams().get('categoryId'));

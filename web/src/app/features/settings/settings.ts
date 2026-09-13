@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { ActiveBudget } from '../../core/active-budget';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -155,6 +156,7 @@ export class Settings {
   protected readonly parseAmount = parseAmount;
 
   private readonly route = inject(ActivatedRoute);
+  private readonly activeBudget = inject(ActiveBudget);
   private readonly router = inject(Router);
 
   /**
@@ -471,7 +473,8 @@ export class Settings {
     if (!confirmed) return;
 
     await this.run(
-      () => firstValueFrom(this.http.delete(`/api/budgets/${row.id}`)),
+      // `forget` dopiero po udanym usunięciu — patrz `ActiveBudget.forget`.
+      () => firstValueFrom(this.http.delete(`/api/budgets/${row.id}`)).then(() => this.activeBudget.forget(row.id)),
       'settings.budgets.toast.deleted',
     );
   }
