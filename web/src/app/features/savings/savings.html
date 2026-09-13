@@ -180,7 +180,7 @@
         @if (months().length === 0) {
           <nz-empty [nzNotFoundContent]="'savings.months.empty' | translate" />
         } @else {
-          <nz-table #monthsTable [nzData]="months()" [nzShowPagination]="false" nzSize="small">
+          <nz-table #monthsTable [nzData]="months()" [nzPageSize]="12" nzSize="small">
             <thead>
               <tr>
                 <th>{{ 'savings.months.month' | translate }}</th>

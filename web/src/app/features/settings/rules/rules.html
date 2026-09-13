@@ -65,6 +65,24 @@
   </nz-table>
 </nz-spin>
 
+<!-- Ostrzeżenie o remisie priorytetów z „Rozumiem". Wraca tylko wtedy, gdy zmieni się ZESTAW
+     zremisowanych priorytetów — patrz `acknowledgedTies` w rules.ts. -->
+@if (showTiesWarning()) {
+  <nz-alert
+    class="rul__tied"
+    nzType="warning"
+    nzShowIcon
+    [nzMessage]="'settings.rules.tiedTitle' | translate: { priorities: tiedPriorities().join(', ') }"
+    [nzDescription]="'settings.rules.tiedDescription' | translate"
+    [nzAction]="tiesAction"
+  />
+  <ng-template #tiesAction>
+    <button nz-button nzSize="small" (click)="acknowledgeTies()">
+      {{ 'settings.rules.tiedAcknowledge' | translate }}
+    </button>
+  </ng-template>
+}
+
 <nz-modal
   [nzVisible]="editorOpen()"
   [nzTitle]="editorTitle() | translate"

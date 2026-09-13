@@ -157,7 +157,7 @@
       <nz-table
         #categoryTable
         [nzData]="categories()"
-        [nzShowPagination]="false"
+        [nzPageSize]="10"
         nzSize="small"
       >
         <thead>
@@ -192,7 +192,7 @@
       @if (models().length === 0) {
         <p class="trn__note">{{ 'settings.training.history.empty' | translate }}</p>
       } @else {
-        <nz-table #modelTable [nzData]="models()" [nzShowPagination]="false" nzSize="small">
+        <nz-table #modelTable [nzData]="models()" [nzPageSize]="10" nzSize="small">
           <thead>
             <tr>
               <th>{{ 'settings.training.history.trainedAt' | translate }}</th>
