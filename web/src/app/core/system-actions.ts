@@ -54,9 +54,9 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
   {
     key: 'savings',
     labelKey: 'actions.savings',
-    // Bez własnego SVG — w `public/icons/` nie ma nic dla oszczędności, a podłożenie cudzej
-    // ikony myliłoby z inną akcją. `svg` jest opcjonalne, więc zostaje ikona NG-ZORRO.
+    // Własna ikona sekcji (tarcza). `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.
     icon: 'wallet',
+    svg: 'icons/cele-oszczednosciowe-azure.svg',
     route: '/savings',
     quickAction: false,
   },

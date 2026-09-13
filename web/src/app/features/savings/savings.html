@@ -3,7 +3,11 @@
     <nz-breadcrumb-item>
       <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
     </nz-breadcrumb-item>
-    <nz-breadcrumb-item>{{ 'savings.title' | translate }}</nz-breadcrumb-item>
+    <!-- Ikona przy BIEŻĄCEJ sekcji, nie przy „Dashboard" — tak jak na makiecie (147:114). -->
+    <nz-breadcrumb-item>
+      <img class="sav__crumb-icon" src="icons/cele-oszczednosciowe-azure.svg" alt="" width="20" height="20" />
+      {{ 'savings.title' | translate }}
+    </nz-breadcrumb-item>
   </nz-breadcrumb>
 
   <!-- Stan błędu PIERWSZY i osobny od pustych stanów — „nie widzę wpłat" i „nie wiadomo, co
