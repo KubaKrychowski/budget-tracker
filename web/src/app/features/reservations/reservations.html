@@ -76,7 +76,7 @@
       @if (rows().length === 0) {
         <nz-empty [nzNotFoundContent]="'reservations.empty' | translate" />
       } @else {
-        <nz-table #table [nzData]="rows()" [nzShowPagination]="false" nzSize="small">
+        <nz-table #table [nzData]="rows()" [nzPageSize]="10" nzSize="small">
           <thead>
             <tr>
               <th>{{ 'reservations.columns.name' | translate }}</th>

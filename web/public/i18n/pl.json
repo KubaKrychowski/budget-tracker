@@ -475,7 +475,10 @@
         "Any": "Dowolny",
         "Expense": "Wydatek",
         "Income": "Przychód"
-      }
+      },
+      "tiedTitle": "Reguły o tym samym priorytecie: {{priorities}}",
+      "tiedDescription": "Przy remisie o wyniku decyduje kolejność dodania reguły, której nie widać na tej liście. Nadaj im różne priorytety, jeśli mogą dopasować tę samą transakcję.",
+      "tiedAcknowledge": "Rozumiem"
     }
   },
   "confirmDialog": {

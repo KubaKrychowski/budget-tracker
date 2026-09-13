@@ -84,18 +84,59 @@ export class Rules {
   );
 
   /**
-   * ⚠️ NIE MA tu ostrzeżenia o równych priorytetach i to jest decyzja, nie przeoczenie.
+   * Priorytety występujące więcej niż raz, rosnąco.
    *
-   * Makieta miała taki alert, bo powstała na pięciu wymyślonych wierszach, gdzie remis wyglądał
-   * na anomalię. Na realnym zbiorze (148 reguł z `BaselineSeed`) zremisowanych priorytetów jest
-   * 19: seed CELOWO grupuje reguły po priorytecie, a dwie reguły o tym samym priorytecie
-   * i różnych wzorcach nie kolidują. Ostrzeżenie krzyczałoby więc przy normie.
-   *
-   * Prawdziwe pytanie („czy inna reguła zabierze mi te transakcje?") ma odpowiedź opartą na
-   * danych, nie na domysłach: `shadowedCount` z podglądu trafień. Statyczne wykrycie kolizji
-   * wymagałoby analizy nakładania się wyrażeń regularnych albo raportu konfliktów po stronie
-   * API — jeśli kiedyś będzie potrzebne, to jako osobna funkcja, nie jako alert na liście.
+   * Remis jest legalny i nie jest losowy — rozstrzyga go `Id`, czyli kolejność dodania — ale `Id`
+   * nie wychodzi z API, więc dla użytkownika o wyniku decyduje coś, czego nie widać na ekranie.
    */
+  protected readonly tiedPriorities = computed(() => {
+    const counts = new Map<number, number>();
+    for (const rule of this.rules()) counts.set(rule.priority, (counts.get(rule.priority) ?? 0) + 1);
+    return [...counts.entries()].filter(([, n]) => n > 1).map(([p]) => p).sort((a, b) => a - b);
+  });
+
+  /**
+   * Zestaw remisów, który użytkownik już przyjął do wiadomości przyciskiem „Rozumiem".
+   *
+   * ⚠️ Pamiętany jest ZESTAW, a nie samo „zamknięte". Na realnych danych remis jest normą
+   * (`BaselineSeed` celowo grupuje reguły po priorytecie — 19 zremisowanych wartości na 148
+   * reguł), więc alert pokazywany przy każdej wizycie byłby szumem. Ale alert zamknięty NA
+   * ZAWSZE przestałby ostrzegać o NOWYM remisie, dopisanym później. Dlatego wraca, gdy zmieni
+   * się lista zremisowanych priorytetów, i tylko wtedy.
+   *
+   * `localStorage`, nie backend: to wygoda tej przeglądarki, nie dana domenowa — ten sam wybór
+   * co pamięć zakresu wykresu na dashboardzie. Brak dostępu do magazynu (tryb prywatny, blokada)
+   * nie może wywrócić ekranu, więc każdy odczyt i zapis jest w `try`.
+   */
+  private readonly acknowledgedTies = signal<string | null>(Rules.readAcknowledgedTies());
+
+  private static readonly TiesStorageKey = 'rules.acknowledgedTiedPriorities';
+
+  private static readAcknowledgedTies(): string | null {
+    try {
+      return localStorage.getItem(Rules.TiesStorageKey);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Czy pokazać ostrzeżenie: są remisy i nie jest to zestaw już przyjęty do wiadomości. */
+  protected readonly showTiesWarning = computed(() => {
+    const tied = this.tiedPriorities();
+    return tied.length > 0 && tied.join(',') !== this.acknowledgedTies();
+  });
+
+  /** „Rozumiem" — zapamiętuje obecny zestaw remisów, żeby alert nie wracał, dopóki się nie zmieni. */
+  protected acknowledgeTies(): void {
+    const signature = this.tiedPriorities().join(',');
+    this.acknowledgedTies.set(signature);
+    try {
+      localStorage.setItem(Rules.TiesStorageKey, signature);
+    } catch {
+      // Bez magazynu przyjęcie działa do końca wizyty — lepsze to niż błąd na ekranie.
+    }
+  }
+
   protected readonly directions: readonly RuleDirection[] = ['Any', 'Expense', 'Income'];
 
   // ── Edytor ─────────────────────────────────────────────────────────────────────────

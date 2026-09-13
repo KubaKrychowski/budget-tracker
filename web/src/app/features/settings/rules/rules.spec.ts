@@ -72,6 +72,23 @@ describe('Rules', () => {
    */
   const modalText = (): string => (document.body.textContent ?? '').replace(/\s+/g, ' ');
 
+  /** Klik w przycisk po jego tekście — tak, jak zrobiłby to człowiek. */
+  const clickButton = (label: string): void => {
+    const button = [...fixture.nativeElement.querySelectorAll('button')]
+      .find((b) => (b as HTMLElement).textContent?.trim() === label) as HTMLButtonElement | undefined;
+    if (!button) throw new Error(`Brak przycisku „${label}"`);
+    button.click();
+    fixture.detectChanges();
+  };
+
+  /** Druga wizyta na ekranie: nowy komponent, ten sam localStorage. */
+  const recreate = async (rules: CategoryRule[]): Promise<void> => {
+    fixture.destroy();
+    fixture = TestBed.createComponent(Rules);
+    internals = fixture.componentInstance as unknown as RulesInternals;
+    await settle(rules);
+  };
+
   const settle = async (rules: CategoryRule[]): Promise<void> => {
     fixture.detectChanges();
     http.match('/api/categorization/rules').forEach((r) => r.flush(rules));
@@ -81,6 +98,7 @@ describe('Rules', () => {
   };
 
   beforeEach(async () => {
+    localStorage.clear();
     confirmDialog = new FakeConfirmDialogService();
 
     await TestBed.configureTestingModule({
@@ -105,6 +123,7 @@ describe('Rules', () => {
           empty: 'Nie ma jeszcze żadnej reguły.',
           tiedTitle: 'Reguły o tym samym priorytecie: {{priorities}}',
           tiedDescription: 'Przy remisie o wyniku decyduje kolejność dodania reguły.',
+          tiedAcknowledge: 'Rozumiem',
           none: '—',
           columns: {
             priority: 'Priorytet', pattern: 'Wzorzec opisu', typePattern: 'Typ operacji',
@@ -154,15 +173,39 @@ describe('Rules', () => {
     expect(priorities).toEqual(['5', '40', '90']);
   });
 
-  it('NIE ostrzega o równych priorytetach, bo remis jest w tych danych normą', async () => {
-    // ⚠️ Makieta miała taki alert, bo powstała na pięciu wymyślonych wierszach. Na realnym
-    // zbiorze (148 reguł z BaselineSeed) zremisowanych priorytetów jest 19 — seed celowo
-    // grupuje reguły po priorytecie, a różne wzorce o tym samym priorytecie nie kolidują.
-    // Ostrzeżenie krzyczałoby przy normie; prawdziwą odpowiedź daje `shadowedCount` z podglądu.
-    await settle([rule({ priority: 40 }), rule({ priority: 40 }), rule({ priority: 40 })]);
+  it('ostrzega o remisie priorytetów i pokazuje, których dotyczy', async () => {
+    await settle([rule({ priority: 40 }), rule({ priority: 40 }), rule({ priority: 90 })]);
 
-    expect(text()).not.toContain('priorytecie');
-    expect(fixture.nativeElement.querySelectorAll('nz-alert').length).toBe(0);
+    expect(text()).toContain('Reguły o tym samym priorytecie: 40');
+    expect(text()).toContain('Rozumiem');
+  });
+
+  it('nie ostrzega, gdy priorytety są różne', async () => {
+    await settle([rule({ priority: 10 }), rule({ priority: 20 })]);
+
+    expect(text()).not.toContain('tym samym priorytecie');
+  });
+
+  it('„Rozumiem" chowa ostrzeżenie i nie wraca przy kolejnej wizycie z tymi samymi remisami', async () => {
+    // ⚠️ Na realnych danych remis jest normą (BaselineSeed grupuje reguły po priorytecie),
+    // więc alert przy każdej wizycie byłby szumem. Pamiętany jest ZESTAW remisów.
+    await settle([rule({ priority: 40 }), rule({ priority: 40 })]);
+    clickButton('Rozumiem');
+    expect(text()).not.toContain('tym samym priorytecie');
+
+    await recreate([rule({ priority: 40 }), rule({ priority: 40 })]);
+
+    expect(text()).not.toContain('tym samym priorytecie');
+  });
+
+  it('ostrzeżenie wraca, gdy pojawi się NOWY remis', async () => {
+    // Zamknięcie na zawsze przestałoby ostrzegać o kolizji dopisanej później — a o to chodzi.
+    await settle([rule({ priority: 40 }), rule({ priority: 40 })]);
+    clickButton('Rozumiem');
+
+    await recreate([rule({ priority: 40 }), rule({ priority: 40 }), rule({ priority: 90 }), rule({ priority: 90 })]);
+
+    expect(text()).toContain('Reguły o tym samym priorytecie: 40, 90');
   });
 
   it('blokuje zapis reguły bez żadnego wzorca', async () => {
