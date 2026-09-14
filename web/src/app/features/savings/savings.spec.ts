@@ -83,6 +83,7 @@ describe('Savings', () => {
     reservedTotal: 0,
     settledTotal: 0,
     collectedTotal: 0,
+    availableToContribute: 0,
     freeFunds: 0,
     coveredBy: null,
     selectedBudgetIds: ['b1'],
@@ -408,13 +409,14 @@ describe('Savings', () => {
       reservations: [
         {
           id: 'r1', name: 'Ubezpieczenie OC', amount: 1800, dueMonth: '2026-05-01',
-          collected: 1800, status: 'Settled', settledOn: '2026-08-14', settledTransactionId: 't1',
+          collected: 1800, status: 'Settled', settledOn: '2026-08-14', settledTransactionId: 't1', contributions: [],
         },
       ],
       accountBalance: 9400,
       reservedTotal: 5000,
       settledTotal: 1800,
       collectedTotal: 1800,
+    availableToContribute: 0,
       freeFunds: 4400,
     });
 
@@ -433,11 +435,12 @@ describe('Savings', () => {
     await settle(response(), {
       ...reservations,
       reservations: [
-        { id: 'r1', name: 'Ubezpieczenie', amount: 1800, dueMonth: '2027-05-01', collected: 900, status: 'Collecting', settledOn: null, settledTransactionId: null },
-        { id: 'r2', name: 'Aparat', amount: 1600, dueMonth: '2027-09-01', collected: 0, status: 'Collecting', settledOn: null, settledTransactionId: null },
+        { id: 'r1', name: 'Ubezpieczenie', amount: 1800, dueMonth: '2027-05-01', collected: 900, status: 'Collecting', settledOn: null, settledTransactionId: null, contributions: [] },
+        { id: 'r2', name: 'Aparat', amount: 1600, dueMonth: '2027-09-01', collected: 0, status: 'Collecting', settledOn: null, settledTransactionId: null, contributions: [] },
       ],
       reservedTotal: 3400,
       collectedTotal: 900,
+    availableToContribute: 0,
     });
 
     const chart = (fixture.componentInstance as unknown as {

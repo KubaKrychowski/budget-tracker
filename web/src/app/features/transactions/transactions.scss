@@ -72,6 +72,19 @@
     width: 232px;   /* szerokość Search-Boxa z makiety */
   }
 
+  /*
+   * Wszystkie kontrolki paska mają tę samą wysokość co szukajka (zgłoszenie #17). Z domyślnych stylów
+   * NG-ZORRO przy 16 px bazowej czcionki zakres dat wychodził na 33 px, a wybór budżetów na 31 px.
+   */
+  &__dates {
+    width: 280px;
+    height: 32px;
+  }
+
+  &__budgets ::ng-deep .ant-select-selector {
+    min-height: 32px;
+  }
+
   /* Etykieta filtra zlecenia stałego — ta sama wysokość linii co szukajka obok. */
   &__standing-order {
     display: inline-flex;

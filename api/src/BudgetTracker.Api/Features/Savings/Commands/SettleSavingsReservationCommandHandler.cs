@@ -16,8 +16,8 @@ namespace BudgetTracker.Api.Features.Savings.Commands;
 /// a wybiera człowiek (tekst jest w makiecie 170:1727).
 /// </para>
 /// <para>
-/// ⚠️ <b>To NIE zwalnia wolnych środków.</b> Zamyka rezerwację i zdejmuje ją z kolejki
-/// zbierania — i tyle. Patrz doc przy <see cref="SavingsReservationsResponseDto.FreeFunds"/>.
+/// Zamyka rezerwację: przestaje przyjmować wpłaty i pomniejszać wolne środki — patrz doc przy
+/// <see cref="SavingsReservationsResponseDto.FreeFunds"/>.
 /// </para>
 /// </remarks>
 public sealed class SettleSavingsReservationCommandHandler(

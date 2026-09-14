@@ -1,5 +1,6 @@
 using BudgetTracker.Api.Features.EpisodicOrders.Contracts;
 using BudgetTracker.Api.Features.EpisodicOrders.Services;
+using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Infrastructure;
 
 namespace BudgetTracker.Api.Features.EpisodicOrders.Commands;
@@ -8,7 +9,7 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Commands;
 /// <remarks>
 /// ⚠️ Nierozliczona rezerwacja zlecenia dostaje TE SAME nazwę, kwotę i termin. Kwotą i terminem rządzi zlecenie
 /// (decyzja użytkownika) — bez tego zmiana planu z 4 000 na 3 500 zł zostawiłaby kopertę zbierającą 4 000.
-/// Rozliczonej nie ruszamy: jej kwota to już historia wypłaty.
+/// Rozliczonej nie ruszamy: jej kwota to już historia wypłaty. Planu nie da się obniżyć poniżej wpłat na rezerwację.
 /// </remarks>
 public sealed class UpdateEpisodicOrderCommandHandler(
     AppDbContext db, EpisodicOrderLookup orders, EpisodicOrderRequestValidator validator)
@@ -28,6 +29,7 @@ public sealed class UpdateEpisodicOrderCommandHandler(
         var reservation = await orders.ReservationOfAsync(order, ct);
         if (reservation is { SettledAt: null } && order is { PlannedAmount: { } planned })
         {
+            if (planned < reservation.Contributed) throw new ReservationAmountBelowContributedException();
             reservation.Update(order.Name, planned, order.DueMonth, reservation.Priority);
         }
 

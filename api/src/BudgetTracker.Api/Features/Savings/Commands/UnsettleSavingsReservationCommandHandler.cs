@@ -9,7 +9,7 @@ namespace BudgetTracker.Api.Features.Savings.Commands;
 /// </summary>
 /// <remarks>
 /// Istnieje dlatego, że wskazanie złej transakcji jest łatwe, a bez tej operacji byłoby drzwiami w jedną stronę:
-/// jedynym wyjściem byłoby skasowanie rezerwacji i założenie jej od nowa, czyli utrata terminu i miejsca w kolejce.
+/// jedynym wyjściem byłoby skasowanie rezerwacji i założenie jej od nowa, czyli utrata terminu i wpłat.
 /// </remarks>
 public sealed class UnsettleSavingsReservationCommandHandler(
     AppDbContext db, ReservationLookup reservations, SavingsBudgetScope scope)

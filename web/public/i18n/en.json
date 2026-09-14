@@ -181,7 +181,9 @@
       "clear": "Clear filters",
       "budgets": "Budgets",
       "standingOrder": "Standing order:",
-      "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once."
+      "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once.",
+      "from": "Date from",
+      "to": "Date to"
     },
     "columns": {
       "date": "Date",
@@ -527,8 +529,8 @@
     "tileTitle": "Reservations for this year",
     "tileEmpty": "No reservations yet. Name an upcoming expense and I will set money aside for it.",
     "freeFunds": "Free funds: {{amount}} PLN",
-    "summary": "{{reserved}} PLN reserved · {{settled}} PLN settled · free funds {{free}} PLN",
-    "summaryOver": "{{reserved}} PLN reserved · {{settled}} PLN settled · no free funds",
+    "summary": "{{reserved}} PLN reserved · {{contributed}} PLN contributed to goals · free funds {{free}} PLN",
+    "summaryOver": "{{reserved}} PLN reserved · {{contributed}} PLN contributed to goals · no free funds",
     "balanceNote": "Savings account balance: {{balance}} PLN. Computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest.",
     "coveredBy": "At your current monthly goal the rest will be collected by {{month}}.",
     "add": "Add reservation",
@@ -566,8 +568,8 @@
       "namePlaceholder": "Car insurance",
       "amount": "Amount",
       "due": "Due",
-      "queueNote": "Reservations collect in order — nearest deadline first. Adding one with an earlier deadline WILL SHIFT THE QUEUE and take progress away from the others.",
-      "noDue": "No due date — collects after reservations with a due date"
+      "noDue": "No due date — when possible",
+      "contributionsNote": "Collected grows with your contributions to the goal — creating the reservation contributes nothing."
     },
     "settleModal": {
       "title": "Was this: {{name}}?",
@@ -575,16 +577,16 @@
       "noCandidates": "I see no unsettled savings withdrawal in this budget. Settling always points at a real transaction — without one, reservations would be a wish list.",
       "confirm": "Yes, settle",
       "cancel": "It was something else",
-      "freeFundsNote": "Settling closes this reservation and takes it out of the collection queue, but it does NOT increase free funds — the envelope is annual, so the amount stays committed for the whole year.",
+      "freeFundsNote": "Settling closes this reservation — it stops accepting contributions and reducing free funds, because the purchase has already left the account.",
       "manualNote": "I never settle automatically — a mistake here closes an envelope nobody paid, and nobody would notice."
     },
     "deleteConfirm": {
       "header": "Delete reservation “{{name}}”?",
-      "description": "The amount will stop weighing on free funds and the collection queue will shift to the remaining reservations."
+      "description": "The amount will stop counting against free funds, and contributions to this goal will go with it."
     },
     "unsettleConfirm": {
       "header": "Undo settlement of “{{name}}”?",
-      "description": "The reservation goes back into the collection queue and the chosen withdrawal becomes available again. Free funds will not change."
+      "description": "The reservation will reduce free funds again, and the chosen withdrawal will be available for another reservation."
     },
     "errors": {
       "loadFailed": "Could not load reservations"
@@ -593,7 +595,20 @@
     "collected": "Collected",
     "freeFundsBody": "Savings account balance {{balance}} PLN − {{reserved}} PLN of reservations.",
     "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest.",
-    "noDue": "when possible"
+    "noDue": "when possible",
+    "contribute": {
+      "action": "Contribute",
+      "title": "Contribute to “{{name}}”",
+      "alert": "A contribution is notional — the money stays in the savings account. You can contribute {{available}} PLN (balance minus contributions to other goals).",
+      "amount": "Contribution amount",
+      "missing": "{{missing}} PLN is missing to the full goal — you cannot contribute more.",
+      "limitedByBalance": "{{missing}} PLN is missing to the goal, but you can contribute at most {{max}} PLN now — the rest of your savings is assigned to other goals.",
+      "history": "Contributions so far",
+      "withdraw": "Withdraw",
+      "confirm": "Contribute",
+      "saved": "Contributed to the goal.",
+      "withdrawn": "Contribution withdrawn."
+    }
   },
   "limits": {
     "title": "Spending limits",
@@ -783,7 +798,7 @@
     "undo": "Move back to planned",
     "saved": "Order saved.",
     "removed": "Order deleted. The transaction is unchanged.",
-    "reservationCreated": "Reservation “{{name}}” created — it collects in the reservation queue like any other.",
+    "reservationCreated": "Reservation “{{name}}” created — contribute to it on the reservations screen.",
     "purchased": "The order moved to completed.",
     "undone": "The order is back in planned.",
     "banner": {
@@ -795,7 +810,7 @@
         "many": "{{count}} planned purchases for {{amount}} PLN."
       },
       "withoutSavings": "Without saving: {{count}}.",
-      "plannedBody": "“Start saving for it” in the row menu creates a reservation with this amount and due month — it collects from savings like any reservation."
+      "plannedBody": "“Start saving for it” in the row menu creates a reservation with this amount and due month — contribute to it on the reservations screen."
     },
     "metrics": {
       "planned": "Planned",

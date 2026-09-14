@@ -26,6 +26,8 @@ public static class SavingsModule
         services.AddScoped<SavingsBudgetScope>();
         services.AddScoped<SavingsCategory>();
         services.AddScoped<ReservationLookup>();
+        services.AddScoped<SavingsAccount>();
+        services.AddScoped<ContributeToReservationCommandHandler>();
 
         services.AddScoped<SetSavingsGoalCommandHandler>();
         services.AddScoped<EndSavingsGoalCommandHandler>();
@@ -125,6 +127,23 @@ public static class SavingsModule
             .WithName("UnsettleSavingsReservation")
             .Produces<SavingsReservationResponseDto>()
             .Produces(StatusCodes.Status404NotFound);
+
+        app.MapPost("/api/savings/reservations/{id:guid}/contributions", async (
+            Guid id, ContributeRequestDto request, ContributeToReservationCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.ContributeAsync(id, request, ct)))
+            .WithName("ContributeToSavingsReservation")
+            .Produces<SavingsReservationResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
+
+        app.MapDelete("/api/savings/reservations/{id:guid}/contributions/{contributionId:guid}", async (
+            Guid id, Guid contributionId, ContributeToReservationCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.WithdrawAsync(id, contributionId, ct)))
+            .WithName("WithdrawSavingsContribution")
+            .Produces<SavingsReservationResponseDto>()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
 
         return app;
     }

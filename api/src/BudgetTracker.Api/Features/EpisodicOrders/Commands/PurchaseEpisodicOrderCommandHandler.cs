@@ -15,7 +15,7 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Commands;
 /// </para>
 /// <para>
 /// Cofnięcie jest tylko dla zlecenia, które było zaplanowane — oznaczone wprost z listy transakcji nie ma planu,
-/// do którego mogłoby wrócić (409). Rezerwacja wraca do kolejki zbierania z tym samym terminem.
+/// do którego mogłoby wrócić (409). Rezerwacja wraca do nierozliczonych, razem z dotychczasowymi wpłatami.
 /// </para>
 /// </remarks>
 public sealed class PurchaseEpisodicOrderCommandHandler(

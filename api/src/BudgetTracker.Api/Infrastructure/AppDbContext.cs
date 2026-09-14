@@ -215,6 +215,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.Property(x => x.Amount).HasColumnType("numeric(18,2)");
             e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
             e.Property(x => x.SettledAt).HasColumnType("timestamptz");
+            // Wpłaty jako jsonb: wartość rezerwacji bez własnego cyklu życia — kasują się i przywracają razem z nią.
+            e.ComplexCollection(x => x.Contributions, c => c.ToJson());
             e.HasIndex(x => new { x.BudgetBusinessId, x.DueMonth, x.Priority });
             e.HasIndex(x => x.SettledTransactionBusinessId)
                 .IsUnique()

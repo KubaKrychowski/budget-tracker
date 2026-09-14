@@ -38,6 +38,9 @@
   <data name="Reservation_AmountInvalid" xml:space="preserve"><value>Kwota rezerwacji musi być większa od zera.</value></data>
   <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>Ta transakcja nie rozliczy rezerwacji. Musi być wypłatą z oszczędności w tym samym budżecie i nie może zamykać już innej rezerwacji.</value></data>
   <data name="Reservation_AlreadySettled" xml:space="preserve"><value>Ta rezerwacja jest już rozliczona. Jeśli wskazałeś złą transakcję, najpierw cofnij rozliczenie.</value></data>
+  <data name="Contribution_AmountInvalid" xml:space="preserve"><value>Wpłata musi być większa od zera i nie większa niż brakuje do kwoty celu.</value></data>
+  <data name="Contribution_ExceedsBalance" xml:space="preserve"><value>Tyle nie ma już do wpłaty — reszta oszczędności jest wpłacona na inne cele.</value></data>
+  <data name="Reservation_AmountBelowContributed" xml:space="preserve"><value>Na ten cel wpłacono już więcej niż nowa kwota. Najpierw wycofaj nadwyżkę wpłat.</value></data>
   <data name="Request_Invalid" xml:space="preserve"><value>Żądanie było nieprawidłowe — najczęściej winny jest zepsuty parametr w adresie (np. data albo filtr). Wyczyść filtry i spróbuj ponownie.</value></data>
   <data name="Rule_PatternRequired" xml:space="preserve"><value>Reguła musi patrzeć na opis albo na typ operacji. Bez żadnego z nich pasowałaby do każdej transakcji.</value></data>
   <data name="Rule_PatternInvalid" xml:space="preserve"><value>Wzorzec nie jest poprawnym wyrażeniem regularnym.</value></data>
