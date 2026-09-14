@@ -32,6 +32,7 @@
          faktycznie policzył odpowiedź, także gdy adres budżetu nie podaje. -->
     @if (lastData(); as d) {
       <app-budget-switcher
+        class="sav__switcher"
         [budgets]="d.budgets"
         [selectedId]="d.selectedBudgetIds[0] ?? null"
         (budgetChange)="switchBudget($event)" />
