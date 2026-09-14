@@ -10,7 +10,7 @@ namespace BudgetTracker.Api.Domain;
 /// (<see cref="TransactionBusinessId"/>) i to ona jest jedynym źródłem kwoty, daty i kategorii — zlecenie ich nie
 /// powiela, więc nie mogą się rozjechać. Zaplanowane niesie własny plan (<see cref="PlannedAmount"/>,
 /// <see cref="DueMonth"/>, <see cref="CategoryId"/>), bo transakcji jeszcze nie ma. Termin jest opcjonalny —
-/// zakup „przy okazji” nie ma daty, a jego rezerwacja zbiera na końcu kolejki.
+/// zakup „przy okazji” nie ma daty, a jego rezerwacja też jest bez terminu.
 /// </para>
 /// <para>
 /// ⚠️ Plan ZOSTAJE po realizacji. Po nim poznajemy zlecenie, które było zaplanowane — tylko takie da się „cofnąć do

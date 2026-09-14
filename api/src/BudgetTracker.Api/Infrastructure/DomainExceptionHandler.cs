@@ -71,6 +71,9 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         // Żądanie jest poprawne, to stan zasobu na nie nie pozwala — stąd 409.
         ReservationAlreadySettledException =>
             (StatusCodes.Status409Conflict, "Reservation_AlreadySettled"),
+        ContributionAmountInvalidException => (StatusCodes.Status400BadRequest, "Contribution_AmountInvalid"),
+        ContributionExceedsBalanceException => (StatusCodes.Status400BadRequest, "Contribution_ExceedsBalance"),
+        ReservationAmountBelowContributedException => (StatusCodes.Status400BadRequest, "Reservation_AmountBelowContributed"),
 
         LimitAmountInvalidException => (StatusCodes.Status400BadRequest, "Limit_AmountInvalid"),
         LimitWarningThresholdInvalidException =>

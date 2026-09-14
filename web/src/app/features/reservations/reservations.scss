@@ -46,12 +46,6 @@
     text-align: right;
   }
 
-  &__percent {
-    margin-left: 8px;
-    font-size: 12px;
-    color: #8c8c8c;
-  }
-
   &__actions {
     white-space: nowrap;
   }
@@ -73,6 +67,46 @@
 
   &__field {
     width: 100%;
+  }
+
+  /* Pasek i „250 z 400 zł” obok siebie (makieta 239:2030). */
+  &__collected {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    nz-progress {
+      flex: 0 0 90px;
+    }
+  }
+
+  &__hint--under {
+    margin: 6px 0 0;
+    font-size: 12px;
+  }
+
+  &__contributions-title {
+    margin: 16px 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  &__contributions {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__contribution {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  &__contribution-date {
+    flex: 1 1 auto;
   }
 
   &__no-due {

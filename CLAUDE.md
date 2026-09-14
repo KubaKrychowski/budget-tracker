@@ -416,6 +416,17 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   je oddaje. Cykl życia budżetu jak przy zleceniach stałych (reset zostawia, usunięcie zabiera).
 > - Oznaczenie z listy transakcji idzie bez `budgetId` — serwer bierze budżet TRANSAKCJI, bo lista pokazuje kilka naraz.
 
+> **REWIZJA — 2026-09-14: wpłaty na cel zamiast kolejki zbierania** (zgłoszenie #23, makiety Figma — strona
+> „Cele oszczędzania”, `239:2030` i `239:2116`):
+> - ⚠️ **Uzbierane to suma RĘCZNYCH wpłat** (`SavingsReservation.Contributions`, jsonb). Kolejka, która rozkładała stan
+>   konta od najbliższego terminu, nie istnieje — pokazywała 100% zaraz po założeniu rezerwacji przy pełnym koncie.
+> - **Dwa limity wpłaty:** nie więcej niż brakuje do kwoty rezerwacji i nie więcej niż zostało na koncie po wpłatach na
+>   inne nierozliczone cele (`AvailableToContribute`). Kwoty rezerwacji (i planu zlecenia epizodycznego) nie da się
+>   obniżyć poniżej wpłat.
+> - **Wolne środki = stan konta − pełne kwoty NIEROZLICZONYCH rezerwacji** (decyzja użytkownika: wpłaty ich nie zmieniają).
+>   ⚠️ Odwraca to decyzję z #11: rozliczona rezerwacja PRZESTAJE pomniejszać wolne środki.
+> - Istniejące rezerwacje dostały pustą listę wpłat — dawnego „uzbieranego” nie da się odtworzyć jako wpłat.
+
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
 > i pomylenie ich daje błąd, którego nie widać na ekranie.

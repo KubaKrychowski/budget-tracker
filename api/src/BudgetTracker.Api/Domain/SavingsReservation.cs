@@ -4,6 +4,10 @@ namespace BudgetTracker.Api.Domain;
 /// Nazwana koperta na koncie oszczędnościowym — „1 800 zł na OC w maju".
 /// </summary>
 /// <remarks>
+/// ⚠️ <b>Uzbierane to suma WPŁAT użytkownika</b> (<see cref="Contributions"/>, zgłoszenie #23), a nie automatyczny
+/// rozkład stanu konta. Wcześniej kolejka rozkładała oszczędności od najbliższego terminu, więc rezerwacja
+/// świeżo założona przy pełnym koncie od razu pokazywała 100% — cel „osiągnięty”, choć nikt na niego nie odłożył.
+///
 /// ⚠️ <b>Rezerwacja ma DWA niezależne postępy: uzbierane i rozliczone.</b> Opłacone
 /// ubezpieczenie to rezerwacja <b>zamknięta</b>, a nie „0% zostało". Jedna liczba na
 /// pierścieniu tego nie udźwignie, stąd wypełnienie (uzbierane) osobno od wygaszenia
@@ -41,14 +45,12 @@ public class SavingsReservation(
     /// Termin — pierwszy dzień miesiąca, na który pieniądze mają być gotowe.
     /// </summary>
     /// <remarks>
-    /// <c>null</c> = „przy okazji” (zakup bez daty z listy zleceń epizodycznych). ⚠️ Taka rezerwacja zbiera NA KOŃCU
-    /// kolejki — po wszystkich z terminem — i nigdy nie jest „po terminie”. Bez tej reguły zakup „kiedyś” odbierałby
-    /// pieniądze rachunkowi, który ma przyjść w maju.
+    /// <c>null</c> = „przy okazji” (zakup bez daty) — taka rezerwacja nigdy nie jest „po terminie”.
     /// </remarks>
     public DateOnly? DueMonth { get; protected set; } = dueMonth;
 
     /// <summary>
-    /// Rozstrzyga kolejkę przy tym samym terminie. Mniejsza liczba = wcześniej w kolejce.
+    /// Kolejność na liście przy tym samym terminie. Mniejsza liczba = wyżej.
     /// Domyślnie 0 — wtedy o kolejności decyduje <c>Id</c>, czyli moment utworzenia.
     /// </summary>
     public int Priority { get; protected set; } = priority;
@@ -57,11 +59,8 @@ public class SavingsReservation(
     /// Kiedy rezerwację rozliczono; <c>null</c> = jeszcze zbiera.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Rozliczenie NIE zwalnia wolnych środków</b> — karta nazywa się „Rezerwacje na ten
-    /// rok", więc koperta jest ROCZNA: 5 000 zł zostaje zaklepane niezależnie od tego, ile już
-    /// wypłacono. Rozliczenie zamyka rezerwację i zdejmuje ją z kolejki zbierania, i tyle.
-    /// Pierwszy odruch przy refaktorze będzie taki, żeby „naprawić" tę liczbę — nie rób tego,
-    /// to decyzja użytkownika, a nie przeoczenie (issue #11).
+    /// Rozliczenie zamyka rezerwację: nie przyjmuje już wpłat i przestaje pomniejszać wolne środki — zapłacony zakup
+    /// zszedł już ze stanu konta (zgłoszenie #23; wcześniej koperta była roczna i odejmowała się dalej).
     /// </remarks>
     public DateTimeOffset? SettledAt { get; protected set; }
 
@@ -78,13 +77,36 @@ public class SavingsReservation(
     /// </remarks>
     public Guid? SettledTransactionBusinessId { get; protected set; }
 
+    /// <summary>Umowne wpłaty na tę rezerwację, od najstarszej. Ich suma to „uzbierane”.</summary>
+    public List<SavingsContribution> Contributions { get; protected set; } = [];
+
+    /// <summary>Suma wpłat.</summary>
+    public decimal Contributed => Contributions.Sum(c => c.Amount);
+
+    /// <summary>Wpłata na rezerwację. Czy kwota się mieści (brakująca kwota, stan konta), sprawdza handler.</summary>
+    /// <remarks>Nowa lista, nie dopisanie w miejscu: EF porównuje kolumnę JSON jako całość.</remarks>
+    public SavingsContribution Contribute(DateOnly date, decimal amount)
+    {
+        var contribution = new SavingsContribution(Guid.CreateVersion7(), date, amount);
+        Contributions = [.. Contributions, contribution];
+        return contribution;
+    }
+
+    /// <summary>Wycofuje wpłatę; <c>false</c>, gdy takiej wpłaty nie ma.</summary>
+    public bool WithdrawContribution(Guid contributionId)
+    {
+        if (Contributions.All(c => c.Id != contributionId)) return false;
+        Contributions = [.. Contributions.Where(c => c.Id != contributionId)];
+        return true;
+    }
+
     /// <summary>Kiedy rezerwację założono — do kolejności przy równym terminie i priorytecie.</summary>
     public DateTimeOffset CreatedAt { get; protected set; } = createdAt;
 
-    /// <summary>Edycja koperty: nazwa, kwota, termin i miejsce w kolejce.</summary>
+    /// <summary>Edycja koperty: nazwa, kwota, termin i miejsce na liście.</summary>
     /// <remarks>
     /// ⚠️ Budżetu NIE da się zmienić — przeniesienie rezerwacji między budżetami przesunęłoby
-    /// ją do innej puli i innej kolejki naraz, a wskazana wypłata została w starym budżecie.
+    /// ją do innej puli oszczędności, a wskazana wypłata i wpłaty zostały w starym budżecie.
     /// Kto chce przenieść, zakłada nową.
     /// </remarks>
     public void Update(string name, decimal amount, DateOnly? dueMonth, int priority)
@@ -95,7 +117,7 @@ public class SavingsReservation(
         Priority = priority;
     }
 
-    /// <summary>Zamyka rezerwację wskazaną wypłatą z oszczędności.</summary>
+    /// <summary>Zamyka rezerwację wskazaną transakcją — wypłatą z oszczędności albo zakupem zlecenia epizodycznego.</summary>
     /// <remarks>
     /// Dwa pola ruszają się razem, bo „rozliczona" bez wskazanej transakcji to dokładnie ta lista
     /// życzeń, której ten mechanizm ma nie być. Czy transakcja się nadaje, sprawdza handler —
@@ -107,7 +129,7 @@ public class SavingsReservation(
         SettledTransactionBusinessId = transactionBusinessId;
     }
 
-    /// <summary>Cofa rozliczenie — rezerwacja wraca do kolejki zbierania z tym samym terminem.</summary>
+    /// <summary>Cofa rozliczenie — rezerwacja znów przyjmuje wpłaty i pomniejsza wolne środki, z tym samym terminem.</summary>
     public void Unsettle()
     {
         SettledAt = null;

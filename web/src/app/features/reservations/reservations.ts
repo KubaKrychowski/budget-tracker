@@ -17,6 +17,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -27,7 +28,7 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 import {
-  ReservationsResponse, SavingsReservation, SettleCandidate,
+  ReservationsResponse, SavingsContribution, SavingsReservation, SettleCandidate,
 } from '../../core/api/models/reservations';
 
 @Component({
@@ -35,7 +36,7 @@ import {
   imports: [
     CommonModule, FormsModule, RouterLink, BudgetSwitcher,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzCheckboxModule, NzDatePickerModule, NzEmptyModule,
-    NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSpinModule,
+    NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzProgressModule, NzSpinModule,
     NzTableModule, NzTagModule,
     TranslatePipe,
   ],
@@ -120,7 +121,7 @@ export class Reservations {
   protected readonly draftName = signal('');
   protected readonly draftAmount = signal<number | null>(null);
   protected readonly draftDue = signal<Date | null>(null);
-  /** „Bez terminu” — rezerwacja przy okazji, zbiera po wszystkich z terminem. */
+  /** „Bez terminu” — rezerwacja „przy okazji”. */
   protected readonly draftNoDue = signal(false);
 
   constructor() {
@@ -184,6 +185,71 @@ export class Reservations {
     try {
       await firstValueFrom(this.http.delete(`/api/savings/reservations/${row.id}`));
       this.message.success(this.translate.instant('reservations.deleted'));
+      this.resource.reload();
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  // ── Wpłaty na cel (makieta 239:2116, zgłoszenie #23) ─────────────────────────────────
+
+  protected readonly contributeOpen = signal(false);
+  /** Identyfikator rezerwacji w dialogu — wiersz bierzemy ze ŚWIEŻEJ listy, żeby po wpłacie widać było nową historię. */
+  private readonly contributingId = signal<string | null>(null);
+  protected readonly contributing = computed(() => this.rows().find((r) => r.id === this.contributingId()) ?? null);
+  protected readonly draftContribution = signal<number | null>(null);
+
+  /** Brakuje do pełnej kwoty celu. */
+  protected readonly missing = computed(() => {
+    const row = this.contributing();
+    return row ? Math.max(0, row.amount - row.collected) : 0;
+  });
+
+  /** Najwięcej, ile da się teraz wpłacić: brakująca kwota, ale nie więcej niż zostało na koncie. */
+  protected readonly maxContribution = computed(() =>
+    Math.max(0, Math.min(this.missing(), this.data()?.availableToContribute ?? 0)));
+
+  protected readonly canContribute = computed(() => {
+    const amount = this.draftContribution() ?? 0;
+    return amount > 0 && amount <= this.maxContribution();
+  });
+
+  /** Podpowiedź w polu: tyle, ile brakuje, o ile starcza oszczędności. */
+  protected openContribute(row: SavingsReservation): void {
+    this.contributingId.set(row.id);
+    this.contributeOpen.set(true);
+    const available = this.data()?.availableToContribute ?? 0;
+    const suggestion = Math.min(Math.max(0, row.amount - row.collected), Math.max(0, available));
+    this.draftContribution.set(suggestion > 0 ? suggestion : null);
+  }
+
+  protected async contribute(): Promise<void> {
+    const row = this.contributing();
+    const amount = this.draftContribution();
+    if (!row || !this.canContribute() || amount === null) return;
+
+    await this.runContribution(
+      () => firstValueFrom(this.http.post(`/api/savings/reservations/${row.id}/contributions`, { amount })),
+      'reservations.contribute.saved');
+    this.contributeOpen.set(false);
+  }
+
+  /** Wycofanie zostawia dialog otwarty — lista wpłat odświeża się razem z ekranem. */
+  protected async withdraw(contribution: SavingsContribution): Promise<void> {
+    const row = this.contributing();
+    if (!row) return;
+    await this.runContribution(
+      () => firstValueFrom(this.http.delete(`/api/savings/reservations/${row.id}/contributions/${contribution.id}`)),
+      'reservations.contribute.withdrawn');
+  }
+
+  private async runContribution(action: () => Promise<unknown>, successKey: string): Promise<void> {
+    this.busy.set(true);
+    try {
+      await action();
+      this.message.success(this.translate.instant(successKey));
       this.resource.reload();
     } catch (e) {
       this.message.error(this.errorMessages.of(e));

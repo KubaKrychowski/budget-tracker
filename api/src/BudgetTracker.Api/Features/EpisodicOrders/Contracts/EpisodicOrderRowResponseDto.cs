@@ -7,7 +7,7 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Contracts;
 /// <param name="DueMonth">Termin planu; <c>null</c> — bez terminu („przy okazji”) albo bez planu.</param>
 /// <param name="Date">Data transakcji; <c>null</c> przy zaplanowanym.</param>
 /// <param name="WasPlanned">Tylko takie zrealizowane zlecenie da się „cofnąć do zaplanowanych”.</param>
-/// <param name="Collected">Uzbierane w rezerwacji — przydział z kolejki zbierania, jak na ekranie rezerwacji.</param>
+/// <param name="Collected">Uzbierane w rezerwacji — suma wpłat, jak na ekranie rezerwacji.</param>
 public sealed record EpisodicOrderRowResponseDto(
     Guid Id,
     string Name,

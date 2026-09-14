@@ -55,6 +55,7 @@ describe('Reservations', () => {
     status: 'Collecting',
     settledOn: null,
     settledTransactionId: null,
+    contributions: [],
     ...over,
   });
 
@@ -64,6 +65,7 @@ describe('Reservations', () => {
     reservedTotal: 5000,
     settledTotal: 1800,
     collectedTotal: 1800,
+    availableToContribute: 7600,
     freeFunds: 4400,
     coveredBy: null,
     selectedBudgetIds: ['b1'],
@@ -152,7 +154,7 @@ describe('Reservations', () => {
           namePlaceholder: 'Ubezpieczenie OC',
           amount: 'Kwota',
           due: 'Termin',
-          queueNote: 'Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych.',
+          contributionsNote: 'Uzbierane rośnie z Twoimi wpłatami na cel.',
         },
         settleModal: {
           title: 'Czy to było: {{name}}?',
@@ -160,11 +162,22 @@ describe('Reservations', () => {
           noCandidates: 'Nie widzę żadnej nierozliczonej wypłaty.',
           confirm: 'Tak, rozlicz',
           cancel: 'To co innego',
-          freeFundsNote: 'Rozliczenie NIE zwiększy wolnych środków — koperta jest roczna.',
+          freeFundsNote: 'Rozliczenie zamknie tę rezerwację — przestanie pomniejszać wolne środki.',
           manualNote: 'Nigdy nie rozliczam automatycznie.',
         },
         deleteConfirm: { header: 'Usunąć „{{name}}"?', description: 'Wolne środki wrócą.' },
-        unsettleConfirm: { header: 'Cofnąć „{{name}}"?', description: 'Wróci do kolejki.' },
+        unsettleConfirm: { header: 'Cofnąć „{{name}}"?', description: 'Znów pomniejszy wolne środki.' },
+        contribute: {
+          action: 'Wpłać',
+          title: 'Wpłać na cel „{{name}}”',
+          alert: 'Do wpłaty masz {{available}} zł.',
+          amount: 'Kwota wpłaty',
+          missing: 'Brakuje {{missing}} zł do celu.',
+          limitedByBalance: 'Brakuje {{missing}} zł, możesz wpłacić najwyżej {{max}} zł.',
+          history: 'Dotychczasowe wpłaty',
+          withdraw: 'Wycofaj',
+          confirm: 'Wpłać',
+        },
         errors: { loadFailed: 'Nie udało się wczytać rezerwacji' },
       },
     });
@@ -273,7 +286,7 @@ describe('Reservations', () => {
 
   // ── Modal dodawania ──────────────────────────────────────────────────────────────────
 
-  it('ostrzega o przesunięciu kolejki ZANIM pozwoli zapisać', async () => {
+  it('modal dodawania mówi, że założenie rezerwacji niczego nie wpłaca', async () => {
     await start();
     await settleList();
 
@@ -282,9 +295,72 @@ describe('Reservations', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    // To zdanie jest jedynym miejscem, w którym da się wytłumaczyć, dlaczego postęp innych
-    // rezerwacji zaraz się cofnie. Po zapisie byłoby już tylko wyjaśnianiem zaskoczenia.
-    expect(documentText()).toContain('PRZESUNIE KOLEJKĘ');
+    expect(documentText()).toContain('Uzbierane rośnie z Twoimi wpłatami na cel.');
+  });
+
+  // ── Wpłaty na cel (#23) ──────────────────────────────────────────────────────────────
+
+  it('uzbierane pokazuje „z” kwoty, a nierozliczona rezerwacja ma akcję „Wpłać”', async () => {
+    await start();
+    await settleList(response({ reservations: [row({ amount: 400, collected: 250 })] }));
+
+    expect(text()).toContain('250,00 z 400,00 zł');
+    expect(text()).toContain('Wpłać');
+  });
+
+  it('dialog podpowiada brakującą kwotę, ogranicza ją stanem konta i wysyła wpłatę', async () => {
+    await start();
+    await settleList(response({
+      reservations: [row({ amount: 2000, collected: 1000 })],
+      availableToContribute: 600,
+    }));
+    const component = fixture.componentInstance as unknown as {
+      openContribute(r: SavingsReservation): void;
+      draftContribution: { (): number | null; set(v: number | null): void };
+      canContribute(): boolean;
+      contribute(): Promise<void>;
+    };
+
+    component.openContribute(row({ amount: 2000, collected: 1000 }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Brakuje 1000 zł, ale na koncie zostało 600 — podpowiedź i limit to 600.
+    expect(component.draftContribution()).toBe(600);
+    expect(documentText()).toContain('możesz wpłacić najwyżej 600,00 zł');
+    component.draftContribution.set(601);
+    expect(component.canContribute()).toBe(false);
+    component.draftContribution.set(600);
+
+    const saving = component.contribute();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/savings/reservations/r1/contributions');
+    expect(request.request.body).toEqual({ amount: 600 });
+    request.flush(row());
+    await saving;
+  });
+
+  it('„Wycofaj” adresuje konkretną wpłatę', async () => {
+    await start();
+    const withHistory = row({
+      amount: 2000, collected: 1000,
+      contributions: [{ id: 'c2', date: '2026-09-02', amount: 600 }, { id: 'c1', date: '2026-08-14', amount: 400 }],
+    });
+    await settleList(response({ reservations: [withHistory] }));
+    const component = fixture.componentInstance as unknown as {
+      openContribute(r: SavingsReservation): void;
+      withdraw(c: { id: string; date: string; amount: number }): Promise<void>;
+    };
+
+    component.openContribute(withHistory);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(documentText()).toContain('Dotychczasowe wpłaty');
+
+    const withdrawing = component.withdraw(withHistory.contributions[1]);
+    http.expectOne((r) => r.method === 'DELETE' && r.url === '/api/savings/reservations/r1/contributions/c1').flush(row());
+    await withdrawing;
   });
 
   it('otwiera modal dodawania, gdy przyszło się z kafla przez ?add=1', async () => {
@@ -294,7 +370,7 @@ describe('Reservations', () => {
     await settleList();
 
     expect(documentText()).toContain('Dodaj rezerwację');
-    expect(documentText()).toContain('PRZESUNIE KOLEJKĘ');
+    expect(documentText()).toContain('Uzbierane rośnie z Twoimi wpłatami na cel.');
   });
 
   it('wysyła termin jako PIERWSZY dzień wybranego miesiąca, licząc go lokalnie', async () => {
@@ -346,9 +422,8 @@ describe('Reservations', () => {
     fixture.detectChanges();
 
     expect(documentText()).toContain('PRZELEW WLASNY');
-    // ⚠️ Bez tego zdania użytkownik rozliczy ubezpieczenie, zobaczy, że wolne środki się
-    // nie ruszyły, i uzna to za błąd. Reguła jest przeciwintuicyjna, więc musi być napisana.
-    expect(documentText()).toContain('NIE zwiększy wolnych środków');
+    // Dialog mówi, co rozliczenie zrobi z wolnymi środkami (#23: przestanie je pomniejszać).
+    expect(documentText()).toContain('przestanie pomniejszać wolne środki');
     expect(documentText()).toContain('Nigdy nie rozliczam automatycznie');
   });
 

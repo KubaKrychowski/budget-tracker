@@ -9,9 +9,8 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Commands;
 /// <summary>„Załóż cel oszczędzania” — rezerwacja z nazwą, kwotą i terminem zaplanowanego zlecenia.</summary>
 /// <remarks>
 /// <para>
-/// Bez nowego bytu (decyzja użytkownika): to zwykła rezerwacja, która zbiera w tej samej kolejce co pozostałe.
-/// Priorytet 0, jak domyślny w modalu rezerwacji — kolejność przy tym samym terminie rozstrzyga moment założenia.
-/// Zlecenie bez terminu zakłada rezerwację „przy okazji”, która zbiera na końcu kolejki.
+/// Bez nowego bytu (decyzja użytkownika): to zwykła rezerwacja — uzbierane rośnie dopiero z wpłatami na ekranie
+/// rezerwacji. Priorytet 0, jak domyślny w modalu rezerwacji. Zlecenie bez terminu zakłada rezerwację „przy okazji”.
 /// </para>
 /// <para>
 /// 409 dla zrealizowanego (nie ma już na co zbierać) i dla zlecenia, które rezerwację już ma — drugi klik

@@ -590,8 +590,8 @@
     "tileTitle": "Rezerwacje na ten rok",
     "tileEmpty": "Nie masz jeszcze żadnych rezerwacji. Nazwij nadchodzący wydatek, a odłożę na niego miejsce w oszczędnościach.",
     "freeFunds": "Wolne środki: {{amount}} zł",
-    "summary": "{{reserved}} zł zarezerwowane · {{settled}} zł rozliczone · wolne środki {{free}} zł",
-    "summaryOver": "{{reserved}} zł zarezerwowane · {{settled}} zł rozliczone · brak wolnych środków",
+    "summary": "{{reserved}} zł zarezerwowane · {{contributed}} zł wpłacone na cele · wolne środki {{free}} zł",
+    "summaryOver": "{{reserved}} zł zarezerwowane · {{contributed}} zł wpłacone na cele · brak wolnych środków",
     "balanceNote": "Stan konta oszczędnościowego: {{balance}} zł. Liczę go jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek.",
     "coveredBy": "Przy obecnym celu miesięcznym resztę rezerwacji uzbierasz do: {{month}}.",
     "add": "Dodaj rezerwację",
@@ -629,8 +629,8 @@
       "namePlaceholder": "Ubezpieczenie OC",
       "amount": "Kwota",
       "due": "Termin",
-      "queueNote": "Rezerwacje zbierają się po kolei — najbliższy termin pierwszy. Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych.",
-      "noDue": "Bez terminu — zbiera po rezerwacjach z terminem"
+      "noDue": "Bez terminu — przy okazji",
+      "contributionsNote": "Uzbierane rośnie z Twoimi wpłatami na cel — założenie rezerwacji niczego nie wpłaca."
     },
     "settleModal": {
       "title": "Czy to było: {{name}}?",
@@ -638,16 +638,16 @@
       "noCandidates": "Nie widzę żadnej nierozliczonej wypłaty z oszczędności w tym budżecie. Rozliczenie zawsze wskazuje realną transakcję — bez niej rezerwacje byłyby listą życzeń.",
       "confirm": "Tak, rozlicz",
       "cancel": "To co innego",
-      "freeFundsNote": "Rozliczenie zamknie tę rezerwację i zdejmie ją z kolejki zbierania, ale NIE zwiększy wolnych środków — koperta jest roczna, więc kwota zostaje zaklepana na cały rok.",
+      "freeFundsNote": "Rozliczenie zamknie tę rezerwację — przestanie przyjmować wpłaty i pomniejszać wolne środki, bo zakup zszedł już z konta.",
       "manualNote": "Nigdy nie rozliczam automatycznie — pomyłka tutaj zamyka kopertę, której nikt nie opłacił, a tego nikt nie zauważy."
     },
     "deleteConfirm": {
       "header": "Usunąć rezerwację „{{name}}\"?",
-      "description": "Kwota przestanie obciążać wolne środki, a kolejka zbierania przesunie się na pozostałe rezerwacje."
+      "description": "Kwota przestanie obciążać wolne środki, a wpłaty na ten cel znikną razem z nim."
     },
     "unsettleConfirm": {
       "header": "Cofnąć rozliczenie „{{name}}\"?",
-      "description": "Rezerwacja wróci do kolejki zbierania, a wskazana wypłata znów będzie dostępna dla innej rezerwacji. Wolne środki się nie zmienią."
+      "description": "Rezerwacja znów będzie pomniejszać wolne środki, a wskazana wypłata będzie dostępna dla innej rezerwacji."
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać rezerwacji"
@@ -656,7 +656,20 @@
     "collected": "Uzbierane",
     "freeFundsBody": "Stan konta oszczędnościowego {{balance}} zł − {{reserved}} zł rezerwacji.",
     "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek.",
-    "noDue": "przy okazji"
+    "noDue": "przy okazji",
+    "contribute": {
+      "action": "Wpłać",
+      "title": "Wpłać na cel „{{name}}”",
+      "alert": "Wpłata jest umowna — pieniądze zostają na koncie oszczędnościowym. Do wpłaty masz {{available}} zł (stan konta minus wpłaty na inne cele).",
+      "amount": "Kwota wpłaty",
+      "missing": "Brakuje {{missing}} zł do pełnej kwoty celu — więcej wpłacić się nie da.",
+      "limitedByBalance": "Brakuje {{missing}} zł do celu, ale teraz możesz wpłacić najwyżej {{max}} zł — reszta oszczędności jest wpłacona na inne cele.",
+      "history": "Dotychczasowe wpłaty",
+      "withdraw": "Wycofaj",
+      "confirm": "Wpłać",
+      "saved": "Wpłacono na cel.",
+      "withdrawn": "Wpłata wycofana."
+    }
   },
   "limits": {
     "title": "Limity wydatków",
@@ -846,7 +859,7 @@
     "undo": "Cofnij do zaplanowanych",
     "saved": "Zlecenie zapisane.",
     "removed": "Zlecenie usunięte. Transakcja została bez zmian.",
-    "reservationCreated": "Założono rezerwację „{{name}}” — zbiera w kolejce rezerwacji jak każda inna.",
+    "reservationCreated": "Założono rezerwację „{{name}}” — wpłacasz na nią na ekranie rezerwacji.",
     "purchased": "Zlecenie przeszło do zrealizowanych.",
     "undone": "Zlecenie wróciło do zaplanowanych.",
     "banner": {
@@ -858,7 +871,7 @@
         "many": "{{count}} zaplanowanych zakupów na {{amount}} zł."
       },
       "withoutSavings": "Bez oszczędzania: {{count}}.",
-      "plannedBody": "Z menu wiersza „Załóż cel oszczędzania” tworzy rezerwację z tą kwotą i terminem — zbiera się z oszczędności jak każda rezerwacja."
+      "plannedBody": "Z menu wiersza „Załóż cel oszczędzania” tworzy rezerwację z tą kwotą i terminem — wpłacasz na nią na ekranie rezerwacji."
     },
     "metrics": {
       "planned": "Zaplanowane",

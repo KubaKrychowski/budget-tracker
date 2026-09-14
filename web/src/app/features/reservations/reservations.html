@@ -48,7 +48,7 @@
                   ? 'reservations.summary'
                   : 'reservations.summaryOver') | translate: {
                  reserved: money(data()?.reservedTotal),
-                 settled: money(data()?.settledTotal),
+                 contributed: money(data()?.collectedTotal),
                  free: money(data()?.freeFunds)
                } }}
           </p>
@@ -91,7 +91,7 @@
               <th>{{ 'reservations.columns.name' | translate }}</th>
               <th class="res__right">{{ 'reservations.columns.amount' | translate }}</th>
               <th>{{ 'reservations.columns.due' | translate }}</th>
-              <th class="res__right">{{ 'reservations.columns.collected' | translate }}</th>
+              <th>{{ 'reservations.columns.collected' | translate }}</th>
               <th>{{ 'reservations.columns.status' | translate }}</th>
               <th>{{ 'transactions.columns.actions' | translate }}</th>
             </tr>
@@ -102,9 +102,12 @@
                 <td>{{ r.name }}</td>
                 <td class="res__right amount">{{ money(r.amount) }}</td>
                 <td>{{ r.dueMonth ? monthLabel(r.dueMonth) : ('reservations.noDue' | translate) }}</td>
-                <td class="res__right amount">
-                  {{ money(r.collected) }}
-                  <span class="res__percent">{{ percent(r) }}%</span>
+                <!-- Uzbierane to suma wpłat (makieta 239:2030): pasek i „250 z 400 zł”. -->
+                <td>
+                  <div class="res__collected">
+                    <nz-progress [nzPercent]="percent(r)" [nzShowInfo]="false" nzSize="small" />
+                    <span class="amount">{{ money(r.collected) }} z {{ money(r.amount) }} zł</span>
+                  </div>
                 </td>
                 <td>
                   @switch (r.status) {
@@ -127,6 +130,9 @@
                       {{ 'reservations.unsettle' | translate }}
                     </button>
                   } @else {
+                    <button nz-button nzType="link" nzSize="small" (click)="openContribute(r)">
+                      {{ 'reservations.contribute.action' | translate }}
+                    </button>
                     <button nz-button nzType="link" nzSize="small" (click)="openSettle(r)">
                       {{ 'reservations.settle' | translate }}
                     </button>
@@ -198,10 +204,7 @@
         <label for="res-no-due">{{ 'reservations.editor.noDue' | translate }}</label>
       </div>
 
-      <!-- ⚠️ To zdanie MUSI paść PRZED zapisem. Dołożenie rezerwacji z bliższym terminem
-           odbiera uzbierane tym dalszym — arytmetycznie poprawne, na ekranie wygląda jak
-           utrata postępu. Tekst jest w makiecie. -->
-      <p class="res__warning">{{ 'reservations.editor.queueNote' | translate }}</p>
+      <p class="res__hint">{{ 'reservations.editor.contributionsNote' | translate }}</p>
     </ng-container>
   </nz-modal>
 
@@ -237,12 +240,62 @@
         }
       }
 
-      <!-- ⚠️ Dwa zdania, które muszą tu zostać. Pierwsze prostuje najczęstsze nieporozumienie:
-           rozliczenie NIE zwalnia wolnych środków (koperta jest roczna) — bez tego użytkownik
-           rozliczy ubezpieczenie, zobaczy zero zmiany i uzna to za błąd. Drugie tłumaczy,
-           dlaczego nic nie dzieje się automatycznie. -->
+      <!-- Dwa zdania: co rozliczenie robi z wolnymi środkami i dlaczego nic nie dzieje się automatycznie. -->
       <p class="res__hint">{{ 'reservations.settleModal.freeFundsNote' | translate }}</p>
       <p class="res__warning">{{ 'reservations.settleModal.manualNote' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+
+  <!-- ── Modal: wpłać na cel (makieta 239:2116) ──────────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="contributeOpen()"
+    [nzTitle]="'reservations.contribute.title' | translate: { name: contributing()?.name }"
+    (nzOnCancel)="contributeOpen.set(false)"
+    (nzOnOk)="contribute()"
+    [nzOkText]="'reservations.contribute.confirm' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="!canContribute()"
+  >
+    <ng-container *nzModalContent>
+      <!-- Alert na górze dialogu: wpłata jest umowna i ile jeszcze da się wpłacić. -->
+      <nz-alert
+        nzType="info"
+        nzShowIcon
+        [nzMessage]="'reservations.contribute.alert' | translate: { available: money(data()?.availableToContribute) }"
+      />
+
+      <label class="res__label" for="res-contribution">{{ 'reservations.contribute.amount' | translate }}</label>
+      <nz-input-number
+        [nzParser]="parseAmount"
+        id="res-contribution"
+        class="res__field"
+        [ngModel]="draftContribution()"
+        (ngModelChange)="draftContribution.set($event)"
+        [nzMin]="0.01"
+        [nzStep]="100"
+      />
+      <p class="res__hint res__hint--under">
+        @if (maxContribution() < missing()) {
+          {{ 'reservations.contribute.limitedByBalance' | translate: { max: money(maxContribution()), missing: money(missing()) } }}
+        } @else {
+          {{ 'reservations.contribute.missing' | translate: { missing: money(missing()) } }}
+        }
+      </p>
+
+      @if (contributing()?.contributions?.length) {
+        <h4 class="res__contributions-title">{{ 'reservations.contribute.history' | translate }}</h4>
+        <ul class="res__contributions">
+          @for (c of contributing()!.contributions; track c.id) {
+            <li class="res__contribution">
+              <span class="res__contribution-date">{{ dateLabel(c.date) }}</span>
+              <strong class="amount">{{ money(c.amount) }} zł</strong>
+              <button nz-button nzType="link" nzSize="small" (click)="withdraw(c)">
+                {{ 'reservations.contribute.withdraw' | translate }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
     </ng-container>
   </nz-modal>
 </section>
