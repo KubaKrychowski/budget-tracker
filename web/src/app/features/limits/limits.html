@@ -173,7 +173,7 @@
                     <th class="lim__right">{{ 'limits.table.remaining' | translate }}</th>
                     <th>{{ 'limits.table.usage' | translate }}</th>
                     @if (!d.readOnly) {
-                      <th class="lim__right">{{ 'transactions.columns.actions' | translate }}</th>
+                      <th>{{ 'transactions.columns.actions' | translate }}</th>
                     }
                   </tr>
                 </thead>
@@ -213,7 +213,7 @@
                         </div>
                       </td>
                       @if (!d.readOnly) {
-                        <td class="lim__right lim__actions">
+                        <td class="lim__actions">
                           <button nz-button nzType="link" nzSize="small" (click)="openEditor(row)">
                             {{ 'limits.change' | translate }}
                           </button>
