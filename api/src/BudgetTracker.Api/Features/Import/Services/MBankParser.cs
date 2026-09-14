@@ -16,7 +16,13 @@ namespace BudgetTracker.Api.Features.Import.Services;
 /// <list type="bullet">
 ///   <item>kodowanie <b>CP1250</b>, bez BOM — jak PKO, nie UTF-8;</item>
 ///   <item>plik zaczyna kilkanaście linii metadanych klienta i rachunku, każda w innym kształcie —
-///     jedyny stały punkt zaczepienia to nagłówek tabeli operacji, <see cref="ExpectedHeader"/>;</item>
+///     jedyny stały punkt zaczepienia to nagłówek tabeli operacji;</item>
+///   <item>⚠️ nagłówek NIE jest rozpoznawany po dokładnym tekście z polskimi znakami („Data księgowania”
+///     itd.) — na realnym pliku (pobranym wprost z serwisu mBanku) te znaki bywają zniekształcone przez coś
+///     PRZED parserem (np. przejście przez CP1252 zanim plik trafił do CP1250/UTF-8), więc dopasowanie
+///     literału by ten plik odrzuciło jako „nierozpoznany format”, mimo że strukturalnie jest poprawny.
+///     Nagłówek rozpoznajemy więc po KSZTAŁCIE — dokładnie 8 niepustych kolumn zaczynających się od „#” —
+///     to jedyny wiersz metadanych o takiej szerokości, reszta ma 1–3 wypełnione kolumny;</item>
 ///   <item>⚠️ <b>wiersz operacji to CSV wewnątrz CSV.</b> Zewnętrzny plik jest rozdzielany przecinkiem,
 ///     ale każdy wiersz operacji to JEDNO pole w cudzysłowie, wewnątrz którego mBank skleja kolumny
 ///     średnikiem — bo Tytuł operacji czasem zawiera przecinek (np. tytuł przelewu z adresem),
@@ -43,10 +49,10 @@ public sealed class MBankParser : IStatementParser
     /// <summary>Fragment pierwszej linii pliku — jedyny sygnał formatu, zanim zacznie się tabela operacji.</summary>
     private const string ExpectedSignature = "mBank";
 
-    /// <summary>Pierwsza kolumna nagłówka tabeli operacji — metadane nad nim nie mają stałego kształtu.</summary>
-    private const string ExpectedHeader = "#Data księgowania";
-
-    /// <summary>Liczba kolumn po rozbiciu spakowanego wiersza średnikiem (ostatnia bywa pustym ogonem).</summary>
+    /// <summary>
+    /// Liczba kolumn nagłówka tabeli operacji — ten sam próg dla kolumn wewnętrznego (średnikowego)
+    /// wiersza operacji, bo oba mają dokładnie 8 pól.
+    /// </summary>
     private const int MinInnerColumns = 8;
 
     /// <summary>
@@ -98,7 +104,7 @@ public sealed class MBankParser : IStatementParser
 
             if (!sawHeader)
             {
-                if (string.Equals(outer[0].Trim(), ExpectedHeader, StringComparison.OrdinalIgnoreCase))
+                if (LooksLikeOperationsHeader(outer))
                 {
                     sawHeader = true;
                 }
@@ -121,6 +127,17 @@ public sealed class MBankParser : IStatementParser
 
         return rows.OrderBy(r => r.Date).ToList();
     }
+
+    /// <summary>
+    /// Nagłówek tabeli operacji ma dokładnie 8 niepustych kolumn zaczynających się od „#” — jedyny taki
+    /// wiersz w metadanych. Celowo NIE porównujemy tekstu etykiet: polskie znaki w nich bywają
+    /// zniekształcone (patrz uwaga w dokumentacji klasy), a kształt wiersza wystarcza do jednoznacznej
+    /// identyfikacji.
+    /// </summary>
+    private static bool LooksLikeOperationsHeader(string[] cells) =>
+        cells.Length >= MinInnerColumns &&
+        cells[0].TrimStart().StartsWith('#') &&
+        cells.Take(MinInnerColumns).All(c => !string.IsNullOrWhiteSpace(c));
 
     /// <summary>Rozbija spakowany wiersz operacji (jedno pole zewnętrznego CSV) na kolumny mBanku.</summary>
     /// <remarks>
