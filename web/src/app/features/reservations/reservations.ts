@@ -172,6 +172,7 @@ export class Reservations {
     const ok = await this.confirmDialog.confirm({
       header: this.translate.instant('reservations.deleteConfirm.header', { name: row.name }),
       description: this.translate.instant('reservations.deleteConfirm.description'),
+      danger: true,
     });
     if (!ok) return;
 

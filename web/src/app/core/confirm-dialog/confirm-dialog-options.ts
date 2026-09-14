@@ -9,4 +9,9 @@ export interface ConfirmDialogOptions {
   confirmKey?: string;
   confirmText?: string;
   cancelText?: string;
+  /**
+   * Operacja niszcząca (usunięcie) — przycisk potwierdzenia na czerwono. Z `confirmKey` czerwony jest zawsze,
+   * bo klucz do przepisania stawia się wyłącznie przy operacjach, których nie da się łatwo cofnąć.
+   */
+  danger?: boolean;
 }

@@ -21,7 +21,7 @@
 
 <div class="confirm-dialog__actions">
   <button nz-button (click)="cancel()">{{ cancelText() }}</button>
-  <button [class.button-danger]="data.confirmKey" nz-button nzType="primary" [disabled]="confirmDisabled()" (click)="confirm()">
+  <button [class.button-danger]="data.danger || data.confirmKey !== undefined" nz-button nzType="primary" [disabled]="confirmDisabled()" (click)="confirm()">
     {{ confirmText() }}
   </button>
 </div>

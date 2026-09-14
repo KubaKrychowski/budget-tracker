@@ -671,7 +671,6 @@
       "noLimitsBody": "Limit ustawiasz dla kategorii wydatkowej. Obok widzisz, na co w tym miesiącu idą pieniądze — to dobry punkt wyjścia, ale kwotę wybierasz sam.",
       "overOne": "Ponad limitem: {{name}} — {{spent}} zł z {{limit}} zł.",
       "overMany": "Kategorie ponad limitem: {{count}}.",
-      "allFine": "Wszystkie kategorie mieszczą się w limicie.",
       "closedFine": "{{month}} — miesiąc zamknięty. Wszystkie kategorie zmieściły się w limicie.",
       "closedBody": "Pokazuję limity, które obowiązywały w tamtym miesiącu — nie dzisiejsze.",
       "uncategorized": "Wydatki bez kategorii ({{count}}, razem {{amount}} zł) nie liczą się do żadnego limitu, dopóki nie dostaną kategorii."
@@ -700,7 +699,8 @@
     "unlimited": {
       "title": "Wydatki bez limitu",
       "hint": "Kategorie z wydatkami w tym miesiącu, które nie mają limitu",
-      "empty": "Każda kategoria z wydatkami ma limit.",
+      "empty": "Każda kategoria z wydatkami w tym miesiącu ma już limit.",
+      "noSpending": "W tym miesiącu nie ma jeszcze wydatków z kategorią.",
       "set": "Ustaw limit",
       "note": "Te {{amount}} zł nie wchodzi do miesięcznego limitu budżetu — limit budżetu to suma limitów kategorii, nic więcej.",
       "contextNote": "Kwoty z tego miesiąca, tylko jako kontekst — nie podpowiadam limitu."

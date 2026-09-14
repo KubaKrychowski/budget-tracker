@@ -137,7 +137,6 @@ describe('Limits', () => {
           noLimitsClosed: '{{month}} — w tym miesiącu budżet nie miał żadnych limitów.',
           overOne: 'Ponad limitem: {{name}} — {{spent}} zł z {{limit}} zł.',
           overMany: 'Kategorie ponad limitem: {{count}}.',
-          allFine: 'Wszystkie kategorie mieszczą się w limicie.',
           closedFine: '{{month}} — miesiąc zamknięty.',
           uncategorized: 'Wydatki bez kategorii ({{count}}, razem {{amount}} zł) nie liczą się do żadnego limitu.',
         },
@@ -147,7 +146,12 @@ describe('Limits', () => {
           empty: 'Brak limitów w tym miesiącu',
           emptyBudget: 'Brak limitów w tym budżecie',
         },
-        unlimited: { set: 'Ustaw limit' },
+        unlimited: {
+          set: 'Ustaw limit',
+          empty: 'Każda kategoria z wydatkami w tym miesiącu ma już limit.',
+          noSpending: 'W tym miesiącu nie ma jeszcze wydatków z kategorią.',
+          note: 'Te {{amount}} zł nie wchodzi do miesięcznego limitu budżetu.',
+        },
         removeConfirm: { header: 'Usunąć limit „{{name}}”?', description: 'spadnie do {{total}} zł' },
       },
     });
@@ -225,6 +229,31 @@ describe('Limits', () => {
     expect(text()).toContain('120% · 70,00 zł ponad');
   });
 
+  it('bez przekroczeń i bez wydatków bez kategorii nie pokazuje żadnego baneru', async () => {
+    // Decyzja użytkownika: zielony „wszystko w limicie" jest zbędny — tabela mówi to sama.
+    await settle();
+
+    expect(fixture.nativeElement.querySelector('.lim__banner')).toBeNull();
+  });
+
+  it('bez przekroczeń, ale z wydatkami bez kategorii — zostaje samo zdanie o nich', async () => {
+    await settle(response({ uncategorizedCount: 2, uncategorizedAmount: 316.17 }));
+
+    const banner = fixture.nativeElement.querySelector('.lim__banner') as HTMLElement;
+    expect(banner.textContent).toContain('Wydatki bez kategorii (2, razem 316,17 zł)');
+  });
+
+  it('pusta karta „Wydatki bez limitu" mówi, dlaczego jest pusta, i nie pisze o 0,00 zł', async () => {
+    await settle(response({ unlimited: [], spentOutside: 0 }));
+    expect(text()).toContain('Każda kategoria z wydatkami w tym miesiącu ma już limit.');
+    expect(text()).not.toContain('Te 0,00 zł');
+
+    fixture.destroy();
+    fixture = TestBed.createComponent(Limits);
+    await settle(response({ unlimited: [], spentOutside: 0, spentInLimited: 0, limits: [row({ spent: 0, percent: 0, state: 'Ok' })] }));
+    expect(text()).toContain('W tym miesiącu nie ma jeszcze wydatków z kategorią.');
+  });
+
   it('pasek przy przekroczeniu jest pełny, a kreska stoi na progu TEGO limitu', async () => {
     await settle(response({
       limits: [row({ percent: 120, state: 'Over', warningThreshold: 75, spent: 1440, remaining: -240 })],
@@ -299,12 +328,13 @@ describe('Limits', () => {
     expect(api().disabledMonth(new Date(2026, 8, 1))).toBe(false);
   });
 
-  it('usunięcie pyta, podaje nowy limit budżetu i dopiero potem wysyła DELETE', async () => {
+  it('usunięcie pyta czerwonym przyciskiem, podaje nowy limit budżetu i dopiero potem wysyła DELETE', async () => {
     await settle();
 
     const removing = api().remove(row());
     await Promise.resolve();
 
+    expect(confirmDialog.lastOptions?.danger).toBe(true);
     expect(confirmDialog.lastOptions?.header).toBe('Usunąć limit „Jedzenie”?');
     expect(confirmDialog.lastOptions?.description).toBe('spadnie do 0,00 zł');
     http.expectNone((r) => r.method === 'DELETE');

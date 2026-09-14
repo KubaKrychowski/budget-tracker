@@ -225,6 +225,7 @@ export class Limits {
         total: this.money((this.data()?.limitTotal ?? 0) - row.limit),
       }),
       confirmText: this.translate.instant('limits.remove'),
+      danger: true,
     });
     if (!ok) return;
 

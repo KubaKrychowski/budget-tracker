@@ -96,13 +96,14 @@
             [nzMessage]="'limits.banner.closedFine' | translate: { month: monthLabel(d.month) }"
             [nzDescription]="'limits.banner.closedBody' | translate"
           />
-        } @else {
+        } @else if (d.uncategorizedCount > 0) {
+          <!-- Bez przekroczeń baneru „wszystko w limicie" nie ma (decyzja użytkownika) — zostaje tylko
+               ostrzeżenie o wydatkach bez kategorii, bo ono zmienia to, jak czytać resztę ekranu. -->
           <nz-alert
             class="lim__banner"
-            nzType="success"
+            nzType="info"
             nzShowIcon
-            [nzMessage]="'limits.banner.allFine' | translate"
-            [nzDescription]="uncategorizedBody"
+            [nzMessage]="uncategorizedBody"
           />
         }
 
@@ -250,7 +251,11 @@
             <p class="lim__hint">{{ 'limits.unlimited.hint' | translate }}</p>
 
             @if (d.unlimited.length === 0) {
-              <p class="lim__hint">{{ 'limits.unlimited.empty' | translate }}</p>
+              <!-- Pusty stan mówi DLACZEGO jest pusto: albo w miesiącu nie ma wydatków z kategorią,
+                   albo każda taka kategoria ma już limit. Samo „0,00 zł poza limitem" nic nie tłumaczyło. -->
+              <nz-empty
+                nzNotFoundImage="simple"
+                [nzNotFoundContent]="(d.spentInLimited > 0 ? 'limits.unlimited.empty' : 'limits.unlimited.noSpending') | translate" />
             } @else {
               <ul class="lim__list">
                 @for (u of d.unlimited; track u.categoryId) {
@@ -267,11 +272,13 @@
               </ul>
             }
 
-            <p class="lim__hint">
-              {{ (d.limits.length === 0 ? 'limits.unlimited.contextNote' : 'limits.unlimited.note') | translate: {
-                   amount: money(d.spentOutside)
-                 } }}
-            </p>
+            @if (d.unlimited.length > 0) {
+              <p class="lim__hint">
+                {{ (d.limits.length === 0 ? 'limits.unlimited.contextNote' : 'limits.unlimited.note') | translate: {
+                     amount: money(d.spentOutside)
+                   } }}
+              </p>
+            }
           </div>
         </div>
       }
