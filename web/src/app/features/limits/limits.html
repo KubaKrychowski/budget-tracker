@@ -208,13 +208,8 @@
                             ></div>
                             <div class="lim__marker" [style.left.%]="row.warningThreshold"></div>
                           </div>
-                          <span [class.lim__over]="row.state === 'Over'">
-                            @if (row.state === 'Over') {
-                              {{ 'limits.table.overBy' | translate: { percent: row.percent, amount: money(-row.remaining) } }}
-                            } @else {
-                              {{ row.percent }}%
-                            }
-                          </span>
+                          <!-- Sam procent — kwotę ponad limit mówi już kolumna „Pozostało" (na czerwono). -->
+                          <span [class.lim__over]="row.state === 'Over'">{{ row.percent }}%</span>
                         </div>
                       </td>
                       @if (!d.readOnly) {

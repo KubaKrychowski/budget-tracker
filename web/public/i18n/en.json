@@ -627,9 +627,8 @@
       "limit": "Limit",
       "spent": "Spent",
       "remaining": "Left",
-      "usage": "Usage · line = warning threshold",
+      "usage": "Usage",
       "total": "Total",
-      "overBy": "{{percent}}% · {{amount}} over",
       "nextLimit": "from {{month}}: {{amount}}",
       "thresholdLabel": "Warning threshold: {{threshold}}%"
     },

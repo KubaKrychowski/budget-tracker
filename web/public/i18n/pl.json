@@ -690,9 +690,8 @@
       "limit": "Limit",
       "spent": "Wydane",
       "remaining": "Pozostało",
-      "usage": "Wykorzystanie · kreska = próg ostrzeżenia",
+      "usage": "Wykorzystanie",
       "total": "Razem",
-      "overBy": "{{percent}}% · {{amount}} zł ponad",
       "nextLimit": "od {{month}}: {{amount}} zł",
       "thresholdLabel": "Próg ostrzeżenia: {{threshold}}%"
     },

@@ -142,7 +142,6 @@ describe('Limits', () => {
         },
         table: {
           nextLimit: 'od {{month}}: {{amount}} zł',
-          overBy: '{{percent}}% · {{amount}} zł ponad',
           empty: 'Brak limitów w tym miesiącu',
           emptyBudget: 'Brak limitów w tym budżecie',
         },
@@ -226,7 +225,8 @@ describe('Limits', () => {
 
     expect(text()).toContain('Ponad limitem: Rozrywka — 420,00 zł z 350,00 zł.');
     expect(text()).toContain('Wydatki bez kategorii (6, razem 310,00 zł) nie liczą się do żadnego limitu.');
-    expect(text()).toContain('120% · 70,00 zł ponad');
+    expect(text()).toContain('120%');
+    expect(text()).not.toContain('zł ponad');
   });
 
   it('bez przekroczeń i bez wydatków bez kategorii nie pokazuje żadnego baneru', async () => {
