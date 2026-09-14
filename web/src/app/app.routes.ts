@@ -45,6 +45,12 @@ export const routes: Routes = [
     title: 'Zlecenia stałe — Budżet tracker',
   },
   {
+    path: 'episodic-orders',
+    loadComponent: () =>
+      import('./features/episodic-orders/episodic-orders').then((m) => m.EpisodicOrders),
+    title: 'Zlecenia epizodyczne — Budżet tracker',
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/settings/settings').then((m) => m.Settings),

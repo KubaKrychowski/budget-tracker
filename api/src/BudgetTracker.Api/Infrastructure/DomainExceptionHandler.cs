@@ -4,6 +4,7 @@ using BudgetTracker.Api.Features.Budgets.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Limits.Exceptions;
 using BudgetTracker.Api.Features.Savings.Exceptions;
+using BudgetTracker.Api.Features.EpisodicOrders.Exceptions;
 using BudgetTracker.Api.Features.StandingOrders.Exceptions;
 using BudgetTracker.Api.Features.Transactions.Exceptions;
 using BudgetTracker.Api.Infrastructure.Exceptions;
@@ -84,6 +85,10 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         StandingOrderRulesInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_RulesInvalid"),
         StandingOrderAmountInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_AmountInvalid"),
         StandingOrderDueMonthInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_DueMonthInvalid"),
+        EpisodicOrderNameRequiredException => (StatusCodes.Status400BadRequest, "EpisodicOrder_NameRequired"),
+        EpisodicOrderPlanInvalidException => (StatusCodes.Status400BadRequest, "EpisodicOrder_PlanInvalid"),
+        EpisodicOrderTransactionInvalidException => (StatusCodes.Status400BadRequest, "EpisodicOrder_TransactionInvalid"),
+        EpisodicOrderStateConflictException => (StatusCodes.Status409Conflict, "EpisodicOrder_StateConflict"),
 
         // Trzy razy ta sama historia: reguła zapisałaby się bez błędu i nigdy nie zadziałała.
         // 400, bo to wejście jest niepoprawne, a nie stan zasobu.

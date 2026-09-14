@@ -61,21 +61,21 @@
             </ng-template>
           </nz-alert>
         }
-        @case ('noLargeExpense') {
-          <!-- Stan WEJŚCIA w funkcję, nie przypadek brzegowy: flaga „jednorazowy" jest ręczna,
+        @case ('noEpisodicExpense') {
+          <!-- Stan WEJŚCIA w funkcję, nie przypadek brzegowy: zlecenia epizodyczne zakłada się ręcznie,
                więc na zimnym starcie jest ich zero i dowód nie ma jak powstać. -->
           <nz-alert
             class="sav__banner"
             nzType="warning"
             nzShowIcon
-            [nzMessage]="'savings.states.noLargeExpense.title' | translate"
+            [nzMessage]="'savings.states.noEpisodicExpense.title' | translate"
             [nzDescription]="noFlagBody"
           >
             <ng-template #noFlagBody>
-              {{ 'savings.states.noLargeExpense.body' | translate }}
+              {{ 'savings.states.noEpisodicExpense.body' | translate }}
               <br />
-              <a nz-button nzType="primary" class="sav__cta" routerLink="/transactions">
-                {{ 'savings.states.noLargeExpense.cta' | translate }}
+              <a nz-button nzType="primary" class="sav__cta" routerLink="/episodic-orders">
+                {{ 'savings.states.noEpisodicExpense.cta' | translate }}
               </a>
             </ng-template>
           </nz-alert>
@@ -239,8 +239,8 @@
                     <!-- Dokładnie DWIE akcje. Edycji kwoty ani opisu tu nie ma — to robota listy
                          transakcji, a dwa miejsca zapisujące to samo pole rozjadą się. -->
                     @if (m.oneOffCount > 0) {
-                      <button nz-button nzType="link" nzSize="small" (click)="clearOneOff(m)">
-                        {{ 'savings.months.notOneOff' | translate }}
+                      <button nz-button nzType="link" nzSize="small" (click)="showEpisodic()">
+                        {{ 'savings.months.showEpisodic' | translate }}
                       </button>
                     }
                     <button nz-button nzType="link" nzSize="small" (click)="showInTransactions(m)">

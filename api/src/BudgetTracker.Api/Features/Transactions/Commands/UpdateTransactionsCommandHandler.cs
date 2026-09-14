@@ -56,7 +56,7 @@ public sealed class UpdateTransactionsCommandHandler(
             if (!transactions.TryGetValue(edit.Id, out var transaction))
                 throw new TransactionNotFoundException(edit.Id);
 
-            transaction.Edit(edit.Date, edit.Description.Trim(), edit.Amount, edit.IsLargeExpense);
+            transaction.Edit(edit.Date, edit.Description.Trim(), edit.Amount);
 
             var newCategoryKey = ResolveCategory(edit.CategoryId, categoryKeys);
             if (newCategoryKey != transaction.CategoryId)

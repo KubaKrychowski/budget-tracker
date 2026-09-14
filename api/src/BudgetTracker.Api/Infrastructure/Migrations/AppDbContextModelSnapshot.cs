@@ -283,6 +283,67 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BudgetTracker.Api.Domain.EpisodicOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BudgetBusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateOnly?>("DueMonth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal?>("PlannedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("ReservationBusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TransactionBusinessId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetBusinessId");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("TransactionBusinessId")
+                        .IsUnique()
+                        .HasFilter("\"TransactionBusinessId\" IS NOT NULL AND \"DeletedAt\" IS NULL");
+
+                    b.ToTable("EpisodicOrders");
+                });
+
             modelBuilder.Entity("BudgetTracker.Api.Domain.ImportBatch", b =>
                 {
                     b.Property<int>("Id")
@@ -597,9 +658,6 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.Property<int?>("ImportBatchId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsLargeExpense")
-                        .HasColumnType("boolean");
-
                     b.Property<Guid?>("StandingOrderBusinessId")
                         .HasColumnType("uuid");
 
@@ -713,6 +771,14 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         .HasForeignKey("Direction")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.EpisodicOrder", b =>
+                {
+                    b.HasOne("BudgetTracker.Api.Domain.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("BudgetTracker.Api.Domain.ImportBatch", b =>

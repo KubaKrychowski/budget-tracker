@@ -53,7 +53,7 @@ export interface SavingsResponse {
   readonly depositedThisYear: number;
   readonly raiseSuggestion: RaiseGoalSuggestion | null;
   /** `false` włącza stan „Brak oznaczonych wydatków" — bez nich dowód nie ma jak powstać. */
-  readonly hasAnyLargeExpense: boolean;
+  readonly hasAnyEpisodicExpense: boolean;
   /** `false` przy istniejącym celu znaczy najczęściej: przelew nie trafił w kategorię. */
   readonly hasAnySavings: boolean;
   readonly selectedBudgetIds: string[];

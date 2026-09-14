@@ -1,0 +1,354 @@
+<section class="eo">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>
+      <img class="eo__crumb-icon" src="icons/wydatki-epizodyczne-azure.svg" alt="" width="20" height="20" />
+      {{ 'episodicOrders.title' | translate }}
+    </nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  @if (failure(); as problem) {
+    <nz-alert nzType="error" nzShowIcon [nzMessage]="'episodicOrders.errors.loadFailed' | translate" [nzDescription]="failureBody">
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">{{ 'transactions.errors.retry' | translate }}</button>
+      </ng-template>
+    </nz-alert>
+  } @else {
+    @if (lastData(); as last) {
+      <!-- Karta „Konfiguracja”, jak na ekranie zleceń stałych (makieta 219:203). -->
+      <div class="eo__config">
+        <h3 class="eo__config-title">{{ 'dashboard.configuration' | translate }}</h3>
+        <app-budget-switcher
+          [budgets]="last.budgets"
+          [selectedId]="last.selectedBudgetIds[0] ?? null"
+          (budgetChange)="switchBudget($event)" />
+      </div>
+    }
+
+    <nz-spin [nzSpinning]="loading() || busy()">
+      @if (data(); as d) {
+        <!-- ── Baner ─────────────────────────────────────────────────────────────────────── -->
+        @if (d.planned.length === 0 && d.realized.length === 0) {
+          <nz-alert class="eo__banner" nzType="info" nzShowIcon
+            [nzMessage]="'episodicOrders.banner.empty' | translate"
+            [nzDescription]="'episodicOrders.banner.emptyBody' | translate" />
+        } @else if (d.planned.length > 0) {
+          <ng-template #plannedTitle>
+            {{ ('episodicOrders.banner.planned.' + pluralForm(d.planned.length)) | translate: {
+                 count: d.planned.length, amount: wholeMoney(d.plannedTotal)
+               } }}
+            @if (d.withoutSavingsCount > 0) {
+              {{ 'episodicOrders.banner.withoutSavings' | translate: { count: d.withoutSavingsCount } }}
+            }
+          </ng-template>
+          <nz-alert class="eo__banner" nzType="info" nzShowIcon
+            [nzMessage]="plannedTitle"
+            [nzDescription]="'episodicOrders.banner.plannedBody' | translate" />
+        }
+
+        <!-- ── Podsumowanie ───────────────────────────────────────────────────────────── -->
+        <h2 class="eo__caption">{{ 'episodicOrders.summary' | translate }}</h2>
+        <div class="eo__metrics">
+          <nz-statistic [nzTitle]="'episodicOrders.metrics.planned' | translate"
+            [nzValue]="wholeMoney(d.plannedTotal)" [nzSuffix]="'dashboard.currency' | translate" />
+          <nz-statistic [nzTitle]="'episodicOrders.metrics.collected' | translate"
+            [nzValue]="wholeMoney(d.collectedTotal) + ' z ' + wholeMoney(d.reservedTotal)" [nzSuffix]="'dashboard.currency' | translate" />
+          <nz-statistic [nzTitle]="'episodicOrders.metrics.realizedThisYear' | translate"
+            [nzValue]="wholeMoney(d.realizedThisYear)" [nzSuffix]="'dashboard.currency' | translate" />
+          <nz-statistic [nzTitle]="'episodicOrders.metrics.withoutSavings' | translate"
+            [nzValue]="d.planned.length > 0 ? d.withoutSavingsCount + ' z ' + d.planned.length : '—'" />
+        </div>
+
+        <div class="eo__cols">
+          <!-- ── Tabela zleceń ──────────────────────────────────────────────────────────── -->
+          <div class="eo__card">
+            <h3 class="eo__card-title">{{ 'episodicOrders.table.title' | translate }}</h3>
+            <p class="eo__hint">{{ 'episodicOrders.table.hint' | translate }}</p>
+
+            <div class="eo__toolbar" role="tablist">
+              <button nz-button nzType="link" role="tab" class="eo__tab" [class.eo__tab--active]="tab() === 'planned'"
+                [attr.aria-selected]="tab() === 'planned'" (click)="switchTab('planned')">
+                {{ 'episodicOrders.tabs.planned' | translate: { count: d.planned.length } }}
+              </button>
+              <button nz-button nzType="link" role="tab" class="eo__tab" [class.eo__tab--active]="tab() === 'realized'"
+                [attr.aria-selected]="tab() === 'realized'" (click)="switchTab('realized')">
+                {{ 'episodicOrders.tabs.realized' | translate: { count: d.realized.length } }}
+              </button>
+              <span class="eo__spacer"></span>
+              <button nz-button nzType="primary" (click)="openEditor(null)">
+                <nz-icon nzType="plus-circle" />
+                {{ 'episodicOrders.add' | translate }}
+              </button>
+            </div>
+
+            @if (rows().length === 0) {
+              <nz-empty [nzNotFoundContent]="('episodicOrders.table.empty.' + tab()) | translate" />
+            } @else if (tab() === 'planned') {
+              <nz-table #plannedTable [nzData]="rows()" [nzPageSize]="20" [nzHideOnSinglePage]="true" nzSize="middle">
+                <thead>
+                  <tr>
+                    <th>{{ 'episodicOrders.table.name' | translate }}</th>
+                    <th>{{ 'episodicOrders.table.category' | translate }}</th>
+                    <th class="eo__right">{{ 'episodicOrders.table.amount' | translate }}</th>
+                    <th>{{ 'episodicOrders.table.due' | translate }}</th>
+                    <th>{{ 'episodicOrders.table.savings' | translate }}</th>
+                    <th>{{ 'transactions.columns.actions' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of plannedTable.data; track row.id) {
+                    <tr>
+                      <td>
+                        {{ row.name }}
+                        @if (row.description) { <span class="eo__description">{{ row.description }}</span> }
+                      </td>
+                      <td>{{ row.categoryName ?? '—' }}</td>
+                      <td class="eo__right amount">{{ wholeMoney(row.amount) }} zł</td>
+                      <td>{{ monthYear(row.dueMonth) }}</td>
+                      <td>
+                        @if (row.reservationId) {
+                          <div class="eo__progress">
+                            <nz-progress [nzPercent]="collectedPercent(row)" [nzShowInfo]="false" nzSize="small" />
+                            <span class="amount">{{ wholeMoney(row.collected) }} z {{ wholeMoney(row.amount) }} zł</span>
+                          </div>
+                        } @else {
+                          <span class="eo__muted">{{ 'episodicOrders.table.noSavings' | translate }}</span>
+                        }
+                      </td>
+                      <td>
+                        <!-- Menu wiersza (makieta 219:203): „Załóż cel oszczędzania” pierwsza, bo po to jest lista. -->
+                        <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="plannedMenu" nzTrigger="click"
+                          [attr.aria-label]="'transactions.columns.actions' | translate">⋯</button>
+                        <nz-dropdown-menu #plannedMenu="nzDropdownMenu">
+                          <ul nz-menu>
+                            @if (row.reservationId) {
+                              <li nz-menu-item tabindex="0" routerLink="/reservations">
+                                <strong>{{ 'episodicOrders.showReservation' | translate }}</strong>
+                              </li>
+                            } @else {
+                              <li nz-menu-item tabindex="0" (click)="createReservation(row)" (keydown.enter)="createReservation(row)">
+                                <strong>{{ 'episodicOrders.createReservation' | translate }}</strong>
+                              </li>
+                            }
+                            <li nz-menu-item tabindex="0" (click)="openPurchase(row)" (keydown.enter)="openPurchase(row)">
+                              {{ 'episodicOrders.markPurchased' | translate }}
+                            </li>
+                            <li nz-menu-item tabindex="0" (click)="openEditor(row)" (keydown.enter)="openEditor(row)">
+                              {{ 'episodicOrders.change' | translate }}
+                            </li>
+                            <li nz-menu-item nzDanger tabindex="0" (click)="remove(row)" (keydown.enter)="remove(row)">
+                              {{ 'episodicOrders.remove' | translate }}
+                            </li>
+                          </ul>
+                        </nz-dropdown-menu>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </nz-table>
+            } @else {
+              <nz-table #realizedTable [nzData]="rows()" [nzPageSize]="20" [nzHideOnSinglePage]="true" nzSize="middle">
+                <thead>
+                  <tr>
+                    <th>{{ 'episodicOrders.table.name' | translate }}</th>
+                    <th>{{ 'episodicOrders.table.category' | translate }}</th>
+                    <th class="eo__right">{{ 'episodicOrders.table.amount' | translate }}</th>
+                    <th>{{ 'episodicOrders.table.date' | translate }}</th>
+                    <th>{{ 'episodicOrders.table.transaction' | translate }}</th>
+                    <th>{{ 'transactions.columns.actions' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of realizedTable.data; track row.id) {
+                    <tr>
+                      <td>
+                        {{ row.name }}
+                        @if (row.description) { <span class="eo__description">{{ row.description }}</span> }
+                      </td>
+                      <td>{{ row.categoryName ?? '—' }}</td>
+                      <td class="eo__right amount">{{ wholeMoney(row.amount) }} zł</td>
+                      <td>{{ fullDate(row.date) }}</td>
+                      <td class="eo__transaction" [title]="row.transactionDescription ?? ''">
+                        {{ row.transactionDescription }} ·
+                        {{ (row.reservationId ? 'episodicOrders.source.reservation' : 'episodicOrders.source.unplanned') | translate }}
+                      </td>
+                      <td>
+                        <!-- Menu wiersza zrealizowanego (makieta 232:938). -->
+                        <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="realizedMenu" nzTrigger="click"
+                          [attr.aria-label]="'transactions.columns.actions' | translate">⋯</button>
+                        <nz-dropdown-menu #realizedMenu="nzDropdownMenu">
+                          <ul nz-menu>
+                            <li nz-menu-item tabindex="0" (click)="goToTransaction(row)" (keydown.enter)="goToTransaction(row)">
+                              <strong>{{ 'episodicOrders.goToTransaction' | translate }}</strong>
+                            </li>
+                            <li nz-menu-item tabindex="0" (click)="openEditor(row)" (keydown.enter)="openEditor(row)">
+                              {{ 'episodicOrders.change' | translate }}
+                            </li>
+                            @if (row.wasPlanned) {
+                              <li nz-menu-item tabindex="0" (click)="undoPurchase(row)" (keydown.enter)="undoPurchase(row)">
+                                {{ 'episodicOrders.undo' | translate }}
+                              </li>
+                            }
+                            <li nz-menu-item nzDanger tabindex="0" (click)="remove(row)" (keydown.enter)="remove(row)">
+                              {{ 'episodicOrders.remove' | translate }}
+                            </li>
+                          </ul>
+                        </nz-dropdown-menu>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </nz-table>
+            }
+          </div>
+
+          <!-- ── Zrealizowane ostatnio ──────────────────────────────────────────────────── -->
+          <div class="eo__card">
+            <h3 class="eo__card-title">{{ 'episodicOrders.recent.title' | translate }}</h3>
+            <p class="eo__hint">{{ 'episodicOrders.recent.hint' | translate }}</p>
+
+            @if (recent().length === 0) {
+              <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="'episodicOrders.recent.empty' | translate" />
+            } @else {
+              <ul class="eo__list">
+                @for (row of recent(); track row.id) {
+                  <li class="eo__list-row">
+                    <span class="eo__list-name">{{ dayMonth(row.date) }} · {{ row.name }}</span>
+                    <span class="amount eo__list-amount">{{ wholeMoney(row.amount) }} zł</span>
+                    <span class="eo__source" [class.eo__source--reservation]="row.reservationId">
+                      {{ (row.reservationId ? 'episodicOrders.source.reservation' : 'episodicOrders.source.unplanned') | translate }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+            <p class="eo__hint">{{ 'episodicOrders.recent.note' | translate }}</p>
+          </div>
+        </div>
+      }
+    </nz-spin>
+  }
+
+  <!-- ── Modal zlecenia (makiety 221:754 i 222:3015) ───────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="editorOpen()"
+    [nzTitle]="(editing() ? 'episodicOrders.editor.editTitle' : 'episodicOrders.editor.addTitle') | translate"
+    (nzOnCancel)="editorOpen.set(false)"
+    (nzOnOk)="save()"
+    [nzOkText]="'episodicOrders.editor.save' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="!canSave()"
+  >
+    <ng-container *nzModalContent>
+      <p class="eo__hint">{{ 'episodicOrders.editor.note' | translate }}</p>
+
+      <!-- Rodzaj wybiera się tylko przy dodawaniu — zmiana nie przerabia zaplanowanego w zrealizowane. -->
+      @if (editing() === null) {
+        <nz-segmented class="eo__kind"
+          [nzOptions]="[
+            { label: ('episodicOrders.editor.planned' | translate), value: 'planned' },
+            { label: ('episodicOrders.editor.realized' | translate), value: 'realized' }
+          ]"
+          [ngModel]="kind()" (ngModelChange)="switchKind($event)" />
+      }
+
+      @if (kind() === 'realized' && editing() === null) {
+        <nz-alert class="eo__alert" nzType="info" nzShowIcon [nzMessage]="'episodicOrders.editor.realizedAlert' | translate" />
+      }
+
+      <label class="eo__label" for="eo-name">{{ 'episodicOrders.editor.name' | translate }}</label>
+      <input id="eo-name" nz-input class="eo__field" maxlength="100" [ngModel]="draftName()" (ngModelChange)="draftName.set($event)"
+        [placeholder]="'episodicOrders.editor.namePlaceholder' | translate" />
+
+      <label class="eo__label" for="eo-description">{{ 'episodicOrders.editor.description' | translate }}</label>
+      <textarea id="eo-description" nz-input class="eo__field" rows="3" maxlength="1000"
+        [ngModel]="draftDescription()" (ngModelChange)="draftDescription.set($event)"
+        [placeholder]="'episodicOrders.editor.descriptionPlaceholder' | translate"></textarea>
+
+      @if (kind() === 'planned') {
+        <label class="eo__label" for="eo-category">{{ 'episodicOrders.editor.category' | translate }}</label>
+        <nz-select nzId="eo-category" class="eo__field" nzShowSearch [ngModel]="draftCategoryId()" (ngModelChange)="draftCategoryId.set($event)"
+          [nzPlaceHolder]="'episodicOrders.editor.categoryPlaceholder' | translate">
+          @for (c of categories(); track c.id) {
+            <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+          }
+        </nz-select>
+
+        <label class="eo__label" for="eo-amount">{{ 'episodicOrders.editor.amount' | translate }}</label>
+        <nz-input-number [nzParser]="parseAmount" id="eo-amount" class="eo__field" [nzMin]="0.01" [nzStep]="100"
+          [ngModel]="draftAmount()" (ngModelChange)="draftAmount.set($event)" />
+
+        <label class="eo__label" for="eo-due">{{ 'episodicOrders.editor.due' | translate }}</label>
+        <!-- Miesiąc, nie dzień — tak samo jak termin rezerwacji, którą zlecenie może założyć. -->
+        <nz-date-picker id="eo-due" class="eo__field" nzMode="month" [nzAllowClear]="false"
+          [ngModel]="draftDueMonth()" (ngModelChange)="draftDueMonth.set($event)" />
+      } @else if (editing() === null) {
+        <label class="eo__label" for="eo-transaction">{{ 'episodicOrders.editor.transaction' | translate }}</label>
+        <nz-select nzId="eo-transaction" class="eo__field" nzShowSearch nzServerSearch [nzLoading]="candidatesLoading()"
+          [ngModel]="draftTransactionId()" (ngModelChange)="draftTransactionId.set($event)" (nzOnSearch)="searchCandidates($event)"
+          [nzPlaceHolder]="'episodicOrders.editor.transactionPlaceholder' | translate">
+          @for (c of candidates(); track c.id) {
+            <nz-option [nzValue]="c.id" [nzLabel]="dayMonth(c.date) + ' · ' + c.description + ' · ' + money(c.amount) + ' zł'" />
+          }
+        </nz-select>
+        <p class="eo__hint eo__hint--under">
+          @if (chosenCandidate(); as c) {
+            {{ 'episodicOrders.editor.transactionChosen' | translate: {
+                 category: c.categoryName ?? ('transactions.filters.uncategorized' | translate), amount: money(-c.amount)
+               } }}
+          } @else {
+            {{ 'episodicOrders.editor.transactionHint' | translate }}
+          }
+        </p>
+      }
+    </ng-container>
+  </nz-modal>
+
+  <!-- ── Dialog „Oznacz jako kupione” (makieta 232:891) ────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="purchaseOpen()"
+    [nzTitle]="'episodicOrders.purchase.title' | translate: { name: purchasing()?.name }"
+    (nzOnCancel)="purchaseOpen.set(false)"
+    (nzOnOk)="confirmPurchase()"
+    [nzOkText]="'episodicOrders.purchase.confirm' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="purchaseTransactionId() === null"
+  >
+    <ng-container *nzModalContent>
+      <p class="eo__hint">{{ 'episodicOrders.purchase.note' | translate }}</p>
+      @if (purchasing()?.reservationId) {
+        <nz-alert class="eo__alert" nzType="info" nzShowIcon
+          [nzMessage]="'episodicOrders.purchase.alert' | translate: {
+            name: purchasing()?.name, amount: money(purchasing()?.amount)
+          }" />
+      }
+
+      <label class="eo__label" for="eo-purchase-search">{{ 'episodicOrders.purchase.transaction' | translate }}</label>
+      <input id="eo-purchase-search" nz-input class="eo__field" [ngModel]="purchaseSearch()" (ngModelChange)="onPurchaseSearch($event)"
+        [placeholder]="'episodicOrders.purchase.searchPlaceholder' | translate" />
+
+      <nz-spin [nzSpinning]="candidatesLoading()">
+        @if (candidates().length === 0) {
+          <p class="eo__muted eo__candidates-empty">{{ 'episodicOrders.purchase.empty' | translate }}</p>
+        } @else {
+          <!-- Wiersze-przyciski z rolą radio: cały wiersz jest celem kliknięcia, jak na makiecie. -->
+          <div class="eo__candidates" role="radiogroup" [attr.aria-label]="'episodicOrders.purchase.transaction' | translate">
+            @for (c of candidates(); track c.id) {
+              <button type="button" role="radio" class="eo__candidate" [class.eo__candidate--chosen]="purchaseTransactionId() === c.id"
+                [attr.aria-checked]="purchaseTransactionId() === c.id" (click)="purchaseTransactionId.set(c.id)">
+                <span class="eo__radio" aria-hidden="true"></span>
+                <span class="eo__candidate-title">{{ dayMonth(c.date) }} · {{ c.description }}</span>
+                <span class="amount">{{ money(c.amount) }} zł</span>
+              </button>
+            }
+          </div>
+        }
+      </nz-spin>
+      <p class="eo__hint eo__hint--under">{{ 'episodicOrders.purchase.hint' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+</section>

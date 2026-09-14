@@ -11,7 +11,6 @@ public class Transaction(
     TransactionStatus status,
     int? categoryId = null,
     decimal? confidence = null,
-    bool isLargeExpense = false,
     string transactionType = "",
     string? externalReference = null,
     Guid? budgetBusinessId = null,
@@ -31,9 +30,6 @@ public class Transaction(
     public decimal Amount { get; protected set; } = amount;
 
     public string Description { get; protected set; } = description;
-
-    /// <summary>Flaga „duży wydatek" — proces 4 z Etapu 0, nie osobny ekran.</summary>
-    public bool IsLargeExpense { get; protected set; } = isLargeExpense;
 
     /// <summary>
     /// Klucz obcy do <see cref="Domain.Category"/> — bez nawigacji (CLAUDE.md §5). Nazwę kategorii
@@ -117,13 +113,13 @@ public class Transaction(
     /// <remarks>
     /// Kategoria NIE jest tu ustawiana, choć edytuje się ją w tym samym wierszu: jej zmiana
     /// pociąga za sobą status i pewność, więc ma własną metodę (<see cref="Recategorize"/>).
+    /// Większy wydatek oznacza się zleceniem epizodycznym (<see cref="EpisodicOrder"/>), nie polem transakcji.
     /// </remarks>
-    public void Edit(DateOnly date, string description, decimal amount, bool isLargeExpense)
+    public void Edit(DateOnly date, string description, decimal amount)
     {
         Date = date;
         Description = description;
         Amount = amount;
-        IsLargeExpense = isLargeExpense;
     }
 
     /// <summary>Zmiana kategorii razem ze statusem i pewnością — trzy pola, które muszą ruszać się RAZEM.</summary>

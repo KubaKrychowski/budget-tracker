@@ -12,9 +12,6 @@ namespace BudgetTracker.Api.Features.Transactions.Services;
 /// </summary>
 public sealed class TransactionFilters(AppDbContext db)
 {
-    /// <summary>Znak ucieczki dla <c>ILIKE</c> — musi być podany jawnie, Postgres nie zakłada żadnego.</summary>
-    private const string LikeEscapeChar = "\\";
-
     /// <summary>Zawęża <paramref name="query"/> do wierszy pasujących do <paramref name="filter"/>.</summary>
     /// <remarks>
     /// <list type="bullet">
@@ -22,7 +19,7 @@ public sealed class TransactionFilters(AppDbContext db)
     /// transakcja nie ma nawigacji do kategorii (CLAUDE.md §5).</item>
     /// <item>Zakres „od-do" działa na WARTOŚCI BEZWZGLĘDNEJ — użytkownik wpisuje kwotę bez znaku,
     /// tak jak ją widzi w kolumnie, niezależnie od kierunku transakcji.</item>
-    /// <item>Szukana fraza jest DANYMI, nie wzorcem — patrz <see cref="EscapeLikePattern"/>.</item>
+    /// <item>Szukana fraza jest DANYMI, nie wzorcem — patrz <see cref="LikePattern.Contains"/>.</item>
     /// </list>
     /// </remarks>
     public IQueryable<Transaction> Apply(IQueryable<Transaction> query, TransactionFilterRequestDto filter)
@@ -54,8 +51,8 @@ public sealed class TransactionFilters(AppDbContext db)
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var pattern = $"%{EscapeLikePattern(filter.Search)}%";
-            query = query.Where(t => EF.Functions.ILike(t.Description, pattern, LikeEscapeChar));
+            var pattern = LikePattern.Contains(filter.Search);
+            query = query.Where(t => EF.Functions.ILike(t.Description, pattern, LikePattern.EscapeChar));
         }
 
         return query;
@@ -66,19 +63,4 @@ public sealed class TransactionFilters(AppDbContext db)
         standingOrderId is { } id
             ? await db.StandingOrders.Where(o => o.BusinessId == id).Select(o => o.Name).FirstOrDefaultAsync(ct)
             : null;
-
-    /// <summary>
-    /// Neutralizuje metaznaki LIKE w tekście od użytkownika.
-    /// </summary>
-    /// <remarks>
-    /// Bez tego szukanie „5%" (np. stawki podatku w opisie) zamienia się we wzorzec <c>%5%%</c>, czyli po prostu
-    /// „zawiera 5" — i wyszukiwarka zwraca „ODSETKI 15 PLN" jako trafienie. To nie jest dziura na wstrzyknięcie
-    /// SQL (zapytanie i tak leci parametrem), tylko cicho błędne wyniki.
-    ///
-    /// Backslash pierwszy, inaczej podwoiłby ucieczki dopisane w kolejnych krokach.
-    /// </remarks>
-    private static string EscapeLikePattern(string value) => value
-        .Replace("\\", "\\\\")
-        .Replace("%", "\\%")
-        .Replace("_", "\\_");
 }

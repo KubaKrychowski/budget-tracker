@@ -21,7 +21,6 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
-import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -71,6 +70,9 @@ interface Crumb {
  */
 const DescriptionMaxLength = 500;
 
+/** Najdłuższa nazwa zlecenia epizodycznego — `HasMaxLength(100)` w API. */
+const EPISODIC_NAME_MAX = 100;
+
 /**
  * Dokładnie te wartości, których backend oczekuje w query stringu — wiązanie enuma
  * w minimalnym API jest wrażliwe na wielkość liter ("all" dawało 400, "All" nie).
@@ -116,7 +118,7 @@ interface SelectionPayload {
     CommonModule, FormsModule, RouterLink,
     NzAlertModule, NzBadgeModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule,
     NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule,
-    NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzSwitchModule, NzTableModule, NzTagModule,
+    NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule, NzTagModule,
     TranslatePipe, EnumTranslatePipe,
   ],
   templateUrl: './transactions.html',
@@ -531,7 +533,6 @@ export class Transactions {
         description: item.description,
         amount: item.amount,
         categoryId: item.categoryId,
-        isLargeExpense: item.isLargeExpense,
       };
     }
     this.drafts.set(next);
@@ -596,7 +597,6 @@ export class Transactions {
             description: d.description.trim(),
             amount: d.amount,
             categoryId: d.categoryId,
-            isLargeExpense: d.isLargeExpense,
           };
         }),
       }));
@@ -615,7 +615,7 @@ export class Transactions {
 
   // ── Menu wiersza (⋮) ─────────────────────────────────────────────────────────────────
   //
-  // Makieta: klik w „⋮" otwiera menu (Edytuj / Usuń / Oznacz jako duży wydatek), a nie
+  // Makieta: klik w „⋮" otwiera menu (Edytuj / Oznacz jako zlecenie epizodyczne / Usuń), a nie
   // wchodzi od razu w edycję. Wiersz pod kursorem zapamiętujemy przy otwarciu menu —
   // ten sam wzorzec co w kroku 3 importu.
 
@@ -631,11 +631,51 @@ export class Transactions {
     if (row) void this.bulkDelete(this.singleRowSelection(row.id), 1);
   }
 
-  /** Przełącznik, nie „ustaw" — wiersz zna swój stan, więc menu proponuje tylko ruch odwrotny. */
-  protected toggleMenuRowLargeExpense(): void {
+  // ── Zlecenie epizodyczne z wiersza (makieta 234:1014) ────────────────────────────────
+  //
+  // Zastępuje flagę „duży wydatek”. Bez akcji masowej: każde zlecenie potrzebuje własnej nazwy.
+
+  protected readonly episodicOpen = signal(false);
+  protected readonly episodicRow = signal<TransactionListItem | null>(null);
+  protected readonly episodicName = signal('');
+  protected readonly episodicDescription = signal('');
+
+  /** Wiersz ze zleceniem proponuje przejście do niego, bez zleceniem — założenie; nigdy oba naraz. */
+  protected episodicMenuRow(): void {
     const row = this.menuRow();
-    if (row) {
-      void this.bulkSetLargeExpense(!row.isLargeExpense, this.singleRowSelection(row.id), 1);
+    if (!row) return;
+    if (row.episodicOrderId) {
+      void this.router.navigate(['/episodic-orders'], { queryParams: { tab: 'realized' } });
+      return;
+    }
+    this.episodicRow.set(row);
+    // Podpowiedź z tytułu przelewu — i tak do poprawienia, ale pusta nazwa to kolejny krok do zrobienia.
+    this.episodicName.set(row.description.slice(0, EPISODIC_NAME_MAX));
+    this.episodicDescription.set('');
+    this.episodicOpen.set(true);
+  }
+
+  protected async saveEpisodic(): Promise<void> {
+    const row = this.episodicRow();
+    const name = this.episodicName().trim();
+    if (!row || name.length === 0) return;
+
+    try {
+      // Bez budżetu — serwer bierze budżet TRANSAKCJI, bo lista pokazuje kilka budżetów naraz.
+      await firstValueFrom(this.http.post('/api/episodic-orders', {
+        budgetId: null,
+        name,
+        description: this.episodicDescription().trim() || null,
+        transactionId: row.id,
+        categoryId: null,
+        amount: null,
+        dueMonth: null,
+      }));
+      this.episodicOpen.set(false);
+      this.message.success(this.translate.instant('transactions.episodic.saved', { name }));
+      this.list.reload();
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
     }
   }
 
@@ -656,20 +696,6 @@ export class Transactions {
 
     await firstValueFrom(this.http.post('/api/transactions/bulk-delete', { selection }));
     this.message.success(this.translate.instant('transactions.bulkDelete.success', { count }));
-    this.clearSelection();
-    this.list.reload();
-  }
-
-  protected async bulkSetLargeExpense(
-    value: boolean,
-    selection: SelectionPayload = this.buildSelection(),
-    count: number = this.selectionCount(),
-  ): Promise<void> {
-    await firstValueFrom(this.http.post('/api/transactions/bulk-large-expense', {
-      selection,
-      isLargeExpense: value,
-    }));
-    this.message.success(this.translate.instant('transactions.bulkLargeExpense.success', { count }));
     this.clearSelection();
     this.list.reload();
   }

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
@@ -60,7 +60,7 @@ describe('Savings', () => {
     proofCount: 1,
     depositedThisYear: 14200,
     raiseSuggestion: null,
-    hasAnyLargeExpense: true,
+    hasAnyEpisodicExpense: true,
     hasAnySavings: true,
     selectedBudgetIds: ['b1'],
     budgets: [
@@ -115,6 +115,7 @@ describe('Savings', () => {
         provideRouter([
           { path: 'dashboard', children: [] },
           { path: 'transactions', children: [] },
+          { path: 'episodic-orders', children: [] },
         ]),
         provideNoopAnimations(),
         provideTranslateService(),
@@ -129,10 +130,10 @@ describe('Savings', () => {
       savings: {
         states: {
           noGoal: { title: 'Nie masz jeszcze celu oszczędnościowego.', body: 'Ustaw kwotę.' },
-          noLargeExpense: {
-            title: 'Nie oznaczyłeś żadnego jednorazowego wydatku.',
+          noEpisodicExpense: {
+            title: 'Nie masz jeszcze żadnego zrealizowanego zlecenia epizodycznego.',
             body: 'Bez nich dowód nie powstanie.',
-            cta: 'Przejdź do listy transakcji',
+            cta: 'Przejdź do zleceń epizodycznych',
           },
           proof: {
             title: 'Odłożyłeś {{amount}} zł także w {{month}} — miesiącu z {{oneOff}} zł jednorazowych.',
@@ -152,7 +153,6 @@ describe('Savings', () => {
         raiseGoal: 'Podnieś cel do {{amount}} zł',
         raiseSuggestion: 'Masz {{count}} miesiące z dowodem. Zapas ok. {{headroom}} zł.',
         endConfirm: { header: 'Zrezygnować z celu?', description: 'Zostanie zakończony datą.' },
-        clearOneOffConfirm: { header: 'Zdjąć oznaczenie?', description: '{{month}} / {{count}}' },
       },
       reservations: {
         tileTitle: 'Rezerwacje na ten rok',
@@ -259,12 +259,12 @@ describe('Savings', () => {
     expect(text()).not.toContain('zabrakło');
   });
 
-  it('bez oznaczonych wydatków mówi, czego potrzebuje — nie „0 dowodów"', async () => {
-    // Stan WEJŚCIA w funkcję: flaga jest ręczna, więc na zimnym starcie jest ich zero.
-    await settle(response({ hasAnyLargeExpense: false, months: [month({ verdict: 'GoalMet', oneOffCount: 0 })] }));
+  it('bez zrealizowanych zleceń epizodycznych mówi, czego potrzebuje — nie „0 dowodów"', async () => {
+    // Stan WEJŚCIA w funkcję: zlecenia zakłada się ręcznie, więc na zimnym starcie jest ich zero.
+    await settle(response({ hasAnyEpisodicExpense: false, months: [month({ verdict: 'GoalMet', oneOffCount: 0 })] }));
 
-    expect(text()).toContain('Nie oznaczyłeś żadnego jednorazowego wydatku');
-    expect(text()).toContain('Przejdź do listy transakcji');
+    expect(text()).toContain('Nie masz jeszcze żadnego zrealizowanego zlecenia epizodycznego');
+    expect(text()).toContain('Przejdź do zleceń epizodycznych');
   });
 
   it('dowód mówi o warunkach, w jakich cel wyszedł — nie o samej kwocie', async () => {
@@ -294,7 +294,7 @@ describe('Savings', () => {
       months: [current],
       currentMonth: current,
       proofCount: 0,
-      hasAnyLargeExpense: true,
+      hasAnyEpisodicExpense: true,
     }));
 
     expect(text()).not.toContain('zabrakło');
@@ -366,29 +366,20 @@ describe('Savings', () => {
 
   // ── Akcje ────────────────────────────────────────────────────────────────────────────
 
-  it('zdjęcie flagi pyta i idzie ISTNIEJĄCYM endpointem akcji masowych', async () => {
-    // ⚠️ Bez nowej ścieżki zapisu: `IsLargeExpense` ma już jedną i dwie rozjechałyby się.
+  it('„Pokaż zlecenia epizodyczne” prowadzi do zrealizowanych tego budżetu, niczego nie zdejmując', async () => {
+    // Zlecenie ma nazwę i opis — usuwa się je pojedynczo na jego ekranie, nie hurtem z miesiąca.
     await settle();
 
-    const component = fixture.componentInstance as unknown as {
-      clearOneOff(m: SavingsMonth): Promise<void>;
-    };
-    void component.clearOneOff(month());
-    await fixture.whenStable();
+    const component = fixture.componentInstance as unknown as { showEpisodic(): void };
+    component.showEpisodic();
+    // Bez whenStable — nawigacja zmienia adres, a nowe żądanie ekranu zostałoby wiszącym zadaniem.
+    await new Promise((resolve) => setTimeout(resolve));
 
-    expect(confirmDialog.lastOptions?.header).toContain('Zdjąć oznaczenie');
-
-    confirmDialog.respond(true);
-    await fixture.whenStable();
-
-    const request = http.expectOne('/api/transactions/bulk-large-expense');
-    const body = request.request.body as { isLargeExpense: boolean; selection: { filter: { from: string; to: string } } };
-    expect(body.isLargeExpense).toBe(false);
-    // Zakres to CAŁY miesiąc wiersza — od pierwszego do ostatniego dnia.
-    expect(body.selection.filter.from).toBe('2026-10-01');
-    expect(body.selection.filter.to).toBe('2026-10-31');
-    request.flush({ affected: 1 });
-    await settle();
+    http.expectNone((r) => r.method !== 'GET');
+    const router = TestBed.inject(Router);
+    const url = router.parseUrl(router.url);
+    expect(url.root.children['primary']?.segments.map((s) => s.path)).toEqual(['episodic-orders']);
+    expect(url.queryParamMap.get('tab')).toBe('realized');
   });
 
   it('rezygnacja z celu pyta, zanim cokolwiek zrobi', async () => {

@@ -32,7 +32,6 @@ public static class TransactionsModule
         services.AddScoped<UpdateTransactionsCommandHandler>();
         services.AddScoped<BulkDeleteTransactionsCommandHandler>();
         services.AddScoped<BulkSetTransactionCategoryCommandHandler>();
-        services.AddScoped<BulkSetTransactionLargeExpenseCommandHandler>();
 
         services.AddScoped<GetTransactionsListQueryHandler>();
         services.AddScoped<GetCategoriesQueryHandler>();
@@ -83,13 +82,6 @@ public static class TransactionsModule
             BulkSetCategoryRequestDto request, BulkSetTransactionCategoryCommandHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.HandleAsync(request, ct)))
             .WithName("BulkSetCategoryTransactions")
-            .Produces<BulkActionResponseDto>()
-            .Produces(StatusCodes.Status404NotFound);
-
-        app.MapPost("/api/transactions/bulk-large-expense", async (
-            BulkSetLargeExpenseRequestDto request, BulkSetTransactionLargeExpenseCommandHandler handler, CancellationToken ct) =>
-            Results.Ok(await handler.HandleAsync(request, ct)))
-            .WithName("BulkSetLargeExpenseTransactions")
             .Produces<BulkActionResponseDto>()
             .Produces(StatusCodes.Status404NotFound);
 

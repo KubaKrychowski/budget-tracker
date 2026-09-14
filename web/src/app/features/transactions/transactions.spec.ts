@@ -74,7 +74,10 @@ describe('Transactions', () => {
     cancelEdit(): void;
     menuRow: { set(v: TransactionListItem): void };
     deleteMenuRow(): void;
-    toggleMenuRowLargeExpense(): void;
+    episodicMenuRow(): void;
+    episodicOpen(): boolean;
+    episodicName: { (): string; set(v: string): void };
+    saveEpisodic(): Promise<void>;
     bulkDelete(): Promise<void>;
     onQueryParamsChange(params: NzTableQueryParams, table: unknown): void;
     noBudget(): boolean;
@@ -97,7 +100,8 @@ describe('Transactions', () => {
     categoryId: 'c1000000-0000-4000-8000-000000000001',
     categoryName: 'Jedzenie',
     status: 'Confirmed',
-    isLargeExpense: false,
+    episodicOrderId: null,
+    episodicOrderName: null,
     confidence: null,
     ...over,
   });
@@ -178,6 +182,7 @@ describe('Transactions', () => {
         provideRouter([
           { path: 'transactions', children: [] },
           { path: 'dashboard', children: [] },
+          { path: 'episodic-orders', children: [] },
         ]),
         provideNoopAnimations(),
         provideTranslateService(),
@@ -336,15 +341,34 @@ describe('Transactions', () => {
     http.expectNone('/api/transactions/bulk-delete');
   });
 
-  it('menu wiersza przełącza duży wydatek na przeciwny stan', async () => {
-    api().menuRow.set(row({ isLargeExpense: true }));
-    api().toggleMenuRowLargeExpense();
-    await fixture.whenStable();
+  it('„Oznacz jako zlecenie epizodyczne” podpowiada nazwę z tytułu i wysyła transakcję bez budżetu', async () => {
+    api().menuRow.set(row({ description: 'WARSZTAT SAMOCHODOWY' }));
+    api().episodicMenuRow();
+    expect(api().episodicOpen()).toBe(true);
+    expect(api().episodicName()).toBe('WARSZTAT SAMOCHODOWY');
 
-    const request = http.expectOne('/api/transactions/bulk-large-expense');
-    expect((request.request.body as { isLargeExpense: boolean }).isLargeExpense).toBe(false);
-    request.flush({ affected: 1 });
+    api().episodicName.set('  Serwis auta ');
+    const saving = api().saveEpisodic();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/episodic-orders');
+    expect(request.request.body).toEqual({
+      budgetId: null, name: 'Serwis auta', description: null, transactionId: row().id,
+      categoryId: null, amount: null, dueMonth: null,
+    });
+    request.flush({ id: 'e1' });
+    await saving;
+    expect(api().episodicOpen()).toBe(false);
     await settle();
+  });
+
+  it('wiersz ze zleceniem epizodycznym przechodzi do zrealizowanych zamiast zakładać drugie', async () => {
+    api().menuRow.set(row({ episodicOrderId: 'e1', episodicOrderName: 'Serwis auta' }));
+    api().episodicMenuRow();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(api().episodicOpen()).toBe(false);
+    http.expectNone((r) => r.url === '/api/episodic-orders');
+    const url = TestBed.inject(Router).url;
+    expect(url).toBe('/episodic-orders?tab=realized');
   });
 
   // ── Walidacja edycji ───────────────────────────────────────────────────────────────

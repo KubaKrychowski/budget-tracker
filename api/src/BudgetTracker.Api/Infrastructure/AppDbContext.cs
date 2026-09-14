@@ -22,6 +22,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
     public DbSet<SavingsReservation> SavingsReservations => Set<SavingsReservation>();
     public DbSet<StandingOrder> StandingOrders => Set<StandingOrder>();
+    public DbSet<EpisodicOrder> EpisodicOrders => Set<EpisodicOrder>();
 
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<TransactionStatusDictionary> TransactionStatuses => Set<TransactionStatusDictionary>();
@@ -165,6 +166,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.HasOne<StandingOrderRhythmDictionary>().WithMany()
                 .HasForeignKey(x => x.Rhythm).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.BudgetBusinessId);
+        });
+
+        b.Entity<EpisodicOrder>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+            e.HasOne<Category>().WithMany()
+                .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => x.BudgetBusinessId);
+            // Jedna transakcja = jedno zlecenie epizodyczne; skasowane zlecenie nie blokuje oznaczenia jej od nowa.
+            e.HasIndex(x => x.TransactionBusinessId)
+                .IsUnique()
+                .HasFilter($"\"TransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
         });
 
         b.Entity<Budget>(e =>

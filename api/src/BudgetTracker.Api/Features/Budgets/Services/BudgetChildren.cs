@@ -50,7 +50,7 @@ public sealed class BudgetChildren(AppDbContext db)
     }
 
     /// <summary>
-    /// Stempluje CELE OSZCZĘDZANIA, REZERWACJE i ZLECENIA STAŁE budżetu — osobno od <see cref="SoftDeleteAsync"/>.
+    /// Stempluje CELE OSZCZĘDZANIA, REZERWACJE i ZLECENIA (stałe i epizodyczne) budżetu — osobno od <see cref="SoftDeleteAsync"/>.
     /// </summary>
     /// <remarks>
     /// ⚠️ Osobna metoda, bo <see cref="SoftDeleteAsync"/> ma DWÓCH wywołujących o różnych intencjach:
@@ -72,8 +72,12 @@ public sealed class BudgetChildren(AppDbContext db)
             .Where(r => r.BudgetBusinessId == budget.BusinessId)
             .ExecuteUpdateAsync(s => s.SetProperty(r => r.DeletedAt, deletedAt), ct);
 
-        // Zlecenia stałe są tą samą grupą: ZASADA budżetu, nie dane — reset je zostawia, usunięcie zabiera.
+        // Zlecenia stałe i epizodyczne są tą samą grupą: ZASADA budżetu, nie dane — reset je zostawia, usunięcie zabiera.
         await db.StandingOrders
+            .Where(o => o.BudgetBusinessId == budget.BusinessId)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.DeletedAt, deletedAt), ct);
+
+        await db.EpisodicOrders
             .Where(o => o.BudgetBusinessId == budget.BusinessId)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.DeletedAt, deletedAt), ct);
     }
@@ -108,5 +112,10 @@ public sealed class BudgetChildren(AppDbContext db)
         await db.StandingOrders.IgnoreQueryFilters()
             .Where(o => o.BudgetBusinessId == budget.BusinessId && o.DeletedAt == deletedAt)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.DeletedAt, (DateTimeOffset?)null), ct);
+
+        await db.EpisodicOrders.IgnoreQueryFilters()
+            .Where(o => o.BudgetBusinessId == budget.BusinessId && o.DeletedAt == deletedAt)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.DeletedAt, (DateTimeOffset?)null), ct);
+
     }
 }

@@ -88,7 +88,6 @@ public static class DevSeed
                     status,
                     categoryId: status == TransactionStatus.PendingReview ? null : categories[categoryName].Id,
                     confidence: confidence,
-                    isLargeExpense: amount > 150,
                     accountId: accounts[rng.Next(accounts.Length)].Id));
             }
 
@@ -100,7 +99,6 @@ public static class DevSeed
                 nowOffset,
                 TransactionStatus.Confirmed,
                 categoryId: categories["Samochód"].Id,
-                isLargeExpense: true,
                 accountId: accounts[0].Id));
 
             // Wypłata — bez niej karta „suma przychodów" byłaby pusta.

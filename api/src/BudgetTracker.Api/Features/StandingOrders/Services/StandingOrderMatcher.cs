@@ -24,9 +24,6 @@ namespace BudgetTracker.Api.Features.StandingOrders.Services;
 /// </remarks>
 public sealed class StandingOrderMatcher(AppDbContext db)
 {
-    /// <summary>Znak ucieczki dla <c>ILIKE</c> — musi być podany jawnie, Postgres nie zakłada żadnego.</summary>
-    private const string LikeEscapeChar = "\\";
-
     /// <summary>Przelicza przypięcia jednego zlecenia od zera: zdejmuje dotychczasowe i przypina według aktualnych reguł.</summary>
     /// <returns>Liczba transakcji przypiętych po przeliczeniu.</returns>
     public async Task<int> RematchAsync(StandingOrder order, CancellationToken ct)
@@ -101,13 +98,13 @@ public sealed class StandingOrderMatcher(AppDbContext db)
 
         foreach (var rule in rules)
         {
-            var like = $"%{EscapeLikePattern(rule.TitlePattern)}%";
+            var like = LikePattern.Contains(rule.TitlePattern);
             var from = rule.AmountFrom;
             var to = rule.AmountTo;
             Expression<Func<Transaction, bool>> one = t =>
                 -t.Amount >= from
                 && -t.Amount <= to
-                && EF.Functions.ILike(t.Description, like, LikeEscapeChar);
+                && EF.Functions.ILike(t.Description, like, LikePattern.EscapeChar);
 
             var rebound = new ParameterSwap(one.Parameters[0], parameter).Visit(one.Body);
             body = body is ConstantExpression ? rebound : Expression.OrElse(body, rebound);
@@ -120,13 +117,6 @@ public sealed class StandingOrderMatcher(AppDbContext db)
         db.Transactions
             .Where(t => t.StandingOrderBusinessId == standingOrderBusinessId)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.StandingOrderBusinessId, (Guid?)null), ct);
-
-    /// <summary>Fraza reguły jest DANYMI, nie wzorcem — „5%” w tytule ma znaczyć „5%”, a nie „zawiera 5”.</summary>
-    /// <remarks>Backslash pierwszy, inaczej podwoiłby ucieczki dopisane w kolejnych krokach.</remarks>
-    private static string EscapeLikePattern(string value) => value
-        .Replace("\\", "\\\\")
-        .Replace("%", "\\%")
-        .Replace("_", "\\_");
 
     /// <summary>Podmienia parametr lambdy jednej reguły na wspólny parametr złożonego warunku.</summary>
     private sealed class ParameterSwap(ParameterExpression from, ParameterExpression to) : ExpressionVisitor

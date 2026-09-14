@@ -398,6 +398,23 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Zlecenie jest ZASADĄ budżetu, jak cel oszczędnościowy: **reset je zostawia, usunięcie zabiera**, przywrócenie
 >   oddaje, purge kasuje (`BudgetChildren.SoftDeleteSavingsAsync`, `BudgetPurger`).
 > - Lista transakcji ma filtr `standingOrderId` i okruszek `?origin=standing-orders` („Przejdź do powiązanych”).
+> - Reguł jest wiele (jsonb, łączone „lub”, każda z własnym zakresem kwot). Zakończenie (`EndMonth`) to nie usunięcie:
+>   po ostatnim miesiącu zlecenie nie jest oczekiwane ani liczone w sumie, a import go już nie przypina.
+
+> **REWIZJA — 2026-09-14: zlecenia epizodyczne ZASTĄPIŁY flagę „duży wydatek”** (etap 2 zgłoszenia #18;
+> `Features/EpisodicOrders`, ekran `/episodic-orders`, makiety Figma — strona „Zlecenia”):
+> - **`Transaction.IsLargeExpense` nie istnieje.** Wydatek jednorazowy to transakcja ZREALIZOWANEGO zlecenia
+>   epizodycznego — na tym stoi dowód na ekranie celów (`GetSavingsQueryHandler`). Migracja `EpisodicOrders` przeniosła
+>   flagi (tylko wydatki z budżetem) i usunęła kolumnę. Akcji masowej nie ma: każde zlecenie potrzebuje nazwy.
+> - ⚠️ **Jedno źródło liczb:** zaplanowane ma plan (kategoria, kwota, termin), zrealizowane wskazuje transakcję
+>   i kwotę, datę oraz kategorię bierze Z NIEJ. Plan zostaje po realizacji — po nim poznajemy, co da się
+>   „cofnąć do zaplanowanych”.
+> - **„Załóż cel oszczędzania” tworzy zwykłą rezerwację**, którą zlecenie RZĄDZI: zmiana planu przepisuje nierozliczoną
+>   rezerwację, usunięcie zlecenia ją zabiera, „Oznacz jako kupione” rozlicza ją ZAKUPEM (nie wypłatą z oszczędności —
+>   warunki z ekranu rezerwacji tu nie obowiązują). Uzbierane liczy `GetSavingsReservationsQueryHandler`, nie drugi kod.
+> - Zrealizowane, którego transakcja zniknęła (usunięcie, reset), jest ukryte, a nie kasowane — przywrócenie transakcji
+>   je oddaje. Cykl życia budżetu jak przy zleceniach stałych (reset zostawia, usunięcie zabiera).
+> - Oznaczenie z listy transakcji idzie bez `budgetId` — serwer bierze budżet TRANSAKCJI, bo lista pokazuje kilka naraz.
 
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
