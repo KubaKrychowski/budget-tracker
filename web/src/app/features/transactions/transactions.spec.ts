@@ -681,4 +681,43 @@ describe('Transactions', () => {
 
     expect(api().selectionCount()).toBe(0);
   });
+
+  // ── Zgłoszenie #17 ───────────────────────────────────────────────────────────────────
+
+  it('podczas przeładowania trzyma poprzednie wiersze, zamiast zerować tabelę', async () => {
+    // Regresja „tabela miga": httpResource na czas żądania zwraca undefined, więc każda zmiana filtra
+    // opróżniała tabelę i kafle, zanim przyszła odpowiedź.
+    expect(api().items()).toHaveLength(1);
+
+    api().setSearch('biedronka');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+
+    expect(api().loading()).toBe(true);
+    expect(api().items()).toHaveLength(1);
+    expect(api().summary()).not.toBeNull();
+
+    flushList(response({ items: [row(), row({ id: 'r2', description: 'BIEDRONKA 2' })], total: 2 }));
+    await settle(response({ items: [row(), row({ id: 'r2', description: 'BIEDRONKA 2' })], total: 2 }));
+    expect(api().items()).toHaveLength(2);
+  });
+
+  it('zakres dat obok wyszukiwarki zapisuje oba końce do adresu, a wyczyszczenie zdejmuje oba', async () => {
+    const component = api() as ReturnType<typeof api> & {
+      setDateRange(range: (Date | null)[] | null): void;
+      dateRange(): Date[];
+    };
+
+    component.setDateRange([new Date(2026, 7, 1), new Date(2026, 7, 31)]);
+    await settle();
+    expect(router.url).toContain('from=2026-08-01');
+    expect(router.url).toContain('to=2026-08-31');
+    expect(component.dateRange().map((d) => d.getDate())).toEqual([1, 31]);
+
+    component.setDateRange(null);
+    await settle();
+    expect(router.url).not.toContain('from=');
+    expect(router.url).not.toContain('to=');
+    expect(component.dateRange()).toEqual([]);
+  });
 });

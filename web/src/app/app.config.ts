@@ -9,6 +9,7 @@ import { pl_PL, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { registerLocaleData } from '@angular/common';
 import pl from '@angular/common/locales/pl';
 import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
+import { pl as plDateFns } from 'date-fns/locale';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { APP_ICONS } from './core/icons';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -40,7 +41,9 @@ export const appConfig: ApplicationConfig = {
     // To osobna warstwa od ngx-translate: NG-ZORRO tłumaczy własne teksty
     // (nazwy miesięcy w datepickerze, „brak danych" w tabelach) swoim mechanizmem.
     provideNzI18n(pl_PL),
-    provideNzDateFnsAdapter(),
+    // ⚠️ Nazwy miesięcy i dni w kalendarzu formatuje adapter date-fns, NIE `pl_PL` powyżej — bez jawnego
+    // języka datepicker mówił „Aug / Mo Tu We” na polskim ekranie.
+    provideNzDateFnsAdapter({ locale: plDateFns, firstDayOfWeek: 1 }),
     provideNzIcons(APP_ICONS),
 
     // `@Injectable()` bez `providedIn: 'root'` (tak jest opakowany w NG-ZORRO) — bez
