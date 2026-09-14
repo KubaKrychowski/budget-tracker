@@ -1,6 +1,10 @@
 .so {
   padding: 16px 24px 48px;
 
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
   /* Karta „Konfiguracja” — jak na ekranie limitów. */
   &__config {
     margin: 16px 0;
@@ -126,6 +130,19 @@
     &--missed {
       background: #d93f38;
     }
+
+    &--ended {
+      background: #bfbfbf;
+    }
+  }
+
+  /* Zakończone zlecenia — wygaszone, ale z działającym menu (makieta 219:3). */
+  &__ended td {
+    color: #a6a6a6;
+  }
+
+  &__ended-toggle td {
+    padding-block: 4px;
   }
 
   &__total td {
@@ -182,10 +199,37 @@
 
     nz-input-number {
       flex: 1 1 0;
+      min-width: 0;
     }
   }
 
+  /* Reguły jako siatka: fraza | kwota od – do | Usuń. Na wąskim ekranie każda reguła w kolumnie. */
+  &__rules {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__rules-head {
+    font-size: 14px;
+  }
+
+  @media (max-width: 560px) {
+    &__rules {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    &__rules-head:not(:first-child) {
+      display: none;
+    }
+  }
+
+  &__add-rule {
+    margin-top: 12px;
+  }
+
   &__preview {
-    margin-top: 16px;
+    margin-bottom: 8px;
   }
 }

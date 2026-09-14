@@ -19,9 +19,8 @@ public sealed class CreateStandingOrderCommandHandler(
         var valid = StandingOrderRuleValidator.Validate(request);
         var budget = await scope.SingleAsync(valid.BudgetId, ct);
 
-        var order = new StandingOrder(
-            budget, valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth,
-            valid.TitlePattern, valid.AmountFrom, valid.AmountTo, scope.Now());
+        var order = new StandingOrder(budget, valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth, scope.Now());
+        order.ReplaceRules(valid.Rules);
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         db.StandingOrders.Add(order);

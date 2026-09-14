@@ -59,14 +59,14 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
                 Math.Abs(p.Amount - byId[p.OrderId].ExpectedAmount) >= AmountTolerance))
             .ToList();
 
-        var due = rows.Where(r => r.State != StandingOrderMonthState.NotDue).ToList();
+        var due = rows.Where(r => r.State is not (StandingOrderMonthState.NotDue or StandingOrderMonthState.Ended)).ToList();
 
         return new StandingOrdersResponseDto(
             Month: viewed,
             CurrentMonth: currentMonth,
             Orders: rows,
             Recent: recent,
-            MonthlyTotal: Math.Round(orders.Sum(MonthlyEquivalent), 2),
+            MonthlyTotal: Math.Round(orders.Where(o => !o.IsEndedBefore(viewed)).Sum(MonthlyEquivalent), 2),
             DueCount: due.Count,
             PaidCount: due.Count(r => r.State is StandingOrderMonthState.Paid or StandingOrderMonthState.PaidDifferentAmount),
             WaitingAmount: rows.Where(r => r.State == StandingOrderMonthState.Waiting).Sum(r => r.ExpectedAmount),
@@ -82,16 +82,20 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
     /// transakcja jest faktem mocniejszym niż kalendarz zlecenia.</item>
     /// <item>„Czeka” tylko w miesiącu, który TRWA. W zamkniętym ta sama sytuacja to „nie zeszło” — inaczej ekran
     /// sprzed pół roku wiecznie „czekałby” na zapłatę.</item>
+    /// <item>Po ostatnim miesiącu zlecenie jest „zakończone” bez względu na przypięcia — to decyzja użytkownika,
+    /// silniejsza niż transakcja przypięta, zanim zlecenie zakończył.</item>
     /// </list>
     /// </remarks>
     private static StandingOrderRowResponseDto Row(
         StandingOrder order, List<Pin> pins, DateOnly month, DateOnly currentMonth, IReadOnlyDictionary<int, string> categoryNames)
     {
         var end = month.AddMonths(1);
-        var inMonth = pins.Where(p => p.Date >= month && p.Date < end).ToList();
+        var ended = order.IsEndedBefore(month);
+        var inMonth = ended ? [] : pins.Where(p => p.Date >= month && p.Date < end).ToList();
         var paid = inMonth.Sum(p => p.Amount);
 
-        var state = inMonth.Count > 0
+        var state = ended ? StandingOrderMonthState.Ended
+            : inMonth.Count > 0
             ? Math.Abs(paid - order.ExpectedAmount) >= AmountTolerance
                 ? StandingOrderMonthState.PaidDifferentAmount
                 : StandingOrderMonthState.Paid
@@ -113,9 +117,8 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
             ExpectedAmount: order.ExpectedAmount,
             Rhythm: order.Rhythm,
             DueMonth: order.DueMonth,
-            TitlePattern: order.TitlePattern,
-            AmountFrom: order.AmountFrom,
-            AmountTo: order.AmountTo,
+            Rules: [.. order.Rules.Select(r => new StandingOrderRuleResponseDto(r.TitlePattern, r.AmountFrom, r.AmountTo))],
+            EndMonth: order.EndMonth,
             CategoryName: category,
             State: state,
             PaidOn: inMonth.Count > 0 ? inMonth.Max(p => p.Date) : null,

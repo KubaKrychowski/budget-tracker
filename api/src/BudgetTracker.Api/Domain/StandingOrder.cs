@@ -3,7 +3,7 @@ using BudgetTracker.Api.Domain.Consts;
 namespace BudgetTracker.Api.Domain;
 
 /// <summary>
-/// Zlecenie stałe — nazwane, powtarzalne zobowiązanie („Czynsz”, „Kredyt”) z regułą, która rozpoznaje jego
+/// Zlecenie stałe — nazwane, powtarzalne zobowiązanie („Czynsz”, „Kredyt”) z regułami, które rozpoznają jego
 /// transakcje w imporcie.
 /// </summary>
 /// <remarks>
@@ -13,8 +13,13 @@ namespace BudgetTracker.Api.Domain;
 /// wyłącznie „to jest czynsz”.
 /// </para>
 /// <para>
-/// Reguła to „tytuł zawiera” plus ZAKRES kwoty, a nie jedna kwota: czynsz po podwyżce musi dalej być czynszem.
-/// Zlecenie jest zasadą budżetu, jak cel oszczędnościowy — przeżywa reset budżetu, znika z jego usunięciem.
+/// Transakcja należy do zlecenia, gdy pasuje do KTÓREJKOLWIEK reguły — ten sam czynsz bywa opisany różnie
+/// (zmiana zarządcy, inny tytuł przelewu). Zlecenie jest zasadą budżetu, jak cel oszczędnościowy — przeżywa reset
+/// budżetu, znika z jego usunięciem.
+/// </para>
+/// <para>
+/// Zakończenie (<see cref="EndMonth"/>) to nie usunięcie: historia i przypięcia zostają, zlecenie przestaje być
+/// oczekiwane i przypinać nowe transakcje po ostatnim miesiącu.
 /// </para>
 /// </remarks>
 public class StandingOrder(
@@ -23,9 +28,6 @@ public class StandingOrder(
     decimal expectedAmount,
     StandingOrderRhythm rhythm,
     int? dueMonth,
-    string titlePattern,
-    decimal amountFrom,
-    decimal amountTo,
     DateTimeOffset createdAt) : Entity
 {
     /// <summary>Budżet zlecenia — zwykła kolumna z publicznym identyfikatorem, bez relacji EF (jak przy transakcji).</summary>
@@ -44,33 +46,41 @@ public class StandingOrder(
     /// </summary>
     public int? DueMonth { get; protected set; } = dueMonth;
 
-    /// <summary>Fraza, którą musi ZAWIERAĆ opis transakcji (bez rozróżniania wielkości liter). To dane, nie wzorzec LIKE.</summary>
-    public string TitlePattern { get; protected set; } = titlePattern;
+    /// <summary>Reguły dopasowania, co najmniej jedna. Łączy je „lub”.</summary>
+    public List<StandingOrderRule> Rules { get; protected set; } = [];
 
-    /// <summary>Dolna granica kwoty wydatku (wartość bezwzględna, włącznie).</summary>
-    public decimal AmountFrom { get; protected set; } = amountFrom;
-
-    /// <summary>Górna granica kwoty wydatku (wartość bezwzględna, włącznie).</summary>
-    public decimal AmountTo { get; protected set; } = amountTo;
+    /// <summary>Pierwszy dzień OSTATNIEGO miesiąca zlecenia; <c>null</c> = trwa.</summary>
+    public DateOnly? EndMonth { get; protected set; }
 
     public DateTimeOffset CreatedAt { get; protected set; } = createdAt;
 
-    /// <summary>Zmiana zlecenia — nazwa, kwota, rytm i reguła ruszają się razem, bo razem decydują o przypięciach.</summary>
+    /// <summary>Zmiana zlecenia — nazwa, kwota, rytm i reguły ruszają się razem, bo razem decydują o przypięciach.</summary>
     public void Change(
         string name, decimal expectedAmount, StandingOrderRhythm rhythm, int? dueMonth,
-        string titlePattern, decimal amountFrom, decimal amountTo)
+        IReadOnlyCollection<StandingOrderRule> rules)
     {
         Name = name;
         ExpectedAmount = expectedAmount;
         Rhythm = rhythm;
         DueMonth = dueMonth;
-        TitlePattern = titlePattern;
-        AmountFrom = amountFrom;
-        AmountTo = amountTo;
+        ReplaceRules(rules);
     }
 
+    /// <summary>Podmienia reguły w całości — przy zakładaniu i przy zmianie.</summary>
+    /// <remarks>Nowa lista, nie edycja w miejscu: EF porównuje kolumnę JSON jako całość.</remarks>
+    public void ReplaceRules(IReadOnlyCollection<StandingOrderRule> rules) => Rules = [.. rules];
+
+    /// <summary>Kończy zlecenie na miesiącu, w którym leży <paramref name="lastMonth"/>.</summary>
+    public void End(DateOnly lastMonth) => EndMonth = new DateOnly(lastMonth.Year, lastMonth.Month, 1);
+
+    /// <summary>Wznawia zakończone zlecenie — znów oczekiwane i przypinające nowe transakcje.</summary>
+    public void Resume() => EndMonth = null;
+
+    /// <summary>Czy zlecenie jest zakończone przed miesiącem zaczynającym się <paramref name="month"/>.</summary>
+    public bool IsEndedBefore(DateOnly month) => EndMonth is { } end && end < month;
+
     /// <summary>Czy zlecenie ma zejść w miesiącu zaczynającym się <paramref name="month"/>.</summary>
-    public bool IsDueIn(DateOnly month) => Rhythm switch
+    public bool IsDueIn(DateOnly month) => !IsEndedBefore(month) && Rhythm switch
     {
         StandingOrderRhythm.Monthly => true,
         StandingOrderRhythm.Quarterly => DueMonth is { } q && (month.Month - q + 12) % 3 == 0,

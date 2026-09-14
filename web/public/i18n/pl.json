@@ -765,7 +765,12 @@
       "state": "W tym miesiącu",
       "rule": "tytuł zawiera „{{pattern}}” · {{from}}–{{to}} zł",
       "total": "Razem miesięcznie",
-      "totalNote": "kwartalne ÷ 3, roczne ÷ 12"
+      "totalNote": "kwartalne ÷ 3, roczne ÷ 12",
+      "rules": {
+        "few": "{{count}} reguły: {{list}}",
+        "many": "{{count}} reguł: {{list}}"
+      },
+      "ended": "Zakończone zlecenia ({{count}})"
     },
     "state": {
       "paid": "Zeszło {{date}}",
@@ -773,7 +778,8 @@
       "waiting": "Czeka",
       "waitingUsual": "Czeka · zwykle do {{day}}.",
       "missed": "Nie zeszło",
-      "notDue": "Nie w tym miesiącu"
+      "notDue": "Nie w tym miesiącu",
+      "ended": "Zakończone w {{month}}"
     },
     "recent": {
       "title": "Ostatnio przypięte transakcje",
@@ -787,20 +793,23 @@
       "addTitle": "Dodaj zlecenie stałe",
       "editTitle": "Zmień zlecenie stałe",
       "save": "Zapisz zlecenie",
-      "note": "Zlecenie przypina transakcje, które pasują do reguły — także te z historii. Kategoria transakcji się nie zmienia.",
+      "note": "Zlecenie przypina transakcje, które pasują do reguły. Kategoria transakcji się nie zmienia — zlecenie mówi tylko, że to np. czynsz.",
       "name": "Nazwa",
       "namePlaceholder": "Czynsz",
       "amount": "Kwota zwykle",
       "rhythm": "Rytm",
       "dueMonth": "Miesiąc",
       "dueMonthPlaceholder": "W którym miesiącu schodzi",
-      "ruleTitle": "Reguła dopasowania",
       "pattern": "Tytuł zawiera",
       "patternPlaceholder": "czynsz",
-      "range": "Kwota od – do (zakres przeżyje podwyżkę)",
-      "preview": "Reguła pasuje do {{count}} transakcji z historii budżetu — ostatnia {{date}}, {{amount}} zł.",
+      "range": "Kwota od – do",
+      "preview": "Reguły pasują do {{count}} transakcji z historii budżetu — ostatnia {{date}}, {{amount}} zł. Zostaną przypięte po zapisie.",
       "previewTaken": "{{count}} z nich należy już do innego zlecenia i przy nim zostanie.",
-      "previewNone": "Reguła nie pasuje jeszcze do żadnej transakcji — przypnie przyszłe z importu."
+      "previewNone": "Reguły nie pasują jeszcze do żadnej transakcji — przypną przyszłe z importu.",
+      "rulesTitle": "Reguły dopasowania",
+      "rulesHint": "Transakcja należy do zlecenia, gdy pasuje do którejkolwiek reguły.",
+      "addRule": "Dodaj regułę",
+      "removeRule": "Usuń"
     },
     "removeConfirm": {
       "header": "Usunąć zlecenie „{{name}}”?",
@@ -808,6 +817,17 @@
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać zleceń stałych"
+    },
+    "end": "Zakończ",
+    "resume": "Wznów",
+    "ended": "Zlecenie zakończone. Przypięte transakcje zostały.",
+    "resumed": "Zlecenie wznowione.",
+    "endDialog": {
+      "title": "Zakończ zlecenie „{{name}}”",
+      "note": "Np. po zmianie operatora albo spłacie kredytu. Zakończenie to nie usunięcie — zlecenie i jego historia zostają.",
+      "alert": "Po tym miesiącu zlecenie nie będzie oczekiwane ani liczone w sumie. Przypięte transakcje zostają, nowe z importu nie będą się już przypinać.",
+      "lastMonth": "Ostatni miesiąc zlecenia",
+      "confirm": "Zakończ zlecenie"
     }
   }
 }

@@ -35,15 +35,25 @@ interface StandingOrdersApi {
   draftAmount: { set(v: number | null): void };
   draftRhythm: { set(v: string): void };
   draftDueMonth: { set(v: number | null): void };
-  draftPattern: { set(v: string): void };
-  draftFrom: { set(v: number | null): void };
-  draftTo: { set(v: number | null): void };
+  draftRules(): { pattern: string; from: number | null; to: number | null }[];
+  addRule(): void;
+  removeRule(index: number): void;
+  updateRule(index: number, patch: { pattern?: string; from?: number | null; to?: number | null }): void;
   canSave(): boolean;
   save(): Promise<void>;
   remove(row: StandingOrderRow): Promise<void>;
   unpin(pin: StandingOrderPin): Promise<void>;
   goToLinked(row: StandingOrderRow): void;
+  openEnd(row: StandingOrderRow): void;
+  endLastMonth: { set(v: Date | null): void };
+  confirmEnd(): Promise<void>;
+  resume(row: StandingOrderRow): Promise<void>;
+  endedOpen: { set(v: boolean): void };
 }
+
+/** Pierwsza reguła modala — wypełnia ją każdy test zapisu. */
+const fillRule = (api: StandingOrdersApi, index: number, pattern: string, from: number, to: number): void =>
+  api.updateRule(index, { pattern, from, to });
 
 /** Ekran „Zlecenia stałe”. Stan w miesiącu i dopasowania liczy serwer — tu sprawdzamy, co ekran mówi i wysyła. */
 describe('StandingOrders', () => {
@@ -57,9 +67,8 @@ describe('StandingOrders', () => {
     expectedAmount: 2200,
     rhythm: 'Monthly',
     dueMonth: null,
-    titlePattern: 'czynsz',
-    amountFrom: 2000,
-    amountTo: 2500,
+    rules: [{ titlePattern: 'czynsz', amountFrom: 2000, amountTo: 2500 }],
+    endMonth: null,
     categoryName: 'Mieszkanie',
     state: 'Paid',
     paidOn: '2026-09-05',
@@ -127,12 +136,18 @@ describe('StandingOrders', () => {
           missed: '{{month}} — nie zeszło: {{list}}.',
           different: 'Inna kwota niż zwykle: {{list}}.',
         },
-        table: { rule: 'tytuł zawiera „{{pattern}}” · {{from}}–{{to}} zł' },
+        resume: 'Wznów',
+        table: {
+          rule: 'tytuł zawiera „{{pattern}}” · {{from}}–{{to}} zł',
+          rules: { few: '{{count}} reguły: {{list}}', many: '{{count}} reguł: {{list}}' },
+          ended: 'Zakończone zlecenia ({{count}})',
+        },
         state: {
           paid: 'Zeszło {{date}}',
           paidDifferent: 'Zeszło {{date}} · {{amount}} zł (inna kwota)',
           waitingUsual: 'Czeka · zwykle do {{day}}.',
           notDue: 'Nie w tym miesiącu',
+          ended: 'Zakończone w {{month}}',
         },
         editor: {
           preview: 'Reguła pasuje do {{count}} transakcji — ostatnia {{date}}, {{amount}} zł.',
@@ -211,26 +226,46 @@ describe('StandingOrders', () => {
     expect(url.queryParamMap.get('budgetId')).toBe('b1');
   });
 
-  it('podgląd reguły pyta serwer dopiero przy poprawnej regule i pokazuje wynik', async () => {
+  it('przy kilku regułach pod nazwą stoi skrót z frazami, a przy jednej pełny opis', async () => {
+    await settle(response({
+      orders: [
+        row({ rules: [
+          { titlePattern: 'czynsz', amountFrom: 2000, amountTo: 2500 },
+          { titlePattern: 'najem lokalu', amountFrom: 2000, amountTo: 2500 },
+        ] }),
+        row({ id: 'o2', name: 'Abonamenty', rules: Array.from({ length: 5 }, (_, i) => ({ titlePattern: `abo${i}`, amountFrom: 1, amountTo: 9 })) }),
+      ],
+    }));
+
+    expect(text()).toContain('2 reguły: „czynsz”, „najem lokalu”');
+    expect(text()).toContain('5 reguł: „abo0”');
+  });
+
+  it('podgląd reguł pyta serwer dopiero, gdy WSZYSTKIE reguły są poprawne', async () => {
     // Sztuczne zegary DOPIERO po wczytaniu — `whenStable()` na sztucznym zegarze nigdy by się nie skończyło.
     await settle();
     vi.useFakeTimers();
     try {
       api().openEditor(null);
-      api().draftPattern.set('cz');
-      api().draftFrom.set(2000);
-      api().draftTo.set(2500);
+      fillRule(api(), 0, 'czynsz', 2000, 2500);
+      api().addRule();
+      api().updateRule(1, { pattern: 'na' });
       fixture.detectChanges();
       vi.advanceTimersByTime(400);
       http.expectNone((r) => r.url === '/api/standing-orders/preview');
 
-      api().draftPattern.set('czynsz');
+      fillRule(api(), 1, 'najem lokalu', 2000, 2200);
       fixture.detectChanges();
       vi.advanceTimersByTime(400);
 
       const preview = http.expectOne((r) => r.url === '/api/standing-orders/preview');
       expect(preview.request.body).toEqual({
-        budgetId: 'b1', standingOrderId: null, titlePattern: 'czynsz', amountFrom: 2000, amountTo: 2500,
+        budgetId: 'b1',
+        standingOrderId: null,
+        rules: [
+          { titlePattern: 'czynsz', amountFrom: 2000, amountTo: 2500 },
+          { titlePattern: 'najem lokalu', amountFrom: 2000, amountTo: 2200 },
+        ],
       });
       preview.flush({ matchCount: 12, takenByOtherOrders: 1, lastDate: '2026-09-05', lastAmount: 2350 });
     } finally {
@@ -238,28 +273,89 @@ describe('StandingOrders', () => {
     }
   });
 
-  it('zapis wysyła regułę, a roczne bez miesiąca nie da się zapisać', async () => {
+  it('ostatniej reguły nie da się usunąć, a zmiana zlecenia wczytuje wszystkie jego reguły', async () => {
+    await settle();
+    api().openEditor(null);
+    api().removeRule(0);
+    expect(api().draftRules()).toHaveLength(1);
+
+    api().openEditor(row({ rules: [
+      { titlePattern: 'czynsz', amountFrom: 2000, amountTo: 2500 },
+      { titlePattern: 'najem', amountFrom: 1900, amountTo: 2100 },
+    ] }));
+    expect(api().draftRules()).toEqual([
+      { pattern: 'czynsz', from: 2000, to: 2500 },
+      { pattern: 'najem', from: 1900, to: 2100 },
+    ]);
+    api().removeRule(0);
+    expect(api().draftRules()).toEqual([{ pattern: 'najem', from: 1900, to: 2100 }]);
+  });
+
+  it('zapis wysyła listę reguł, a roczne bez miesiąca nie da się zapisać', async () => {
     await settle();
     api().openEditor(null);
     api().draftName.set('OC samochodu');
     api().draftAmount.set(1200);
     api().draftRhythm.set('Yearly');
-    api().draftPattern.set('polisa oc');
-    api().draftFrom.set(1100);
-    api().draftTo.set(1400);
+    fillRule(api(), 0, ' polisa oc ', 1100, 1400);
     expect(api().canSave()).toBe(false);
 
     api().draftDueMonth.set(5);
     expect(api().canSave()).toBe(true);
 
+    api().addRule();
+    expect(api().canSave()).toBe(false);
+    fillRule(api(), 1, 'ubezpieczenie', 1100, 1400);
+
     const saving = api().save();
     const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/standing-orders');
     expect(request.request.body).toEqual({
       budgetId: 'b1', name: 'OC samochodu', expectedAmount: 1200, rhythm: 'Yearly', dueMonth: 5,
-      titlePattern: 'polisa oc', amountFrom: 1100, amountTo: 1400,
+      rules: [
+        { titlePattern: 'polisa oc', amountFrom: 1100, amountTo: 1400 },
+        { titlePattern: 'ubezpieczenie', amountFrom: 1100, amountTo: 1400 },
+      ],
     });
     request.flush({ id: 'o9', linkedCount: 3 });
     await saving;
+  });
+
+  it('zakończenie wysyła ostatni miesiąc, domyślnie bieżący', async () => {
+    await settle();
+
+    api().openEnd(row());
+    const ending = api().confirmEnd();
+    const request = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/standing-orders/o1/end');
+    expect(request.request.body).toEqual({ lastMonth: '2026-09-01' });
+    request.flush(null);
+    await ending;
+
+    api().openEnd(row());
+    api().endLastMonth.set(new Date(2026, 6, 20));
+    const second = api().confirmEnd();
+    const secondRequest = http.expectOne((r) => r.url === '/api/standing-orders/o1/end');
+    expect(secondRequest.request.body).toEqual({ lastMonth: '2026-07-01' });
+    secondRequest.flush(null);
+    await second;
+  });
+
+  it('zakończone zlecenia są zwinięte pod sumą, a rozwinięte mają stan i „Wznów”', async () => {
+    await settle(response({
+      orders: [row(), row({ id: 'o2', name: 'Telewizja', state: 'Ended', endMonth: '2026-08-01', paidOn: null })],
+    }));
+
+    expect(text()).toContain('Zakończone zlecenia (1)');
+    expect(text()).not.toContain('Telewizja');
+
+    api().endedOpen.set(true);
+    fixture.detectChanges();
+    expect(text()).toContain('Telewizja');
+    expect(text()).toContain('Zakończone w VIII 2026');
+    expect(fixture.nativeElement.querySelectorAll('tr.so__ended')).toHaveLength(1);
+
+    const resuming = api().resume(row({ id: 'o2' }));
+    http.expectOne((r) => r.method === 'DELETE' && r.url === '/api/standing-orders/o2/end').flush(null);
+    await resuming;
   });
 
   it('usunięcie pyta czerwonym przyciskiem i mówi, ile transakcji straci przypięcie', async () => {

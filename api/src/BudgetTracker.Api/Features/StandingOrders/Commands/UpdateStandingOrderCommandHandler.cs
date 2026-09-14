@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetTracker.Api.Features.StandingOrders.Commands;
 
-/// <summary>Zmienia zlecenie stałe i przelicza jego przypięcia według nowej reguły.</summary>
+/// <summary>Zmienia zlecenie stałe i przelicza jego przypięcia według nowych reguł.</summary>
 public sealed class UpdateStandingOrderCommandHandler(AppDbContext db, StandingOrderMatcher matcher)
 {
     /// <summary>Zmiana i przeliczenie przypięć w jednej transakcji bazodanowej.</summary>
@@ -20,8 +20,7 @@ public sealed class UpdateStandingOrderCommandHandler(AppDbContext db, StandingO
         var order = await db.StandingOrders.FirstOrDefaultAsync(o => o.BusinessId == id, ct)
             ?? throw new StandingOrderNotFoundException(id);
 
-        order.Change(valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth,
-            valid.TitlePattern, valid.AmountFrom, valid.AmountTo);
+        order.Change(valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth, valid.Rules);
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.SaveChangesAsync(ct);

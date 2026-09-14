@@ -8,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -28,27 +29,56 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 import {
   StandingOrderMonthState, StandingOrderPin, StandingOrderPreview, StandingOrderRhythm, StandingOrderRow,
-  StandingOrdersResponse,
+  StandingOrderRule, StandingOrdersResponse,
 } from '../../core/api/models/standing-orders';
 
 /** Najkrótsza fraza reguły — ta sama co `StandingOrderRuleValidator.MinPatternLength` w API. */
 const MIN_PATTERN_LENGTH = 3;
 
+/** Najwięcej reguł na zlecenie — ta sama co `StandingOrderRuleValidator.MaxRules` w API. */
+const MAX_RULES = 20;
+
 /** Opóźnienie podglądu reguły — żeby nie pytać serwera przy każdej literze. */
 const PREVIEW_DEBOUNCE_MS = 300;
+
+const ROMAN_MONTHS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+/** Reguła w trakcie edycji — kwoty mogą być puste, dopóki użytkownik ich nie wpisze. */
+interface DraftRule {
+  readonly pattern: string;
+  readonly from: number | null;
+  readonly to: number | null;
+}
+
+const emptyRule = (): DraftRule => ({ pattern: '', from: null, to: null });
+
+const ruleValid = (r: DraftRule): boolean =>
+  r.pattern.trim().length >= MIN_PATTERN_LENGTH
+  && r.from !== null && r.to !== null && r.from >= 0 && r.to > 0 && r.from <= r.to;
+
+const rulesOf = (rules: readonly DraftRule[]): StandingOrderRule[] =>
+  rules.map((r) => ({ titlePattern: r.pattern.trim(), amountFrom: r.from!, amountTo: r.to! }));
+
+/** Polska liczba mnoga: 2–4 „reguły”, 5+ i 12–14 „reguł”. */
+const pluralForm = (count: number): 'few' | 'many' => {
+  const tens = count % 100;
+  const units = count % 10;
+  return units >= 2 && units <= 4 && (tens < 12 || tens > 14) ? 'few' : 'many';
+};
 
 /**
  * Ekran „Zlecenia stałe” (makieta Figma, strona „Zlecenia”: 219:3, modal 221:296, zgłoszenie #18).
  *
- * Zlecenie to nazwane zobowiązanie („Czynsz”) z regułą: tytuł zawiera + zakres kwoty. Reguła przypina transakcje
- * WSTECZ i przy imporcie. ⚠️ Przypięcie NIE zmienia kategorii (decyzja użytkownika) — dlatego kolumna „Kategoria”
+ * Zlecenie to nazwane zobowiązanie („Czynsz”) z regułami: tytuł zawiera + zakres kwoty, łączonymi „lub”. Reguły
+ * przypinają transakcje WSTECZ i przy imporcie. Zakończone zlecenie (dialog 229:1110) przestaje być oczekiwane
+ * po ostatnim miesiącu, ale zostaje z historią. ⚠️ Przypięcie NIE zmienia kategorii (decyzja użytkownika) — dlatego kolumna „Kategoria”
  * pokazuje kategorię przypiętych transakcji, a nie ustawienie zlecenia.
  */
 @Component({
   selector: 'app-standing-orders',
   imports: [
     CommonModule, FormsModule, RouterLink, BudgetSwitcher,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule,
     NzInputNumberModule, NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule,
     TranslatePipe,
   ],
@@ -114,14 +144,21 @@ export class StandingOrders {
     return d !== null && d.month === d.currentMonth;
   });
 
+  /** Zlecenia trwające w oglądanym miesiącu — główna część tabeli. */
+  protected readonly activeOrders = computed(() => (this.data()?.orders ?? []).filter((o) => o.state !== 'Ended'));
+  /**
+   * Zakończone PRZED oglądanym miesiącem — zwijana sekcja pod „Razem miesięcznie” (makieta 219:3).
+   * Do ostatniego miesiąca włącznie zlecenie jest zwykłym wierszem, więc cofnięcie się strzałkami pokazuje, czy wtedy zeszło.
+   */
+  protected readonly endedOrders = computed(() => (this.data()?.orders ?? []).filter((o) => o.state === 'Ended'));
+  protected readonly endedOpen = signal(false);
+
   /** Zlecenia, które czekają (bieżący miesiąc) — materiał na baner. */
-  protected readonly waiting = computed(() => (this.data()?.orders ?? []).filter((o) => o.state === 'Waiting'));
+  protected readonly waiting = computed(() => this.activeOrders().filter((o) => o.state === 'Waiting'));
   /** Zlecenia, które nie zeszły w zamkniętym miesiącu. */
-  protected readonly missed = computed(() => (this.data()?.orders ?? []).filter((o) => o.state === 'Missed'));
+  protected readonly missed = computed(() => this.activeOrders().filter((o) => o.state === 'Missed'));
   /** Zlecenia, które zeszły w innej kwocie niż zwykle. */
-  protected readonly different = computed(
-    () => (this.data()?.orders ?? []).filter((o) => o.state === 'PaidDifferentAmount'),
-  );
+  protected readonly different = computed(() => this.activeOrders().filter((o) => o.state === 'PaidDifferentAmount'));
 
   // ── Nawigacja ────────────────────────────────────────────────────────────────────────
 
@@ -165,40 +202,51 @@ export class StandingOrders {
   protected readonly draftAmount = signal<number | null>(null);
   protected readonly draftRhythm = signal<StandingOrderRhythm>('Monthly');
   protected readonly draftDueMonth = signal<number | null>(null);
-  protected readonly draftPattern = signal('');
-  protected readonly draftFrom = signal<number | null>(null);
-  protected readonly draftTo = signal<number | null>(null);
+  /** Reguły dopasowania w kolejności z modala; zlecenie ma co najmniej jedną. */
+  protected readonly draftRules = signal<DraftRule[]>([emptyRule()]);
 
   protected readonly preview = signal<StandingOrderPreview | null>(null);
   private previewTimer: ReturnType<typeof setTimeout> | undefined;
 
-  private readonly rangeValid = computed(() => {
-    const from = this.draftFrom();
-    const to = this.draftTo();
-    return from !== null && to !== null && from >= 0 && to > 0 && from <= to;
+  private readonly rulesValid = computed(() => {
+    const rules = this.draftRules();
+    return rules.length > 0 && rules.length <= MAX_RULES && rules.every(ruleValid);
   });
+
+  protected readonly canAddRule = computed(() => this.draftRules().length < MAX_RULES);
 
   protected readonly canSave = computed(() =>
     this.draftName().trim().length > 0
     && (this.draftAmount() ?? 0) > 0
-    && this.draftPattern().trim().length >= MIN_PATTERN_LENGTH
-    && this.rangeValid()
+    && this.rulesValid()
     && (this.draftRhythm() === 'Monthly' || this.draftDueMonth() !== null));
 
+  protected addRule(): void {
+    if (this.canAddRule()) this.draftRules.update((rules) => [...rules, emptyRule()]);
+  }
+
+  /** Ostatniej reguły nie da się usunąć — zlecenie bez reguły nie przypnie niczego. */
+  protected removeRule(index: number): void {
+    this.draftRules.update((rules) => (rules.length > 1 ? rules.filter((_, i) => i !== index) : rules));
+  }
+
+  protected updateRule(index: number, patch: Partial<DraftRule>): void {
+    this.draftRules.update((rules) => rules.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+
   /**
-   * Podgląd reguły liczy SERWER, na całej historii budżetu — ten sam zbiór, który przypnie zapis.
+   * Podgląd reguł liczy SERWER, na całej historii budżetu — ten sam zbiór, który przypnie zapis.
    * Zliczanie po stronie przeglądarki na jednej stronie listy pokazywałoby liczbę, która nie ma nic wspólnego z zapisem.
+   * Pyta dopiero, gdy WSZYSTKIE reguły są poprawne — liczba dla części reguł myliłaby tak samo.
    */
   private readonly schedulePreview = effect(() => {
     const open = this.editorOpen();
-    const pattern = this.draftPattern().trim();
-    const from = this.draftFrom();
-    const to = this.draftTo();
-    const valid = this.rangeValid();
+    const rules = this.draftRules();
+    const valid = this.rulesValid();
     const editingId = this.editing()?.id ?? null;
 
     clearTimeout(this.previewTimer);
-    if (!open || pattern.length < MIN_PATTERN_LENGTH || !valid) {
+    if (!open || !valid) {
       this.preview.set(null);
       return;
     }
@@ -206,9 +254,7 @@ export class StandingOrders {
     const body = {
       budgetId: this.data()?.selectedBudgetIds[0] ?? this.budgetId(),
       standingOrderId: editingId,
-      titlePattern: pattern,
-      amountFrom: from,
-      amountTo: to,
+      rules: rulesOf(rules),
     };
     this.previewTimer = setTimeout(() => void this.loadPreview(body), PREVIEW_DEBOUNCE_MS);
   });
@@ -227,9 +273,9 @@ export class StandingOrders {
     this.draftAmount.set(row?.expectedAmount ?? null);
     this.draftRhythm.set(row?.rhythm ?? 'Monthly');
     this.draftDueMonth.set(row?.dueMonth ?? null);
-    this.draftPattern.set(row?.titlePattern ?? '');
-    this.draftFrom.set(row?.amountFrom ?? null);
-    this.draftTo.set(row?.amountTo ?? null);
+    this.draftRules.set(row && row.rules.length > 0
+      ? row.rules.map((r) => ({ pattern: r.titlePattern, from: r.amountFrom, to: r.amountTo }))
+      : [emptyRule()]);
     this.preview.set(null);
     this.editorOpen.set(true);
   }
@@ -243,9 +289,7 @@ export class StandingOrders {
       expectedAmount: this.draftAmount(),
       rhythm: this.draftRhythm(),
       dueMonth: this.draftRhythm() === 'Monthly' ? null : this.draftDueMonth(),
-      titlePattern: this.draftPattern().trim(),
-      amountFrom: this.draftFrom(),
-      amountTo: this.draftTo(),
+      rules: rulesOf(this.draftRules()),
     };
     const existing = this.editing();
 
@@ -274,6 +318,36 @@ export class StandingOrders {
     if (!ok) return;
 
     await this.run(() => firstValueFrom(this.http.delete(`/api/standing-orders/${row.id}`)), 'standingOrders.removed');
+  }
+
+  // ── Zakończenie (makieta 229:1110) ───────────────────────────────────────────────────
+
+  protected readonly endOpen = signal(false);
+  protected readonly endTarget = signal<StandingOrderRow | null>(null);
+  /** Ostatni miesiąc zlecenia — domyślnie bieżący, jak na makiecie. */
+  protected readonly endLastMonth = signal<Date | null>(null);
+
+  protected openEnd(row: StandingOrderRow): void {
+    const current = this.data()?.currentMonth;
+    this.endTarget.set(row);
+    this.endLastMonth.set(current ? this.dateOf(current) : new Date());
+    this.endOpen.set(true);
+  }
+
+  protected async confirmEnd(): Promise<void> {
+    const row = this.endTarget();
+    const lastMonth = this.endLastMonth();
+    if (!row || !lastMonth) return;
+
+    this.endOpen.set(false);
+    await this.run(
+      () => firstValueFrom(this.http.put(`/api/standing-orders/${row.id}/end`, { lastMonth: this.isoMonth(lastMonth) })),
+      'standingOrders.ended');
+  }
+
+  /** „Wznów” zdejmuje datę końca — bez dialogu, bo nic nie znika i da się to od razu cofnąć „Zakończ”. */
+  protected async resume(row: StandingOrderRow): Promise<void> {
+    await this.run(() => firstValueFrom(this.http.delete(`/api/standing-orders/${row.id}/end`)), 'standingOrders.resumed');
   }
 
   protected async unpin(pin: StandingOrderPin): Promise<void> {
@@ -326,6 +400,31 @@ export class StandingOrders {
     if (!iso) return '';
     const [, month, day] = iso.split('-').map(Number);
     return `${day}.${String(month).padStart(2, '0')}`;
+  }
+
+  /** „VIII 2026” — miesiąc zakończenia rzymską cyfrą, jak na makiecie. */
+  protected romanMonth(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const [year, month] = iso.split('-').map(Number);
+    return `${ROMAN_MONTHS[month - 1]} ${year}`;
+  }
+
+  /**
+   * Opis reguł pod nazwą. Przy jednej regule pełny („tytuł zawiera „czynsz” · 2000–2500 zł”), przy kilku skrót
+   * z samymi frazami — pełny opis z kwotami się nie mieścił (makieta 219:3).
+   */
+  protected rulesSummary(row: StandingOrderRow): string {
+    const [first] = row.rules;
+    if (!first) return '';
+    if (row.rules.length === 1) {
+      return this.translate.instant('standingOrders.table.rule', {
+        pattern: first.titlePattern, from: this.money(first.amountFrom), to: this.money(first.amountTo),
+      });
+    }
+    return this.translate.instant(`standingOrders.table.rules.${pluralForm(row.rules.length)}`, {
+      count: row.rules.length,
+      list: row.rules.map((r) => `„${r.titlePattern}”`).join(', '),
+    });
   }
 
   /** Kolor kropki stanu — znaczenie niesie kolor, jak w statusach listy transakcji. */

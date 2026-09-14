@@ -9,7 +9,8 @@ namespace BudgetTracker.Api.Features.StandingOrders;
 /// <remarks>
 /// <list type="bullet">
 /// <item>Endpointy NIE łapią wyjątków — kody rozstrzyga <c>DomainExceptionHandler</c>. Stąd <c>Produces</c>.</item>
-/// <item>Podgląd reguły to POST, bo niesie regułę w ciele, ale NICZEGO nie zapisuje.</item>
+/// <item>Podgląd reguł to POST, bo niesie reguły w ciele, ale NICZEGO nie zapisuje.</item>
+/// <item>Zakończenie to zasób <c>/end</c>: PUT ustawia ostatni miesiąc, DELETE go zdejmuje („Wznów”).</item>
 /// <item>„Odepnij” adresuje TRANSAKCJĘ, nie zlecenie — transakcja należy do jednego zlecenia naraz.</item>
 /// </list>
 /// </remarks>
@@ -25,6 +26,7 @@ public static class StandingOrdersModule
         services.AddScoped<CreateStandingOrderCommandHandler>();
         services.AddScoped<UpdateStandingOrderCommandHandler>();
         services.AddScoped<DeleteStandingOrderCommandHandler>();
+        services.AddScoped<EndStandingOrderCommandHandler>();
         services.AddScoped<UnpinTransactionCommandHandler>();
         return services;
     }
@@ -70,6 +72,26 @@ public static class StandingOrdersModule
             return Results.NoContent();
         })
             .WithName("DeleteStandingOrder")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapPut("/api/standing-orders/{id:guid}/end", async (
+            Guid id, EndStandingOrderRequestDto request, EndStandingOrderCommandHandler handler, CancellationToken ct) =>
+        {
+            await handler.EndAsync(id, request, ct);
+            return Results.NoContent();
+        })
+            .WithName("EndStandingOrder")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapDelete("/api/standing-orders/{id:guid}/end", async (
+            Guid id, EndStandingOrderCommandHandler handler, CancellationToken ct) =>
+        {
+            await handler.ResumeAsync(id, ct);
+            return Results.NoContent();
+        })
+            .WithName("ResumeStandingOrder")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound);
 

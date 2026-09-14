@@ -78,7 +78,13 @@ public sealed class StandingOrdersTests : IAsyncLifetime
     private static SaveStandingOrderRequestDto Rent(
         decimal from = 2000m, decimal to = 2500m, string pattern = "czynsz",
         StandingOrderRhythm rhythm = StandingOrderRhythm.Monthly, int? dueMonth = null, string name = "Czynsz") =>
-        new(null, name, 2200m, rhythm, dueMonth, pattern, from, to);
+        new(null, name, 2200m, rhythm, dueMonth, [new StandingOrderRuleRequestDto(pattern, from, to)]);
+
+    private static StandingOrderRuleRequestDto Rule(string pattern, decimal from, decimal to) => new(pattern, from, to);
+
+    private PreviewStandingOrderQueryHandler Preview() => new(_db, Scope(), Matcher());
+
+    private EndStandingOrderCommandHandler End() => new(_db);
 
     private Transaction Add(DateOnly date, decimal amount, string description, Category? category = null, Guid? budget = null)
     {
@@ -165,14 +171,41 @@ public sealed class StandingOrdersTests : IAsyncLifetime
         await _db.SaveChangesAsync();
         var first = await Create().HandleAsync(Rent(), default);
 
-        var preview = await new PreviewStandingOrderQueryHandler(Scope(), Matcher()).HandleAsync(
-            new StandingOrderPreviewRequestDto(null, null, "garaz", 100m, 3000m), default);
+        var preview = await Preview().HandleAsync(
+            new StandingOrderPreviewRequestDto(null, null, [Rule("garaz", 100m, 3000m)]), default);
         var second = await Create().HandleAsync(Rent(100m, 3000m, "garaz", name: "Garaż"), default);
 
         Assert.Equal(1, preview.MatchCount);
         Assert.Equal(1, preview.TakenByOtherOrders);
         Assert.Equal(0, second.LinkedCount);
         Assert.Equal(first.Id, await PinOf(t));
+    }
+
+    [Fact]
+    public async Task Wiele_regul_laczy_LUB_a_kazda_ma_wlasny_zakres_kwot()
+    {
+        var byRent = Add(new DateOnly(2026, 8, 5), -2200m, "CZYNSZ SIERPIEN");
+        var byLease = Add(new DateOnly(2026, 7, 5), -2100m, "NAJEM LOKALU LIPIEC");
+        var bothRules = Add(new DateOnly(2026, 6, 5), -2100m, "CZYNSZ NAJEM LOKALU");
+        // „najem lokalu" za 900 zł nie mieści się w zakresie SWOJEJ reguły — zakres innej reguły go nie ratuje.
+        var wrongRange = Add(new DateOnly(2026, 6, 20), -900m, "NAJEM LOKALU GARAZ");
+        await _db.SaveChangesAsync();
+
+        var request = Rent() with { Rules = [Rule("czynsz", 2000m, 2500m), Rule("najem lokalu", 2000m, 2200m)] };
+        var preview = await Preview().HandleAsync(new StandingOrderPreviewRequestDto(null, null, request.Rules), default);
+        var saved = await Create().HandleAsync(request, default);
+
+        Assert.Equal(3, preview.MatchCount);
+        Assert.Equal(3, saved.LinkedCount);
+        Assert.Equal(saved.Id, await PinOf(byRent));
+        Assert.Equal(saved.Id, await PinOf(byLease));
+        Assert.Equal(saved.Id, await PinOf(bothRules));
+        Assert.Null(await PinOf(wrongRange));
+
+        // Reguły wracają z jsonb w tej samej kolejności, co w modalu.
+        var row = await RowAsync(August);
+        Assert.Equal(["czynsz", "najem lokalu"], row.Rules.Select(r => r.TitlePattern));
+        Assert.Equal(2200m, row.Rules[1].AmountTo);
     }
 
     [Fact]
@@ -252,11 +285,83 @@ public sealed class StandingOrdersTests : IAsyncLifetime
     [Fact]
     public async Task Kwartalne_przypada_co_trzy_miesiace_od_wskazanego()
     {
-        var order = new StandingOrder(_budget.BusinessId, "Woda", 150m, StandingOrderRhythm.Quarterly, 2, "woda", 100m, 200m, _clock.GetUtcNow());
+        var order = new StandingOrder(_budget.BusinessId, "Woda", 150m, StandingOrderRhythm.Quarterly, 2, _clock.GetUtcNow());
 
         Assert.True(order.IsDueIn(new DateOnly(2026, 2, 1)));
         Assert.True(order.IsDueIn(new DateOnly(2026, 11, 1)));
         Assert.False(order.IsDueIn(new DateOnly(2026, 9, 1)));
+    }
+
+    // ── Zakończenie ──────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Zakonczone_zlecenie_do_ostatniego_miesiaca_wyglada_normalnie_a_potem_jest_zakonczone_i_poza_suma()
+    {
+        Add(new DateOnly(2026, 7, 5), -2200m, "CZYNSZ");
+        await _db.SaveChangesAsync();
+        var saved = await Create().HandleAsync(Rent(), default);
+        await Create().HandleAsync(Rent(pattern: "internet", from: 50m, to: 70m, name: "Internet") with { ExpectedAmount = 60m }, default);
+        _db.ChangeTracker.Clear();
+
+        await End().EndAsync(saved.Id, new EndStandingOrderRequestDto(new DateOnly(2026, 7, 31)), default);
+
+        var july = await Query().HandleAsync(_budget.BusinessId, new DateOnly(2026, 7, 1), default);
+        var september = await Query().HandleAsync(_budget.BusinessId, September, default);
+        var rentInJuly = july.Orders.Single(o => o.Name == "Czynsz");
+        var rentInSeptember = september.Orders.Single(o => o.Name == "Czynsz");
+
+        Assert.Equal(StandingOrderMonthState.Paid, rentInJuly.State);
+        Assert.Equal(2260m, july.MonthlyTotal);
+        Assert.Equal(StandingOrderMonthState.Ended, rentInSeptember.State);
+        Assert.Equal(new DateOnly(2026, 7, 1), rentInSeptember.EndMonth);
+        Assert.Equal(60m, september.MonthlyTotal);
+        Assert.Equal(1, september.DueCount);
+        Assert.Equal(60m, september.WaitingAmount);
+    }
+
+    [Fact]
+    public async Task Zakonczenie_zostawia_przypiecia_a_import_po_ostatnim_miesiacu_juz_nie_przypina()
+    {
+        var old = Add(new DateOnly(2026, 8, 5), -2200m, "CZYNSZ SIERPIEN");
+        await _db.SaveChangesAsync();
+        var saved = await Create().HandleAsync(Rent(), default);
+        _db.ChangeTracker.Clear();
+        await End().EndAsync(saved.Id, new EndStandingOrderRequestDto(new DateOnly(2026, 7, 1)), default);
+
+        var late = Add(new DateOnly(2026, 9, 5), -2200m, "CZYNSZ WRZESIEN");
+        var lastMonth = Add(new DateOnly(2026, 7, 30), -2200m, "CZYNSZ LIPIEC");
+        await _db.SaveChangesAsync();
+        await Matcher().PinAsync(_budget.BusinessId, [late.BusinessId, lastMonth.BusinessId], default);
+
+        // Sierpniowy czynsz był przypięty przed zakończeniem — dialog obiecuje, że zostaje.
+        Assert.Equal(saved.Id, await PinOf(old));
+        Assert.Equal(saved.Id, await PinOf(lastMonth));
+        Assert.Null(await PinOf(late));
+    }
+
+    [Fact]
+    public async Task Wznowienie_przywraca_zlecenie_i_przypinanie()
+    {
+        var saved = await Create().HandleAsync(Rent(), default);
+        _db.ChangeTracker.Clear();
+        await End().EndAsync(saved.Id, new EndStandingOrderRequestDto(August), default);
+        _db.ChangeTracker.Clear();
+
+        await End().ResumeAsync(saved.Id, default);
+
+        var imported = Add(new DateOnly(2026, 9, 5), -2200m, "CZYNSZ WRZESIEN");
+        await _db.SaveChangesAsync();
+        await Matcher().PinAsync(_budget.BusinessId, [imported.BusinessId], default);
+        var row = await RowAsync(September);
+        Assert.Null(row.EndMonth);
+        Assert.Equal(StandingOrderMonthState.Paid, row.State);
+    }
+
+    [Fact]
+    public async Task Zakonczenie_nieznanego_zlecenia_to_404()
+    {
+        await Assert.ThrowsAsync<StandingOrderNotFoundException>(
+            () => End().EndAsync(Guid.NewGuid(), new EndStandingOrderRequestDto(August), default));
     }
 
     // ── Cykl życia budżetu ───────────────────────────────────────────────────────────────
@@ -323,6 +428,9 @@ public sealed class StandingOrdersTests : IAsyncLifetime
         await Assert.ThrowsAsync<StandingOrderDueMonthInvalidException>(
             () => Create().HandleAsync(Rent(rhythm: StandingOrderRhythm.Yearly), default));
         await Assert.ThrowsAsync<StandingOrderNameRequiredException>(() => Create().HandleAsync(Rent(name: "  "), default));
+        await Assert.ThrowsAsync<StandingOrderRulesInvalidException>(() => Create().HandleAsync(Rent() with { Rules = [] }, default));
+        await Assert.ThrowsAsync<StandingOrderPatternInvalidException>(
+            () => Create().HandleAsync(Rent() with { Rules = [Rule("czynsz", 1m, 2m), Rule("x", 1m, 2m)] }, default));
     }
 
     [Fact]

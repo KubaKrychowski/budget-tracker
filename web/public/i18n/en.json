@@ -700,9 +700,14 @@
       "amount": "Amount",
       "rhythm": "Rhythm",
       "state": "This month",
-      "rule": "title contains “{{pattern}}” · {{from}}–{{to}}",
+      "rule": "title contains “{{pattern}}” · {{from}}–{{to}} PLN",
       "total": "Total per month",
-      "totalNote": "quarterly ÷ 3, yearly ÷ 12"
+      "totalNote": "quarterly ÷ 3, yearly ÷ 12",
+      "rules": {
+        "few": "{{count}} rules: {{list}}",
+        "many": "{{count}} rules: {{list}}"
+      },
+      "ended": "Ended standing orders ({{count}})"
     },
     "state": {
       "paid": "Paid {{date}}",
@@ -710,7 +715,8 @@
       "waiting": "Waiting",
       "waitingUsual": "Waiting · usually by the {{day}}.",
       "missed": "Not paid",
-      "notDue": "Not this month"
+      "notDue": "Not this month",
+      "ended": "Ended in {{month}}"
     },
     "recent": {
       "title": "Recently linked transactions",
@@ -724,20 +730,23 @@
       "addTitle": "Add standing order",
       "editTitle": "Change standing order",
       "save": "Save order",
-      "note": "The order links transactions that match the rule — including past ones. The transaction category does not change.",
+      "note": "A standing order links transactions that match its rules. Their category does not change — the order only says it is, e.g., rent.",
       "name": "Name",
       "namePlaceholder": "Rent",
       "amount": "Usual amount",
       "rhythm": "Rhythm",
       "dueMonth": "Month",
       "dueMonthPlaceholder": "Month it is paid in",
-      "ruleTitle": "Matching rule",
       "pattern": "Title contains",
       "patternPlaceholder": "rent",
-      "range": "Amount from – to (the range survives a price rise)",
-      "preview": "The rule matches {{count}} transactions in this budget's history — the last one {{date}}, {{amount}}.",
+      "range": "Amount from – to",
+      "preview": "The rules match {{count}} transactions in the budget history — the latest on {{date}}, {{amount}} PLN. They will be linked on save.",
       "previewTaken": "{{count}} of them already belong to another order and stay there.",
-      "previewNone": "The rule matches no transaction yet — it will link future imports."
+      "previewNone": "The rules do not match any transaction yet — they will link future imports.",
+      "rulesTitle": "Matching rules",
+      "rulesHint": "A transaction belongs to the order when it matches any rule.",
+      "addRule": "Add rule",
+      "removeRule": "Remove"
     },
     "removeConfirm": {
       "header": "Remove the “{{name}}” standing order?",
@@ -745,6 +754,17 @@
     },
     "errors": {
       "loadFailed": "Could not load standing orders"
+    },
+    "end": "End",
+    "resume": "Resume",
+    "ended": "Standing order ended. Linked transactions stay.",
+    "resumed": "Standing order resumed.",
+    "endDialog": {
+      "title": "End standing order “{{name}}”",
+      "note": "E.g. after switching providers or paying off a loan. Ending is not deleting — the order and its history stay.",
+      "alert": "After this month the order will not be expected or counted in the total. Linked transactions stay; new imports will no longer be linked.",
+      "lastMonth": "Last month of the order",
+      "confirm": "End standing order"
     }
   }
 }

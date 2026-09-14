@@ -72,8 +72,9 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
   {
     key: 'standing-orders',
     labelKey: 'actions.standingOrders',
-    // Bez własnego pliku ikony — do dostarczenia (zgłoszenie #18). Do tego czasu ikona NG-ZORRO.
+    // Własna ikona sekcji. `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.
     icon: 'sync',
+    svg: 'icons/zlecenia-stale-azure.svg',
     route: '/standing-orders',
     quickAction: false,
   },

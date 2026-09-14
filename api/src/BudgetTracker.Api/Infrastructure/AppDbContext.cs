@@ -157,8 +157,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         b.Entity<StandingOrder>(e =>
         {
             e.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            e.Property(x => x.TitlePattern).HasMaxLength(200).IsRequired();
             e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+            // Reguły jako jsonb: wartość zlecenia bez własnego cyklu życia — kasują się, przywracają i purge'ują
+            // razem z nim, bez osobnej tabeli do pilnowania w BudgetChildren/BudgetPurger.
+            e.ComplexCollection(x => x.Rules, r => r.ToJson());
             e.Property(x => x.Rhythm).HasConversion<string>().HasMaxLength(DictionaryCodeLength);
             e.HasOne<StandingOrderRhythmDictionary>().WithMany()
                 .HasForeignKey(x => x.Rhythm).OnDelete(DeleteBehavior.Restrict);

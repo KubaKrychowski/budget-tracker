@@ -21,4 +21,7 @@ public enum StandingOrderMonthState
 
     /// <summary>Zlecenie nie przypada na ten miesiąc (roczne, kwartalne).</summary>
     NotDue = 5,
+
+    /// <summary>Zlecenie zakończone przed tym miesiącem — nie jest oczekiwane ani liczone w sumie.</summary>
+    Ended = 6,
 }

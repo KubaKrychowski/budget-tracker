@@ -81,6 +81,7 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
 
         StandingOrderNameRequiredException => (StatusCodes.Status400BadRequest, "StandingOrder_NameRequired"),
         StandingOrderPatternInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_PatternInvalid"),
+        StandingOrderRulesInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_RulesInvalid"),
         StandingOrderAmountInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_AmountInvalid"),
         StandingOrderDueMonthInvalidException => (StatusCodes.Status400BadRequest, "StandingOrder_DueMonthInvalid"),
 
