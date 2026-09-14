@@ -33,4 +33,7 @@ export interface TransactionListResponse {
 
   /** Czy WYBRANE budżety mają jakiekolwiek transakcje, bez względu na filtr. */
   hasAnyTransactions: boolean;
+
+  /** Nazwa zlecenia stałego z filtra `standingOrderId` — do etykiety „Zlecenie stałe: …”. */
+  standingOrderName?: string | null;
 }

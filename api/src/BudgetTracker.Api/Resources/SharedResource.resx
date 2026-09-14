@@ -25,6 +25,15 @@
   <data name="Limit_WarningThresholdInvalid" xml:space="preserve"><value>The warning threshold must be between 1 and 100% of the limit.</value></data>
   <data name="Limit_CategoryInvalid" xml:space="preserve"><value>A spending limit cannot be set on this category — it does not exist or it is an income category.</value></data>
   <data name="Limit_HistoryLocked" xml:space="preserve"><value>Limits change from the current month on — closed months keep the limit that applied to them.</value></data>
+  <data name="StandingOrder_NameRequired" xml:space="preserve"><value>Name the standing order — e.g. “Rent”.</value></data>
+  <data name="StandingOrder_PatternInvalid" xml:space="preserve"><value>The title phrase needs at least 3 characters — a shorter one matches almost every transaction.</value></data>
+  <data name="StandingOrder_RulesInvalid" xml:space="preserve"><value>A standing order needs between 1 and 20 matching rules.</value></data>
+  <data name="StandingOrder_AmountInvalid" xml:space="preserve"><value>The amount must be greater than zero and the “from – to” range cannot be reversed.</value></data>
+  <data name="StandingOrder_DueMonthInvalid" xml:space="preserve"><value>A yearly or quarterly standing order needs the month it is paid in.</value></data>
+  <data name="EpisodicOrder_NameRequired" xml:space="preserve"><value>Name the order — e.g. “New laptop”.</value></data>
+  <data name="EpisodicOrder_PlanInvalid" xml:space="preserve"><value>A planned order needs a category, an amount above zero and a due month.</value></data>
+  <data name="EpisodicOrder_TransactionInvalid" xml:space="preserve"><value>This transaction cannot be used — it must be an expense from this budget and not belong to another one-off order.</value></data>
+  <data name="EpisodicOrder_StateConflict" xml:space="preserve"><value>The order has changed — refresh the screen and try again.</value></data>
   <data name="Reservation_NameRequired" xml:space="preserve"><value>Give the reservation a name — an amount without one is not an envelope.</value></data>
   <data name="Reservation_AmountInvalid" xml:space="preserve"><value>The reservation amount must be greater than zero.</value></data>
   <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>This transaction cannot settle the reservation. It has to be a withdrawal from savings in the same budget, not already used to settle another one.</value></data>

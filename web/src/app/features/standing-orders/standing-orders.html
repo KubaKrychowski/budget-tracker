@@ -1,0 +1,339 @@
+<section class="so">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>
+      <img class="so__crumb-icon" src="icons/zlecenia-stale-azure.svg" alt="" width="20" height="20" />
+      {{ 'standingOrders.title' | translate }}
+    </nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  @if (failure(); as problem) {
+    <nz-alert nzType="error" nzShowIcon [nzMessage]="'standingOrders.errors.loadFailed' | translate" [nzDescription]="failureBody">
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">{{ 'transactions.errors.retry' | translate }}</button>
+      </ng-template>
+    </nz-alert>
+  } @else {
+    @if (lastData(); as last) {
+      <!-- Karta „Konfiguracja”, jak na ekranie limitów (makieta 219:3). -->
+      <div class="so__config">
+        <h3 class="so__config-title">{{ 'dashboard.configuration' | translate }}</h3>
+        <app-budget-switcher
+          [budgets]="last.budgets"
+          [selectedId]="last.selectedBudgetIds[0] ?? null"
+          (budgetChange)="switchBudget($event)" />
+      </div>
+    }
+
+    <nz-spin [nzSpinning]="loading() || busy()">
+      @if (data(); as d) {
+        <!-- ── Baner ─────────────────────────────────────────────────────────────────────
+             Bez niczego do powiedzenia baneru nie ma (jak na limitach). Czekające i niezapłacone są TYTUŁEM,
+             inna kwota — opisem: to informacja, nie ostrzeżenie. -->
+        <ng-template #differentBody>
+          @if (different().length > 0) {
+            {{ 'standingOrders.banner.different' | translate: { list: nameList(different(), 'paid') } }}
+          }
+        </ng-template>
+
+        @if (d.orders.length === 0) {
+          <nz-alert class="so__banner" nzType="info" nzShowIcon
+            [nzMessage]="'standingOrders.banner.empty' | translate"
+            [nzDescription]="'standingOrders.banner.emptyBody' | translate" />
+        } @else if (waiting().length > 0) {
+          <nz-alert class="so__banner" nzType="info" nzShowIcon
+            [nzMessage]="'standingOrders.banner.waiting' | translate: { list: nameList(waiting()) }"
+            [nzDescription]="differentBody" />
+        } @else if (missed().length > 0) {
+          <nz-alert class="so__banner" nzType="warning" nzShowIcon
+            [nzMessage]="'standingOrders.banner.missed' | translate: { month: monthLabel(d.month), list: nameList(missed()) }"
+            [nzDescription]="differentBody" />
+        } @else if (different().length > 0) {
+          <nz-alert class="so__banner" nzType="info" nzShowIcon [nzMessage]="differentBody" />
+        }
+
+        <!-- ── Podsumowanie ───────────────────────────────────────────────────────────── -->
+        <h2 class="so__caption">{{ 'standingOrders.summary' | translate }}</h2>
+        <div class="so__metrics">
+          <nz-statistic [nzTitle]="'standingOrders.metrics.monthlyTotal' | translate"
+            [nzValue]="money(d.monthlyTotal)" [nzSuffix]="'dashboard.currency' | translate" />
+          <nz-statistic [nzTitle]="'standingOrders.metrics.paid' | translate"
+            [nzValue]="d.dueCount > 0 ? d.paidCount + ' z ' + d.dueCount : '—'" />
+          <nz-statistic [nzTitle]="'standingOrders.metrics.waiting' | translate"
+            [nzValue]="money(d.waitingAmount)" [nzSuffix]="'dashboard.currency' | translate" />
+          <nz-statistic [nzTitle]="'standingOrders.metrics.different' | translate"
+            [nzValue]="d.differentAmountCount" />
+        </div>
+
+        <div class="so__cols">
+          <!-- ── Tabela zleceń ──────────────────────────────────────────────────────────── -->
+          <div class="so__card">
+            <h3 class="so__card-title">{{ 'standingOrders.table.title' | translate }}</h3>
+            <p class="so__hint">{{ 'standingOrders.table.hint' | translate }}</p>
+
+            <div class="so__toolbar">
+              <button nz-button (click)="shiftMonth(-1)" [attr.aria-label]="'limits.prevMonth' | translate">‹</button>
+              <span class="so__month">{{ monthLabel(d.month) }}</span>
+              <button nz-button (click)="shiftMonth(1)" [attr.aria-label]="'limits.nextMonth' | translate">›</button>
+              <button nz-button nzType="link" [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
+                {{ 'limits.currentMonth' | translate }}
+              </button>
+              <span class="so__spacer"></span>
+              <button nz-button nzType="primary" (click)="openEditor(null)">
+                <nz-icon nzType="plus-circle" />
+                {{ 'standingOrders.add' | translate }}
+              </button>
+            </div>
+
+            <!-- Wiersz zlecenia — ten sam dla trwających i zakończonych; zakończone są tylko wygaszone. -->
+            <ng-template #orderRow let-row>
+              <tr [class.so__ended]="row.state === 'Ended'">
+                <td>
+                  {{ row.name }}
+                  <span class="so__rule">{{ rulesSummary(row) }}</span>
+                </td>
+                <td>{{ row.categoryName ?? '—' }}</td>
+                <td class="so__right amount">{{ money(row.expectedAmount) }} zł</td>
+                <td>
+                  {{ ('standingOrders.rhythm.' + row.rhythm) | translate }}
+                  @if (row.dueMonth !== null) { · {{ monthName(row.dueMonth) }} }
+                </td>
+                <td>
+                  <span class="so__dot" [ngClass]="stateClass(row.state)"></span>
+                  @switch (row.state) {
+                    @case ('Paid') { {{ 'standingOrders.state.paid' | translate: { date: dayMonth(row.paidOn) } }} }
+                    @case ('PaidDifferentAmount') {
+                      {{ 'standingOrders.state.paidDifferent' | translate: { date: dayMonth(row.paidOn), amount: money(row.paidAmount) } }}
+                    }
+                    @case ('Waiting') {
+                      @if (row.usualDay !== null) {
+                        {{ 'standingOrders.state.waitingUsual' | translate: { day: row.usualDay } }}
+                      } @else {
+                        {{ 'standingOrders.state.waiting' | translate }}
+                      }
+                    }
+                    @case ('Missed') { {{ 'standingOrders.state.missed' | translate }} }
+                    @case ('Ended') { {{ 'standingOrders.state.ended' | translate: { month: romanMonth(row.endMonth) } }} }
+                    @default { {{ 'standingOrders.state.notDue' | translate }} }
+                  }
+                </td>
+                <td>
+                  <!-- Menu wiersza (makiety 219:3, 229:13387): „Przejdź do powiązanych” pierwsza, bo najczęstsza;
+                       zakończone zamiast „Zakończ” mają „Wznów”. -->
+                  <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="rowMenu" nzTrigger="click"
+                    [attr.aria-label]="'transactions.columns.actions' | translate">⋯</button>
+                  <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+                    <ul nz-menu>
+                      <li nz-menu-item tabindex="0" [nzDisabled]="row.linkedCount === 0"
+                        (click)="goToLinked(row)" (keydown.enter)="goToLinked(row)">
+                        <strong>{{ 'standingOrders.goToLinked' | translate: { count: row.linkedCount } }}</strong>
+                      </li>
+                      <li nz-menu-item tabindex="0" (click)="openEditor(row)" (keydown.enter)="openEditor(row)">
+                        {{ 'standingOrders.change' | translate }}
+                      </li>
+                      @if (row.endMonth === null) {
+                        <li nz-menu-item tabindex="0" (click)="openEnd(row)" (keydown.enter)="openEnd(row)">
+                          {{ 'standingOrders.end' | translate }}
+                        </li>
+                      } @else {
+                        <li nz-menu-item tabindex="0" (click)="resume(row)" (keydown.enter)="resume(row)">
+                          {{ 'standingOrders.resume' | translate }}
+                        </li>
+                      }
+                      <li nz-menu-item nzDanger tabindex="0" (click)="remove(row)" (keydown.enter)="remove(row)">
+                        {{ 'standingOrders.remove' | translate }}
+                      </li>
+                    </ul>
+                  </nz-dropdown-menu>
+                </td>
+              </tr>
+            </ng-template>
+
+            @if (d.orders.length === 0) {
+              <nz-empty [nzNotFoundContent]="'standingOrders.table.empty' | translate" />
+            } @else {
+              <nz-table [nzData]="d.orders" [nzShowPagination]="false" [nzFrontPagination]="false" nzSize="middle">
+                <thead>
+                  <tr>
+                    <th>{{ 'standingOrders.table.name' | translate }}</th>
+                    <th>{{ 'standingOrders.table.category' | translate }}</th>
+                    <th class="so__right">{{ 'standingOrders.table.amount' | translate }}</th>
+                    <th>{{ 'standingOrders.table.rhythm' | translate }}</th>
+                    <th>{{ 'standingOrders.table.state' | translate }}</th>
+                    <th>{{ 'transactions.columns.actions' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of activeOrders(); track row.id) {
+                    <ng-container *ngTemplateOutlet="orderRow; context: { $implicit: row }" />
+                  }
+                  <tr class="so__total">
+                    <td>{{ 'standingOrders.table.total' | translate }}</td>
+                    <td></td>
+                    <td class="so__right amount">{{ money(d.monthlyTotal) }} zł</td>
+                    <td class="so__muted">{{ 'standingOrders.table.totalNote' | translate }}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  @if (endedOrders().length > 0) {
+                    <tr class="so__ended-toggle">
+                      <td colspan="6">
+                        <button nz-button nzType="link" nzSize="small" [attr.aria-expanded]="endedOpen()"
+                          (click)="endedOpen.set(!endedOpen())">
+                          <nz-icon [nzType]="endedOpen() ? 'caret-down' : 'caret-right'" />
+                          {{ 'standingOrders.table.ended' | translate: { count: endedOrders().length } }}
+                        </button>
+                      </td>
+                    </tr>
+                    @if (endedOpen()) {
+                      @for (row of endedOrders(); track row.id) {
+                        <ng-container *ngTemplateOutlet="orderRow; context: { $implicit: row }" />
+                      }
+                    }
+                  }
+                </tbody>
+              </nz-table>
+            }
+          </div>
+
+          <!-- ── Ostatnio przypięte ─────────────────────────────────────────────────────── -->
+          <div class="so__card">
+            <h3 class="so__card-title">{{ 'standingOrders.recent.title' | translate }}</h3>
+            <p class="so__hint">{{ 'standingOrders.recent.hint' | translate }}</p>
+
+            @if (d.recent.length === 0) {
+              <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="'standingOrders.recent.empty' | translate" />
+            } @else {
+              <ul class="so__list">
+                @for (pin of d.recent; track pin.transactionId) {
+                  <li class="so__list-row">
+                    <span class="so__list-name">{{ dayMonth(pin.date) }} · {{ pin.standingOrderName }}</span>
+                    <span class="amount so__list-amount">{{ money(pin.amount) }} zł</span>
+                    @if (pin.differentAmount) {
+                      <span class="so__different">{{ 'standingOrders.recent.different' | translate }}</span>
+                    }
+                    <button nz-button nzType="link" nzSize="small" (click)="unpin(pin)">
+                      {{ 'standingOrders.recent.unpin' | translate }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            <p class="so__hint">{{ 'standingOrders.recent.note' | translate }}</p>
+          </div>
+        </div>
+      }
+    </nz-spin>
+  }
+
+  <!-- ── Modal zlecenia (makieta 221:296) ──────────────────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="editorOpen()"
+    [nzTitle]="(editing() ? 'standingOrders.editor.editTitle' : 'standingOrders.editor.addTitle') | translate"
+    (nzOnCancel)="editorOpen.set(false)"
+    (nzOnOk)="save()"
+    [nzOkText]="'standingOrders.editor.save' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="!canSave()"
+  >
+    <ng-container *nzModalContent>
+      <p class="so__hint">{{ 'standingOrders.editor.note' | translate }}</p>
+
+      <!-- Podgląd na GÓRZE dialogu, jak na makiecie — nie pod regułami. -->
+      @if (preview(); as p) {
+        <nz-alert class="so__preview" nzType="info" nzShowIcon [nzMessage]="previewText" />
+        <ng-template #previewText>
+          @if (p.matchCount === 0) {
+            {{ 'standingOrders.editor.previewNone' | translate }}
+          } @else {
+            {{ 'standingOrders.editor.preview' | translate: {
+                 count: p.matchCount, date: dayMonth(p.lastDate), amount: money(p.lastAmount)
+               } }}
+            @if (p.takenByOtherOrders > 0) {
+              {{ 'standingOrders.editor.previewTaken' | translate: { count: p.takenByOtherOrders } }}
+            }
+          }
+        </ng-template>
+      }
+
+      <label class="so__label" for="so-name">{{ 'standingOrders.editor.name' | translate }}</label>
+      <input id="so-name" nz-input class="so__field" [ngModel]="draftName()" (ngModelChange)="draftName.set($event)"
+        [placeholder]="'standingOrders.editor.namePlaceholder' | translate" />
+
+      <label class="so__label" for="so-amount">{{ 'standingOrders.editor.amount' | translate }}</label>
+      <nz-input-number [nzParser]="parseAmount" id="so-amount" class="so__field" [nzMin]="0.01" [nzStep]="10"
+        [ngModel]="draftAmount()" (ngModelChange)="draftAmount.set($event)" />
+
+      <label class="so__label" for="so-rhythm">{{ 'standingOrders.editor.rhythm' | translate }}</label>
+      <nz-select nzId="so-rhythm" class="so__field" [ngModel]="draftRhythm()" (ngModelChange)="draftRhythm.set($event)">
+        @for (r of rhythms; track r) {
+          <nz-option [nzValue]="r" [nzLabel]="('standingOrders.rhythm.' + r) | translate" />
+        }
+      </nz-select>
+
+      @if (draftRhythm() !== 'Monthly') {
+        <label class="so__label" for="so-due">{{ 'standingOrders.editor.dueMonth' | translate }}</label>
+        <nz-select nzId="so-due" class="so__field" [ngModel]="draftDueMonth()" (ngModelChange)="draftDueMonth.set($event)"
+          [nzPlaceHolder]="'standingOrders.editor.dueMonthPlaceholder' | translate">
+          @for (m of months; track m) {
+            <nz-option [nzValue]="m" [nzLabel]="monthName(m)" />
+          }
+        </nz-select>
+      }
+
+      <h4 class="so__rule-title">{{ 'standingOrders.editor.rulesTitle' | translate }}</h4>
+      <p class="so__hint">{{ 'standingOrders.editor.rulesHint' | translate }}</p>
+
+      <!-- Jedna reguła = jeden wiersz; etykiety tylko nad pierwszym (makieta 221:296). -->
+      <div class="so__rules">
+        <span class="so__rules-head" id="so-pattern-label">{{ 'standingOrders.editor.pattern' | translate }}</span>
+        <span class="so__rules-head" id="so-range-label">{{ 'standingOrders.editor.range' | translate }}</span>
+        <span></span>
+        @for (rule of draftRules(); track $index; let i = $index) {
+          <input nz-input aria-labelledby="so-pattern-label" [ngModel]="rule.pattern"
+            (ngModelChange)="updateRule(i, { pattern: $event })"
+            [placeholder]="'standingOrders.editor.patternPlaceholder' | translate" />
+          <div class="so__range" role="group" aria-labelledby="so-range-label">
+            <nz-input-number [nzParser]="parseAmount" [nzMin]="0" [nzStep]="10"
+              [ngModel]="rule.from" (ngModelChange)="updateRule(i, { from: $event })" />
+            <span>–</span>
+            <nz-input-number [nzParser]="parseAmount" [nzMin]="0.01" [nzStep]="10"
+              [ngModel]="rule.to" (ngModelChange)="updateRule(i, { to: $event })" />
+          </div>
+          <button nz-button nzType="link" nzDanger [disabled]="draftRules().length === 1" (click)="removeRule(i)">
+            {{ 'standingOrders.editor.removeRule' | translate }}
+          </button>
+        }
+      </div>
+      <button nz-button nzType="dashed" nzBlock class="so__add-rule" [disabled]="!canAddRule()" (click)="addRule()">
+        <nz-icon nzType="plus" />
+        {{ 'standingOrders.editor.addRule' | translate }}
+      </button>
+    </ng-container>
+  </nz-modal>
+
+  <!-- ── Dialog zakończenia (makieta 229:1110) ─────────────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="endOpen()"
+    [nzTitle]="'standingOrders.endDialog.title' | translate: { name: endTarget()?.name }"
+    (nzOnCancel)="endOpen.set(false)"
+    (nzOnOk)="confirmEnd()"
+    [nzOkText]="'standingOrders.endDialog.confirm' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="endLastMonth() === null"
+  >
+    <ng-container *nzModalContent>
+      <p class="so__hint">{{ 'standingOrders.endDialog.note' | translate }}</p>
+      <nz-alert nzType="info" nzShowIcon [nzMessage]="'standingOrders.endDialog.alert' | translate" />
+
+      <label class="so__label" for="so-end-month">{{ 'standingOrders.endDialog.lastMonth' | translate }}</label>
+      <!-- Miesiąc, nie dzień — zlecenie jest oczekiwane do końca tego miesiąca. -->
+      <nz-date-picker id="so-end-month" class="so__field" nzMode="month" [nzAllowClear]="false"
+        [ngModel]="endLastMonth()" (ngModelChange)="endLastMonth.set($event)" />
+    </ng-container>
+  </nz-modal>
+</section>

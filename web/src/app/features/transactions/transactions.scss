@@ -72,6 +72,15 @@
     width: 232px;   /* szerokość Search-Boxa z makiety */
   }
 
+  /* Etykieta filtra zlecenia stałego — ta sama wysokość linii co szukajka obok. */
+  &__standing-order {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 4px 8px;
+  }
+
   /* Szerszy od szukajki, bo nazwy budżetów bywają długie, a tagów potrafi być kilka. */
   &__budgets {
     min-width: 260px;
@@ -147,6 +156,25 @@
 
   &__center {
     text-align: center;
+  }
+
+  /* Nazwa zlecenia epizodycznego — jedna linia, pełna w podpowiedzi. */
+  &__episodic {
+    max-width: 150px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__modal-note {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #8c8c8c;
+  }
+
+  &__modal-label {
+    display: block;
+    margin: 12px 0 4px;
   }
 
   /* Dropdown filtra „Kwota" (kierunek + zakres) — sam wygląd co RangeFilter

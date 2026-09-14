@@ -25,6 +25,15 @@
   <data name="Limit_WarningThresholdInvalid" xml:space="preserve"><value>Próg ostrzeżenia musi mieścić się między 1 a 100% limitu.</value></data>
   <data name="Limit_CategoryInvalid" xml:space="preserve"><value>Na tę kategorię nie da się nałożyć limitu wydatków — nie ma jej albo jest przychodowa.</value></data>
   <data name="Limit_HistoryLocked" xml:space="preserve"><value>Limity zmienia się od bieżącego miesiąca — zamknięte miesiące zostają z limitem, który w nich obowiązywał.</value></data>
+  <data name="StandingOrder_NameRequired" xml:space="preserve"><value>Nazwij zlecenie — np. „Czynsz”.</value></data>
+  <data name="StandingOrder_PatternInvalid" xml:space="preserve"><value>Fraza z tytułu musi mieć co najmniej 3 znaki — krótsza pasuje do prawie każdej transakcji.</value></data>
+  <data name="StandingOrder_RulesInvalid" xml:space="preserve"><value>Zlecenie potrzebuje od 1 do 20 reguł dopasowania.</value></data>
+  <data name="StandingOrder_AmountInvalid" xml:space="preserve"><value>Kwota zlecenia musi być większa od zera, a zakres „od – do” nie może być odwrócony.</value></data>
+  <data name="StandingOrder_DueMonthInvalid" xml:space="preserve"><value>Zlecenie roczne i kwartalne potrzebuje miesiąca, w którym schodzi.</value></data>
+  <data name="EpisodicOrder_NameRequired" xml:space="preserve"><value>Nazwij zlecenie — np. „Nowy laptop”.</value></data>
+  <data name="EpisodicOrder_PlanInvalid" xml:space="preserve"><value>Zaplanowane zlecenie potrzebuje kategorii, kwoty większej od zera i miesiąca terminu.</value></data>
+  <data name="EpisodicOrder_TransactionInvalid" xml:space="preserve"><value>Tej transakcji nie da się wskazać — musi być wydatkiem z tego budżetu i nie może należeć do innego zlecenia epizodycznego.</value></data>
+  <data name="EpisodicOrder_StateConflict" xml:space="preserve"><value>Zlecenie zmieniło stan — odśwież ekran i spróbuj jeszcze raz.</value></data>
   <data name="Reservation_NameRequired" xml:space="preserve"><value>Nazwij rezerwację — kwota bez nazwy nie jest kopertą, tylko liczbą bez adresata.</value></data>
   <data name="Reservation_AmountInvalid" xml:space="preserve"><value>Kwota rezerwacji musi być większa od zera.</value></data>
   <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>Ta transakcja nie rozliczy rezerwacji. Musi być wypłatą z oszczędności w tym samym budżecie i nie może zamykać już innej rezerwacji.</value></data>

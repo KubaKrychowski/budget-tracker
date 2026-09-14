@@ -17,7 +17,7 @@ public class SavingsReservation(
     Guid budgetBusinessId,
     string name,
     decimal amount,
-    DateOnly dueMonth,
+    DateOnly? dueMonth,
     int priority,
     DateTimeOffset createdAt) : Entity
 {
@@ -41,11 +41,11 @@ public class SavingsReservation(
     /// Termin — pierwszy dzień miesiąca, na który pieniądze mają być gotowe.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Wymagany.</b> Bez niego nie da się ustawić kolejki zbierania (to ona rozstrzyga,
-    /// która rezerwacja bierze pieniądze pierwsza), a rezerwacja bez terminu i tak nie mówi
-    /// rzeczy najważniejszej: czy zdążysz.
+    /// <c>null</c> = „przy okazji” (zakup bez daty z listy zleceń epizodycznych). ⚠️ Taka rezerwacja zbiera NA KOŃCU
+    /// kolejki — po wszystkich z terminem — i nigdy nie jest „po terminie”. Bez tej reguły zakup „kiedyś” odbierałby
+    /// pieniądze rachunkowi, który ma przyjść w maju.
     /// </remarks>
-    public DateOnly DueMonth { get; protected set; } = dueMonth;
+    public DateOnly? DueMonth { get; protected set; } = dueMonth;
 
     /// <summary>
     /// Rozstrzyga kolejkę przy tym samym terminie. Mniejsza liczba = wcześniej w kolejce.
@@ -87,7 +87,7 @@ public class SavingsReservation(
     /// ją do innej puli i innej kolejki naraz, a wskazana wypłata została w starym budżecie.
     /// Kto chce przenieść, zakłada nową.
     /// </remarks>
-    public void Update(string name, decimal amount, DateOnly dueMonth, int priority)
+    public void Update(string name, decimal amount, DateOnly? dueMonth, int priority)
     {
         Name = name;
         Amount = amount;

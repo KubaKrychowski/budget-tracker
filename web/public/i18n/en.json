@@ -13,7 +13,9 @@
     "importStatement": "Import statement",
     "notImplemented": "“{{label}}” — this feature is coming in a later task.",
     "savings": "Savings goals",
-    "limits": "Spending limits"
+    "limits": "Spending limits",
+    "standingOrders": "Standing orders",
+    "episodicOrders": "One-off orders"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -178,6 +180,7 @@
       "amountTo": "Amount to",
       "clear": "Clear filters",
       "budgets": "Budgets",
+      "standingOrder": "Standing order:",
       "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once."
     },
     "columns": {
@@ -185,9 +188,9 @@
       "description": "Description",
       "category": "Category",
       "status": "Status",
-      "largeExpense": "Large expense",
       "amount": "Amount",
-      "actions": "Actions"
+      "actions": "Actions",
+      "episodic": "One-off"
     },
     "selection": {
       "count": "Selected: {{count}}",
@@ -195,8 +198,6 @@
       "edit": "Edit selected",
       "editDisabledHint": "Inline editing only works for the on-page selection, not for the whole matching set.",
       "setCategory": "Bulk category assignment",
-      "markLargeExpense": "Mark as large expense",
-      "unmarkLargeExpense": "Unmark large expense",
       "delete": "Delete selected"
     },
     "metrics": {
@@ -207,8 +208,8 @@
     "rowMenu": {
       "edit": "Edit",
       "delete": "Delete",
-      "markLargeExpense": "Mark as large expense",
-      "unmarkLargeExpense": "Unmark large expense"
+      "markEpisodic": "Mark as a one-off order…",
+      "goToEpisodic": "Go to the one-off order"
     },
     "edit": {
       "modified": "{{count}} rows modified",
@@ -237,9 +238,6 @@
       "confirm": "Delete the selected transactions ({{count}})?",
       "success": "Deleted {{count}} transactions."
     },
-    "bulkLargeExpense": {
-      "success": "Updated {{count}} transactions."
-    },
     "bulkSetCategory": {
       "title": "Bulk category assignment",
       "info": "Once accepted, {{count}} transactions will change. If needed, you can retrain the model on the new categories in settings.",
@@ -254,6 +252,16 @@
     "errors": {
       "loadFailed": "Could not load the transactions",
       "retry": "Try again"
+    },
+    "episodic": {
+      "title": "Mark as a one-off order",
+      "note": "A larger, one-off expense. It goes to “Completed” and counts as a one-off expense on the goals screen.",
+      "transaction": "Transaction: {{date}} · {{description}} · {{amount}} PLN · {{category}}",
+      "name": "Name",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "What it was — e.g. “timing belt and brake pads”",
+      "save": "Save order",
+      "saved": "One-off order “{{name}}” saved."
     }
   },
   "currencies": {
@@ -440,7 +448,6 @@
     "goalSince": "in force since {{month}}",
     "goalSaved": "Goal saved.",
     "goalEnded": "Goal ended. The history of proofs stays.",
-    "oneOffCleared": "One-off marking removed.",
     "raiseGoal": "Raise the goal to {{amount}}",
     "raiseSuggestion": "You have {{count}} months with a proof. In months with one-off expenses the budget carried roughly {{headroom}} above the goal.",
     "metrics": {
@@ -461,11 +468,6 @@
         "title": "You have not set a savings goal yet.",
         "body": "Set the amount you want to put aside every month — only then can I tell you whether you keep it up despite one-off expenses."
       },
-      "noLargeExpense": {
-        "title": "You have not marked any one-off expense.",
-        "body": "Without them I cannot tell a hard month from an ordinary one, so no proof can appear. Mark them in the transaction list.",
-        "cta": "Go to the transaction list"
-      },
       "proof": {
         "title": "You saved {{amount}} in {{month}} too — a month with {{oneOff}} of one-off expenses.",
         "body": "This goal is safe. Months with a proof: {{count}}."
@@ -473,6 +475,11 @@
       "missed": {
         "title": "{{month}} fell {{missing}} short of the goal.",
         "body": "There were {{oneOff}} of one-off expenses. This is information, not a judgement — a proof appears in a month where the goal holds despite them."
+      },
+      "noEpisodicExpense": {
+        "title": "You have no completed one-off orders yet.",
+        "body": "Without one-off expenses I cannot tell a hard month from a normal one, so no proof can be made. Mark them on the transaction list or add them on the one-off orders screen.",
+        "cta": "Go to one-off orders"
       }
     },
     "noSavingsSeen": {
@@ -487,9 +494,9 @@
       "goal": "Goal",
       "oneOff": "One-off",
       "verdict": "Verdict",
-      "notOneOff": "This was not a one-off expense",
       "showInTransactions": "Show in transactions",
-      "empty": "No transactions in this budget yet."
+      "empty": "No transactions in this budget yet.",
+      "showEpisodic": "Show one-off orders"
     },
     "verdict": {
       "proof": "Proof",
@@ -510,10 +517,6 @@
     "endConfirm": {
       "header": "Drop the goal?",
       "description": "The goal is ended with a date, not deleted — past proofs will still refer to the amount that was in force back then."
-    },
-    "clearOneOffConfirm": {
-      "header": "Remove the one-off marking?",
-      "description": "{{count}} transactions in {{month}} will lose the marking. A month that was a proof only thanks to them will stop being one."
     },
     "errors": {
       "loadFailed": "Could not load the savings data"
@@ -563,7 +566,8 @@
       "namePlaceholder": "Car insurance",
       "amount": "Amount",
       "due": "Due",
-      "queueNote": "Reservations collect in order — nearest deadline first. Adding one with an earlier deadline WILL SHIFT THE QUEUE and take progress away from the others."
+      "queueNote": "Reservations collect in order — nearest deadline first. Adding one with an earlier deadline WILL SHIFT THE QUEUE and take progress away from the others.",
+      "noDue": "No due date — collects after reservations with a due date"
     },
     "settleModal": {
       "title": "Was this: {{name}}?",
@@ -588,7 +592,8 @@
     "tileSummary": "{{reserved}} PLN reserved · {{settled}} PLN already settled",
     "collected": "Collected",
     "freeFundsBody": "Savings account balance {{balance}} PLN − {{reserved}} PLN of reservations.",
-    "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest."
+    "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest.",
+    "noDue": "when possible"
   },
   "limits": {
     "title": "Spending limits",
@@ -659,6 +664,216 @@
     },
     "errors": {
       "loadFailed": "Could not load limits"
+    }
+  },
+  "standingOrders": {
+    "title": "Standing orders",
+    "summary": "Summary",
+    "add": "Add standing order",
+    "change": "Change",
+    "remove": "Remove",
+    "goToLinked": "Go to linked ({{count}})",
+    "saved": "Standing order saved — linked transactions: {{count}}.",
+    "removed": "Standing order removed. Transactions stay as they are.",
+    "unpinned": "Transaction unlinked — it will not return to this order on the next match.",
+    "rhythm": {
+      "Monthly": "monthly",
+      "Quarterly": "quarterly",
+      "Yearly": "yearly"
+    },
+    "banner": {
+      "empty": "You have no standing orders yet.",
+      "emptyBody": "Add rent, a loan or a subscription with a rule based on the transfer title — matching transactions from history and future imports will be linked to it.",
+      "waiting": "Still waiting this month: {{list}}.",
+      "missed": "{{month}} — not paid: {{list}}.",
+      "different": "Different amount than usual: {{list}}."
+    },
+    "metrics": {
+      "monthlyTotal": "Standing orders per month",
+      "paid": "Paid this month",
+      "waiting": "Waiting to be paid",
+      "different": "Different amount than usual"
+    },
+    "table": {
+      "title": "Standing orders",
+      "hint": "Rent, loans, subscriptions — each order has a rule (title + amount) that links imported transactions to it. The transaction category does not change.",
+      "empty": "No standing orders in this budget",
+      "name": "Name",
+      "category": "Category",
+      "amount": "Amount",
+      "rhythm": "Rhythm",
+      "state": "This month",
+      "rule": "title contains “{{pattern}}” · {{from}}–{{to}} PLN",
+      "total": "Total per month",
+      "totalNote": "quarterly ÷ 3, yearly ÷ 12",
+      "rules": {
+        "few": "{{count}} rules: {{list}}",
+        "many": "{{count}} rules: {{list}}"
+      },
+      "ended": "Ended standing orders ({{count}})"
+    },
+    "state": {
+      "paid": "Paid {{date}}",
+      "paidDifferent": "Paid {{date}} · {{amount}} (different amount)",
+      "waiting": "Waiting",
+      "waitingUsual": "Waiting · usually by the {{day}}.",
+      "missed": "Not paid",
+      "notDue": "Not this month",
+      "ended": "Ended in {{month}}"
+    },
+    "recent": {
+      "title": "Recently linked transactions",
+      "hint": "Imported transactions that match an order's rule",
+      "empty": "No transaction is linked yet.",
+      "different": "different amount",
+      "unpin": "Unlink",
+      "note": "Linking does not change the transaction category. Unlink a transaction linked by mistake here."
+    },
+    "editor": {
+      "addTitle": "Add standing order",
+      "editTitle": "Change standing order",
+      "save": "Save order",
+      "note": "A standing order links transactions that match its rules. Their category does not change — the order only says it is, e.g., rent.",
+      "name": "Name",
+      "namePlaceholder": "Rent",
+      "amount": "Usual amount",
+      "rhythm": "Rhythm",
+      "dueMonth": "Month",
+      "dueMonthPlaceholder": "Month it is paid in",
+      "pattern": "Title contains",
+      "patternPlaceholder": "rent",
+      "range": "Amount from – to",
+      "preview": "The rules match {{count}} transactions in the budget history — the latest on {{date}}, {{amount}} PLN. They will be linked on save.",
+      "previewTaken": "{{count}} of them already belong to another order and stay there.",
+      "previewNone": "The rules do not match any transaction yet — they will link future imports.",
+      "rulesTitle": "Matching rules",
+      "rulesHint": "A transaction belongs to the order when it matches any rule.",
+      "addRule": "Add rule",
+      "removeRule": "Remove"
+    },
+    "removeConfirm": {
+      "header": "Remove the “{{name}}” standing order?",
+      "description": "Linked transactions: {{count}}. They stay as they are, they just stop belonging to the order."
+    },
+    "errors": {
+      "loadFailed": "Could not load standing orders"
+    },
+    "end": "End",
+    "resume": "Resume",
+    "ended": "Standing order ended. Linked transactions stay.",
+    "resumed": "Standing order resumed.",
+    "endDialog": {
+      "title": "End standing order “{{name}}”",
+      "note": "E.g. after switching providers or paying off a loan. Ending is not deleting — the order and its history stay.",
+      "alert": "After this month the order will not be expected or counted in the total. Linked transactions stay; new imports will no longer be linked.",
+      "lastMonth": "Last month of the order",
+      "confirm": "End standing order"
+    }
+  },
+  "episodicOrders": {
+    "title": "One-off orders",
+    "summary": "Summary",
+    "add": "Add order",
+    "change": "Edit",
+    "remove": "Delete",
+    "createReservation": "Start saving for it",
+    "showReservation": "Show reservation",
+    "markPurchased": "Mark as purchased…",
+    "goToTransaction": "Go to transaction",
+    "undo": "Move back to planned",
+    "saved": "Order saved.",
+    "removed": "Order deleted. The transaction is unchanged.",
+    "reservationCreated": "Reservation “{{name}}” created — it collects in the reservation queue like any other.",
+    "purchased": "The order moved to completed.",
+    "undone": "The order is back in planned.",
+    "banner": {
+      "empty": "You have no one-off orders yet.",
+      "emptyBody": "Add something you will need to buy, or a larger expense that already happened — e.g. from the transaction list.",
+      "planned": {
+        "one": "{{count}} planned purchase for {{amount}} PLN.",
+        "few": "{{count}} planned purchases for {{amount}} PLN.",
+        "many": "{{count}} planned purchases for {{amount}} PLN."
+      },
+      "withoutSavings": "Without saving: {{count}}.",
+      "plannedBody": "“Start saving for it” in the row menu creates a reservation with this amount and due month — it collects from savings like any reservation."
+    },
+    "metrics": {
+      "planned": "Planned",
+      "collected": "Collected in reservations",
+      "realizedThisYear": "Completed this year",
+      "withoutSavings": "Without saving"
+    },
+    "tabs": {
+      "planned": "Planned ({{count}})",
+      "realized": "Completed ({{count}})"
+    },
+    "table": {
+      "title": "One-off orders",
+      "hint": "Larger expenses: planned (“a list of things to buy”) or already completed. Completed ones count as one-off expenses on the goals screen.",
+      "empty": {
+        "planned": "No planned purchases",
+        "realized": "No completed orders"
+      },
+      "name": "Name",
+      "category": "Category",
+      "amount": "Amount",
+      "due": "Due",
+      "date": "Date",
+      "savings": "Saving",
+      "transaction": "Transaction",
+      "noSavings": "— none",
+      "noDue": "no due date"
+    },
+    "source": {
+      "reservation": "from reservation",
+      "unplanned": "unplanned"
+    },
+    "recent": {
+      "title": "Recently completed",
+      "hint": "Larger expenses linked to a transaction — they count as one-off",
+      "empty": "No completed orders yet.",
+      "note": "A completed expense joins here in two ways: “Mark as purchased…” on a planned order or “Mark as a one-off order” on the transaction list (replaces the old “large expense” flag)."
+    },
+    "editor": {
+      "addTitle": "Add one-off order",
+      "editTitle": "Edit one-off order",
+      "save": "Save order",
+      "note": "A larger expense: planned (e.g. “New laptop by March”) or already completed. Completed ones count as one-off expenses on the goals screen.",
+      "planned": "Planned",
+      "realized": "Already completed",
+      "realizedAlert": "A completed order points to a transaction — the amount, date and category come from it, so you do not enter them twice.",
+      "name": "Name",
+      "namePlaceholder": "New laptop",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "E.g. for work, 16 GB RAM, before the new project at the latest",
+      "category": "Category",
+      "categoryPlaceholder": "Choose a category",
+      "amount": "Amount",
+      "due": "Due (month)",
+      "transaction": "Transaction",
+      "transactionPlaceholder": "Type part of the title",
+      "transactionHint": "The list shows expenses without an order, newest first — type part of the title to narrow it down.",
+      "transactionChosen": "Category: {{category}} · amount {{amount}} PLN.",
+      "noDue": "No due date — I will buy it when there is a chance"
+    },
+    "purchase": {
+      "title": "Mark as purchased “{{name}}”",
+      "note": "Pick the transaction you paid with. The order moves to “Completed” with its amount and date.",
+      "alert": "Reservation “{{name}}” will be settled with this transaction. An amount different from planned ({{amount}} PLN) is fine — what counts is what was paid.",
+      "transaction": "Purchase transaction",
+      "searchPlaceholder": "Search in title…",
+      "empty": "No matching expenses.",
+      "hint": "Expenses from the budget without another order, from 2 months before the due month. Purchase not on the list? Import a statement and come back.",
+      "confirm": "Mark as purchased"
+    },
+    "removeConfirm": {
+      "header": "Delete order “{{name}}”?",
+      "planned": "The order will disappear from the shopping list.",
+      "withReservation": "The unsettled reservation collecting for it will disappear too.",
+      "realized": "The transaction stays unchanged but will no longer count as a one-off expense on the goals screen."
+    },
+    "errors": {
+      "loadFailed": "Could not load one-off orders"
     }
   }
 }

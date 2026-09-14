@@ -72,6 +72,14 @@
         />
       </nz-input-search>
 
+      <!-- Filtr zlecenia stałego obok wyszukiwarki (makieta 224:5821) — ✕ zdejmuje tylko ten filtr. -->
+      @if (standingOrderId()) {
+        <nz-tag class="tx__standing-order" nzMode="closeable" (nzOnClose)="clearStandingOrder()">
+          {{ 'transactions.filters.standingOrder' | translate }}
+          <strong>{{ standingOrderName() ?? '…' }}</strong>
+        </nz-tag>
+      }
+
       <!-- Z których budżetów jest ta lista. Pusty wybór NIE znaczy „wszystkie" — znaczy
            „budżet domyślny", ten sam co na dashboardzie; kontrolka pokazuje go wtedy
            wybranego, żeby nie było wątpliwości, co się właśnie liczy. -->
@@ -107,15 +115,6 @@
           {{ 'transactions.selection.selectAllMatching' | translate: { count: total() } }}
         </button>
       }
-
-      <!-- Duży wydatek (proces 4 z Etapu 0) — poza makietą, ale wymagany przez issue.
-           Przyciski drugorzędne, żeby trzy z makiety zostały tymi dominującymi. -->
-      <button nz-button [disabled]="selectionCount() === 0" (click)="bulkSetLargeExpense(true)">
-        {{ 'transactions.selection.markLargeExpense' | translate }}
-      </button>
-      <button nz-button [disabled]="selectionCount() === 0" (click)="bulkSetLargeExpense(false)">
-        {{ 'transactions.selection.unmarkLargeExpense' | translate }}
-      </button>
 
       <!-- Fiolet #8075CD jest wprost z makiety — poza paletą motywu, stąd własna klasa. -->
       <button
@@ -246,7 +245,7 @@
             >
               {{ 'transactions.columns.status' | translate }}
             </th>
-            <th nzWidth="110px" class="tx__center">{{ 'transactions.columns.largeExpense' | translate }}</th>
+            <th nzWidth="150px">{{ 'transactions.columns.episodic' | translate }}</th>
             <th
               nzWidth="140px"
               class="tx__right"
@@ -361,13 +360,8 @@
                 <td>
                   <nz-badge [nzStatus]="statusBadge(item.status)" [nzText]="item.status | enumTranslate: 'transactionStatus'" />
                 </td>
-                <td class="tx__center">
-                  <nz-switch
-                    nzSize="small"
-                    [ngModel]="drafts()[item.id].isLargeExpense"
-                    (ngModelChange)="updateDraft(item.id, { isLargeExpense: $event })"
-                  />
-                </td>
+                <!-- Zlecenia nie zmienia się w edycji wiersza — ma własny dialog z nazwą. -->
+                <td class="tx__episodic">{{ item.episodicOrderName ?? '—' }}</td>
                 <!-- ⚠️ BEZ `$event ?? 0`. Wyczyszczenie pola (żeby wpisać nową kwotę) robiło
                      z transakcji 0,00 PLN po cichu — i taka szła do zapisu. Puste pole ma
                      zostać puste i zablokować „Zapisz" (patrz errorFor/editHasErrors). -->
@@ -395,13 +389,7 @@
                 <td>
                   <nz-badge [nzStatus]="statusBadge(item.status)" [nzText]="item.status | enumTranslate: 'transactionStatus'" />
                 </td>
-                <td class="tx__center">
-                  @if (item.isLargeExpense) {
-                    <nz-icon nzType="check" />
-                  } @else {
-                    <nz-icon nzType="close" />
-                  }
-                </td>
+                <td class="tx__episodic" [title]="item.episodicOrderName ?? ''">{{ item.episodicOrderName ?? '—' }}</td>
                 <td class="tx__right amount" [style.color]="amountColor(item.amount)">
                   {{ money(item.amount) }} PLN
                 </td>
@@ -433,20 +421,13 @@
           <li nz-menu-item tabindex="0" (click)="editMenuRow()" (keydown.enter)="editMenuRow()">
             {{ 'transactions.rowMenu.edit' | translate }}
           </li>
-          <!-- Jedna pozycja, która PRZEŁĄCZA — nie dwie jak na toolbarze. Toolbar działa na
-               zaznaczeniu, które bywa mieszane (część oznaczona, część nie), więc tam potrzeba
-               osobnego „oznacz" i „odznacz". Wiersz ma stan jednoznaczny, więc oferowanie mu
-               akcji, którą już wykonał, byłoby ślepym zaułkiem. -->
-          <li
-            nz-menu-item
-            tabindex="0"
-            (click)="toggleMenuRowLargeExpense()"
-            (keydown.enter)="toggleMenuRowLargeExpense()"
-          >
+          <!-- Wiersz zna swój stan: bez zlecenia proponuje założenie (makieta 234:1005), ze zleceniem —
+               przejście do niego. Oferowanie akcji, którą wiersz już wykonał, byłoby ślepym zaułkiem. -->
+          <li nz-menu-item tabindex="0" (click)="episodicMenuRow()" (keydown.enter)="episodicMenuRow()">
             {{
-              (menuRow()?.isLargeExpense
-                ? 'transactions.rowMenu.unmarkLargeExpense'
-                : 'transactions.rowMenu.markLargeExpense'
+              (menuRow()?.episodicOrderId
+                ? 'transactions.rowMenu.goToEpisodic'
+                : 'transactions.rowMenu.markEpisodic'
               ) | translate
             }}
           </li>
@@ -528,6 +509,37 @@
           <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
         }
       </nz-select>
+    </div>
+  </nz-modal>
+
+  <!-- Modal „Oznacz jako zlecenie epizodyczne” (makieta 234:1014): transakcja na górze, nazwa i opis. -->
+  <nz-modal
+    [nzVisible]="episodicOpen()"
+    [nzTitle]="'transactions.episodic.title' | translate"
+    (nzOnCancel)="episodicOpen.set(false)"
+    (nzOnOk)="saveEpisodic()"
+    [nzOkText]="'transactions.episodic.save' | translate"
+    [nzCancelText]="'transactions.bulkSetCategory.cancel' | translate"
+    [nzOkDisabled]="episodicName().trim().length === 0"
+  >
+    <div *nzModalContent class="tx__modal">
+      <p class="tx__modal-note">{{ 'transactions.episodic.note' | translate }}</p>
+      @if (episodicRow(); as row) {
+        <nz-alert
+          nzType="info"
+          nzShowIcon
+          [nzMessage]="'transactions.episodic.transaction' | translate: {
+            date: day(row.date), description: row.description, amount: money(row.amount),
+            category: row.categoryName ?? ('transactions.filters.uncategorized' | translate)
+          }"
+        />
+      }
+      <label class="tx__modal-label" for="tx-episodic-name">{{ 'transactions.episodic.name' | translate }}</label>
+      <input id="tx-episodic-name" nz-input maxlength="100" [ngModel]="episodicName()" (ngModelChange)="episodicName.set($event)" />
+      <label class="tx__modal-label" for="tx-episodic-description">{{ 'transactions.episodic.description' | translate }}</label>
+      <textarea id="tx-episodic-description" nz-input rows="3" maxlength="1000"
+        [placeholder]="'transactions.episodic.descriptionPlaceholder' | translate"
+        [ngModel]="episodicDescription()" (ngModelChange)="episodicDescription.set($event)"></textarea>
     </div>
   </nz-modal>
 </div>

@@ -84,7 +84,7 @@ public sealed class LimitsTests : IAsyncLifetime
     private Task<LimitSavedResponseDto> SetAsync(Category category, decimal amount, DateOnly from, int threshold = 80) =>
         Set().HandleAsync(new SetLimitRequestDto(_budgetId, category.BusinessId, amount, threshold, from), default);
 
-    private void Spend(Category? category, DateOnly month, decimal amount, bool large = false) =>
+    private Transaction Spend(Category? category, DateOnly month, decimal amount) =>
         _db.Transactions.Add(new Transaction(
             new DateOnly(month.Year, month.Month, 10),
             -amount,
@@ -92,8 +92,7 @@ public sealed class LimitsTests : IAsyncLifetime
             default,
             TransactionStatus.Confirmed,
             categoryId: category?.Id,
-            isLargeExpense: large,
-            budgetBusinessId: _budgetId));
+            budgetBusinessId: _budgetId)).Entity;
 
     private async Task<LimitRowResponseDto> RowAsync(Category category, DateOnly month) =>
         (await Query().HandleAsync(_budgetId, month, default)).Limits.Single(r => r.CategoryId == category.BusinessId);
@@ -198,7 +197,9 @@ public sealed class LimitsTests : IAsyncLifetime
     {
         await SetAsync(_fun, 350m, September);
         Spend(_fun, September, 300m);
-        Spend(_fun, September, 120m, large: true);
+        var large = new EpisodicOrder(_budgetId, "Duży wydatek", null, default);
+        large.Realize(Spend(_fun, September, 120m).BusinessId);
+        _db.EpisodicOrders.Add(large);
         Spend(null, September, 310m);
         Spend(_fun, August, 999m);
         await _db.SaveChangesAsync();

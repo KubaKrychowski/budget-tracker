@@ -32,7 +32,6 @@ public static class TransactionsModule
         services.AddScoped<UpdateTransactionsCommandHandler>();
         services.AddScoped<BulkDeleteTransactionsCommandHandler>();
         services.AddScoped<BulkSetTransactionCategoryCommandHandler>();
-        services.AddScoped<BulkSetTransactionLargeExpenseCommandHandler>();
 
         services.AddScoped<GetTransactionsListQueryHandler>();
         services.AddScoped<GetCategoriesQueryHandler>();
@@ -44,14 +43,14 @@ public static class TransactionsModule
         app.MapGet("/api/transactions", async (
             Guid[]? budgetId, DateOnly? from, DateOnly? to,
             Guid? categoryId, string? sort, string? search,
-            TransactionStatus[]? status, decimal? amountFrom, decimal? amountTo,
+            TransactionStatus[]? status, decimal? amountFrom, decimal? amountTo, Guid? standingOrderId,
             GetTransactionsListQueryHandler handler, CancellationToken ct,
             bool uncategorized = false, TransactionDirection direction = TransactionDirection.All,
             int page = 1, int pageSize = 10, bool desc = true) =>
         {
             var filter = new TransactionFilterRequestDto(
                 budgetId, from, to, categoryId, uncategorized, direction,
-                status, amountFrom, amountTo, search);
+                status, amountFrom, amountTo, search, standingOrderId);
 
             return Results.Ok(await handler.HandleAsync(filter, page, pageSize, sort, desc, ct));
         })
@@ -83,13 +82,6 @@ public static class TransactionsModule
             BulkSetCategoryRequestDto request, BulkSetTransactionCategoryCommandHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.HandleAsync(request, ct)))
             .WithName("BulkSetCategoryTransactions")
-            .Produces<BulkActionResponseDto>()
-            .Produces(StatusCodes.Status404NotFound);
-
-        app.MapPost("/api/transactions/bulk-large-expense", async (
-            BulkSetLargeExpenseRequestDto request, BulkSetTransactionLargeExpenseCommandHandler handler, CancellationToken ct) =>
-            Results.Ok(await handler.HandleAsync(request, ct)))
-            .WithName("BulkSetLargeExpenseTransactions")
             .Produces<BulkActionResponseDto>()
             .Produces(StatusCodes.Status404NotFound);
 

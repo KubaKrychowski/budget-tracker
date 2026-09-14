@@ -71,7 +71,7 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
             ProofCount: proofs.Count,
             DepositedThisYear: months.Where(m => m.Month.Year == today.Year).Sum(m => m.Deposited),
             RaiseSuggestion: Suggest(proofs, active),
-            HasAnyLargeExpense: months.Any(m => m.OneOffCount > 0),
+            HasAnyEpisodicExpense: months.Any(m => m.OneOffCount > 0),
             HasAnySavings: months.Any(m => m.Deposited > 0),
             SelectedBudgetIds: selected,
             Budgets: budgets);
@@ -134,6 +134,8 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
 
     /// <summary>Sumy miesięczne jednym zapytaniem — grupowanie po miesiącu kalendarzowym daty.</summary>
     /// <remarks>
+    /// Wydatek jednorazowy to transakcja zrealizowanego zlecenia epizodycznego — dawniej flaga „duży wydatek”.
+    ///
     /// ⚠️ Sumy w zapytaniu zostają ZE ZNAKIEM. Negacja musi być poza zapytaniem — EF nie tłumaczy
     /// <c>-g.Sum(...)</c> wewnątrz projekcji (ta sama pułapka co w <c>GetDashboardQueryHandler</c>).
     /// Przelew na oszczędnościowe WYCHODZI z konta bieżącego, więc w bazie jest ujemny —
@@ -144,6 +146,13 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
     {
         var rows = await db.Transactions
             .Where(t => t.BudgetBusinessId != null && budgetIds.Contains(t.BudgetBusinessId.Value))
+            .Select(t => new
+            {
+                t.Date,
+                t.Amount,
+                t.CategoryId,
+                OneOff = t.Amount < 0 && db.EpisodicOrders.Any(o => o.TransactionBusinessId == t.BusinessId),
+            })
             .GroupBy(t => new { t.Date.Year, t.Date.Month })
             .Select(g => new
             {
@@ -153,9 +162,9 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
                     .Sum(t => (decimal?)t.Amount) ?? 0m,
                 Withdrawn = g.Where(t => t.CategoryId == savingsCategoryId && t.Amount > 0)
                     .Sum(t => (decimal?)t.Amount) ?? 0m,
-                OneOff = g.Where(t => t.IsLargeExpense && t.Amount < 0)
+                OneOff = g.Where(t => t.OneOff)
                     .Sum(t => (decimal?)t.Amount) ?? 0m,
-                OneOffCount = g.Count(t => t.IsLargeExpense && t.Amount < 0),
+                OneOffCount = g.Count(t => t.OneOff),
             })
             .ToListAsync(ct);
 

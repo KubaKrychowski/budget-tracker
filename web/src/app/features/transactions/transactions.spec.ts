@@ -74,7 +74,10 @@ describe('Transactions', () => {
     cancelEdit(): void;
     menuRow: { set(v: TransactionListItem): void };
     deleteMenuRow(): void;
-    toggleMenuRowLargeExpense(): void;
+    episodicMenuRow(): void;
+    episodicOpen(): boolean;
+    episodicName: { (): string; set(v: string): void };
+    saveEpisodic(): Promise<void>;
     bulkDelete(): Promise<void>;
     onQueryParamsChange(params: NzTableQueryParams, table: unknown): void;
     noBudget(): boolean;
@@ -97,7 +100,8 @@ describe('Transactions', () => {
     categoryId: 'c1000000-0000-4000-8000-000000000001',
     categoryName: 'Jedzenie',
     status: 'Confirmed',
-    isLargeExpense: false,
+    episodicOrderId: null,
+    episodicOrderName: null,
     confidence: null,
     ...over,
   });
@@ -178,6 +182,7 @@ describe('Transactions', () => {
         provideRouter([
           { path: 'transactions', children: [] },
           { path: 'dashboard', children: [] },
+          { path: 'episodic-orders', children: [] },
         ]),
         provideNoopAnimations(),
         provideTranslateService(),
@@ -336,15 +341,34 @@ describe('Transactions', () => {
     http.expectNone('/api/transactions/bulk-delete');
   });
 
-  it('menu wiersza przełącza duży wydatek na przeciwny stan', async () => {
-    api().menuRow.set(row({ isLargeExpense: true }));
-    api().toggleMenuRowLargeExpense();
-    await fixture.whenStable();
+  it('„Oznacz jako zlecenie epizodyczne” podpowiada nazwę z tytułu i wysyła transakcję bez budżetu', async () => {
+    api().menuRow.set(row({ description: 'WARSZTAT SAMOCHODOWY' }));
+    api().episodicMenuRow();
+    expect(api().episodicOpen()).toBe(true);
+    expect(api().episodicName()).toBe('WARSZTAT SAMOCHODOWY');
 
-    const request = http.expectOne('/api/transactions/bulk-large-expense');
-    expect((request.request.body as { isLargeExpense: boolean }).isLargeExpense).toBe(false);
-    request.flush({ affected: 1 });
+    api().episodicName.set('  Serwis auta ');
+    const saving = api().saveEpisodic();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/episodic-orders');
+    expect(request.request.body).toEqual({
+      budgetId: null, name: 'Serwis auta', description: null, transactionId: row().id,
+      categoryId: null, amount: null, dueMonth: null,
+    });
+    request.flush({ id: 'e1' });
+    await saving;
+    expect(api().episodicOpen()).toBe(false);
     await settle();
+  });
+
+  it('wiersz ze zleceniem epizodycznym przechodzi do zrealizowanych zamiast zakładać drugie', async () => {
+    api().menuRow.set(row({ episodicOrderId: 'e1', episodicOrderName: 'Serwis auta' }));
+    api().episodicMenuRow();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(api().episodicOpen()).toBe(false);
+    http.expectNone((r) => r.url === '/api/episodic-orders');
+    const url = TestBed.inject(Router).url;
+    expect(url).toBe('/episodic-orders?tab=realized');
   });
 
   // ── Walidacja edycji ───────────────────────────────────────────────────────────────
@@ -457,6 +481,36 @@ describe('Transactions', () => {
     // Srodkowy element MUSI niesc zakladke — inaczej wraca na ustawienia otwarte na budzetach.
     expect(crumbs[1].link).toBe('/settings');
     expect(crumbs[1].queryParams).toEqual({ tab: 'training' });
+  });
+
+  it('z „Przejdź do powiązanych” filtruje po zleceniu, pokazuje jego nazwę i wraca do zleceń', async () => {
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', standingOrderId: 'o1', origin: 'standing-orders' },
+    });
+    fixture.detectChanges();
+    const [request] = http.match((r) => r.url === '/api/transactions');
+    expect(request.request.params.get('standingOrderId')).toBe('o1');
+    request.flush(response({ standingOrderName: 'Czynsz' }));
+    await settle(response({ standingOrderName: 'Czynsz' }));
+
+    const tag = fixture.nativeElement.querySelector('.tx__standing-order') as HTMLElement;
+    expect(tag.textContent).toContain('Czynsz');
+    expect(api().crumbs().map((c) => c.label)).toEqual(['standingOrders.title', 'transactions.title']);
+    expect(api().crumbs()[0].link).toBe('/standing-orders');
+  });
+
+  it('✕ na filtrze zlecenia zdejmuje tylko ten filtr, a powrót do zleceń zostaje', async () => {
+    await router.navigate(['/transactions'], {
+      queryParams: { standingOrderId: 'o1', origin: 'standing-orders', search: 'czynsz' },
+    });
+    await settle(response({ standingOrderName: 'Czynsz' }));
+
+    (fixture.componentInstance as unknown as { clearStandingOrder(): void }).clearStandingOrder();
+    await settle();
+
+    expect(router.url).not.toContain('standingOrderId');
+    expect(router.url).toContain('origin=standing-orders');
+    expect(router.url).toContain('search=czynsz');
   });
 
   it('ostatni element nie jest odnosnikiem, bo to biezacy ekran', () => {

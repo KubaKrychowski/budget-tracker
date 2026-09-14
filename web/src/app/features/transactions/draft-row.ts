@@ -13,5 +13,4 @@ export interface DraftRow {
    */
   amount: number | null;
   categoryId: string | null;
-  isLargeExpense: boolean;
 }

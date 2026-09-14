@@ -71,8 +71,9 @@ public sealed class DemoSeedTests : IAsyncLifetime
         await DemoSeed.SeedAsync(_db, _clock);
 
         var goal = await _db.SavingsGoals.SingleAsync();
+        var oneOffIds = await _db.EpisodicOrders.Select(o => o.TransactionBusinessId).ToListAsync();
         var oneOff = await _db.Transactions
-            .Where(t => t.IsLargeExpense && t.Amount < 0)
+            .Where(t => oneOffIds.Contains(t.BusinessId) && t.Amount < 0)
             .ToListAsync();
         Assert.NotEmpty(oneOff);
 

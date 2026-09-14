@@ -9,6 +9,8 @@ export interface TransactionListItem {
   categoryName: string | null;
   /** Nazwa enuma `TransactionStatus` (np. „PendingReview") — tłumacz przez `enumTranslate`. */
   status: string;
-  isLargeExpense: boolean;
+  /** Zlecenie epizodyczne zrealizowane tą transakcją — kolumna „Epizodyczne” (dawniej flaga „duży wydatek”). */
+  episodicOrderId: string | null;
+  episodicOrderName: string | null;
   confidence: number | null;
 }

@@ -9,6 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -33,7 +34,7 @@ import {
   selector: 'app-reservations',
   imports: [
     CommonModule, FormsModule, RouterLink, BudgetSwitcher,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzEmptyModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzCheckboxModule, NzDatePickerModule, NzEmptyModule,
     NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSpinModule,
     NzTableModule, NzTagModule,
     TranslatePipe,
@@ -119,6 +120,8 @@ export class Reservations {
   protected readonly draftName = signal('');
   protected readonly draftAmount = signal<number | null>(null);
   protected readonly draftDue = signal<Date | null>(null);
+  /** „Bez terminu” — rezerwacja przy okazji, zbiera po wszystkich z terminem. */
+  protected readonly draftNoDue = signal(false);
 
   constructor() {
     // Kafel na ekranie oszczędności ma przycisk „Dodaj rezerwację" (makieta 147:96), ale modal
@@ -131,14 +134,15 @@ export class Reservations {
     this.editing.set(row);
     this.draftName.set(row?.name ?? '');
     this.draftAmount.set(row?.amount ?? null);
-    this.draftDue.set(row ? new Date(row.dueMonth) : null);
+    this.draftDue.set(row?.dueMonth ? new Date(row.dueMonth) : null);
+    this.draftNoDue.set(row !== null && row.dueMonth === null);
     this.editorOpen.set(true);
   }
 
   protected readonly canSave = computed(() =>
     this.draftName().trim().length > 0
     && (this.draftAmount() ?? 0) > 0
-    && this.draftDue() !== null);
+    && (this.draftNoDue() || this.draftDue() !== null));
 
   protected async save(): Promise<void> {
     if (!this.canSave()) return;
@@ -146,7 +150,7 @@ export class Reservations {
     const body = {
       name: this.draftName().trim(),
       amount: this.draftAmount(),
-      dueMonth: this.isoMonth(this.draftDue()!),
+      dueMonth: this.draftNoDue() ? null : this.isoMonth(this.draftDue()!),
       priority: 0,
       budgetId: this.budgetIds()[0] ?? null,
     };

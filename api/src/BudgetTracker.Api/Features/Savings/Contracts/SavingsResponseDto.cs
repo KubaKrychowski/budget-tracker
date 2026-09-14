@@ -10,8 +10,8 @@ namespace BudgetTracker.Api.Features.Savings.Contracts;
 /// Bieżący miesiąc, ZAWSZE obecny — nawet gdy nie ma w nim jeszcze ani jednej transakcji.
 /// Kafel „odłożone w tym miesiącu" musi mieć co pokazać od pierwszego dnia.
 /// </param>
-/// <param name="HasAnyLargeExpense">
-/// Czy w budżecie jest choć jedna transakcja oznaczona jako jednorazowa. <c>false</c> włącza
+/// <param name="HasAnyEpisodicExpense">
+/// Czy w budżecie jest choć jedno zrealizowane zlecenie epizodyczne (wydatek jednorazowy). <c>false</c> włącza
 /// stan „Brak oznaczonych wydatków" — bez nich dowód nie ma jak powstać i trzeba to powiedzieć
 /// wprost, zamiast pokazywać „0 dowodów" jak fakt o dyscyplinie użytkownika.
 /// </param>
@@ -28,7 +28,7 @@ public sealed record SavingsResponseDto(
     int ProofCount,
     decimal DepositedThisYear,
     RaiseGoalSuggestionResponseDto? RaiseSuggestion,
-    bool HasAnyLargeExpense,
+    bool HasAnyEpisodicExpense,
     bool HasAnySavings,
     IReadOnlyList<Guid> SelectedBudgetIds,
     IReadOnlyList<SavingsBudgetOptionResponseDto> Budgets);

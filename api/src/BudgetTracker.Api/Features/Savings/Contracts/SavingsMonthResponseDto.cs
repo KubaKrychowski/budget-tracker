@@ -13,7 +13,7 @@ namespace BudgetTracker.Api.Features.Savings.Contracts;
 /// uzasadnioną wypłatę od przelewu tam i z powrotem — jedno i drugie widać w wierszu.
 /// </param>
 /// <param name="Goal">Cel obowiązujący W TYM miesiącu; <c>null</c>, gdy wtedy celu nie było.</param>
-/// <param name="OneOffTotal">Suma jednorazowych wydatków (<c>IsLargeExpense</c>) tego miesiąca.</param>
+/// <param name="OneOffTotal">Suma jednorazowych wydatków (transakcje zrealizowanych zleceń epizodycznych) tego miesiąca.</param>
 /// <param name="OneOffCount">Ile ich było — znacznik na wykresie zapala się od jednego.</param>
 public sealed record SavingsMonthResponseDto(
     DateOnly Month,

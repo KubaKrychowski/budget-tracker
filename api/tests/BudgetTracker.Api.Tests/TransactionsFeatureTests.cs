@@ -102,7 +102,6 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
 
     private BulkSetTransactionCategoryCommandHandler BulkSetCategoryHandler() => new(_db, Selection());
 
-    private BulkSetTransactionLargeExpenseCommandHandler BulkSetLargeExpenseHandler() => new(_db, Selection());
 
     private static TransactionFilterRequestDto EmptyFilter(params Guid[] budgetIds) => new(
         budgetIds.Length == 0 ? null : budgetIds,
@@ -284,7 +283,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         await _db.SaveChangesAsync();
 
         var edit = new TransactionEditRequestDto(
-            target.BusinessId, target.Date, target.Description, target.Amount, _transportId, false);
+            target.BusinessId, target.Date, target.Description, target.Amount, _transportId);
         var result = await UpdateHandler().HandleAsync(new UpdateTransactionsRequestDto([edit], [_budgetId]), default);
 
         var saved = Assert.Single(result);
@@ -299,7 +298,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         var target = await _db.Transactions.FirstAsync(t => t.Description == "BIEDRONKA");
 
         var edit = new TransactionEditRequestDto(
-            target.BusinessId, target.Date, target.Description, target.Amount, null, false);
+            target.BusinessId, target.Date, target.Description, target.Amount, null);
         var result = await UpdateHandler().HandleAsync(new UpdateTransactionsRequestDto([edit], [_budgetId]), default);
 
         Assert.Equal("PendingReview", Assert.Single(result).Status);
@@ -313,8 +312,8 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
 
         var edits = new List<TransactionEditRequestDto>
         {
-            new(target.BusinessId, target.Date, target.Description, 999m, _jedzenieId, false),
-            new(Guid.NewGuid(), Today, "nieistniejaca", 1m, null, false),
+            new(target.BusinessId, target.Date, target.Description, 999m, _jedzenieId),
+            new(Guid.NewGuid(), Today, "nieistniejaca", 1m, null),
         };
 
         await Assert.ThrowsAsync<TransactionNotFoundException>(() =>
@@ -378,14 +377,14 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         var selection = new TransactionSelectionRequestDto(
             null, EmptyFilter(_budgetId) with { Direction = TransactionDirection.Expense });
 
-        var result = await BulkSetLargeExpenseHandler().HandleAsync(
-            new BulkSetLargeExpenseRequestDto(selection, true), default);
+        var result = await BulkSetCategoryHandler().HandleAsync(
+                new BulkSetCategoryRequestDto(selection, _transportId), default);
         Assert.Equal(4, result.Affected); // wszystkie 4 wydatki, nie tylko jedna strona
 
         // Piata transakcja (WYNAGRODZENIE, przychod) zostaje nietknieta — filtr mial
         // Direction=Expense, wiec zasieg wyszedl z kryteriow, a nie z listy identyfikatorow.
-        var flagged = await _db.Transactions.AsNoTracking().CountAsync(t => t.IsLargeExpense);
-        Assert.Equal(4, flagged);
+        var salary = await _db.Transactions.AsNoTracking().SingleAsync(t => t.Description == "WYNAGRODZENIE");
+        Assert.NotEqual(TransactionStatus.ManuallyCategorized, salary.Status);
     }
 
     // ── Granice stronicowania ────────────────────────────────────────────────────────────
@@ -478,8 +477,8 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         var selection = new TransactionSelectionRequestDto([Guid.NewGuid()], EmptyFilter(_budgetId));
 
         await Assert.ThrowsAsync<TransactionNotFoundException>(() =>
-            BulkSetLargeExpenseHandler().HandleAsync(
-                new BulkSetLargeExpenseRequestDto(selection, true), default));
+            BulkSetCategoryHandler().HandleAsync(
+                new BulkSetCategoryRequestDto(selection, _transportId), default));
     }
 
     [Fact]
@@ -487,7 +486,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
     {
         var foreignId = await SeedOtherBudgetTransactionAsync();
         var edit = new TransactionEditRequestDto(
-            foreignId, new DateOnly(2026, 2, 10), "PRZEJETA", -1m, null, false);
+            foreignId, new DateOnly(2026, 2, 10), "PRZEJETA", -1m, null);
 
         await Assert.ThrowsAsync<TransactionNotFoundException>(() =>
             UpdateHandler().HandleAsync(new UpdateTransactionsRequestDto([edit], [_budgetId]), default));
@@ -563,7 +562,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
     {
         var target = await _db.Transactions.FirstAsync(t => t.Description == "LIDL");
         var edit = new TransactionEditRequestDto(
-            target.BusinessId, target.Date, description, target.Amount, _jedzenieId, false);
+            target.BusinessId, target.Date, description, target.Amount, _jedzenieId);
 
         await Assert.ThrowsAsync<TransactionDescriptionRequiredException>(() =>
             UpdateHandler().HandleAsync(new UpdateTransactionsRequestDto([edit], [_budgetId]), default));
@@ -580,7 +579,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         var target = await _db.Transactions.FirstAsync(t => t.Description == "LIDL");
         var tooLong = new string('x', TransactionLimits.DescriptionMaxLength + 1);
         var edit = new TransactionEditRequestDto(
-            target.BusinessId, target.Date, tooLong, target.Amount, _jedzenieId, false);
+            target.BusinessId, target.Date, tooLong, target.Amount, _jedzenieId);
 
         await Assert.ThrowsAsync<TransactionDescriptionTooLongException>(() =>
             UpdateHandler().HandleAsync(new UpdateTransactionsRequestDto([edit], [_budgetId]), default));
@@ -591,7 +590,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
     {
         var target = await _db.Transactions.FirstAsync(t => t.Description == "LIDL");
         var edit = new TransactionEditRequestDto(
-            target.BusinessId, target.Date, "  LIDL CENTRUM  ", target.Amount, _jedzenieId, false);
+            target.BusinessId, target.Date, "  LIDL CENTRUM  ", target.Amount, _jedzenieId);
 
         var saved = Assert.Single(
             await UpdateHandler().HandleAsync(new UpdateTransactionsRequestDto([edit], [_budgetId]), default));
@@ -728,8 +727,8 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         var selection = new TransactionSelectionRequestDto(
             [foreignId], EmptyFilter(_budgetId, secondBudgetId));
 
-        var result = await BulkSetLargeExpenseHandler().HandleAsync(
-            new BulkSetLargeExpenseRequestDto(selection, true), default);
+        var result = await BulkSetCategoryHandler().HandleAsync(
+                new BulkSetCategoryRequestDto(selection, _transportId), default);
 
         Assert.Equal(1, result.Affected);
     }
@@ -743,7 +742,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         var selection = new TransactionSelectionRequestDto([foreignId], EmptyFilter(_budgetId));
 
         await Assert.ThrowsAsync<TransactionNotFoundException>(
-            () => BulkSetLargeExpenseHandler().HandleAsync(
-                new BulkSetLargeExpenseRequestDto(selection, true), default));
+            () => BulkSetCategoryHandler().HandleAsync(
+                new BulkSetCategoryRequestDto(selection, _transportId), default));
     }
 }

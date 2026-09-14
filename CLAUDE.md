@@ -385,6 +385,37 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   „Oszczędności" nie dostają limitu i nie wchodzą do „wydane poza limitami".
 > - Przełącznik budżetu to wspólny `core/budget-switcher` — wybór idzie do ADRESU, bo adres wygrywa z `ActiveBudget`.
 
+> **REWIZJA — 2026-09-14: zlecenia stałe** (etap 1 zgłoszenia #18 na tablicy; `Features/StandingOrders`, ekran
+> `/standing-orders`, makieta Figma — strona „Zlecenia”):
+> - **Zlecenie stałe to osobny byt** („Czynsz”) z regułą: tytuł ZAWIERA frazę (≥ 3 znaki, to dane — nie wzorzec LIKE)
+>   + ZAKRES kwoty wydatku. Zakres, nie jedna kwota, bo czynsz po podwyżce dalej ma być czynszem.
+> - ⚠️ **Zlecenie TYLKO SIĘ PRZYPINA** (`Transaction.StandingOrderBusinessId`) — **nie zmienia kategorii** (decyzja
+>   użytkownika). Kolumna „Kategoria” na ekranie to najczęstsza kategoria PRZYPIĘTYCH transakcji.
+> - Przypinanie **wstecz** (zapis/zmiana zlecenia przelicza całą historię budżetu) i **przy imporcie** (w tej samej
+>   transakcji bazodanowej co zapis wierszy). Transakcja należy do jednego zlecenia — pierwsze wygrywa.
+> - ⚠️ **Ręczne „Odepnij” jest pamiętane** (`StandingOrderUnpinnedFrom`) — bez tego każda zmiana reguły przypinałaby
+>   transakcję z powrotem. Pamiętane jest KONKRETNE zlecenie, więc transakcja może trafić do innego.
+> - Zlecenie jest ZASADĄ budżetu, jak cel oszczędnościowy: **reset je zostawia, usunięcie zabiera**, przywrócenie
+>   oddaje, purge kasuje (`BudgetChildren.SoftDeleteSavingsAsync`, `BudgetPurger`).
+> - Lista transakcji ma filtr `standingOrderId` i okruszek `?origin=standing-orders` („Przejdź do powiązanych”).
+> - Reguł jest wiele (jsonb, łączone „lub”, każda z własnym zakresem kwot). Zakończenie (`EndMonth`) to nie usunięcie:
+>   po ostatnim miesiącu zlecenie nie jest oczekiwane ani liczone w sumie, a import go już nie przypina.
+
+> **REWIZJA — 2026-09-14: zlecenia epizodyczne ZASTĄPIŁY flagę „duży wydatek”** (etap 2 zgłoszenia #18;
+> `Features/EpisodicOrders`, ekran `/episodic-orders`, makiety Figma — strona „Zlecenia”):
+> - **`Transaction.IsLargeExpense` nie istnieje.** Wydatek jednorazowy to transakcja ZREALIZOWANEGO zlecenia
+>   epizodycznego — na tym stoi dowód na ekranie celów (`GetSavingsQueryHandler`). Migracja `EpisodicOrders` przeniosła
+>   flagi (tylko wydatki z budżetem) i usunęła kolumnę. Akcji masowej nie ma: każde zlecenie potrzebuje nazwy.
+> - ⚠️ **Jedno źródło liczb:** zaplanowane ma plan (kategoria, kwota, termin), zrealizowane wskazuje transakcję
+>   i kwotę, datę oraz kategorię bierze Z NIEJ. Plan zostaje po realizacji — po nim poznajemy, co da się
+>   „cofnąć do zaplanowanych”.
+> - **„Załóż cel oszczędzania” tworzy zwykłą rezerwację**, którą zlecenie RZĄDZI: zmiana planu przepisuje nierozliczoną
+>   rezerwację, usunięcie zlecenia ją zabiera, „Oznacz jako kupione” rozlicza ją ZAKUPEM (nie wypłatą z oszczędności —
+>   warunki z ekranu rezerwacji tu nie obowiązują). Uzbierane liczy `GetSavingsReservationsQueryHandler`, nie drugi kod.
+> - Zrealizowane, którego transakcja zniknęła (usunięcie, reset), jest ukryte, a nie kasowane — przywrócenie transakcji
+>   je oddaje. Cykl życia budżetu jak przy zleceniach stałych (reset zostawia, usunięcie zabiera).
+> - Oznaczenie z listy transakcji idzie bez `budgetId` — serwer bierze budżet TRANSAKCJI, bo lista pokazuje kilka naraz.
+
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
 > i pomylenie ich daje błąd, którego nie widać na ekranie.

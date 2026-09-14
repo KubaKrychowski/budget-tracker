@@ -51,6 +51,17 @@ public static class DemoSeed
     /// <summary>Kwota tego wydatku — ta sama liczba, którą cytuje landing.</summary>
     private const decimal ProofOneOffAmount = 2551m;
 
+    /// <summary>
+    /// Wydatki jednorazowe demo (tytuł transakcji → nazwa zlecenia epizodycznego). Dawniej flaga „duży wydatek”;
+    /// rower z bieżącego miesiąca świadomie NIE jest tu — zwykły zakup obok, bez zlecenia.
+    /// </summary>
+    private static readonly Dictionary<string, string> OneOffOrders = new()
+    {
+        ["SERWIS AUTO KOLO - NAPRAWA"] = "Serwis auta",
+        ["MEBLE ROGALA - ZAMOWIENIE"] = "Meble",
+        ["PRALKA - SKLEP AGD FALA"] = "Pralka",
+    };
+
     /// <summary>Ile zwykłych zakupów generujemy na miesiąc.</summary>
     private const int PurchasesPerMonth = 13;
 
@@ -93,7 +104,18 @@ public static class DemoSeed
         var firstMonth = new DateOnly(today.Year, today.Month, 1).AddMonths(-(MonthsOfHistory - 1));
         var budgetId = DeterministicGuid.For("demo:budget:domowy");
 
-        db.Transactions.AddRange(BuildTransactions(categories, accounts, budgetId, firstMonth, today, now));
+        var transactions = BuildTransactions(categories, accounts, budgetId, firstMonth, today, now).ToList();
+        db.Transactions.AddRange(transactions);
+
+        db.EpisodicOrders.AddRange(transactions
+            .Where(t => OneOffOrders.ContainsKey(t.Description))
+            .Select(t =>
+            {
+                var order = new EpisodicOrder(budgetId, OneOffOrders[t.Description], null, now)
+                    .WithSeedBusinessId<EpisodicOrder>(DeterministicGuid.For($"demo:episodicorder:{t.Description}"));
+                order.Realize(t.BusinessId);
+                return order;
+            }));
 
         db.Budgets.Add(new Budget("Domowy", new DateOnly(today.Year, today.Month, 1), initialBalance: 0m, createdAt: now)
             .WithSeedBusinessId<Budget>(budgetId));
@@ -268,7 +290,6 @@ public static class DemoSeed
                 now,
                 TransactionStatus.Confirmed,
                 categoryId: categories["Samochód"].Id,
-                isLargeExpense: true,
                 budgetBusinessId: budgetId,
                 accountId: accounts[0].Id);
         }
@@ -286,7 +307,6 @@ public static class DemoSeed
                 now,
                 TransactionStatus.Confirmed,
                 categoryId: categories["Wyposażenie domu"].Id,
-                isLargeExpense: monthsAgo != 0,
                 budgetBusinessId: budgetId,
                 accountId: accounts[0].Id);
         }

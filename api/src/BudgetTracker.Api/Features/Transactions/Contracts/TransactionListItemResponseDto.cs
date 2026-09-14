@@ -7,6 +7,9 @@ namespace BudgetTracker.Api.Features.Transactions.Contracts;
 /// Tekst z <c>TransactionStatus.ToString()</c> — tak samo jak <c>RecentTransactionResponseDto.Status</c>
 /// na dashboardzie, żeby front miał jeden format statusu do tłumaczenia w obu miejscach.
 /// </param>
+/// <param name="EpisodicOrderName">
+/// Zlecenie epizodyczne, które ta transakcja zrealizowała — kolumna „Epizodyczne” (dawniej flaga „duży wydatek”).
+/// </param>
 public sealed record TransactionListItemResponseDto(
     Guid Id,
     DateOnly Date,
@@ -15,5 +18,6 @@ public sealed record TransactionListItemResponseDto(
     Guid? CategoryId,
     string? CategoryName,
     string Status,
-    bool IsLargeExpense,
+    Guid? EpisodicOrderId,
+    string? EpisodicOrderName,
     decimal? Confidence);

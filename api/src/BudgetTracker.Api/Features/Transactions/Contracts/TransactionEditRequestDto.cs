@@ -9,5 +9,4 @@ public sealed record TransactionEditRequestDto(
     DateOnly Date,
     string Description,
     decimal Amount,
-    Guid? CategoryId,
-    bool IsLargeExpense);
+    Guid? CategoryId);

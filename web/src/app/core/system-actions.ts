@@ -7,8 +7,8 @@ import { SystemAction } from './models/system-action';
  * Etykiety to KLUCZE TŁUMACZEŃ, nie teksty — rozwiązuje je TranslateService.
  * Wartości siedzą w `public/i18n/*.json` pod `actions.*`.
  *
- * `duzy-wydatek-azure.svg` leży w `public/icons/` NIEUŻYWANY — dotyczy procesu 4
- * z Etapu 0 („oznacz duży wydatek"), który jest flagą na transakcji, nie akcją menu.
+ * `duzy-wydatek-azure.svg` leży w `public/icons/` NIEUŻYWANY — flaga „duży wydatek” zniknęła,
+ * zastąpiły ją zlecenia epizodyczne z własną ikoną.
  */
 export const SYSTEM_ACTIONS: readonly SystemAction[] = [
   {
@@ -67,6 +67,24 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     icon: 'pie-chart',
     svg: 'icons/limity-wydatkow-azure.svg',
     route: '/limits',
+    quickAction: false,
+  },
+  {
+    key: 'standing-orders',
+    labelKey: 'actions.standingOrders',
+    // Własna ikona sekcji. `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.
+    icon: 'sync',
+    svg: 'icons/zlecenia-stale-azure.svg',
+    route: '/standing-orders',
+    quickAction: false,
+  },
+  {
+    key: 'episodic-orders',
+    labelKey: 'actions.episodicOrders',
+    // Własna ikona sekcji. `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.
+    icon: 'unordered-list',
+    svg: 'icons/wydatki-epizodyczne-azure.svg',
+    route: '/episodic-orders',
     quickAction: false,
   },
 ];

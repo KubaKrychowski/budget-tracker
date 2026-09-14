@@ -48,7 +48,7 @@ const MONTHS_LOCATIVE_PL = [
  * pokazuje „cel nieosiągnięty", oskarża użytkownika o niedotrzymanie czegoś, czego nigdy
  * nie zadeklarował.
  */
-type ScreenState = 'noGoal' | 'noLargeExpense' | 'proof' | 'missed' | 'plain';
+type ScreenState = 'noGoal' | 'noEpisodicExpense' | 'proof' | 'missed' | 'plain';
 
 @Component({
   selector: 'app-savings',
@@ -175,7 +175,7 @@ export class Savings {
 
     // Bez ani jednej oznaczonej transakcji dowód nie ma jak powstać — i trzeba to powiedzieć
     // wprost, zamiast pokazywać „0 dowodów" jak fakt o dyscyplinie użytkownika.
-    if (!data.hasAnyLargeExpense) return 'noLargeExpense';
+    if (!data.hasAnyEpisodicExpense) return 'noEpisodicExpense';
 
     if (this.latestProof() !== null) return 'proof';
     return this.lastMissed() !== null ? 'missed' : 'plain';
@@ -425,52 +425,16 @@ export class Savings {
   // ── Akcje na wierszu ─────────────────────────────────────────────────────────────────
 
   /**
-   * „To nie był jednorazowy wydatek" — zdejmuje flagę ze WSZYSTKICH oznaczonych transakcji
-   * tego miesiąca.
+   * „Pokaż zlecenia epizodyczne” — jednorazowe wydatki miesiąca to zrealizowane zlecenia.
    *
-   * ⚠️ Idzie istniejącym `bulk-large-expense`, a nie nowym endpointem. `IsLargeExpense` ma już
-   * jedną drogę zapisu i dwie rozjechałyby się — a przy okazji tamta wymusza zasięg budżetu
-   * po stronie serwera, więc nie trzeba go tu odtwarzać.
+   * ⚠️ Bez zdejmowania ich stąd. Dawniej przycisk zdejmował flagę z całego miesiąca naraz; zlecenie ma nazwę i opis,
+   * więc usuwa się je świadomie, pojedynczo, na jego ekranie — jedna droga zapisu zamiast dwóch.
    */
-  protected async clearOneOff(month: SavingsMonth): Promise<void> {
-    const ok = await this.confirmDialog.confirm({
-      header: this.translate.instant('savings.clearOneOffConfirm.header'),
-      description: this.translate.instant('savings.clearOneOffConfirm.description', {
-        month: this.monthLabel(month.month),
-        count: month.oneOffCount,
-      }),
+  protected showEpisodic(): void {
+    const budget = this.budgetIds()[0];
+    void this.router.navigate(['/episodic-orders'], {
+      queryParams: { tab: 'realized', ...(budget ? { budgetId: budget } : {}) },
     });
-    if (!ok) return;
-
-    const from = month.month;
-    const to = this.lastDayOf(month.month);
-
-    this.busy.set(true);
-    try {
-      await firstValueFrom(this.http.post('/api/transactions/bulk-large-expense', {
-        selection: {
-          ids: null,
-          filter: {
-            budgetIds: this.budgetIds().length > 0 ? this.budgetIds() : null,
-            from, to,
-            categoryId: null,
-            uncategorized: false,
-            direction: 'Expense',
-            status: null,
-            amountFrom: null,
-            amountTo: null,
-            search: null,
-          },
-        },
-        isLargeExpense: false,
-      }));
-      this.message.success(this.translate.instant('savings.oneOffCleared'));
-      this.resource.reload();
-    } catch (e) {
-      this.message.error(this.errorMessages.of(e));
-    } finally {
-      this.busy.set(false);
-    }
   }
 
   /** Przejście do listy transakcji zawężonej do tego miesiąca — „Pokaż w transakcjach". */

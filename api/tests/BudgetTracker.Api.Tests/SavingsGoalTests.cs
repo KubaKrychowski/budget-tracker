@@ -80,17 +80,22 @@ public sealed class SavingsGoalTests : IAsyncLifetime
 
     /// <summary>Wpłata na oszczędności: z konta bieżącego pieniądze WYCHODZĄ, więc kwota ujemna.</summary>
     private void Deposit(int year, int month, decimal amount) =>
-        Add(year, month, -amount, _savingsCategoryId, largeExpense: false);
+        Add(year, month, -amount, _savingsCategoryId);
 
     /// <summary>Wypłata z oszczędności — wraca na bieżące, więc dodatnia.</summary>
     private void Withdraw(int year, int month, decimal amount) =>
-        Add(year, month, amount, _savingsCategoryId, largeExpense: false);
+        Add(year, month, amount, _savingsCategoryId);
 
-    /// <summary>Jednorazowy wydatek — ręczna flaga `IsLargeExpense`, czyli test obciążeniowy.</summary>
-    private void OneOff(int year, int month, decimal amount) =>
-        Add(year, month, -amount, _foodCategoryId, largeExpense: true);
+    /// <summary>Jednorazowy wydatek — transakcja zrealizowanego zlecenia epizodycznego, czyli test obciążeniowy.</summary>
+    private void OneOff(int year, int month, decimal amount)
+    {
+        var transaction = Add(year, month, -amount, _foodCategoryId);
+        var order = new EpisodicOrder(_budgetId, "TEST", null, default);
+        order.Realize(transaction.BusinessId);
+        _db.EpisodicOrders.Add(order);
+    }
 
-    private void Add(int year, int month, decimal amount, int categoryId, bool largeExpense) =>
+    private Transaction Add(int year, int month, decimal amount, int categoryId) =>
         _db.Transactions.Add(new Transaction(
                                  new DateOnly(year, month, 10),
                                  amount,
@@ -98,8 +103,7 @@ public sealed class SavingsGoalTests : IAsyncLifetime
                                  new DateTimeOffset(year, month, 10, 0, 0, 0, TimeSpan.Zero),
                                  TransactionStatus.Confirmed,
                                  categoryId: categoryId,
-                                 isLargeExpense: largeExpense,
-                                 budgetBusinessId: _budgetId));
+                                 budgetBusinessId: _budgetId)).Entity;
 
     private void Goal(decimal amount, DateOnly startedOn, DateOnly? endedOn = null)
     {
@@ -353,7 +357,7 @@ public sealed class SavingsGoalTests : IAsyncLifetime
 
         var response = await GetHandler().HandleAsync(null, default);
 
-        Assert.False(response.HasAnyLargeExpense);
+        Assert.False(response.HasAnyEpisodicExpense);
         Assert.Equal(0, response.ProofCount);
     }
 
@@ -363,7 +367,7 @@ public sealed class SavingsGoalTests : IAsyncLifetime
         // Przed #10 odkładanie widać wyłącznie przez kategorię „Oszczędności". Przelew opisany
         // inaczej nie zostanie rozpoznany — ekran ma o tym powiedzieć, a nie pokazać zero jak fakt.
         Goal(1500m, new DateOnly(2026, 1, 1));
-        Add(2026, 10, -1500m, _foodCategoryId, largeExpense: false);
+        Add(2026, 10, -1500m, _foodCategoryId);
         await _db.SaveChangesAsync();
 
         var response = await GetHandler().HandleAsync(null, default);

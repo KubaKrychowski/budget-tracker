@@ -13,7 +13,9 @@
     "importStatement": "Zaimportuj wyciąg",
     "notImplemented": "„{{label}}” — ta funkcja powstanie w kolejnym zadaniu.",
     "savings": "Cele oszczędzania",
-    "limits": "Limity wydatków"
+    "limits": "Limity wydatków",
+    "standingOrders": "Zlecenia stałe",
+    "episodicOrders": "Zlecenia epizodyczne"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -178,6 +180,7 @@
       "amountTo": "Kwota do",
       "clear": "Wyczyść filtry",
       "budgets": "Budżety",
+      "standingOrder": "Zlecenie stałe:",
       "budgetsNote": "Wybrano kilka budżetów. Jeśli ten sam wyciąg trafił do więcej niż jednego, kafle policzą te same pieniądze wielokrotnie."
     },
     "columns": {
@@ -185,9 +188,9 @@
       "description": "Opis",
       "category": "Kategoria",
       "status": "Status",
-      "largeExpense": "Duży wydatek",
       "amount": "Kwota",
-      "actions": "Akcje"
+      "actions": "Akcje",
+      "episodic": "Epizodyczne"
     },
     "selection": {
       "count": "Zaznaczono: {{count}}",
@@ -195,8 +198,6 @@
       "edit": "Edytuj zaznaczone",
       "editDisabledHint": "Edycja inline działa tylko dla zaznaczenia na stronie, nie dla całego pasującego zestawu.",
       "setCategory": "Masowe ustawienie kategorii",
-      "markLargeExpense": "Oznacz jako duży wydatek",
-      "unmarkLargeExpense": "Odznacz duży wydatek",
       "delete": "Usuń zaznaczone"
     },
     "metrics": {
@@ -207,8 +208,8 @@
     "rowMenu": {
       "edit": "Edytuj",
       "delete": "Usuń",
-      "markLargeExpense": "Oznacz jako duży wydatek",
-      "unmarkLargeExpense": "Odznacz duży wydatek"
+      "markEpisodic": "Oznacz jako zlecenie epizodyczne…",
+      "goToEpisodic": "Przejdź do zlecenia epizodycznego"
     },
     "edit": {
       "modified": "Zmodyfikowano {{count}} wierszy",
@@ -237,9 +238,6 @@
       "confirm": "Usunąć zaznaczone transakcje ({{count}})?",
       "success": "Usunięto {{count}} transakcji."
     },
-    "bulkLargeExpense": {
-      "success": "Zaktualizowano {{count}} transakcji."
-    },
     "bulkSetCategory": {
       "title": "Masowe ustawianie kategorii",
       "info": "Po akceptacji {{count}} transakcji ulegnie zmianie. W razie potrzeby w ustawieniach możesz wykonać przeuczenie modelu na nowych kategoriach.",
@@ -254,6 +252,16 @@
     "errors": {
       "loadFailed": "Nie udało się wczytać transakcji",
       "retry": "Spróbuj ponownie"
+    },
+    "episodic": {
+      "title": "Oznacz jako zlecenie epizodyczne",
+      "note": "Większy, jednorazowy wydatek. Trafi do „Zrealizowanych” i liczy się jako wydatek epizodyczny na ekranie celów.",
+      "transaction": "Transakcja: {{date}} · {{description}} · {{amount}} PLN · {{category}}",
+      "name": "Nazwa",
+      "description": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Co to było — np. „rozrząd i klocki”",
+      "save": "Zapisz zlecenie",
+      "saved": "Zapisano zlecenie epizodyczne „{{name}}”."
     }
   },
   "currencies": {
@@ -503,7 +511,6 @@
     "goalSince": "obowiązuje od: {{month}}",
     "goalSaved": "Cel zapisany.",
     "goalEnded": "Cel zakończony. Historia dowodów zostaje.",
-    "oneOffCleared": "Zdjęto oznaczenie jednorazowego wydatku.",
     "raiseGoal": "Podnieś cel do {{amount}} zł",
     "raiseSuggestion": "Masz {{count}} miesiące z dowodem. W miesiącach z jednorazowymi wydatkami budżet uniósł dodatkowo ok. {{headroom}} zł ponad cel.",
     "metrics": {
@@ -524,11 +531,6 @@
         "title": "Nie masz jeszcze celu oszczędnościowego.",
         "body": "Ustaw kwotę, którą chcesz odkładać co miesiąc — dopiero wtedy mogę powiedzieć, czy ją utrzymujesz mimo jednorazowych wydatków."
       },
-      "noLargeExpense": {
-        "title": "Nie oznaczyłeś żadnego jednorazowego wydatku.",
-        "body": "Bez nich nie odróżnię trudnego miesiąca od zwykłego, więc dowód nie powstanie. Oznacz je na liście transakcji.",
-        "cta": "Przejdź do listy transakcji"
-      },
       "proof": {
         "title": "Odłożyłeś {{amount}} zł także w {{month}} — miesiącu, w którym doszło {{oneOff}} zł jednorazowych wydatków.",
         "body": "Ten cel jest bezpieczny. Liczba miesięcy z dowodem: {{count}}."
@@ -536,6 +538,11 @@
       "missed": {
         "title": "W {{month}} zabrakło {{missing}} zł do celu.",
         "body": "Doszło {{oneOff}} zł jednorazowych wydatków. To informacja, nie ocena — dowód powstaje w miesiącu, w którym cel mimo nich wychodzi."
+      },
+      "noEpisodicExpense": {
+        "title": "Nie masz jeszcze żadnego zrealizowanego zlecenia epizodycznego.",
+        "body": "Bez jednorazowych wydatków nie odróżnię trudnego miesiąca od zwykłego, więc dowód nie powstanie. Oznacz je na liście transakcji albo dodaj na ekranie zleceń epizodycznych.",
+        "cta": "Przejdź do zleceń epizodycznych"
       }
     },
     "noSavingsSeen": {
@@ -550,9 +557,9 @@
       "goal": "Cel",
       "oneOff": "Jednorazowe",
       "verdict": "Werdykt",
-      "notOneOff": "To nie był jednorazowy wydatek",
       "showInTransactions": "Pokaż w transakcjach",
-      "empty": "Nie ma jeszcze żadnych transakcji w tym budżecie."
+      "empty": "Nie ma jeszcze żadnych transakcji w tym budżecie.",
+      "showEpisodic": "Pokaż zlecenia epizodyczne"
     },
     "verdict": {
       "proof": "Dowód",
@@ -573,10 +580,6 @@
     "endConfirm": {
       "header": "Zrezygnować z celu?",
       "description": "Cel zostanie zakończony datą, nie skasowany — dowody z przeszłości dalej będą odnosić się do kwoty, która wtedy obowiązywała."
-    },
-    "clearOneOffConfirm": {
-      "header": "Zdjąć oznaczenie jednorazowego wydatku?",
-      "description": "Z {{month}} zniknie oznaczenie z {{count}} transakcji. Miesiąc, który był dowodem wyłącznie dzięki nim, przestanie nim być."
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać oszczędności"
@@ -626,7 +629,8 @@
       "namePlaceholder": "Ubezpieczenie OC",
       "amount": "Kwota",
       "due": "Termin",
-      "queueNote": "Rezerwacje zbierają się po kolei — najbliższy termin pierwszy. Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych."
+      "queueNote": "Rezerwacje zbierają się po kolei — najbliższy termin pierwszy. Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych.",
+      "noDue": "Bez terminu — zbiera po rezerwacjach z terminem"
     },
     "settleModal": {
       "title": "Czy to było: {{name}}?",
@@ -651,7 +655,8 @@
     "tileSummary": "{{reserved}} zł zarezerwowane · {{settled}} zł już rozliczone",
     "collected": "Uzbierane",
     "freeFundsBody": "Stan konta oszczędnościowego {{balance}} zł − {{reserved}} zł rezerwacji.",
-    "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek."
+    "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek.",
+    "noDue": "przy okazji"
   },
   "limits": {
     "title": "Limity wydatków",
@@ -722,6 +727,216 @@
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać limitów"
+    }
+  },
+  "standingOrders": {
+    "title": "Zlecenia stałe",
+    "summary": "Podsumowanie",
+    "add": "Dodaj zlecenie",
+    "change": "Zmień",
+    "remove": "Usuń",
+    "goToLinked": "Przejdź do powiązanych ({{count}})",
+    "saved": "Zlecenie zapisane — przypięte transakcje: {{count}}.",
+    "removed": "Zlecenie usunięte. Transakcje zostały bez zmian.",
+    "unpinned": "Transakcja odpięta — nie wróci do tego zlecenia przy kolejnym dopasowaniu.",
+    "rhythm": {
+      "Monthly": "co miesiąc",
+      "Quarterly": "co kwartał",
+      "Yearly": "co rok"
+    },
+    "banner": {
+      "empty": "Nie masz jeszcze zleceń stałych.",
+      "emptyBody": "Dodaj czynsz, kredyt albo abonament z regułą z tytułu przelewu — przypnę do niego transakcje z historii i z kolejnych importów.",
+      "waiting": "W tym miesiącu czekają jeszcze: {{list}}.",
+      "missed": "{{month}} — nie zeszło: {{list}}.",
+      "different": "Inna kwota niż zwykle: {{list}}."
+    },
+    "metrics": {
+      "monthlyTotal": "Stałe zlecenia miesięcznie",
+      "paid": "Zeszło w tym miesiącu",
+      "waiting": "Czeka do zapłaty",
+      "different": "Inna kwota niż zwykle"
+    },
+    "table": {
+      "title": "Zlecenia stałe",
+      "hint": "Czynsz, kredyt, abonamenty — każde zlecenie ma regułę (tytuł + kwota), która przypina do niego transakcje z importu. Kategoria transakcji się nie zmienia.",
+      "empty": "Brak zleceń stałych w tym budżecie",
+      "name": "Nazwa",
+      "category": "Kategoria",
+      "amount": "Kwota",
+      "rhythm": "Rytm",
+      "state": "W tym miesiącu",
+      "rule": "tytuł zawiera „{{pattern}}” · {{from}}–{{to}} zł",
+      "total": "Razem miesięcznie",
+      "totalNote": "kwartalne ÷ 3, roczne ÷ 12",
+      "rules": {
+        "few": "{{count}} reguły: {{list}}",
+        "many": "{{count}} reguł: {{list}}"
+      },
+      "ended": "Zakończone zlecenia ({{count}})"
+    },
+    "state": {
+      "paid": "Zeszło {{date}}",
+      "paidDifferent": "Zeszło {{date}} · {{amount}} zł (inna kwota)",
+      "waiting": "Czeka",
+      "waitingUsual": "Czeka · zwykle do {{day}}.",
+      "missed": "Nie zeszło",
+      "notDue": "Nie w tym miesiącu",
+      "ended": "Zakończone w {{month}}"
+    },
+    "recent": {
+      "title": "Ostatnio przypięte transakcje",
+      "hint": "Transakcje z importu, które pasują do reguły zlecenia",
+      "empty": "Żadna transakcja nie jest jeszcze przypięta.",
+      "different": "inna kwota",
+      "unpin": "Odepnij",
+      "note": "Przypięcie nie zmienia kategorii transakcji. Transakcję przypiętą przez pomyłkę odpinasz tutaj."
+    },
+    "editor": {
+      "addTitle": "Dodaj zlecenie stałe",
+      "editTitle": "Zmień zlecenie stałe",
+      "save": "Zapisz zlecenie",
+      "note": "Zlecenie przypina transakcje, które pasują do reguły. Kategoria transakcji się nie zmienia — zlecenie mówi tylko, że to np. czynsz.",
+      "name": "Nazwa",
+      "namePlaceholder": "Czynsz",
+      "amount": "Kwota zwykle",
+      "rhythm": "Rytm",
+      "dueMonth": "Miesiąc",
+      "dueMonthPlaceholder": "W którym miesiącu schodzi",
+      "pattern": "Tytuł zawiera",
+      "patternPlaceholder": "czynsz",
+      "range": "Kwota od – do",
+      "preview": "Reguły pasują do {{count}} transakcji z historii budżetu — ostatnia {{date}}, {{amount}} zł. Zostaną przypięte po zapisie.",
+      "previewTaken": "{{count}} z nich należy już do innego zlecenia i przy nim zostanie.",
+      "previewNone": "Reguły nie pasują jeszcze do żadnej transakcji — przypną przyszłe z importu.",
+      "rulesTitle": "Reguły dopasowania",
+      "rulesHint": "Transakcja należy do zlecenia, gdy pasuje do którejkolwiek reguły.",
+      "addRule": "Dodaj regułę",
+      "removeRule": "Usuń"
+    },
+    "removeConfirm": {
+      "header": "Usunąć zlecenie „{{name}}”?",
+      "description": "Przypiętych transakcji: {{count}}. Zostaną bez zmian, tylko przestaną należeć do zlecenia."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać zleceń stałych"
+    },
+    "end": "Zakończ",
+    "resume": "Wznów",
+    "ended": "Zlecenie zakończone. Przypięte transakcje zostały.",
+    "resumed": "Zlecenie wznowione.",
+    "endDialog": {
+      "title": "Zakończ zlecenie „{{name}}”",
+      "note": "Np. po zmianie operatora albo spłacie kredytu. Zakończenie to nie usunięcie — zlecenie i jego historia zostają.",
+      "alert": "Po tym miesiącu zlecenie nie będzie oczekiwane ani liczone w sumie. Przypięte transakcje zostają, nowe z importu nie będą się już przypinać.",
+      "lastMonth": "Ostatni miesiąc zlecenia",
+      "confirm": "Zakończ zlecenie"
+    }
+  },
+  "episodicOrders": {
+    "title": "Zlecenia epizodyczne",
+    "summary": "Podsumowanie",
+    "add": "Dodaj zlecenie",
+    "change": "Zmień",
+    "remove": "Usuń",
+    "createReservation": "Załóż cel oszczędzania",
+    "showReservation": "Pokaż rezerwację",
+    "markPurchased": "Oznacz jako kupione…",
+    "goToTransaction": "Przejdź do transakcji",
+    "undo": "Cofnij do zaplanowanych",
+    "saved": "Zlecenie zapisane.",
+    "removed": "Zlecenie usunięte. Transakcja została bez zmian.",
+    "reservationCreated": "Założono rezerwację „{{name}}” — zbiera w kolejce rezerwacji jak każda inna.",
+    "purchased": "Zlecenie przeszło do zrealizowanych.",
+    "undone": "Zlecenie wróciło do zaplanowanych.",
+    "banner": {
+      "empty": "Nie masz jeszcze zleceń epizodycznych.",
+      "emptyBody": "Dodaj rzecz, którą trzeba będzie kupić, albo większy wydatek, który już był — np. z listy transakcji.",
+      "planned": {
+        "one": "{{count}} zaplanowany zakup na {{amount}} zł.",
+        "few": "{{count}} zaplanowane zakupy na {{amount}} zł.",
+        "many": "{{count}} zaplanowanych zakupów na {{amount}} zł."
+      },
+      "withoutSavings": "Bez oszczędzania: {{count}}.",
+      "plannedBody": "Z menu wiersza „Załóż cel oszczędzania” tworzy rezerwację z tą kwotą i terminem — zbiera się z oszczędności jak każda rezerwacja."
+    },
+    "metrics": {
+      "planned": "Zaplanowane",
+      "collected": "Uzbierane w rezerwacjach",
+      "realizedThisYear": "Zrealizowane w tym roku",
+      "withoutSavings": "Bez oszczędzania"
+    },
+    "tabs": {
+      "planned": "Zaplanowane ({{count}})",
+      "realized": "Zrealizowane ({{count}})"
+    },
+    "table": {
+      "title": "Zlecenia epizodyczne",
+      "hint": "Większe wydatki: zaplanowane („lista rzeczy, które trzeba będzie kupić”) albo już zrealizowane. Zrealizowane liczą się jako wydatki epizodyczne na ekranie celów.",
+      "empty": {
+        "planned": "Brak zaplanowanych zakupów",
+        "realized": "Brak zrealizowanych zleceń"
+      },
+      "name": "Nazwa",
+      "category": "Kategoria",
+      "amount": "Kwota",
+      "due": "Termin",
+      "date": "Data",
+      "savings": "Oszczędzanie",
+      "transaction": "Transakcja",
+      "noSavings": "— brak",
+      "noDue": "bez terminu"
+    },
+    "source": {
+      "reservation": "z rezerwacji",
+      "unplanned": "bez planu"
+    },
+    "recent": {
+      "title": "Zrealizowane ostatnio",
+      "hint": "Większe wydatki powiązane z transakcją — liczą się jako epizodyczne",
+      "empty": "Nie ma jeszcze zrealizowanych zleceń.",
+      "note": "Wydatek zrealizowany dołącza się tu na dwa sposoby: „Oznacz jako kupione…” przy zaplanowanym zleceniu albo „Oznacz jako zlecenie epizodyczne” na liście transakcji (zastępuje dawną flagę „duży wydatek”)."
+    },
+    "editor": {
+      "addTitle": "Dodaj zlecenie epizodyczne",
+      "editTitle": "Zmień zlecenie epizodyczne",
+      "save": "Zapisz zlecenie",
+      "note": "Większy wydatek: zaplanowany (np. „Nowy laptop do marca”) albo już zrealizowany. Zrealizowany liczy się jako wydatek epizodyczny na ekranie celów.",
+      "planned": "Zaplanowane",
+      "realized": "Już zrealizowane",
+      "realizedAlert": "Zrealizowane zlecenie wskazuje transakcję — kwota, data i kategoria idą z niej, więc nie wpisujesz ich drugi raz.",
+      "name": "Nazwa",
+      "namePlaceholder": "Nowy laptop",
+      "description": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Np. do pracy, 16 GB RAM, najpóźniej przed nowym projektem",
+      "category": "Kategoria",
+      "categoryPlaceholder": "Wybierz kategorię",
+      "amount": "Kwota",
+      "due": "Termin (miesiąc)",
+      "transaction": "Transakcja",
+      "transactionPlaceholder": "Wpisz fragment tytułu",
+      "transactionHint": "Lista pokazuje wydatki bez zlecenia, najnowsze najpierw — wpisz fragment tytułu, żeby zawęzić.",
+      "transactionChosen": "Kategoria: {{category}} · kwota {{amount}} zł.",
+      "noDue": "Bez terminu — kupię, kiedy będzie okazja"
+    },
+    "purchase": {
+      "title": "Oznacz jako kupione „{{name}}”",
+      "note": "Wskaż transakcję, którą zapłaciłeś. Zlecenie przejdzie do „Zrealizowanych” z jej kwotą i datą.",
+      "alert": "Rezerwacja „{{name}}” zostanie rozliczona tą transakcją. Kwota inna niż planowana ({{amount}} zł) jest w porządku — liczy się to, co zeszło.",
+      "transaction": "Transakcja zakupu",
+      "searchPlaceholder": "Szukaj w tytule…",
+      "empty": "Brak pasujących wydatków.",
+      "hint": "Wydatki z budżetu bez innego zlecenia, od 2 miesięcy przed terminem. Brak zakupu na liście? Zaimportuj wyciąg i wróć tutaj.",
+      "confirm": "Oznacz jako kupione"
+    },
+    "removeConfirm": {
+      "header": "Usunąć zlecenie „{{name}}”?",
+      "planned": "Zlecenie zniknie z listy zakupów.",
+      "withReservation": "Razem z nim zniknie nierozliczona rezerwacja, która na nie zbiera.",
+      "realized": "Transakcja zostanie bez zmian, ale przestanie liczyć się jako wydatek epizodyczny na ekranie celów."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać zleceń epizodycznych"
     }
   }
 }
