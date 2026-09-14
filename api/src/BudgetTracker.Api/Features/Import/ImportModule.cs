@@ -43,6 +43,7 @@ public static class ImportModule
         services.AddScoped<ImportConfidenceThreshold>();
 
         services.AddScoped<IStatementParser, PkoParser>();
+        services.AddScoped<IStatementParser, MBankParser>();
 
         services.AddScoped<GetImportSourcesQueryHandler>();
         services.AddScoped<GetImportPreviewQueryHandler>();
