@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal, untracked } from '@angular/core';
 import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
@@ -328,7 +328,20 @@ export class Transactions {
    * `undefined`. Bezpośredni odczyt wywalał render szablonu przy odpowiedzi 400 i zostawiał
    * `nz-spin` zawieszony nad pustą tabelą. Patrz `core/api/resource-value.ts`.
    */
-  private readonly listValue = valueOf(this.list);
+  private readonly freshListValue = valueOf(this.list);
+
+  /**
+   * Ostatnia odpowiedź listy — trzymana PRZEZ przeładowanie (zgłoszenie #17).
+   *
+   * `httpResource` na czas nowego żądania zwraca `undefined`, więc każda zmiana filtra zerowała tabelę, kafle
+   * i przełącznik budżetu, a po odpowiedzi rysowała je od nowa — ekran skakał. Teraz stare wiersze stoją pod
+   * spinnerem, dopóki API nie zwróci nowego widoku. Błąd ma własny stan (`listError`), więc nie zasłoni go
+   * poprzednia odpowiedź.
+   */
+  private readonly listValue = linkedSignal<TransactionListResponse | undefined, TransactionListResponse | undefined>({
+    source: this.freshListValue,
+    computation: (next, prev) => next ?? prev?.value,
+  });
 
   /** Błąd listy — osobny stan niż „brak wyników", patrz szablon. */
   protected readonly listError = errorOf(this.list);
@@ -755,10 +768,27 @@ export class Transactions {
     void this.changeQuery({ search: value || null, page: 1 });
   }
 
+  /** Zakres dat z kontrolki obok wyszukiwarki — ten sam `from`/`to` w adresie, który niesie wejście z dashboardu. */
+  protected readonly dateRange = computed<Date[]>(() => {
+    const from = this.from();
+    const to = this.to();
+    return from && to ? [fromIsoDate(from), fromIsoDate(to)] : [];
+  });
+
+  /** Wyczyszczenie kontrolki zdejmuje OBA końce — pół zakresu z adresu nie miałoby na ekranie reprezentacji. */
+  protected setDateRange(range: (Date | null)[] | null): void {
+    const [from, to] = range ?? [];
+    void this.changeQuery({
+      from: from ? toIsoDate(from) : null,
+      to: to ? toIsoDate(to) : null,
+      page: 1,
+    });
+  }
+
   protected clearFilters(): void {
     void this.changeQuery({
       categoryId: null, uncategorized: null, direction: null, status: null,
-      amountFrom: null, amountTo: null, search: null, standingOrderId: null, page: 1,
+      amountFrom: null, amountTo: null, search: null, standingOrderId: null, from: null, to: null, page: 1,
     });
   }
 

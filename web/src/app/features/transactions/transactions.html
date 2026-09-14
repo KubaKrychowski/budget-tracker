@@ -72,6 +72,16 @@
         />
       </nz-input-search>
 
+      <!-- Zakres dat obok wyszukiwarki, nie w nagłówku kolumny (zgłoszenie #17) — ten sam `from`/`to`
+           w adresie, którym przychodzi wejście z dashboardu. -->
+      <nz-range-picker
+        class="tx__dates"
+        [ngModel]="dateRange()"
+        (ngModelChange)="setDateRange($event)"
+        [nzPlaceHolder]="['transactions.filters.from' | translate, 'transactions.filters.to' | translate]"
+        nzFormat="dd.MM.yyyy"
+      />
+
       <!-- Filtr zlecenia stałego obok wyszukiwarki (makieta 224:5821) — ✕ zdejmuje tylko ten filtr. -->
       @if (standingOrderId()) {
         <nz-tag class="tx__standing-order" nzMode="closeable" (nzOnClose)="clearStandingOrder()">

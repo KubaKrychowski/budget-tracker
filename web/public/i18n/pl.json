@@ -181,7 +181,9 @@
       "clear": "Wyczyść filtry",
       "budgets": "Budżety",
       "standingOrder": "Zlecenie stałe:",
-      "budgetsNote": "Wybrano kilka budżetów. Jeśli ten sam wyciąg trafił do więcej niż jednego, kafle policzą te same pieniądze wielokrotnie."
+      "budgetsNote": "Wybrano kilka budżetów. Jeśli ten sam wyciąg trafił do więcej niż jednego, kafle policzą te same pieniądze wielokrotnie.",
+      "from": "Data od",
+      "to": "Data do"
     },
     "columns": {
       "date": "Data",

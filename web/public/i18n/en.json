@@ -181,7 +181,9 @@
       "clear": "Clear filters",
       "budgets": "Budgets",
       "standingOrder": "Standing order:",
-      "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once."
+      "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once.",
+      "from": "Date from",
+      "to": "Date to"
     },
     "columns": {
       "date": "Date",
