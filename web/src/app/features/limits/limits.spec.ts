@@ -124,7 +124,9 @@ describe('Limits', () => {
 
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('pl', {
+      dashboard: { configuration: 'Konfiguracja' },
       limits: {
+        addFirst: 'Dodaj pierwszy limit',
         title: 'Limity wydatków',
         add: 'Dodaj limit',
         change: 'Zmień',
@@ -143,6 +145,7 @@ describe('Limits', () => {
           nextLimit: 'od {{month}}: {{amount}} zł',
           overBy: '{{percent}}% · {{amount}} zł ponad',
           empty: 'Brak limitów w tym miesiącu',
+          emptyBudget: 'Brak limitów w tym budżecie',
         },
         unlimited: { set: 'Ustaw limit' },
         removeConfirm: { header: 'Usunąć limit „{{name}}”?', description: 'spadnie do {{total}} zł' },
@@ -190,12 +193,23 @@ describe('Limits', () => {
 
   // ── Baner ────────────────────────────────────────────────────────────────────────────
 
-  it('bez limitów mówi to wprost i nie rysuje tabeli', async () => {
+  it('bez limitów w bieżącym miesiącu: jedno wezwanie „Dodaj pierwszy limit", bez tabeli i paska miesięcy', async () => {
+    // Makieta 203:13079 — pusty stan nie ma strzałek miesięcy, tylko zdanie i przycisk.
     await settle(response({ limits: [], limitTotal: 0, spentInLimited: 0 }));
 
     expect(text()).toContain('Ten budżet nie ma jeszcze limitów.');
-    expect(text()).toContain('Brak limitów w tym miesiącu');
+    expect(text()).toContain('Brak limitów w tym budżecie');
+    expect(text()).toContain('Dodaj pierwszy limit');
+    expect(text()).not.toContain('Bieżący miesiąc');
     expect(fixture.nativeElement.querySelector('.lim__track')).toBeNull();
+  });
+
+  it('przełącznik budżetu siedzi w karcie „Konfiguracja"', async () => {
+    await settle();
+
+    const config = fixture.nativeElement.querySelector('.lim__config') as HTMLElement;
+    expect(config.textContent).toContain('Konfiguracja');
+    expect(config.querySelector('app-budget-switcher')).not.toBeNull();
   });
 
   it('przekroczenie nazywa kategorię i kwoty, a wydatki bez kategorii dostają osobne zdanie', async () => {
@@ -241,7 +255,7 @@ describe('Limits', () => {
       limits: [row({ limit: 1000, state: 'Warning', nextLimit: 1200, nextValidFrom: '2026-09-01' })],
     }));
 
-    expect(text()).toContain('od 09.2026: 1200,00 zł');
+    expect(text()).toContain('Jedzenie · od IX: 1200,00 zł');
     expect(text()).not.toContain('Dodaj limit');
     expect(text()).not.toContain('Zmień');
     expect(text()).not.toContain('Ustaw limit');

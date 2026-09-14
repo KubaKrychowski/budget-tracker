@@ -27,10 +27,14 @@
     </nz-alert>
   } @else {
     @if (lastData(); as last) {
-      <app-budget-switcher
-        [budgets]="last.budgets"
-        [selectedId]="last.selectedBudgetIds[0] ?? null"
-        (budgetChange)="switchBudget($event)" />
+      <!-- Karta „Konfiguracja" z makiety (203:3) — ten sam nagłówek co na dashboardzie. -->
+      <div class="lim__config">
+        <h3 class="lim__config-title">{{ 'dashboard.configuration' | translate }}</h3>
+        <app-budget-switcher
+          [budgets]="last.budgets"
+          [selectedId]="last.selectedBudgetIds[0] ?? null"
+          (budgetChange)="switchBudget($event)" />
+      </div>
     }
 
     <nz-spin [nzSpinning]="loading() || busy()">
@@ -107,7 +111,7 @@
         <div class="lim__metrics">
           <nz-statistic
             [nzTitle]="'limits.metrics.spentInLimited' | translate"
-            [nzValue]="d.limits.length > 0 ? money(d.spentInLimited) + ' / ' + money(d.limitTotal) : '—'"
+            [nzValue]="d.limits.length > 0 ? money(d.spentInLimited) + ' z ' + money(d.limitTotal) : '—'"
             [nzSuffix]="d.limits.length > 0 ? ('dashboard.currency' | translate) : ''" />
           <nz-statistic
             [nzTitle]="'limits.metrics.limitTotal' | translate"
@@ -115,7 +119,7 @@
             [nzSuffix]="'dashboard.currency' | translate" />
           <nz-statistic
             [nzTitle]="'limits.metrics.overLimit' | translate"
-            [nzValue]="d.limits.length > 0 ? d.overLimitCount + ' / ' + d.limits.length : '—'" />
+            [nzValue]="d.limits.length > 0 ? d.overLimitCount + ' z ' + d.limits.length : '—'" />
           <nz-statistic
             [nzTitle]="'limits.metrics.spentOutside' | translate"
             [nzValue]="money(d.spentOutside)"
@@ -126,15 +130,24 @@
           <!-- ── Tabela limitów ─────────────────────────────────────────────────────────── -->
           <div class="lim__card">
             <h3 class="lim__card-title">{{ 'limits.table.title' | translate }}</h3>
-            <p class="lim__hint">
-              {{ (d.readOnly ? 'limits.table.readOnlyHint' : 'limits.table.hint') | translate }}
-            </p>
+            <p class="lim__hint">{{ 'limits.table.hint' | translate }}</p>
 
+            @if (d.limits.length === 0 && !d.readOnly) {
+              <!-- Pusty stan bieżącego miesiąca (makieta 203:13079): bez paska miesięcy, jedno wezwanie do działania. -->
+              <div class="lim__empty">
+                <p>{{ 'limits.table.emptyBudget' | translate }}</p>
+                <button nz-button nzType="primary" (click)="openEditor(null)">
+                  <nz-icon nzType="plus-circle" />
+                  {{ 'limits.addFirst' | translate }}
+                </button>
+              </div>
+            } @else {
             <div class="lim__toolbar">
               <button nz-button (click)="shiftMonth(-1)" [attr.aria-label]="'limits.prevMonth' | translate">‹</button>
               <span class="lim__month">{{ monthLabel(d.month) }}</span>
               <button nz-button (click)="shiftMonth(1)" [attr.aria-label]="'limits.nextMonth' | translate">›</button>
-              <button nz-button [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
+              <!-- Link, nie przycisk z ramką — makieta 203:3 / 206:182. -->
+              <button nz-button nzType="link" [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
                 {{ 'limits.currentMonth' | translate }}
               </button>
               <span class="lim__spacer"></span>
@@ -145,10 +158,11 @@
                 </button>
               }
             </div>
+            }
 
-            @if (d.limits.length === 0) {
+            @if (d.limits.length === 0 && d.readOnly) {
               <nz-empty [nzNotFoundContent]="'limits.table.empty' | translate" />
-            } @else {
+            } @else if (d.limits.length > 0) {
               <nz-table #limitsTable [nzData]="d.limits" [nzPageSize]="20" nzSize="middle">
                 <thead>
                   <tr>
@@ -171,8 +185,8 @@
                              wyglądałaby na błąd, a nie na historię (makieta 206:182). -->
                         @if (row.nextLimit !== null && row.nextValidFrom) {
                           <span class="lim__next">
-                            {{ 'limits.table.nextLimit' | translate: {
-                                 month: monthShort(row.nextValidFrom),
+                            · {{ 'limits.table.nextLimit' | translate: {
+                                 month: monthRoman(row.nextValidFrom),
                                  amount: money(row.nextLimit)
                                } }}
                           </span>

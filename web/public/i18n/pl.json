@@ -657,6 +657,7 @@
     "title": "Limity wydatków",
     "summary": "Podsumowanie",
     "add": "Dodaj limit",
+    "addFirst": "Dodaj pierwszy limit",
     "change": "Zmień",
     "remove": "Usuń",
     "saved": "Limit zapisany.",
@@ -684,8 +685,8 @@
     "table": {
       "title": "Limity kategorii",
       "hint": "Limit obowiązuje co miesiąc w tym budżecie · wydane = wydatki z kategorią w wybranym miesiącu, także oznaczone jako duże",
-      "readOnlyHint": "Miniony miesiąc jest tylko do odczytu — limity zmienia się od bieżącego miesiąca w przód",
       "empty": "Brak limitów w tym miesiącu",
+      "emptyBudget": "Brak limitów w tym budżecie",
       "category": "Kategoria",
       "limit": "Limit",
       "spent": "Wydane",

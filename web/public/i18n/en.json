@@ -594,6 +594,7 @@
     "title": "Spending limits",
     "summary": "Summary",
     "add": "Add limit",
+    "addFirst": "Add the first limit",
     "change": "Change",
     "remove": "Remove",
     "saved": "Limit saved.",
@@ -621,8 +622,8 @@
     "table": {
       "title": "Category limits",
       "hint": "The limit applies every month in this budget · spent = categorised expenses in the selected month, including large ones",
-      "readOnlyHint": "A past month is read-only — limits change from the current month on",
       "empty": "No limits in this month",
+      "emptyBudget": "No limits in this budget",
       "category": "Category",
       "limit": "Limit",
       "spent": "Spent",

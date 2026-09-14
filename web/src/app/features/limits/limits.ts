@@ -262,14 +262,18 @@ export class Limits {
   }
 
   /**
-   * Miesiąc liczbowo („09.2026") — do wtrąceń w zdaniu („od 09.2026: …").
+   * Miesiąc rzymską liczbą („IX") — do wtrącenia przy kategorii („· od IX: 1200 zł"), jak na makiecie 206:182.
    *
    * Nazwa miesiąca w mianowniku („od wrzesień") jest niegramatyczna, a dopełniacza `Intl` nie zna.
+   * Rok jest dopisywany tylko wtedy, gdy zmiana wchodzi w INNYM roku niż oglądany miesiąc — inaczej „od I"
+   * przy grudniu nie mówiłoby, którego stycznia dotyczy.
    */
-  protected monthShort(iso: string | null | undefined): string {
+  protected monthRoman(iso: string | null | undefined): string {
     if (!iso) return '';
-    const [year, month] = iso.split('-');
-    return `${month}.${year}`;
+    const [year, month] = iso.split('-').map(Number);
+    const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][month - 1] ?? '';
+    const viewedYear = Number(this.data()?.month.split('-')[0]);
+    return year === viewedYear ? roman : `${roman} ${year}`;
   }
 
   /** Szerokość wypełnienia paska — przy przekroczeniu pasek jest pełny, a nie wychodzi poza tor. */
