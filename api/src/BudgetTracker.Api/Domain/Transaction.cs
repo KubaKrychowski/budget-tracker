@@ -92,6 +92,27 @@ public class Transaction(
     /// <summary>Null dla transakcji dodanych ręcznie — te nie pochodzą z żadnego importu.</summary>
     public int? ImportBatchId { get; protected set; } = importBatchId;
 
+    /// <summary>Zlecenie stałe, do którego przypięła transakcję jego reguła; <c>null</c> = żadne.</summary>
+    /// <remarks>Zwykła kolumna z publicznym identyfikatorem, bez relacji EF. Przypięcie NIE zmienia kategorii.</remarks>
+    public Guid? StandingOrderBusinessId { get; protected set; }
+
+    /// <summary>
+    /// Zlecenie, od którego użytkownik RĘCZNIE odpiął transakcję.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Bez tej pamięci każde ponowne dopasowanie (zmiana reguły, kolejny import) przypinałoby transakcję z powrotem
+    /// i „Odepnij” działałoby do pierwszej zmiany. Pamiętamy KONKRETNE zlecenie, a nie ogólny zakaz: transakcja odpięta
+    /// od „Czynszu” wciąż może pasować do innego zlecenia.
+    /// </remarks>
+    public Guid? StandingOrderUnpinnedFrom { get; protected set; }
+
+    /// <summary>Ręczne odpięcie — transakcja nie wróci do tego zlecenia przy ponownym dopasowaniu.</summary>
+    public void UnpinFromStandingOrder()
+    {
+        StandingOrderUnpinnedFrom = StandingOrderBusinessId;
+        StandingOrderBusinessId = null;
+    }
+
     /// <summary>Edycja inline z listy transakcji — pola, które widzi użytkownik w wierszu.</summary>
     /// <remarks>
     /// Kategoria NIE jest tu ustawiana, choć edytuje się ją w tym samym wierszu: jej zmiana

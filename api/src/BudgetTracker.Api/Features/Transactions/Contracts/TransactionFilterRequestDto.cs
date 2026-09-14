@@ -22,6 +22,9 @@ namespace BudgetTracker.Api.Features.Transactions.Contracts;
 /// Zakres działa na WARTOŚCI BEZWZGLĘDNEJ kwoty — użytkownik wpisuje „od-do" bez znaku,
 /// tak jak widzi liczbę w kolumnie, niezależnie od kierunku transakcji.
 /// </param>
+/// <param name="StandingOrderId">
+/// Tylko transakcje przypięte do tego zlecenia stałego — „Przejdź do powiązanych” z ekranu zleceń.
+/// </param>
 public sealed record TransactionFilterRequestDto(
     IReadOnlyList<Guid>? BudgetIds,
     DateOnly? From,
@@ -32,4 +35,5 @@ public sealed record TransactionFilterRequestDto(
     IReadOnlyList<TransactionStatus>? Status,
     decimal? AmountFrom,
     decimal? AmountTo,
-    string? Search);
+    string? Search,
+    Guid? StandingOrderId = null);

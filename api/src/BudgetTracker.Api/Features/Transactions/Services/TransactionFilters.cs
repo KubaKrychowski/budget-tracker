@@ -49,6 +49,9 @@ public sealed class TransactionFilters(AppDbContext db)
         if (filter.AmountTo is { } amountTo)
             query = query.Where(t => Math.Abs(t.Amount) <= amountTo);
 
+        if (filter.StandingOrderId is { } standingOrderId)
+            query = query.Where(t => t.StandingOrderBusinessId == standingOrderId);
+
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var pattern = $"%{EscapeLikePattern(filter.Search)}%";
@@ -57,6 +60,12 @@ public sealed class TransactionFilters(AppDbContext db)
 
         return query;
     }
+
+    /// <summary>Nazwa zlecenia stałego z filtra — do etykiety filtra na liście; <c>null</c> bez filtra albo bez zlecenia.</summary>
+    public async Task<string?> StandingOrderNameAsync(Guid? standingOrderId, CancellationToken ct) =>
+        standingOrderId is { } id
+            ? await db.StandingOrders.Where(o => o.BusinessId == id).Select(o => o.Name).FirstOrDefaultAsync(ct)
+            : null;
 
     /// <summary>
     /// Neutralizuje metaznaki LIKE w tekście od użytkownika.

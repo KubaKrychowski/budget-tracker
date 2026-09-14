@@ -6,6 +6,7 @@ using BudgetTracker.Api.Features.Dashboard;
 using BudgetTracker.Api.Features.Import;
 using BudgetTracker.Api.Features.Limits;
 using BudgetTracker.Api.Features.Savings;
+using BudgetTracker.Api.Features.StandingOrders;
 using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Infrastructure.Jobs;
@@ -36,6 +37,7 @@ builder.Services.AddBudgets(builder.Configuration);
 builder.Services.AddTransactions();
 builder.Services.AddSavings();
 builder.Services.AddLimits();
+builder.Services.AddStandingOrders();
 
 const string devCors = "dev-frontend";
 builder.Services.AddCors(options =>
@@ -94,6 +96,7 @@ app.MapDashboard();
 app.MapCategorization();
 app.MapSavings();
 app.MapLimits();
+app.MapStandingOrders();
 app.MapImport();
 app.MapBudgets();
 app.MapTransactions();

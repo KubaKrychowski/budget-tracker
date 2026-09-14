@@ -385,6 +385,20 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   „Oszczędności" nie dostają limitu i nie wchodzą do „wydane poza limitami".
 > - Przełącznik budżetu to wspólny `core/budget-switcher` — wybór idzie do ADRESU, bo adres wygrywa z `ActiveBudget`.
 
+> **REWIZJA — 2026-09-14: zlecenia stałe** (etap 1 zgłoszenia #18 na tablicy; `Features/StandingOrders`, ekran
+> `/standing-orders`, makieta Figma — strona „Zlecenia”):
+> - **Zlecenie stałe to osobny byt** („Czynsz”) z regułą: tytuł ZAWIERA frazę (≥ 3 znaki, to dane — nie wzorzec LIKE)
+>   + ZAKRES kwoty wydatku. Zakres, nie jedna kwota, bo czynsz po podwyżce dalej ma być czynszem.
+> - ⚠️ **Zlecenie TYLKO SIĘ PRZYPINA** (`Transaction.StandingOrderBusinessId`) — **nie zmienia kategorii** (decyzja
+>   użytkownika). Kolumna „Kategoria” na ekranie to najczęstsza kategoria PRZYPIĘTYCH transakcji.
+> - Przypinanie **wstecz** (zapis/zmiana zlecenia przelicza całą historię budżetu) i **przy imporcie** (w tej samej
+>   transakcji bazodanowej co zapis wierszy). Transakcja należy do jednego zlecenia — pierwsze wygrywa.
+> - ⚠️ **Ręczne „Odepnij” jest pamiętane** (`StandingOrderUnpinnedFrom`) — bez tego każda zmiana reguły przypinałaby
+>   transakcję z powrotem. Pamiętane jest KONKRETNE zlecenie, więc transakcja może trafić do innego.
+> - Zlecenie jest ZASADĄ budżetu, jak cel oszczędnościowy: **reset je zostawia, usunięcie zabiera**, przywrócenie
+>   oddaje, purge kasuje (`BudgetChildren.SoftDeleteSavingsAsync`, `BudgetPurger`).
+> - Lista transakcji ma filtr `standingOrderId` i okruszek `?origin=standing-orders` („Przejdź do powiązanych”).
+
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
 > i pomylenie ich daje błąd, którego nie widać na ekranie.

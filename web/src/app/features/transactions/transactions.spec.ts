@@ -459,6 +459,36 @@ describe('Transactions', () => {
     expect(crumbs[1].queryParams).toEqual({ tab: 'training' });
   });
 
+  it('z „Przejdź do powiązanych” filtruje po zleceniu, pokazuje jego nazwę i wraca do zleceń', async () => {
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', standingOrderId: 'o1', origin: 'standing-orders' },
+    });
+    fixture.detectChanges();
+    const [request] = http.match((r) => r.url === '/api/transactions');
+    expect(request.request.params.get('standingOrderId')).toBe('o1');
+    request.flush(response({ standingOrderName: 'Czynsz' }));
+    await settle(response({ standingOrderName: 'Czynsz' }));
+
+    const tag = fixture.nativeElement.querySelector('.tx__standing-order') as HTMLElement;
+    expect(tag.textContent).toContain('Czynsz');
+    expect(api().crumbs().map((c) => c.label)).toEqual(['standingOrders.title', 'transactions.title']);
+    expect(api().crumbs()[0].link).toBe('/standing-orders');
+  });
+
+  it('✕ na filtrze zlecenia zdejmuje tylko ten filtr, a powrót do zleceń zostaje', async () => {
+    await router.navigate(['/transactions'], {
+      queryParams: { standingOrderId: 'o1', origin: 'standing-orders', search: 'czynsz' },
+    });
+    await settle(response({ standingOrderName: 'Czynsz' }));
+
+    (fixture.componentInstance as unknown as { clearStandingOrder(): void }).clearStandingOrder();
+    await settle();
+
+    expect(router.url).not.toContain('standingOrderId');
+    expect(router.url).toContain('origin=standing-orders');
+    expect(router.url).toContain('search=czynsz');
+  });
+
   it('ostatni element nie jest odnosnikiem, bo to biezacy ekran', () => {
     const crumbs = api().crumbs();
     expect(crumbs[crumbs.length - 1].link).toBeUndefined();

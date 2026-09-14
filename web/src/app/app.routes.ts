@@ -39,6 +39,12 @@ export const routes: Routes = [
     title: 'Limity wydatków — Budżet tracker',
   },
   {
+    path: 'standing-orders',
+    loadComponent: () =>
+      import('./features/standing-orders/standing-orders').then((m) => m.StandingOrders),
+    title: 'Zlecenia stałe — Budżet tracker',
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/settings/settings').then((m) => m.Settings),

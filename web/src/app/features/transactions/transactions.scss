@@ -72,6 +72,15 @@
     width: 232px;   /* szerokość Search-Boxa z makiety */
   }
 
+  /* Etykieta filtra zlecenia stałego — ta sama wysokość linii co szukajka obok. */
+  &__standing-order {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 4px 8px;
+  }
+
   /* Szerszy od szukajki, bo nazwy budżetów bywają długie, a tagów potrafi być kilka. */
   &__budgets {
     min-width: 260px;

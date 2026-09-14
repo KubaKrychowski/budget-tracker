@@ -12,6 +12,7 @@ using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Models;
 using BudgetTracker.Api.Features.Import.Queries;
 using BudgetTracker.Api.Features.Import.Services;
+using BudgetTracker.Api.Features.StandingOrders.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -97,7 +98,8 @@ public sealed class ImportFeatureTests : IAsyncLifetime
                 // "trwa kategoryzacja", ktory nie dotyka dysku.
                 new ModelStore(Options.Create(new CategorizationOptions()), _clock),
                 budgets, existingKeys, confidenceThreshold),
-            new CommitImportCommandHandler(_db, _clock, budgets, existingKeys, confidenceThreshold));
+            new CommitImportCommandHandler(
+                _db, _clock, budgets, existingKeys, confidenceThreshold, new StandingOrderMatcher(_db)));
     }
 
     /// <summary>

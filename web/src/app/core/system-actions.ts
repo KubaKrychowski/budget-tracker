@@ -69,6 +69,14 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     route: '/limits',
     quickAction: false,
   },
+  {
+    key: 'standing-orders',
+    labelKey: 'actions.standingOrders',
+    // Bez własnego pliku ikony — do dostarczenia (zgłoszenie #18). Do tego czasu ikona NG-ZORRO.
+    icon: 'sync',
+    route: '/standing-orders',
+    quickAction: false,
+  },
 ];
 
 /**

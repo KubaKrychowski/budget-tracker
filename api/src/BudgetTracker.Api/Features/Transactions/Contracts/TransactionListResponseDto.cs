@@ -21,6 +21,10 @@ namespace BudgetTracker.Api.Features.Transactions.Contracts;
 /// stan („budżet bez transakcji") od trzeciego („brak wyników filtra") — oba dają `Total == 0`,
 /// ale wymagają innego komunikatu (import vs. wyczyść filtry).
 /// </param>
+/// <param name="StandingOrderName">
+/// Nazwa zlecenia stałego z filtra (<see cref="TransactionFilterRequestDto.StandingOrderId"/>) — do etykiety filtra
+/// „Zlecenie stałe: Czynsz ✕”. <c>null</c> bez filtra albo gdy zlecenia już nie ma.
+/// </param>
 public sealed record TransactionListResponseDto(
     IReadOnlyList<TransactionListItemResponseDto> Items,
     int Total,
@@ -29,4 +33,5 @@ public sealed record TransactionListResponseDto(
     TransactionSummaryResponseDto Summary,
     IReadOnlyList<Guid> SelectedBudgetIds,
     IReadOnlyList<TransactionBudgetOptionResponseDto> Budgets,
-    bool HasAnyTransactions);
+    bool HasAnyTransactions,
+    string? StandingOrderName = null);

@@ -72,6 +72,14 @@
         />
       </nz-input-search>
 
+      <!-- Filtr zlecenia stałego obok wyszukiwarki (makieta 224:5821) — ✕ zdejmuje tylko ten filtr. -->
+      @if (standingOrderId()) {
+        <nz-tag class="tx__standing-order" nzMode="closeable" (nzOnClose)="clearStandingOrder()">
+          {{ 'transactions.filters.standingOrder' | translate }}
+          <strong>{{ standingOrderName() ?? '…' }}</strong>
+        </nz-tag>
+      }
+
       <!-- Z których budżetów jest ta lista. Pusty wybór NIE znaczy „wszystkie" — znaczy
            „budżet domyślny", ten sam co na dashboardzie; kontrolka pokazuje go wtedy
            wybranego, żeby nie było wątpliwości, co się właśnie liczy. -->

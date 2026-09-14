@@ -21,11 +21,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
     public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
     public DbSet<SavingsReservation> SavingsReservations => Set<SavingsReservation>();
+    public DbSet<StandingOrder> StandingOrders => Set<StandingOrder>();
 
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<TransactionStatusDictionary> TransactionStatuses => Set<TransactionStatusDictionary>();
     public DbSet<RuleDirectionDictionary> RuleDirections => Set<RuleDirectionDictionary>();
     public DbSet<AccountTypeDictionary> AccountTypes => Set<AccountTypeDictionary>();
+    public DbSet<StandingOrderRhythmDictionary> StandingOrderRhythms => Set<StandingOrderRhythmDictionary>();
 
     /// <summary>
     /// Kwoty pieniężne zawsze <c>numeric(18,2)</c> — nigdy float/double. Konwencja globalna,
@@ -81,6 +83,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
             e.HasIndex(x => new { x.Date, x.CategoryId });
             e.HasIndex(x => x.Status);
+            e.HasIndex(x => x.StandingOrderBusinessId);
 
             e.HasOne<Category>().WithMany()
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
@@ -143,6 +146,23 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         {
             e.ToTable("AccountTypes");
             e.HasData(Enum.GetValues<AccountType>().Select(code => new AccountTypeDictionary(code)));
+        });
+
+        b.Entity<StandingOrderRhythmDictionary>(e =>
+        {
+            e.ToTable("StandingOrderRhythms");
+            e.HasData(Enum.GetValues<StandingOrderRhythm>().Select(code => new StandingOrderRhythmDictionary(code)));
+        });
+
+        b.Entity<StandingOrder>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            e.Property(x => x.TitlePattern).HasMaxLength(200).IsRequired();
+            e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+            e.Property(x => x.Rhythm).HasConversion<string>().HasMaxLength(DictionaryCodeLength);
+            e.HasOne<StandingOrderRhythmDictionary>().WithMany()
+                .HasForeignKey(x => x.Rhythm).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => x.BudgetBusinessId);
         });
 
         b.Entity<Budget>(e =>

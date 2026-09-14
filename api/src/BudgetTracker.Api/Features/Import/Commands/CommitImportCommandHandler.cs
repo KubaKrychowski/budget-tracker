@@ -3,6 +3,7 @@ using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Services;
+using BudgetTracker.Api.Features.StandingOrders.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,8 @@ public sealed class CommitImportCommandHandler(
     TimeProvider clock,
     ImportBudgetLookup budgets,
     ExistingTransactionKeys existingTransactionKeys,
-    ImportConfidenceThreshold threshold)
+    ImportConfidenceThreshold threshold,
+    StandingOrderMatcher standingOrders)
 {
     /// <summary>Zapisuje import i zwraca liczby na ekran „Podsumowanie".</summary>
     /// <remarks>
@@ -35,6 +37,8 @@ public sealed class CommitImportCommandHandler(
     /// <item><see cref="ImportBatch"/> zapisuje się pierwszym <c>SaveChanges</c> wewnątrz transakcji bazodanowej:
     /// transakcje odwołują się do niego kluczem, a bez nawigacji EF nie uzupełni go sam. Transakcja bazodanowa pilnuje,
     /// żeby po nieudanym zapisie wierszy nie został pusty ślad importu.</item>
+    /// <item>Nowe wydatki są przypinane do zleceń stałych budżetu W TEJ SAMEJ transakcji — import, po którym czynsz
+    /// „czeka”, choć właśnie zszedł, byłby gorszy niż brak zleceń. Przypięcie nie zmienia kategorii.</item>
     /// </list>
     /// </remarks>
     public async Task<ImportSummaryResponseDto> HandleAsync(CommitRequestDto request, CancellationToken ct)
@@ -88,6 +92,7 @@ public sealed class CommitImportCommandHandler(
         }
 
         await db.SaveChangesAsync(ct);
+        await standingOrders.PinAsync(budget.BusinessId, [.. saved.Select(t => t.BusinessId)], ct);
         await dbTransaction.CommitAsync(ct);
 
         return await BuildSummaryAsync(batch, saved, budget, ct);

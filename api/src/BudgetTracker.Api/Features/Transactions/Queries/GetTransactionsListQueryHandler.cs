@@ -50,7 +50,8 @@ public sealed class GetTransactionsListQueryHandler(
             .ToListAsync(ct);
 
         return new TransactionListResponseDto(
-            items, total, page, pageSize, summary, selectedBudgetIds, budgets, hasAny);
+            items, total, page, pageSize, summary, selectedBudgetIds, budgets, hasAny,
+            await filters.StandingOrderNameAsync(filter.StandingOrderId, ct));
     }
 
     /// <summary>

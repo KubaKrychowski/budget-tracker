@@ -13,7 +13,8 @@
     "importStatement": "Zaimportuj wyciąg",
     "notImplemented": "„{{label}}” — ta funkcja powstanie w kolejnym zadaniu.",
     "savings": "Cele oszczędzania",
-    "limits": "Limity wydatków"
+    "limits": "Limity wydatków",
+    "standingOrders": "Zlecenia stałe"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -178,6 +179,7 @@
       "amountTo": "Kwota do",
       "clear": "Wyczyść filtry",
       "budgets": "Budżety",
+      "standingOrder": "Zlecenie stałe:",
       "budgetsNote": "Wybrano kilka budżetów. Jeśli ten sam wyciąg trafił do więcej niż jednego, kafle policzą te same pieniądze wielokrotnie."
     },
     "columns": {
@@ -722,6 +724,90 @@
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać limitów"
+    }
+  },
+  "standingOrders": {
+    "title": "Zlecenia stałe",
+    "summary": "Podsumowanie",
+    "add": "Dodaj zlecenie",
+    "change": "Zmień",
+    "remove": "Usuń",
+    "goToLinked": "Przejdź do powiązanych ({{count}})",
+    "saved": "Zlecenie zapisane — przypięte transakcje: {{count}}.",
+    "removed": "Zlecenie usunięte. Transakcje zostały bez zmian.",
+    "unpinned": "Transakcja odpięta — nie wróci do tego zlecenia przy kolejnym dopasowaniu.",
+    "rhythm": {
+      "Monthly": "co miesiąc",
+      "Quarterly": "co kwartał",
+      "Yearly": "co rok"
+    },
+    "banner": {
+      "empty": "Nie masz jeszcze zleceń stałych.",
+      "emptyBody": "Dodaj czynsz, kredyt albo abonament z regułą z tytułu przelewu — przypnę do niego transakcje z historii i z kolejnych importów.",
+      "waiting": "W tym miesiącu czekają jeszcze: {{list}}.",
+      "missed": "{{month}} — nie zeszło: {{list}}.",
+      "different": "Inna kwota niż zwykle: {{list}}."
+    },
+    "metrics": {
+      "monthlyTotal": "Stałe zlecenia miesięcznie",
+      "paid": "Zeszło w tym miesiącu",
+      "waiting": "Czeka do zapłaty",
+      "different": "Inna kwota niż zwykle"
+    },
+    "table": {
+      "title": "Zlecenia stałe",
+      "hint": "Czynsz, kredyt, abonamenty — każde zlecenie ma regułę (tytuł + kwota), która przypina do niego transakcje z importu. Kategoria transakcji się nie zmienia.",
+      "empty": "Brak zleceń stałych w tym budżecie",
+      "name": "Nazwa",
+      "category": "Kategoria",
+      "amount": "Kwota",
+      "rhythm": "Rytm",
+      "state": "W tym miesiącu",
+      "rule": "tytuł zawiera „{{pattern}}” · {{from}}–{{to}} zł",
+      "total": "Razem miesięcznie",
+      "totalNote": "kwartalne ÷ 3, roczne ÷ 12"
+    },
+    "state": {
+      "paid": "Zeszło {{date}}",
+      "paidDifferent": "Zeszło {{date}} · {{amount}} zł (inna kwota)",
+      "waiting": "Czeka",
+      "waitingUsual": "Czeka · zwykle do {{day}}.",
+      "missed": "Nie zeszło",
+      "notDue": "Nie w tym miesiącu"
+    },
+    "recent": {
+      "title": "Ostatnio przypięte transakcje",
+      "hint": "Transakcje z importu, które pasują do reguły zlecenia",
+      "empty": "Żadna transakcja nie jest jeszcze przypięta.",
+      "different": "inna kwota",
+      "unpin": "Odepnij",
+      "note": "Przypięcie nie zmienia kategorii transakcji. Transakcję przypiętą przez pomyłkę odpinasz tutaj."
+    },
+    "editor": {
+      "addTitle": "Dodaj zlecenie stałe",
+      "editTitle": "Zmień zlecenie stałe",
+      "save": "Zapisz zlecenie",
+      "note": "Zlecenie przypina transakcje, które pasują do reguły — także te z historii. Kategoria transakcji się nie zmienia.",
+      "name": "Nazwa",
+      "namePlaceholder": "Czynsz",
+      "amount": "Kwota zwykle",
+      "rhythm": "Rytm",
+      "dueMonth": "Miesiąc",
+      "dueMonthPlaceholder": "W którym miesiącu schodzi",
+      "ruleTitle": "Reguła dopasowania",
+      "pattern": "Tytuł zawiera",
+      "patternPlaceholder": "czynsz",
+      "range": "Kwota od – do (zakres przeżyje podwyżkę)",
+      "preview": "Reguła pasuje do {{count}} transakcji z historii budżetu — ostatnia {{date}}, {{amount}} zł.",
+      "previewTaken": "{{count}} z nich należy już do innego zlecenia i przy nim zostanie.",
+      "previewNone": "Reguła nie pasuje jeszcze do żadnej transakcji — przypnie przyszłe z importu."
+    },
+    "removeConfirm": {
+      "header": "Usunąć zlecenie „{{name}}”?",
+      "description": "Przypiętych transakcji: {{count}}. Zostaną bez zmian, tylko przestaną należeć do zlecenia."
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać zleceń stałych"
     }
   }
 }

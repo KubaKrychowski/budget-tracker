@@ -454,6 +454,93 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.ToTable("SavingsReservations");
                 });
 
+            modelBuilder.Entity("BudgetTracker.Api.Domain.StandingOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AmountFrom")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("AmountTo")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("BudgetBusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int?>("DueMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ExpectedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Rhythm")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TitlePattern")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetBusinessId");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("Rhythm");
+
+                    b.ToTable("StandingOrders");
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.StandingOrderRhythmDictionary", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("StandingOrderRhythms", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "Monthly"
+                        },
+                        new
+                        {
+                            Code = "Quarterly"
+                        },
+                        new
+                        {
+                            Code = "Yearly"
+                        });
+                });
+
             modelBuilder.Entity("BudgetTracker.Api.Domain.Transaction", b =>
                 {
                     b.Property<int>("Id")
@@ -506,6 +593,12 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.Property<bool>("IsLargeExpense")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("StandingOrderBusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StandingOrderUnpinnedFrom")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -528,6 +621,8 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("ImportBatchId");
+
+                    b.HasIndex("StandingOrderBusinessId");
 
                     b.HasIndex("Status");
 
@@ -618,6 +713,15 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.HasOne("BudgetTracker.Api.Domain.Budget", null)
                         .WithMany()
                         .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.StandingOrder", b =>
+                {
+                    b.HasOne("BudgetTracker.Api.Domain.StandingOrderRhythmDictionary", null)
+                        .WithMany()
+                        .HasForeignKey("Rhythm")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

@@ -13,7 +13,8 @@
     "importStatement": "Import statement",
     "notImplemented": "“{{label}}” — this feature is coming in a later task.",
     "savings": "Savings goals",
-    "limits": "Spending limits"
+    "limits": "Spending limits",
+    "standingOrders": "Standing orders"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -178,6 +179,7 @@
       "amountTo": "Amount to",
       "clear": "Clear filters",
       "budgets": "Budgets",
+      "standingOrder": "Standing order:",
       "budgetsNote": "Several budgets selected. If the same statement was imported into more than one, the tiles count the same money more than once."
     },
     "columns": {
@@ -659,6 +661,90 @@
     },
     "errors": {
       "loadFailed": "Could not load limits"
+    }
+  },
+  "standingOrders": {
+    "title": "Standing orders",
+    "summary": "Summary",
+    "add": "Add standing order",
+    "change": "Change",
+    "remove": "Remove",
+    "goToLinked": "Go to linked ({{count}})",
+    "saved": "Standing order saved — linked transactions: {{count}}.",
+    "removed": "Standing order removed. Transactions stay as they are.",
+    "unpinned": "Transaction unlinked — it will not return to this order on the next match.",
+    "rhythm": {
+      "Monthly": "monthly",
+      "Quarterly": "quarterly",
+      "Yearly": "yearly"
+    },
+    "banner": {
+      "empty": "You have no standing orders yet.",
+      "emptyBody": "Add rent, a loan or a subscription with a rule based on the transfer title — matching transactions from history and future imports will be linked to it.",
+      "waiting": "Still waiting this month: {{list}}.",
+      "missed": "{{month}} — not paid: {{list}}.",
+      "different": "Different amount than usual: {{list}}."
+    },
+    "metrics": {
+      "monthlyTotal": "Standing orders per month",
+      "paid": "Paid this month",
+      "waiting": "Waiting to be paid",
+      "different": "Different amount than usual"
+    },
+    "table": {
+      "title": "Standing orders",
+      "hint": "Rent, loans, subscriptions — each order has a rule (title + amount) that links imported transactions to it. The transaction category does not change.",
+      "empty": "No standing orders in this budget",
+      "name": "Name",
+      "category": "Category",
+      "amount": "Amount",
+      "rhythm": "Rhythm",
+      "state": "This month",
+      "rule": "title contains “{{pattern}}” · {{from}}–{{to}}",
+      "total": "Total per month",
+      "totalNote": "quarterly ÷ 3, yearly ÷ 12"
+    },
+    "state": {
+      "paid": "Paid {{date}}",
+      "paidDifferent": "Paid {{date}} · {{amount}} (different amount)",
+      "waiting": "Waiting",
+      "waitingUsual": "Waiting · usually by the {{day}}.",
+      "missed": "Not paid",
+      "notDue": "Not this month"
+    },
+    "recent": {
+      "title": "Recently linked transactions",
+      "hint": "Imported transactions that match an order's rule",
+      "empty": "No transaction is linked yet.",
+      "different": "different amount",
+      "unpin": "Unlink",
+      "note": "Linking does not change the transaction category. Unlink a transaction linked by mistake here."
+    },
+    "editor": {
+      "addTitle": "Add standing order",
+      "editTitle": "Change standing order",
+      "save": "Save order",
+      "note": "The order links transactions that match the rule — including past ones. The transaction category does not change.",
+      "name": "Name",
+      "namePlaceholder": "Rent",
+      "amount": "Usual amount",
+      "rhythm": "Rhythm",
+      "dueMonth": "Month",
+      "dueMonthPlaceholder": "Month it is paid in",
+      "ruleTitle": "Matching rule",
+      "pattern": "Title contains",
+      "patternPlaceholder": "rent",
+      "range": "Amount from – to (the range survives a price rise)",
+      "preview": "The rule matches {{count}} transactions in this budget's history — the last one {{date}}, {{amount}}.",
+      "previewTaken": "{{count}} of them already belong to another order and stay there.",
+      "previewNone": "The rule matches no transaction yet — it will link future imports."
+    },
+    "removeConfirm": {
+      "header": "Remove the “{{name}}” standing order?",
+      "description": "Linked transactions: {{count}}. They stay as they are, they just stop belonging to the order."
+    },
+    "errors": {
+      "loadFailed": "Could not load standing orders"
     }
   }
 }

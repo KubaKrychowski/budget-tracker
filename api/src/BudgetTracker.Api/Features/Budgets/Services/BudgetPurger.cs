@@ -5,7 +5,7 @@ namespace BudgetTracker.Api.Features.Budgets.Services;
 
 /// <summary>
 /// Fizyczne usuwanie skasowanych budżetów razem z dziećmi (transakcje, importy, limity, cele
-/// oszczędzania, rezerwacje) — mechanika wspólna dla sprzątania po oknie retencji i wymuszonego.
+/// oszczędzania, rezerwacje, zlecenia stałe) — mechanika wspólna dla sprzątania po oknie retencji i wymuszonego.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -70,6 +70,10 @@ public sealed class BudgetPurger(AppDbContext db)
 
         await db.SavingsReservations.IgnoreQueryFilters()
             .Where(r => businessIds.Contains(r.BudgetBusinessId))
+            .ExecuteDeleteAsync(ct);
+
+        await db.StandingOrders.IgnoreQueryFilters()
+            .Where(o => businessIds.Contains(o.BudgetBusinessId))
             .ExecuteDeleteAsync(ct);
 
         await db.Budgets.IgnoreQueryFilters()

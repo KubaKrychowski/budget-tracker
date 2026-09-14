@@ -23,6 +23,7 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EnumTranslatePipe } from '../../core/pipes/enum-translate.pipe';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
@@ -47,6 +48,9 @@ const NoCategory = '__brak__';
  * kończyła się odpowiedzią 400.
  */
 const OriginTraining = 'training';
+
+/** Wartość `?origin=` przy wejściu z „Przejdź do powiązanych” na ekranie zleceń stałych. */
+const OriginStandingOrders = 'standing-orders';
 
 /**
  * Jeden element ścieżki breadcrumbów. `label` to KLUCZ tłumaczenia, nie gotowy tekst:
@@ -98,6 +102,7 @@ interface FilterPayload {
   amountFrom: number | null;
   amountTo: number | null;
   search: string | null;
+  standingOrderId: string | null;
 }
 
 interface SelectionPayload {
@@ -111,7 +116,7 @@ interface SelectionPayload {
     CommonModule, FormsModule, RouterLink,
     NzAlertModule, NzBadgeModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule,
     NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule,
-    NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzSwitchModule, NzTableModule,
+    NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzSwitchModule, NzTableModule, NzTagModule,
     TranslatePipe, EnumTranslatePipe,
   ],
   templateUrl: './transactions.html',
@@ -172,6 +177,9 @@ export class Transactions {
   protected readonly amountFrom = computed(() => toNumberOrNull(this.queryParams().get('amountFrom')));
   protected readonly amountTo = computed(() => toNumberOrNull(this.queryParams().get('amountTo')));
   protected readonly search = computed(() => this.queryParams().get('search') ?? '');
+
+  /** Zlecenie stałe z adresu — tylko transakcje do niego przypięte („Przejdź do powiązanych”). */
+  protected readonly standingOrderId = computed(() => this.queryParams().get('standingOrderId'));
   protected readonly sort = computed(() => this.queryParams().get('sort') ?? 'date');
   protected readonly desc = computed(() => this.queryParams().get('desc') !== 'false');
   protected readonly page = computed(() => Number(this.queryParams().get('page') ?? '1'));
@@ -217,6 +225,13 @@ export class Transactions {
       label: 'transactions.title',
       icon: 'icons/lista-transakcji-azure.svg',
     };
+
+    if (this.queryParams().get('origin') === OriginStandingOrders) {
+      return [
+        { label: 'standingOrders.title', link: '/standing-orders' },
+        list,
+      ];
+    }
 
     if (this.queryParams().get('origin') === OriginTraining) {
       return [
@@ -298,6 +313,7 @@ export class Transactions {
       ...(this.amountFrom() !== null ? { amountFrom: this.amountFrom()! } : {}),
       ...(this.amountTo() !== null ? { amountTo: this.amountTo()! } : {}),
       ...(this.search() ? { search: this.search() } : {}),
+      ...(this.standingOrderId() ? { standingOrderId: this.standingOrderId()! } : {}),
       page: this.page(),
       pageSize: this.pageSize(),
       sort: this.sort(),
@@ -476,6 +492,7 @@ export class Transactions {
       amountFrom: this.amountFrom(),
       amountTo: this.amountTo(),
       search: this.search() || null,
+      standingOrderId: this.standingOrderId(),
     };
   }
 
@@ -715,9 +732,17 @@ export class Transactions {
   protected clearFilters(): void {
     void this.changeQuery({
       categoryId: null, uncategorized: null, direction: null, status: null,
-      amountFrom: null, amountTo: null, search: null, page: 1,
+      amountFrom: null, amountTo: null, search: null, standingOrderId: null, page: 1,
     });
   }
+
+  /** ✕ na etykiecie filtra zlecenia. Okruszek pochodzenia zostaje — powrót dalej prowadzi do zleceń. */
+  protected clearStandingOrder(): void {
+    void this.changeQuery({ standingOrderId: null, page: 1 });
+  }
+
+  /** Nazwa zlecenia do etykiety filtra — z odpowiedzi listy, bo adres niesie tylko identyfikator. */
+  protected readonly standingOrderName = computed(() => this.listValue()?.standingOrderName ?? null);
 
   /**
    * Jedno zdarzenie z `nz-table` niesie KOMPLET stanu (strona, sortowanie, filtry kolumn
