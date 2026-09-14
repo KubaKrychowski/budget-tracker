@@ -261,7 +261,7 @@ describe('Reservations', () => {
 
   // ── Wiersze ──────────────────────────────────────────────────────────────────────────
 
-  it('zostawia rozliczoną rezerwację w tabeli, bo ta dalej liczy się do wolnych środków', async () => {
+  it('zostawia rozliczoną rezerwację w tabeli jako wygaszony ślad wydatku',async () => {
     await start();
     await settleList(response({
       reservations: [row({ status: 'Settled', settledOn: '2026-08-14' })],

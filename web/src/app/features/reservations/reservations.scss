@@ -52,8 +52,8 @@
 
   /*
    * Rozliczona rezerwacja jest WYGASZONA, nie ukryta.
-   * ⚠️ Zostaje w tabeli, bo dalej liczy się do wolnych środków — koperta jest roczna.
-   * Ukrycie jej sprawiłoby, że suma w nagłówku nie zgadzałaby się z widocznymi wierszami.
+   * Zostaje w tabeli jako ślad wydatku — da się ją cofnąć, gdy rozliczenie było pomyłką.
+   * ⚠️ Nie pomniejsza już wolnych środków (#23): wydatek zszedł z konta razem z nią.
    */
   &__row--settled {
     opacity: 0.55;
