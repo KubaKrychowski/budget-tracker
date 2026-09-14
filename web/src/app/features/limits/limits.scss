@@ -1,0 +1,201 @@
+.lim {
+  padding: 16px 24px 48px;
+
+  /* Ten sam układ co ikona okruszka na ekranie celów — ikona siedzi na linii tekstu. */
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
+  /* Karta „Konfiguracja" — jasna ramka z zaokrągleniem, bez cienia (makieta 203:3). */
+  &__config {
+    margin: 16px 0;
+    padding: 12px 16px 16px;
+    border: 1px solid #d9e8dd;
+    border-radius: 8px;
+  }
+
+  &__config-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__banner {
+    margin: 16px 0;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 48px 0;
+    color: #595959;
+  }
+
+  &__caption {
+    margin: 24px 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  &__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+
+    > * {
+      flex: 1 1 180px;
+    }
+  }
+
+  /* Dwie kolumny z makiety: szersza z tabelą, węższa z wydatkami bez limitu. */
+  &__cols {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  @media (max-width: 1100px) {
+    &__cols {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Karty jak na makiecie: cienka ramka i cień, bez zaokrąglenia. */
+  &__card {
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid #c0d7c6;
+    box-shadow: 0 3px 8px rgba(34, 34, 34, 0.24);
+  }
+
+  &__card-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  &__hint {
+    margin: 4px 0 12px;
+    font-size: 13px;
+    color: #8c8c8c;
+  }
+
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+  }
+
+  &__month {
+    min-width: 140px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
+
+  &__right {
+    text-align: right;
+  }
+
+  &__actions {
+    white-space: nowrap;
+  }
+
+  &__next {
+    font-size: 13px;
+    color: #8c8c8c;
+  }
+
+  &__over {
+    color: #d93f38;
+    font-weight: 600;
+  }
+
+  &__usage {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+  }
+
+  /* Tor paska z kreską progu — kreska wystaje ponad tor, żeby była widoczna także na wypełnieniu. */
+  &__track {
+    position: relative;
+    flex: 0 0 120px;
+    height: 8px;
+    border-radius: 4px;
+    background: #f0f0f0;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: 4px;
+    background: #43a05b;
+
+    &--warning {
+      background: #faad14;
+    }
+
+    &--over {
+      background: #d93f38;
+    }
+  }
+
+  &__marker {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 14px;
+    margin-left: -1px;
+    background: #262b27;
+  }
+
+  &__total td {
+    font-weight: 600;
+    background: #fafafa;
+  }
+
+  &__list {
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__list-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  &__list-name {
+    flex: 1 1 auto;
+  }
+
+  &__list-amount {
+    font-weight: 600;
+  }
+
+  &__modal-alert {
+    margin-bottom: 16px;
+  }
+
+  &__label {
+    display: block;
+    margin: 12px 0 4px;
+  }
+
+  &__field {
+    width: 100%;
+  }
+}

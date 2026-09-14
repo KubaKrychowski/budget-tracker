@@ -368,6 +368,23 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - `BudgetItem` (limity per kategoria) to nadal Etap 1 i **inna wielkość niż bilans** —
 >   nie mieszaj ich na jednym wykresie.
 
+> **REWIZJA — 2026-09-13: limity wydatków (Etap 1).** Decyzje użytkownika i to, co z nich wynika w kodzie
+> (`Features/Limits`, ekran `/limits`, makieta Figma — strona „Limity wydatków"):
+> - **Limit na KATEGORIĘ, a miesięczny limit budżetu to ich SUMA** — nie osobne pole. **Bez podpowiedzi kwot**:
+>   prognozy to osobne zadanie (dlatego kreator budżetu już nie obiecuje „podpowiemy limity").
+> - **Limit ma historię** (`BudgetItem.ValidFrom` / `ValidTo`), tak jak cel oszczędnościowy. Zmiana kończy poprzedni
+>   limit miesiąc wcześniej i zakłada nowy; każdy miesiąc liczy się z limitem, który obowiązywał W NIM.
+>   ⚠️ Każde miejsce sumujące `BudgetItems` musi filtrować po miesiącu — suma wszystkich wierszy liczy każdą zmianę
+>   kwoty jako osobny limit (tak było w `BudgetListItemReader`, poprawione).
+> - **Historia jest zamknięta**: zmiana istniejącego limitu wstecz to 409. Wyjątek: PIERWSZY limit kategorii wolno
+>   zadeklarować wstecz (inaczej cała dotychczasowa historia zostaje „bez limitu").
+> - **Próg ostrzeżenia ustawiany przy każdym limicie** (`WarningThreshold`, domyślnie 80%); stan paska liczony na kwotach,
+>   nie na zaokrąglonym procencie.
+> - **Do limitu liczą się wszystkie wydatki z kategorią, także oznaczone jako duże.** Wydatki bez kategorii nie liczą się
+>   do żadnego limitu i ekran mówi o nich osobnym zdaniem. Kategorie przychodowe (wszystkie reguły `Income`) i
+>   „Oszczędności" nie dostają limitu i nie wchodzą do „wydane poza limitami".
+> - Przełącznik budżetu to wspólny `core/budget-switcher` — wybór idzie do ADRESU, bo adres wygrywa z `ActiveBudget`.
+
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
 > i pomylenie ich daje błąd, którego nie widać na ekranie.

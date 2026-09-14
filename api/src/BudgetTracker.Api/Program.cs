@@ -4,6 +4,7 @@ using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Categorization;
 using BudgetTracker.Api.Features.Dashboard;
 using BudgetTracker.Api.Features.Import;
+using BudgetTracker.Api.Features.Limits;
 using BudgetTracker.Api.Features.Savings;
 using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
@@ -34,6 +35,7 @@ builder.Services.AddImport();
 builder.Services.AddBudgets(builder.Configuration);
 builder.Services.AddTransactions();
 builder.Services.AddSavings();
+builder.Services.AddLimits();
 
 const string devCors = "dev-frontend";
 builder.Services.AddCors(options =>
@@ -91,6 +93,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken ct) =>
 app.MapDashboard();
 app.MapCategorization();
 app.MapSavings();
+app.MapLimits();
 app.MapImport();
 app.MapBudgets();
 app.MapTransactions();

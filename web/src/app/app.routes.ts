@@ -33,6 +33,12 @@ export const routes: Routes = [
     title: 'Wszystkie rezerwacje — Budżet tracker',
   },
   {
+    path: 'limits',
+    loadComponent: () =>
+      import('./features/limits/limits').then((m) => m.Limits),
+    title: 'Limity wydatków — Budżet tracker',
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/settings/settings').then((m) => m.Settings),

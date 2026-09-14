@@ -1,0 +1,359 @@
+<section class="lim">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <!-- Ikona przy BIEŻĄCEJ sekcji, jak na ekranie celów (makieta 203:3). -->
+    <nz-breadcrumb-item>
+      <img class="lim__crumb-icon" src="icons/limity-wydatkow-azure.svg" alt="" width="20" height="20" />
+      {{ 'limits.title' | translate }}
+    </nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  @if (failure(); as problem) {
+    <nz-alert
+      nzType="error"
+      nzShowIcon
+      [nzMessage]="'limits.errors.loadFailed' | translate"
+      [nzDescription]="failureBody"
+    >
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">
+          {{ 'transactions.errors.retry' | translate }}
+        </button>
+      </ng-template>
+    </nz-alert>
+  } @else {
+    @if (lastData(); as last) {
+      <!-- Karta „Konfiguracja" z makiety (203:3) — ten sam nagłówek co na dashboardzie. -->
+      <div class="lim__config">
+        <h3 class="lim__config-title">{{ 'dashboard.configuration' | translate }}</h3>
+        <app-budget-switcher
+          [budgets]="last.budgets"
+          [selectedId]="last.selectedBudgetIds[0] ?? null"
+          (budgetChange)="switchBudget($event)" />
+      </div>
+    }
+
+    <nz-spin [nzSpinning]="loading() || busy()">
+      @if (data(); as d) {
+        <!-- ── Baner ────────────────────────────────────────────────────────────────────
+             Fakt, nie ocena. Zdanie o wydatkach bez kategorii jest ważniejsze, niż wygląda:
+             one nie liczą się do ŻADNEGO limitu, więc bez niego limit wygląda bezpieczniej, niż jest. -->
+        <ng-template #uncategorizedBody>
+          @if (d.uncategorizedCount > 0) {
+            {{ 'limits.banner.uncategorized' | translate: {
+                 count: d.uncategorizedCount,
+                 amount: money(d.uncategorizedAmount)
+               } }}
+          }
+        </ng-template>
+
+        @if (d.limits.length === 0 && d.readOnly) {
+          <!-- Zamknięty miesiąc bez limitów to fakt o TAMTYM miesiącu, a nie zachęta do ustawienia limitu —
+               budżet może mieć limity od później. -->
+          <nz-alert
+            class="lim__banner"
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'limits.banner.noLimitsClosed' | translate: { month: monthLabel(d.month) }"
+          />
+        } @else if (d.limits.length === 0) {
+          <nz-alert
+            class="lim__banner"
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'limits.banner.noLimits' | translate"
+            [nzDescription]="'limits.banner.noLimitsBody' | translate"
+          />
+        } @else if (overRows().length === 1) {
+          <nz-alert
+            class="lim__banner"
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="'limits.banner.overOne' | translate: {
+              name: overRows()[0].categoryName,
+              spent: money(overRows()[0].spent),
+              limit: money(overRows()[0].limit)
+            }"
+            [nzDescription]="uncategorizedBody"
+          />
+        } @else if (overRows().length > 1) {
+          <nz-alert
+            class="lim__banner"
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="'limits.banner.overMany' | translate: { count: overRows().length }"
+            [nzDescription]="uncategorizedBody"
+          />
+        } @else if (d.readOnly) {
+          <nz-alert
+            class="lim__banner"
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="'limits.banner.closedFine' | translate: { month: monthLabel(d.month) }"
+            [nzDescription]="'limits.banner.closedBody' | translate"
+          />
+        } @else if (d.uncategorizedCount > 0) {
+          <!-- Bez przekroczeń baneru „wszystko w limicie" nie ma (decyzja użytkownika) — zostaje tylko
+               ostrzeżenie o wydatkach bez kategorii, bo ono zmienia to, jak czytać resztę ekranu. -->
+          <nz-alert
+            class="lim__banner"
+            nzType="info"
+            nzShowIcon
+            [nzMessage]="uncategorizedBody"
+          />
+        }
+
+        <!-- ── Podsumowanie ───────────────────────────────────────────────────────────── -->
+        <h2 class="lim__caption">{{ 'limits.summary' | translate }}</h2>
+        <div class="lim__metrics">
+          <nz-statistic
+            [nzTitle]="'limits.metrics.spentInLimited' | translate"
+            [nzValue]="d.limits.length > 0 ? money(d.spentInLimited) + ' z ' + money(d.limitTotal) : '—'"
+            [nzSuffix]="d.limits.length > 0 ? ('dashboard.currency' | translate) : ''" />
+          <nz-statistic
+            [nzTitle]="'limits.metrics.limitTotal' | translate"
+            [nzValue]="money(d.limitTotal)"
+            [nzSuffix]="'dashboard.currency' | translate" />
+          <nz-statistic
+            [nzTitle]="'limits.metrics.overLimit' | translate"
+            [nzValue]="d.limits.length > 0 ? d.overLimitCount + ' z ' + d.limits.length : '—'" />
+          <nz-statistic
+            [nzTitle]="'limits.metrics.spentOutside' | translate"
+            [nzValue]="money(d.spentOutside)"
+            [nzSuffix]="'dashboard.currency' | translate" />
+        </div>
+
+        <div class="lim__cols">
+          <!-- ── Tabela limitów ─────────────────────────────────────────────────────────── -->
+          <div class="lim__card">
+            <h3 class="lim__card-title">{{ 'limits.table.title' | translate }}</h3>
+            <p class="lim__hint">{{ 'limits.table.hint' | translate }}</p>
+
+            @if (d.limits.length === 0 && !d.readOnly) {
+              <!-- Pusty stan bieżącego miesiąca (makieta 203:13079): bez paska miesięcy, jedno wezwanie do działania. -->
+              <div class="lim__empty">
+                <p>{{ 'limits.table.emptyBudget' | translate }}</p>
+                <button nz-button nzType="primary" (click)="openEditor(null)">
+                  <nz-icon nzType="plus-circle" />
+                  {{ 'limits.addFirst' | translate }}
+                </button>
+              </div>
+            } @else {
+            <div class="lim__toolbar">
+              <button nz-button (click)="shiftMonth(-1)" [attr.aria-label]="'limits.prevMonth' | translate">‹</button>
+              <span class="lim__month">{{ monthLabel(d.month) }}</span>
+              <button nz-button (click)="shiftMonth(1)" [attr.aria-label]="'limits.nextMonth' | translate">›</button>
+              <!-- Link, nie przycisk z ramką — makieta 203:3 / 206:182. -->
+              <button nz-button nzType="link" [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
+                {{ 'limits.currentMonth' | translate }}
+              </button>
+              <span class="lim__spacer"></span>
+              @if (!d.readOnly) {
+                <button nz-button nzType="primary" (click)="openEditor(null)">
+                  <nz-icon nzType="plus-circle" />
+                  {{ 'limits.add' | translate }}
+                </button>
+              }
+            </div>
+            }
+
+            @if (d.limits.length === 0 && d.readOnly) {
+              <nz-empty [nzNotFoundContent]="'limits.table.empty' | translate" />
+            } @else if (d.limits.length > 0) {
+              <nz-table #limitsTable [nzData]="d.limits" [nzPageSize]="20" nzSize="middle">
+                <thead>
+                  <tr>
+                    <th>{{ 'limits.table.category' | translate }}</th>
+                    <th class="lim__right">{{ 'limits.table.limit' | translate }}</th>
+                    <th class="lim__right">{{ 'limits.table.spent' | translate }}</th>
+                    <th class="lim__right">{{ 'limits.table.remaining' | translate }}</th>
+                    <th>{{ 'limits.table.usage' | translate }}</th>
+                    @if (!d.readOnly) {
+                      <th>{{ 'transactions.columns.actions' | translate }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of limitsTable.data; track row.id) {
+                    <tr>
+                      <td>
+                        {{ row.categoryName }}
+                        <!-- Kwota z kolejnego miesiąca przy minionym — bez niej inna kwota niż dziś
+                             wyglądałaby na błąd, a nie na historię (makieta 206:182). -->
+                        @if (row.nextLimit !== null && row.nextValidFrom) {
+                          <span class="lim__next">
+                            · {{ 'limits.table.nextLimit' | translate: {
+                                 month: monthRoman(row.nextValidFrom),
+                                 amount: money(row.nextLimit)
+                               } }}
+                          </span>
+                        }
+                      </td>
+                      <td class="lim__right amount">{{ money(row.limit) }}</td>
+                      <td class="lim__right amount">{{ money(row.spent) }}</td>
+                      <td class="lim__right amount" [class.lim__over]="row.remaining < 0">{{ money(row.remaining) }}</td>
+                      <td>
+                        <div class="lim__usage">
+                          <!-- Kreska = próg ostrzeżenia TEGO limitu; kolor paska liczy serwer. -->
+                          <div class="lim__track" [attr.aria-label]="'limits.table.thresholdLabel' | translate: { threshold: row.warningThreshold }">
+                            <div
+                              class="lim__fill"
+                              [class.lim__fill--warning]="row.state === 'Warning'"
+                              [class.lim__fill--over]="row.state === 'Over'"
+                              [style.width.%]="fillWidth(row)"
+                            ></div>
+                            <div class="lim__marker" [style.left.%]="row.warningThreshold"></div>
+                          </div>
+                          <!-- Sam procent — kwotę ponad limit mówi już kolumna „Pozostało" (na czerwono). -->
+                          <span [class.lim__over]="row.state === 'Over'">{{ row.percent }}%</span>
+                        </div>
+                      </td>
+                      @if (!d.readOnly) {
+                        <td class="lim__actions">
+                          <button nz-button nzType="link" nzSize="small" (click)="openEditor(row)">
+                            {{ 'limits.change' | translate }}
+                          </button>
+                          <button nz-button nzType="link" nzSize="small" nzDanger (click)="remove(row)">
+                            {{ 'limits.remove' | translate }}
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                  <tr class="lim__total">
+                    <td>{{ 'limits.table.total' | translate }}</td>
+                    <td class="lim__right amount">{{ money(d.limitTotal) }}</td>
+                    <td class="lim__right amount">{{ money(d.spentInLimited) }}</td>
+                    <td class="lim__right amount">{{ money(d.limitTotal - d.spentInLimited) }}</td>
+                    <td>{{ d.limitTotal > 0 ? ((d.spentInLimited / d.limitTotal) * 100 | number: '1.0-0') + '%' : '—' }}</td>
+                    @if (!d.readOnly) {
+                      <td></td>
+                    }
+                  </tr>
+                </tbody>
+              </nz-table>
+            }
+          </div>
+
+          <!-- ── Wydatki bez limitu ─────────────────────────────────────────────────────────
+               Pilnuje, żeby „limit budżetu" nie udawał wszystkich wydatków. -->
+          <div class="lim__card">
+            <h3 class="lim__card-title">{{ 'limits.unlimited.title' | translate }}</h3>
+            <p class="lim__hint">{{ 'limits.unlimited.hint' | translate }}</p>
+
+            @if (d.unlimited.length === 0) {
+              <!-- Pusty stan mówi DLACZEGO jest pusto: albo w miesiącu nie ma wydatków z kategorią,
+                   albo każda taka kategoria ma już limit. Samo „0,00 zł poza limitem" nic nie tłumaczyło. -->
+              <nz-empty
+                nzNotFoundImage="simple"
+                [nzNotFoundContent]="(d.spentInLimited > 0 ? 'limits.unlimited.empty' : 'limits.unlimited.noSpending') | translate" />
+            } @else {
+              <ul class="lim__list">
+                @for (u of d.unlimited; track u.categoryId) {
+                  <li class="lim__list-row">
+                    <span class="lim__list-name">{{ u.categoryName }}</span>
+                    <span class="amount lim__list-amount">{{ money(u.spent) }} {{ 'dashboard.currency' | translate }}</span>
+                    @if (!d.readOnly) {
+                      <button nz-button nzType="link" nzSize="small" (click)="openEditor(null, u.categoryId)">
+                        {{ 'limits.unlimited.set' | translate }}
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (d.unlimited.length > 0) {
+              <p class="lim__hint">
+                {{ (d.limits.length === 0 ? 'limits.unlimited.contextNote' : 'limits.unlimited.note') | translate: {
+                     amount: money(d.spentOutside)
+                   } }}
+              </p>
+            }
+          </div>
+        </div>
+      }
+    </nz-spin>
+  }
+
+  <!-- ── Modal „Ustaw limit" (makieta 203:12996) ────────────────────────────────────────── -->
+  <nz-modal
+    [nzVisible]="editorOpen()"
+    [nzTitle]="(editing() ? 'limits.editor.editTitle' : 'limits.editor.addTitle') | translate"
+    (nzOnCancel)="editorOpen.set(false)"
+    (nzOnOk)="save()"
+    [nzOkText]="'limits.editor.save' | translate"
+    [nzCancelText]="'import.preview.editCancel' | translate"
+    [nzOkDisabled]="!canSave()"
+  >
+    <ng-container *nzModalContent>
+      <p class="lim__hint">{{ 'limits.editor.ceilingNote' | translate }}</p>
+      <nz-alert
+        class="lim__modal-alert"
+        nzType="info"
+        nzShowIcon
+        [nzMessage]="'limits.editor.historyNote' | translate: { total: money(totalAfterSave()) }"
+      />
+
+      <label class="lim__label" for="limit-category">{{ 'limits.editor.category' | translate }}</label>
+      @if (editing(); as row) {
+        <!-- Kategoria zablokowana przy zmianie — inna kategoria to inny limit, nie zmiana tego. -->
+        <nz-select nzId="limit-category" class="lim__field" [ngModel]="row.categoryId" nzDisabled>
+          <nz-option [nzValue]="row.categoryId" [nzLabel]="row.categoryName" />
+        </nz-select>
+      } @else {
+        <nz-select
+          nzId="limit-category"
+          class="lim__field"
+          nzShowSearch
+          [nzPlaceHolder]="'limits.editor.categoryPlaceholder' | translate"
+          [ngModel]="draftCategoryId()"
+          (ngModelChange)="draftCategoryId.set($event)"
+        >
+          @for (c of availableCategories(); track c.id) {
+            <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+          }
+        </nz-select>
+      }
+
+      <label class="lim__label" for="limit-amount">{{ 'limits.editor.amount' | translate }}</label>
+      <nz-input-number
+        [nzParser]="parseAmount"
+        id="limit-amount"
+        class="lim__field"
+        [ngModel]="draftAmount()"
+        (ngModelChange)="draftAmount.set($event)"
+        [nzMin]="1"
+        [nzStep]="100"
+      />
+
+      <label class="lim__label" for="limit-threshold">{{ 'limits.editor.threshold' | translate }}</label>
+      <nz-input-number
+        [nzParser]="parseAmount"
+        id="limit-threshold"
+        class="lim__field"
+        [ngModel]="draftThreshold()"
+        (ngModelChange)="draftThreshold.set($event)"
+        [nzMin]="1"
+        [nzMax]="100"
+        [nzStep]="5"
+      />
+
+      <label class="lim__label" for="limit-from">{{ 'limits.editor.validFrom' | translate }}</label>
+      <!-- Miesiąc, nie dzień — limit obowiązuje od początku miesiąca. -->
+      <nz-date-picker
+        id="limit-from"
+        class="lim__field"
+        nzMode="month"
+        [nzDisabledDate]="disabledMonth"
+        [nzAllowClear]="false"
+        [ngModel]="draftValidFrom()"
+        (ngModelChange)="draftValidFrom.set($event)"
+      />
+    </ng-container>
+  </nz-modal>
+</section>

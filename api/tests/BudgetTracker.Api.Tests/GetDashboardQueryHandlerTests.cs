@@ -62,7 +62,7 @@ public sealed class GetDashboardQueryHandlerTests : IAsyncLifetime
         // budżetu, więc transakcja bez `BudgetId` nie należy do żadnego i nigdzie nie wejdzie.
         var budget = new Budget("Testowy", From, OpeningBalance, default);
         _db.Budgets.Add(budget);
-        _db.BudgetItems.Add(new BudgetItem(budget.BusinessId, jedzenie.Id, 1000m));
+        _db.BudgetItems.Add(new BudgetItem(budget.BusinessId, jedzenie.Id, 1000m, From, LimitWarning.DefaultThreshold));
         await _db.SaveChangesAsync();
         _budgetId = budget.BusinessId;
 
