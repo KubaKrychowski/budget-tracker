@@ -69,7 +69,8 @@
     }
   },
   "banks": {
-    "pko": "PKO Bank Polski S.A."
+    "pko": "PKO Bank Polski S.A.",
+    "mbank": "mBank S.A."
   },
   "import": {
     "title": "Import transaction data",
