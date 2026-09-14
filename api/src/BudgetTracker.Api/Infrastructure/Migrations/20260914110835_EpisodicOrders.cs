@@ -9,14 +9,24 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
     /// <inheritdoc />
     public partial class EpisodicOrders : Migration
     {
-        /// <summary>Tabela zleceń epizodycznych i przeniesienie na nie flagi „duży wydatek”.</summary>
+        /// <summary>
+        /// Tabela zleceń epizodycznych, przeniesienie na nie flagi „duży wydatek” i opcjonalny termin rezerwacji.
+        /// </summary>
         /// <remarks>
         /// Flaga → zrealizowane zlecenie (nazwa = tytuł transakcji), PRZED usunięciem kolumny, bo po nim nie ma już czego
         /// przenosić. Stempel usunięcia idzie z transakcji, żeby przywrócenie budżetu oddało też zlecenie. Poza zakresem:
         /// flagi na wpływach i na transakcjach bez budżetu — zlecenie wymaga budżetu i liczy się jako wydatek.
+        /// Termin rezerwacji staje się opcjonalny („przy okazji”) — istniejące rezerwacje zachowują swoje terminy.
         /// </remarks>
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterColumn<DateOnly>(
+                name: "DueMonth",
+                table: "SavingsReservations",
+                type: "date",
+                nullable: true,
+                oldClrType: typeof(DateOnly),
+                oldType: "date");
 
             migrationBuilder.CreateTable(
                 name: "EpisodicOrders",
@@ -95,10 +105,21 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
             migrationBuilder.Sql("""
                 UPDATE "Transactions" t SET "IsLargeExpense" = true
                 WHERE EXISTS (SELECT 1 FROM "EpisodicOrders" o WHERE o."TransactionBusinessId" = t."BusinessId");
+                UPDATE "SavingsReservations" SET "DueMonth" = date_trunc('month', now())::date WHERE "DueMonth" IS NULL;
                 """);
 
             migrationBuilder.DropTable(
                 name: "EpisodicOrders");
+
+            migrationBuilder.AlterColumn<DateOnly>(
+                name: "DueMonth",
+                table: "SavingsReservations",
+                type: "date",
+                nullable: false,
+                defaultValue: new DateOnly(1, 1, 1),
+                oldClrType: typeof(DateOnly),
+                oldType: "date",
+                oldNullable: true);
         }
     }
 }

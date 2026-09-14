@@ -101,7 +101,7 @@
               <tr [class.res__row--settled]="r.status === 'Settled'">
                 <td>{{ r.name }}</td>
                 <td class="res__right amount">{{ money(r.amount) }}</td>
-                <td>{{ monthLabel(r.dueMonth) }}</td>
+                <td>{{ r.dueMonth ? monthLabel(r.dueMonth) : ('reservations.noDue' | translate) }}</td>
                 <td class="res__right amount">
                   {{ money(r.collected) }}
                   <span class="res__percent">{{ percent(r) }}%</span>
@@ -189,9 +189,14 @@
         id="res-due"
         class="res__field"
         nzMode="month"
+        [nzDisabled]="draftNoDue()"
         [ngModel]="draftDue()"
         (ngModelChange)="draftDue.set($event)"
       />
+      <div class="res__no-due">
+        <span nz-checkbox nzId="res-no-due" [ngModel]="draftNoDue()" (ngModelChange)="draftNoDue.set($event)"></span>
+        <label for="res-no-due">{{ 'reservations.editor.noDue' | translate }}</label>
+      </div>
 
       <!-- ⚠️ To zdanie MUSI paść PRZED zapisem. Dołożenie rezerwacji z bliższym terminem
            odbiera uzbierane tym dalszym — arytmetycznie poprawne, na ekranie wygląda jak

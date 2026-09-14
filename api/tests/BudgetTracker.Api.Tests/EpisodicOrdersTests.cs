@@ -126,6 +126,25 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Zakup_bez_terminu_jest_na_koncu_listy_a_jego_cel_zbiera_po_rezerwacjach_z_terminem()
+    {
+        Add(new DateOnly(2026, 8, 5), -3000m, "PRZELEW NA OSZCZEDNOSCI", _savings);
+        await _db.SaveChangesAsync();
+        var someday = await Create().HandleAsync(Laptop(amount: 2000m) with { Name = "Rower", DueMonth = null }, default);
+        var dated = await Create().HandleAsync(Laptop(amount: 2500m), default);
+
+        await Reserve().HandleAsync(someday.Id, default);
+        await Reserve().HandleAsync(dated.Id, default);
+
+        var screen = await ScreenAsync();
+        Assert.Equal(["Nowy laptop", "Rower"], screen.Planned.Select(r => r.Name));
+        Assert.Null(screen.Planned[1].DueMonth);
+        // 3000 zł na koncie: najpierw pełne 2500 dla zakupu z terminem, reszta dla „przy okazji”.
+        Assert.Equal((2500m, 500m), (screen.Planned[0].Collected!.Value, screen.Planned[1].Collected!.Value));
+        Assert.Null((await _db.SavingsReservations.AsNoTracking().SingleAsync(r => r.Name == "Rower")).DueMonth);
+    }
+
+    [Fact]
     public async Task Walidacja_nazwy_i_planu()
     {
         await Assert.ThrowsAsync<EpisodicOrderNameRequiredException>(

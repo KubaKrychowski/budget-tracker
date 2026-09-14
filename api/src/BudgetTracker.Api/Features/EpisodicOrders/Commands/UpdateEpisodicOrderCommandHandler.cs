@@ -26,9 +26,9 @@ public sealed class UpdateEpisodicOrderCommandHandler(
         }
 
         var reservation = await orders.ReservationOfAsync(order, ct);
-        if (reservation is { SettledAt: null } && order is { PlannedAmount: { } planned, DueMonth: { } due })
+        if (reservation is { SettledAt: null } && order is { PlannedAmount: { } planned })
         {
-            reservation.Update(order.Name, planned, due, reservation.Priority);
+            reservation.Update(order.Name, planned, order.DueMonth, reservation.Priority);
         }
 
         await db.SaveChangesAsync(ct);

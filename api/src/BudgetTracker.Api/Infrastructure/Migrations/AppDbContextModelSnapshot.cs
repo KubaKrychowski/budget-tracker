@@ -485,7 +485,7 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamptz");
 
-                    b.Property<DateOnly>("DueMonth")
+                    b.Property<DateOnly?>("DueMonth")
                         .HasColumnType("date");
 
                     b.Property<string>("Name")

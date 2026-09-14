@@ -12,6 +12,7 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -61,7 +62,7 @@ const RECENT_COUNT = 5;
   selector: 'app-episodic-orders',
   imports: [
     CommonModule, FormsModule, RouterLink, BudgetSwitcher,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDropdownModule, NzEmptyModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzCheckboxModule, NzDatePickerModule, NzDropdownModule, NzEmptyModule,
     NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzProgressModule, NzSegmentedModule,
     NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule,
     TranslatePipe,
@@ -166,6 +167,8 @@ export class EpisodicOrders {
   protected readonly draftCategoryId = signal<string | null>(null);
   protected readonly draftAmount = signal<number | null>(null);
   protected readonly draftDueMonth = signal<Date | null>(null);
+  /** „Bez terminu” — zakup przy okazji; jawny wybór, żeby nie mylił się z zapomnianym polem. */
+  protected readonly draftNoDue = signal(false);
   protected readonly draftTransactionId = signal<string | null>(null);
 
   /** Zmiana zrealizowanego to tylko nazwa i opis — liczby niesie transakcja. */
@@ -175,7 +178,8 @@ export class EpisodicOrders {
     if (this.draftName().trim().length === 0) return false;
     if (this.editingRealized()) return true;
     if (this.editing() === null && this.kind() === 'realized') return this.draftTransactionId() !== null;
-    return this.draftCategoryId() !== null && (this.draftAmount() ?? 0) > 0 && this.draftDueMonth() !== null;
+    return this.draftCategoryId() !== null && (this.draftAmount() ?? 0) > 0
+      && (this.draftNoDue() || this.draftDueMonth() !== null);
   });
 
   protected openEditor(row: EpisodicOrderRow | null): void {
@@ -186,6 +190,7 @@ export class EpisodicOrders {
     this.draftCategoryId.set(row?.categoryId ?? null);
     this.draftAmount.set(row && !row.transactionId ? row.amount : null);
     this.draftDueMonth.set(row?.dueMonth ? this.dateOf(row.dueMonth) : null);
+    this.draftNoDue.set(row !== null && !row.transactionId && row.dueMonth === null);
     this.draftTransactionId.set(null);
     this.candidates.set([]);
     this.editorOpen.set(true);
@@ -209,7 +214,7 @@ export class EpisodicOrders {
       transactionId: realizedNew ? this.draftTransactionId() : null,
       categoryId: realizedNew ? null : this.draftCategoryId(),
       amount: realizedNew ? null : this.draftAmount(),
-      dueMonth: realizedNew || !due ? null : this.isoMonth(due),
+      dueMonth: realizedNew || this.draftNoDue() || !due ? null : this.isoMonth(due),
     };
 
     await this.run(async () => {

@@ -64,15 +64,15 @@ public sealed class GetEpisodicOrdersQueryHandler(
                     -t.Amount, o.DueMonth, t.Date, t.BusinessId, t.Description, o.WasPlanned,
                     reservation?.Id, reservation?.Collected));
             }
-            else if (o is { PlannedAmount: { } amount, DueMonth: { } due })
+            else if (o is { PlannedAmount: { } amount })
             {
                 planned.Add(new EpisodicOrderRowResponseDto(
                     o.BusinessId, o.Name, o.Description, category?.BusinessId, category?.Name,
-                    amount, due, null, null, null, true, reservation?.Id, reservation?.Collected));
+                    amount, o.DueMonth, null, null, null, true, reservation?.Id, reservation?.Collected));
             }
         }
 
-        planned = [.. planned.OrderBy(r => r.DueMonth).ThenBy(r => r.Name)];
+        planned = [.. planned.OrderBy(r => r.DueMonth is null).ThenBy(r => r.DueMonth).ThenBy(r => r.Name)];
         realized = [.. realized.OrderByDescending(r => r.Date).ThenBy(r => r.Name)];
         var withReservation = planned.Where(r => r.ReservationId is not null).ToList();
 

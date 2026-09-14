@@ -108,7 +108,9 @@
                       </td>
                       <td>{{ row.categoryName ?? '—' }}</td>
                       <td class="eo__right amount">{{ wholeMoney(row.amount) }} zł</td>
-                      <td>{{ monthYear(row.dueMonth) }}</td>
+                      <td [class.eo__muted]="!row.dueMonth">
+                        {{ row.dueMonth ? monthYear(row.dueMonth) : ('episodicOrders.table.noDue' | translate) }}
+                      </td>
                       <td>
                         @if (row.reservationId) {
                           <div class="eo__progress">
@@ -126,7 +128,7 @@
                         <nz-dropdown-menu #plannedMenu="nzDropdownMenu">
                           <ul nz-menu>
                             @if (row.reservationId) {
-                              <li nz-menu-item tabindex="0" routerLink="/reservations">
+                              <li nz-menu-item tabindex="0" routerLink="/savings/reservations">
                                 <strong>{{ 'episodicOrders.showReservation' | translate }}</strong>
                               </li>
                             } @else {
@@ -284,8 +286,12 @@
 
         <label class="eo__label" for="eo-due">{{ 'episodicOrders.editor.due' | translate }}</label>
         <!-- Miesiąc, nie dzień — tak samo jak termin rezerwacji, którą zlecenie może założyć. -->
-        <nz-date-picker id="eo-due" class="eo__field" nzMode="month" [nzAllowClear]="false"
+        <nz-date-picker id="eo-due" class="eo__field" nzMode="month" [nzAllowClear]="false" [nzDisabled]="draftNoDue()"
           [ngModel]="draftDueMonth()" (ngModelChange)="draftDueMonth.set($event)" />
+        <div class="eo__no-due">
+          <span nz-checkbox nzId="eo-no-due" [ngModel]="draftNoDue()" (ngModelChange)="draftNoDue.set($event)"></span>
+          <label for="eo-no-due">{{ 'episodicOrders.editor.noDue' | translate }}</label>
+        </div>
       } @else if (editing() === null) {
         <label class="eo__label" for="eo-transaction">{{ 'episodicOrders.editor.transaction' | translate }}</label>
         <nz-select nzId="eo-transaction" class="eo__field" nzShowSearch nzServerSearch [nzLoading]="candidatesLoading()"

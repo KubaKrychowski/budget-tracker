@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BudgetTracker.Api.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260914102819_EpisodicOrders")]
+    [Migration("20260914110835_EpisodicOrders")]
     partial class EpisodicOrders
     {
         /// <inheritdoc />
@@ -488,7 +488,7 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamptz");
 
-                    b.Property<DateOnly>("DueMonth")
+                    b.Property<DateOnly?>("DueMonth")
                         .HasColumnType("date");
 
                     b.Property<string>("Name")

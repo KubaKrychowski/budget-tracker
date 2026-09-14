@@ -566,7 +566,8 @@
       "namePlaceholder": "Car insurance",
       "amount": "Amount",
       "due": "Due",
-      "queueNote": "Reservations collect in order — nearest deadline first. Adding one with an earlier deadline WILL SHIFT THE QUEUE and take progress away from the others."
+      "queueNote": "Reservations collect in order — nearest deadline first. Adding one with an earlier deadline WILL SHIFT THE QUEUE and take progress away from the others.",
+      "noDue": "No due date — collects after reservations with a due date"
     },
     "settleModal": {
       "title": "Was this: {{name}}?",
@@ -591,7 +592,8 @@
     "tileSummary": "{{reserved}} PLN reserved · {{settled}} PLN already settled",
     "collected": "Collected",
     "freeFundsBody": "Savings account balance {{balance}} PLN − {{reserved}} PLN of reservations.",
-    "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest."
+    "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest.",
+    "noDue": "when possible"
   },
   "limits": {
     "title": "Spending limits",
@@ -819,7 +821,8 @@
       "date": "Date",
       "savings": "Saving",
       "transaction": "Transaction",
-      "noSavings": "— none"
+      "noSavings": "— none",
+      "noDue": "no due date"
     },
     "source": {
       "reservation": "from reservation",
@@ -850,7 +853,8 @@
       "transaction": "Transaction",
       "transactionPlaceholder": "Type part of the title",
       "transactionHint": "The list shows expenses without an order, newest first — type part of the title to narrow it down.",
-      "transactionChosen": "Category: {{category}} · amount {{amount}} PLN."
+      "transactionChosen": "Category: {{category}} · amount {{amount}} PLN.",
+      "noDue": "No due date — I will buy it when there is a chance"
     },
     "purchase": {
       "title": "Mark as purchased “{{name}}”",

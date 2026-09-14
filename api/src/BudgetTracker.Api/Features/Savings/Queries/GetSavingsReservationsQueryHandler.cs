@@ -73,7 +73,8 @@ public sealed class GetSavingsReservationsQueryHandler(
     /// Wpłata na konto oszczędnościowe nie niesie informacji, na którą rezerwację poszła, więc
     /// bez reguły „uzbierane 36%" nie znaczy nic. Reguła: <b>zbiera rezerwacja z najbliższym
     /// terminem, nadwyżka schodzi do następnej</b>. Alternatywa (proporcjonalnie do kwot) jest
-    /// prostsza, ale gorsza — przy niej nic nie jest gotowe na czas.
+    /// prostsza, ale gorsza — przy niej nic nie jest gotowe na czas. Rezerwacje „przy okazji” (bez terminu) zbierają
+    /// dopiero po wszystkich z terminem.
     /// </para>
     /// <para>
     /// Rozliczone nie biorą udziału w kolejce: nie ma już czego zbierać, ich pieniądze wyszły — dlatego są pokryte
@@ -99,7 +100,7 @@ public sealed class GetSavingsReservationsQueryHandler(
         var collected = new Dictionary<int, decimal>();
         foreach (var r in reservations
             .Where(r => r.SettledAt is null)
-            .OrderBy(r => r.DueMonth).ThenBy(r => r.Priority).ThenBy(r => r.Id))
+            .OrderBy(r => r.DueMonth is null).ThenBy(r => r.DueMonth).ThenBy(r => r.Priority).ThenBy(r => r.Id))
         {
             var share = Math.Min(r.Amount, pool);
             collected[r.Id] = share;
@@ -107,7 +108,7 @@ public sealed class GetSavingsReservationsQueryHandler(
         }
 
         return [.. reservations
-            .OrderBy(r => r.DueMonth).ThenBy(r => r.Priority).ThenBy(r => r.Id)
+            .OrderBy(r => r.DueMonth is null).ThenBy(r => r.DueMonth).ThenBy(r => r.Priority).ThenBy(r => r.Id)
             .Select(r => new SavingsReservationResponseDto(
                 r.BusinessId,
                 r.Name,

@@ -9,7 +9,8 @@ namespace BudgetTracker.Api.Domain;
 /// Zastępuje flagę „duży wydatek” na transakcji. Zrealizowane zlecenie wskazuje transakcję
 /// (<see cref="TransactionBusinessId"/>) i to ona jest jedynym źródłem kwoty, daty i kategorii — zlecenie ich nie
 /// powiela, więc nie mogą się rozjechać. Zaplanowane niesie własny plan (<see cref="PlannedAmount"/>,
-/// <see cref="DueMonth"/>, <see cref="CategoryId"/>), bo transakcji jeszcze nie ma.
+/// <see cref="DueMonth"/>, <see cref="CategoryId"/>), bo transakcji jeszcze nie ma. Termin jest opcjonalny —
+/// zakup „przy okazji” nie ma daty, a jego rezerwacja zbiera na końcu kolejki.
 /// </para>
 /// <para>
 /// ⚠️ Plan ZOSTAJE po realizacji. Po nim poznajemy zlecenie, które było zaplanowane — tylko takie da się „cofnąć do
@@ -42,7 +43,7 @@ public class EpisodicOrder(
     /// <summary>Kwota planu, dodatnia; <c>null</c> = zlecenie nie było zaplanowane.</summary>
     public decimal? PlannedAmount { get; protected set; }
 
-    /// <summary>Pierwszy dzień miesiąca terminu planu; <c>null</c> = zlecenie nie było zaplanowane.</summary>
+    /// <summary>Pierwszy dzień miesiąca terminu planu; <c>null</c> = bez terminu („przy okazji”) albo bez planu.</summary>
     public DateOnly? DueMonth { get; protected set; }
 
     /// <summary>Transakcja, którą zlecenie zrealizowano; <c>null</c> = jeszcze zaplanowane.</summary>
@@ -56,7 +57,7 @@ public class EpisodicOrder(
 
     public bool IsRealized => TransactionBusinessId is not null;
 
-    public bool WasPlanned => DueMonth is not null;
+    public bool WasPlanned => PlannedAmount is not null;
 
     /// <summary>Nazwa i opis — jedyne, co da się zmienić w zleceniu zrealizowanym.</summary>
     public void Rename(string name, string? description)
@@ -65,12 +66,12 @@ public class EpisodicOrder(
         Description = description;
     }
 
-    /// <summary>Plan zakupu — kategoria, kwota i termin ruszają się razem.</summary>
-    public void Plan(int categoryId, decimal amount, DateOnly dueMonth)
+    /// <summary>Plan zakupu — kategoria, kwota i termin ruszają się razem. Termin <c>null</c> = „przy okazji”.</summary>
+    public void Plan(int categoryId, decimal amount, DateOnly? dueMonth)
     {
         CategoryId = categoryId;
         PlannedAmount = amount;
-        DueMonth = new DateOnly(dueMonth.Year, dueMonth.Month, 1);
+        DueMonth = dueMonth is { } due ? new DateOnly(due.Year, due.Month, 1) : null;
     }
 
     /// <summary>Realizacja wskazaną transakcją. Czy transakcja się nadaje, sprawdza handler.</summary>

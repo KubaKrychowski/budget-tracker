@@ -10,7 +10,7 @@ public static class ReservationViews
     /// <summary>Trzy statusy z makiety (171:1690) — rozliczenie jest nadrzędne nad terminem.</summary>
     public static ReservationStatus StatusOf(SavingsReservation r, DateOnly currentMonth) =>
         r.SettledAt is not null ? ReservationStatus.Settled
-        : r.DueMonth < currentMonth ? ReservationStatus.Overdue
+        : r.DueMonth is { } due && due < currentMonth ? ReservationStatus.Overdue
         : ReservationStatus.Collecting;
 
     /// <summary>

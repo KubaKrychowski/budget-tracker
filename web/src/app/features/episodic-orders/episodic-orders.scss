@@ -203,6 +203,13 @@
     width: 100%;
   }
 
+  &__no-due {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
   /* Do 50 kandydatów — lista przewija się w miejscu, żeby przyciski dialogu zostały na ekranie. */
   &__candidates {
     display: flex;

@@ -11,7 +11,7 @@ export interface EpisodicOrderRow {
   readonly categoryName: string | null;
   /** Dodatnia. Przy zrealizowanym — kwota transakcji. */
   readonly amount: number;
-  /** Pierwszy dzień miesiąca terminu; `null`, gdy zlecenie nie było zaplanowane. */
+  /** Pierwszy dzień miesiąca terminu; `null` — bez terminu („przy okazji”) albo bez planu. */
   readonly dueMonth: string | null;
   /** Data transakcji; `null` przy zaplanowanym. */
   readonly date: string | null;

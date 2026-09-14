@@ -114,7 +114,7 @@ describe('EpisodicOrders', () => {
           { path: 'dashboard', children: [] },
           { path: 'episodic-orders', children: [] },
           { path: 'transactions', children: [] },
-          { path: 'reservations', children: [] },
+          { path: 'savings/reservations', children: [] },
         ]),
         provideNoopAnimations(),
         provideTranslateService(),
@@ -133,7 +133,7 @@ describe('EpisodicOrders', () => {
           withoutSavings: 'Bez oszczędzania: {{count}}.',
         },
         tabs: { planned: 'Zaplanowane ({{count}})', realized: 'Zrealizowane ({{count}})' },
-        table: { noSavings: '— brak' },
+        table: { noSavings: '— brak', noDue: 'bez terminu' },
         source: { reservation: 'z rezerwacji', unplanned: 'bez planu' },
         removeConfirm: { header: 'Usunąć zlecenie „{{name}}”?', withReservation: 'Zniknie też rezerwacja.' },
       },
@@ -192,6 +192,27 @@ describe('EpisodicOrders', () => {
     });
     request.flush({ id: 'e9' });
     await saving;
+  });
+
+  it('„Bez terminu” pozwala zapisać zakup bez daty i wysyła pusty termin', async () => {
+    await settle();
+    const component = api() as EpisodicOrdersApi & { draftNoDue: { set(v: boolean): void } };
+    component.openEditor(null);
+    component.draftName.set('Rower');
+    component.draftCategoryId.set('c1');
+    component.draftAmount.set(2000);
+    component.draftDueMonth.set(new Date(2026, 10, 1));
+    component.draftNoDue.set(true);
+    expect(component.canSave()).toBe(true);
+
+    const saving = component.save();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/episodic-orders');
+    expect(request.request.body).toMatchObject({ name: 'Rower', dueMonth: null, amount: 2000 });
+    request.flush({ id: 'e9' });
+    await saving;
+
+    await settle(response({ planned: [planned({ name: 'Rower', dueMonth: null })] }));
+    expect(text()).toContain('bez terminu');
   });
 
   it('„Już zrealizowane” szuka wydatków na serwerze i wysyła transakcję bez planu', async () => {

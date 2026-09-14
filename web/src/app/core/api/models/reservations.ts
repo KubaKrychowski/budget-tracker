@@ -8,8 +8,8 @@ export interface SavingsReservation {
   readonly id: string;
   readonly name: string;
   readonly amount: number;
-  /** Pierwszy dzień miesiąca terminu (ISO). */
-  readonly dueMonth: string;
+  /** Pierwszy dzień miesiąca terminu (ISO); `null` = „przy okazji” — zbiera na końcu kolejki. */
+  readonly dueMonth: string | null;
   /**
    * Ile z tej rezerwacji jest naprawdę pokryte pieniędzmi na koncie — przydział z kolejki
    * (najbliższy termin pierwszy), nie procent od oka. Rozliczona ma tu pełną kwotę.

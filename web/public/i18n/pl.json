@@ -629,7 +629,8 @@
       "namePlaceholder": "Ubezpieczenie OC",
       "amount": "Kwota",
       "due": "Termin",
-      "queueNote": "Rezerwacje zbierają się po kolei — najbliższy termin pierwszy. Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych."
+      "queueNote": "Rezerwacje zbierają się po kolei — najbliższy termin pierwszy. Dodanie rezerwacji z bliższym terminem PRZESUNIE KOLEJKĘ i cofnie postęp pozostałych.",
+      "noDue": "Bez terminu — zbiera po rezerwacjach z terminem"
     },
     "settleModal": {
       "title": "Czy to było: {{name}}?",
@@ -654,7 +655,8 @@
     "tileSummary": "{{reserved}} zł zarezerwowane · {{settled}} zł już rozliczone",
     "collected": "Uzbierane",
     "freeFundsBody": "Stan konta oszczędnościowego {{balance}} zł − {{reserved}} zł rezerwacji.",
-    "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek."
+    "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek.",
+    "noDue": "przy okazji"
   },
   "limits": {
     "title": "Limity wydatków",
@@ -882,7 +884,8 @@
       "date": "Data",
       "savings": "Oszczędzanie",
       "transaction": "Transakcja",
-      "noSavings": "— brak"
+      "noSavings": "— brak",
+      "noDue": "bez terminu"
     },
     "source": {
       "reservation": "z rezerwacji",
@@ -913,7 +916,8 @@
       "transaction": "Transakcja",
       "transactionPlaceholder": "Wpisz fragment tytułu",
       "transactionHint": "Lista pokazuje wydatki bez zlecenia, najnowsze najpierw — wpisz fragment tytułu, żeby zawęzić.",
-      "transactionChosen": "Kategoria: {{category}} · kwota {{amount}} zł."
+      "transactionChosen": "Kategoria: {{category}} · kwota {{amount}} zł.",
+      "noDue": "Bez terminu — kupię, kiedy będzie okazja"
     },
     "purchase": {
       "title": "Oznacz jako kupione „{{name}}”",

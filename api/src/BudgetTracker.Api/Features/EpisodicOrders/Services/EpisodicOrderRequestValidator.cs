@@ -26,12 +26,11 @@ public sealed class EpisodicOrderRequestValidator(AppDbContext db)
             : description.Length > MaxDescriptionLength ? description[..MaxDescriptionLength] : description);
     }
 
-    /// <summary>Plan zakupu: kategoria (wewnętrzny klucz), dodatnia kwota i miesiąc terminu.</summary>
-    public async Task<(int CategoryId, decimal Amount, DateOnly DueMonth)> PlanAsync(
+    /// <summary>Plan zakupu: kategoria (wewnętrzny klucz), dodatnia kwota i opcjonalny miesiąc terminu.</summary>
+    public async Task<(int CategoryId, decimal Amount, DateOnly? DueMonth)> PlanAsync(
         SaveEpisodicOrderRequestDto request, CancellationToken ct)
     {
-        if (request.CategoryId is not { } categoryId || request.Amount is not { } amount || amount <= 0
-            || request.DueMonth is not { } due)
+        if (request.CategoryId is not { } categoryId || request.Amount is not { } amount || amount <= 0)
         {
             throw new EpisodicOrderPlanInvalidException();
         }
@@ -42,7 +41,7 @@ public sealed class EpisodicOrderRequestValidator(AppDbContext db)
             .FirstOrDefaultAsync(ct);
 
         return category is { } id
-            ? (id, amount, new DateOnly(due.Year, due.Month, 1))
+            ? (id, amount, request.DueMonth is { } due ? new DateOnly(due.Year, due.Month, 1) : null)
             : throw new EpisodicOrderPlanInvalidException();
     }
 }

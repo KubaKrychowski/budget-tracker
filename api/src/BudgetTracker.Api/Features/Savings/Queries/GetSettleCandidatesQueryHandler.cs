@@ -47,7 +47,7 @@ public sealed class GetSettleCandidatesQueryHandler(
 
         return [.. rows
             .OrderBy(c => Math.Abs(c.Amount - reservation.Amount))
-            .ThenBy(c => Math.Abs(SavingsMonths.MonthsBetween(SavingsMonths.FirstDayOf(c.Date), reservation.DueMonth)))
+            .ThenBy(c => reservation.DueMonth is { } due ? Math.Abs(SavingsMonths.MonthsBetween(SavingsMonths.FirstDayOf(c.Date), due)) : 0)
             .ThenByDescending(c => c.Date)
             .Take(MaxSettleCandidates)];
     }

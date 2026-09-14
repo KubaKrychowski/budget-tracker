@@ -10,6 +10,7 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Queries;
 /// <para>
 /// Przy kupieniu zaplanowanego lista zaczyna się 2 miesiące przed terminem — zakup „przed czasem” jest normalny,
 /// a starsze wydatki tylko zasłaniałyby właściwy. Po terminie brak górnej granicy: rzeczy kupuje się też później.
+/// Zlecenie bez terminu nie ma też dolnej granicy — szukajka zawęża resztę.
 /// </para>
 /// <para>Od najnowszego, bo szuka się zwykle czegoś, co zeszło niedawno; szukajka zawęża po tytule.</para>
 /// </remarks>
