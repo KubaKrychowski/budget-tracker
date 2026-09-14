@@ -28,6 +28,16 @@
       </ng-template>
     </nz-alert>
   } @else {
+    <!-- Przełącznik budżetu pod okruszkami, jak na makiecie (147:96). Wybrany = ten, na którym serwer
+         faktycznie policzył odpowiedź, także gdy adres budżetu nie podaje. -->
+    @if (lastData(); as d) {
+      <app-budget-switcher
+        class="sav__switcher"
+        [budgets]="d.budgets"
+        [selectedId]="d.selectedBudgetIds[0] ?? null"
+        (budgetChange)="switchBudget($event)" />
+    }
+
     <nz-spin [nzSpinning]="loading() || busy()">
 
       <!-- ── Baner ──────────────────────────────────────────────────────────────────────

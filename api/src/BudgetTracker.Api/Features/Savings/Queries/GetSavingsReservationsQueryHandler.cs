@@ -36,10 +36,11 @@ public sealed class GetSavingsReservationsQueryHandler(
         var today = scope.Today();
         var currentMonth = SavingsMonths.FirstDayOf(today);
 
-        var selected = await scope.ResolveAsync(budgetIds, today, ct);
+        var budgets = await scope.OptionsAsync(ct);
+        var selected = SavingsBudgetScope.Resolve(budgets, budgetIds, today);
         if (selected.Count == 0)
         {
-            return new SavingsReservationsResponseDto([], 0m, 0m, 0m, 0m, 0m, null, []);
+            return new SavingsReservationsResponseDto([], 0m, 0m, 0m, 0m, 0m, null, [], budgets);
         }
 
         var reservations = await db.SavingsReservations
@@ -60,7 +61,8 @@ public sealed class GetSavingsReservationsQueryHandler(
             CollectedTotal: collectedTotal,
             FreeFunds: balance - reservedTotal,
             CoveredBy: await CoveredByAsync(selected, reservedTotal - collectedTotal, currentMonth, ct),
-            SelectedBudgetIds: selected);
+            SelectedBudgetIds: selected,
+            Budgets: budgets);
     }
 
     /// <summary>

@@ -87,6 +87,18 @@ describe('ConfirmDialog', () => {
     expect(api().confirmDisabled()).toBe(true);
   });
 
+  it('operacja niszcząca ma czerwony przycisk potwierdzenia, zwykła nie', () => {
+    const confirmButton = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('.confirm-dialog__actions button[nztype="primary"]');
+
+    create({ header: 'Usunąć limit?', danger: true });
+    expect(confirmButton().classList).toContain('button-danger');
+
+    TestBed.resetTestingModule();
+    create({ header: 'Cofnąć rozliczenie?' });
+    expect(confirmButton().classList).not.toContain('button-danger');
+  });
+
   it('anulowanie zamyka z `false`, niezależnie od stanu klucza', () => {
     create({ header: 'Usunąć?', confirmKey: 'Testowy' });
 

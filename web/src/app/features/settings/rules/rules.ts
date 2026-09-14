@@ -296,6 +296,7 @@ export class Rules {
       }),
       description: this.translate.instant('settings.rules.delete.note'),
       confirmText: this.translate.instant('settings.rules.delete.confirm'),
+      danger: true,
     });
     if (!confirmed) return;
 

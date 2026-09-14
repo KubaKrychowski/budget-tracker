@@ -21,6 +21,10 @@
   <data name="Training_NoData" xml:space="preserve"><value>Nie ma z czego uczyć modelu — brakuje i pliku bazowego, i kwalifikujących się poprawek.</value></data>
   <data name="Training_UnknownModel" xml:space="preserve"><value>Tej wersji modelu już nie ma na dysku.</value></data>
   <data name="Savings_AmountInvalid" xml:space="preserve"><value>Kwota celu musi być większa od zera — „odkładam 0 zł" to nie cel, tylko jego brak.</value></data>
+  <data name="Limit_AmountInvalid" xml:space="preserve"><value>Limit musi być większy od zera.</value></data>
+  <data name="Limit_WarningThresholdInvalid" xml:space="preserve"><value>Próg ostrzeżenia musi mieścić się między 1 a 100% limitu.</value></data>
+  <data name="Limit_CategoryInvalid" xml:space="preserve"><value>Na tę kategorię nie da się nałożyć limitu wydatków — nie ma jej albo jest przychodowa.</value></data>
+  <data name="Limit_HistoryLocked" xml:space="preserve"><value>Limity zmienia się od bieżącego miesiąca — zamknięte miesiące zostają z limitem, który w nich obowiązywał.</value></data>
   <data name="Reservation_NameRequired" xml:space="preserve"><value>Nazwij rezerwację — kwota bez nazwy nie jest kopertą, tylko liczbą bez adresata.</value></data>
   <data name="Reservation_AmountInvalid" xml:space="preserve"><value>Kwota rezerwacji musi być większa od zera.</value></data>
   <data name="Reservation_SettlementInvalid" xml:space="preserve"><value>Ta transakcja nie rozliczy rezerwacji. Musi być wypłatą z oszczędności w tym samym budżecie i nie może zamykać już innej rezerwacji.</value></data>

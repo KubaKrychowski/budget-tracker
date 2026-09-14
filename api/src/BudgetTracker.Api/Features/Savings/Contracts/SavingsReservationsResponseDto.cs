@@ -26,6 +26,7 @@ namespace BudgetTracker.Api.Features.Savings.Contracts;
 /// („resztę uzbierasz do maja"). <c>null</c>, gdy wszystko już pokryte albo gdy nie ma celu —
 /// bez celu nie ma z czego liczyć tempa i zdanie byłoby zgadywanką.
 /// </param>
+/// <param name="Budgets">Budżety do przełącznika nad listą — patrz <see cref="SavingsBudgetOptionResponseDto"/>.</param>
 public sealed record SavingsReservationsResponseDto(
     IReadOnlyList<SavingsReservationResponseDto> Reservations,
     decimal AccountBalance,
@@ -34,4 +35,5 @@ public sealed record SavingsReservationsResponseDto(
     decimal CollectedTotal,
     decimal FreeFunds,
     DateOnly? CoveredBy,
-    IReadOnlyList<Guid> SelectedBudgetIds);
+    IReadOnlyList<Guid> SelectedBudgetIds,
+    IReadOnlyList<SavingsBudgetOptionResponseDto> Budgets);

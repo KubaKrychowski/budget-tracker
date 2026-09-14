@@ -1,9 +1,9 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { ActiveBudget } from '../../core/active-budget';
 import { CommonModule } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
@@ -24,6 +24,7 @@ import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.s
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
+import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 import {
   ReservationsResponse, SavingsReservation, SettleCandidate,
 } from '../../core/api/models/reservations';
@@ -31,7 +32,7 @@ import {
 @Component({
   selector: 'app-reservations',
   imports: [
-    CommonModule, FormsModule, RouterLink,
+    CommonModule, FormsModule, RouterLink, BudgetSwitcher,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzEmptyModule,
     NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSpinModule,
     NzTableModule, NzTagModule,
@@ -46,6 +47,7 @@ export class Reservations {
 
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
   private readonly message = inject(NzMessageService);
   private readonly confirmDialog = inject(ConfirmDialogService);
@@ -68,6 +70,15 @@ export class Reservations {
     if (fromUrl.length > 0) this.activeBudget.set(fromUrl);
   });
 
+  /** Wybór z przełącznika idzie do ADRESU — patrz `BudgetSwitcher`, dlaczego nie wprost do `ActiveBudget`. */
+  protected switchBudget(id: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { budgetId: id },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   private readonly resource = httpResource<ReservationsResponse>(() => ({
     url: '/api/savings/reservations',
     params: { ...(this.budgetIds().length > 0 ? { budgetId: this.budgetIds() } : {}) },
@@ -81,6 +92,12 @@ export class Reservations {
   protected readonly busy = signal(false);
 
   protected readonly data = computed(() => this.value() ?? null);
+
+  /** Ostatnia odpowiedź — tylko dla przełącznika budżetu, żeby nie znikał w trakcie przeładowania (patrz `Savings.lastData`). */
+  protected readonly lastData = linkedSignal<ReservationsResponse | null, ReservationsResponse | null>({
+    source: this.data,
+    computation: (next, prev) => next ?? prev?.value ?? null,
+  });
   protected readonly rows = computed(() => this.data()?.reservations ?? []);
 
   /**
@@ -155,6 +172,7 @@ export class Reservations {
     const ok = await this.confirmDialog.confirm({
       header: this.translate.instant('reservations.deleteConfirm.header', { name: row.name }),
       description: this.translate.instant('reservations.deleteConfirm.description'),
+      danger: true,
     });
     if (!ok) return;
 

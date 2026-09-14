@@ -55,7 +55,7 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
 
     private BudgetLookup Lookup() => new(_db);
     private BudgetChildren Children() => new(_db);
-    private BudgetListItemReader Reader() => new(_db);
+    private BudgetListItemReader Reader() => new(_db, _clock);
 
     private GetBudgetsListQueryHandler List() => new(Reader(), Options.Create(_options));
     private UpdateBudgetCommandHandler Update() => new(_db, Lookup(), Reader());
@@ -85,7 +85,7 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
 
         var batch = new ImportBatch(budget.Id, "pko", "wyciag.csv", 0, _clock.GetUtcNow());
         _db.Add(batch);
-        _db.Add(new BudgetItem(budget.BusinessId, category.Id, 500m));
+        _db.Add(new BudgetItem(budget.BusinessId, category.Id, 500m, budget.Month, LimitWarning.DefaultThreshold));
         await _db.SaveChangesAsync();
 
         _db.AddRange(

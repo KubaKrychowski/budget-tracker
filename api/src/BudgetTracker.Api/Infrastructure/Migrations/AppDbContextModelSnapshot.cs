@@ -152,6 +152,15 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("ValidTo")
+                        .HasColumnType("date");
+
+                    b.Property<int>("WarningThreshold")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId")
@@ -159,7 +168,7 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("BudgetBusinessId", "CategoryId")
+                    b.HasIndex("BudgetBusinessId", "CategoryId", "ValidFrom")
                         .IsUnique()
                         .HasFilter("\"DeletedAt\" IS NULL");
 

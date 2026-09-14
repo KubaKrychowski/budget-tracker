@@ -100,7 +100,9 @@ public static class DemoSeed
 
         db.BudgetItems.AddRange(categories.Values
             .Where(c => Merchants.ContainsKey(c.Name))
-            .Select(c => new BudgetItem(budgetId, c.Id, c.Name == "Jedzenie" ? 1400m : 700m)
+            // Od pierwszego miesiąca historii — ekran limitów ma co pokazać także po cofnięciu się w czasie.
+            .Select(c => new BudgetItem(
+                    budgetId, c.Id, c.Name == "Jedzenie" ? 1400m : 700m, firstMonth, LimitWarning.DefaultThreshold)
                 .WithSeedBusinessId<BudgetItem>(DeterministicGuid.For($"demo:budgetitem:{c.Name}"))));
 
         db.SavingsGoals.Add(new SavingsGoal(budgetId, MonthlyGoal, firstMonth, now)

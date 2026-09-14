@@ -1,3 +1,5 @@
+import { BudgetOption } from './budget-option';
+
 /** Odpowiednik MonthVerdict z BudgetTracker.Api.Features.Savings.Consts. */
 export type MonthVerdict = 'NoGoal' | 'GoalMissed' | 'GoalMet' | 'Proof';
 
@@ -55,4 +57,6 @@ export interface SavingsResponse {
   /** `false` przy istniejącym celu znaczy najczęściej: przelew nie trafił w kategorię. */
   readonly hasAnySavings: boolean;
   readonly selectedBudgetIds: string[];
+  /** Budżety do przełącznika nad ekranem — wyłączone też, z tagiem. */
+  readonly budgets: BudgetOption[];
 }

@@ -2,6 +2,7 @@ using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Budgets.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
+using BudgetTracker.Api.Features.Limits.Exceptions;
 using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Features.Transactions.Exceptions;
 using BudgetTracker.Api.Infrastructure.Exceptions;
@@ -68,6 +69,14 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         // Żądanie jest poprawne, to stan zasobu na nie nie pozwala — stąd 409.
         ReservationAlreadySettledException =>
             (StatusCodes.Status409Conflict, "Reservation_AlreadySettled"),
+
+        LimitAmountInvalidException => (StatusCodes.Status400BadRequest, "Limit_AmountInvalid"),
+        LimitWarningThresholdInvalidException =>
+            (StatusCodes.Status400BadRequest, "Limit_WarningThresholdInvalid"),
+        // 400, nie 404: kategoria przychodzi w CIELE żądania — ta sama zasada co przy rozliczeniu rezerwacji.
+        LimitCategoryInvalidException => (StatusCodes.Status400BadRequest, "Limit_CategoryInvalid"),
+        // Żądanie poprawne, to historia limitów na nie nie pozwala — stąd 409.
+        LimitHistoryLockedException => (StatusCodes.Status409Conflict, "Limit_HistoryLocked"),
 
         // Trzy razy ta sama historia: reguła zapisałaby się bez błędu i nigdy nie zadziałała.
         // 400, bo to wejście jest niepoprawne, a nie stan zasobu.

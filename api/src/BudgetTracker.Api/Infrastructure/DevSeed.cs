@@ -125,7 +125,9 @@ public static class DevSeed
 
         db.BudgetItems.AddRange(categories.Values
             .Where(c => merchants.ContainsKey(c.Name))
-            .Select(c => new BudgetItem(budgetBusinessId, c.Id, c.Name == "Catering" ? 1500m : 800m)
+            .Select(c => new BudgetItem(
+                    budgetBusinessId, c.Id, c.Name == "Catering" ? 1500m : 800m,
+                    new DateOnly(today.Year, today.Month, 1), LimitWarning.DefaultThreshold)
                 .WithSeedBusinessId<BudgetItem>(DeterministicGuid.For($"budgetitem:podstawowy:{c.Name}"))));
 
         await db.SaveChangesAsync(ct);

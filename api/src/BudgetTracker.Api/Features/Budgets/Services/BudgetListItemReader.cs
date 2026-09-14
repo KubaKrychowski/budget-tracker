@@ -14,11 +14,19 @@ namespace BudgetTracker.Api.Features.Budgets.Services;
 /// Lista widzi TAKŻE usunięte (<c>IgnoreQueryFilters</c>) — to jedyne miejsce w aplikacji, gdzie
 /// usunięty budżet jest widoczny, bo tylko tu da się go przywrócić.
 /// </remarks>
-public sealed class BudgetListItemReader(AppDbContext db)
+public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
 {
     /// <summary>Wszystkie budżety, od najnowszego. Trzy zapytania łącznie, a nie trzy na budżet.</summary>
+    /// <remarks>
+    /// ⚠️ Miesięczny limit to suma limitów obowiązujących w BIEŻĄCYM miesiącu. Limit ma historię
+    /// (<see cref="BudgetItem.ValidFrom"/>), więc suma wszystkich wierszy liczyłaby każdą zmianę kwoty
+    /// jako osobny limit — po jednej podwyżce „miesięczny limit" wyszedłby prawie dwa razy za duży.
+    /// </remarks>
     public async Task<IReadOnlyList<BudgetListItemResponseDto>> ReadAllAsync(CancellationToken ct)
     {
+        var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime.Date);
+        var currentMonth = new DateOnly(today.Year, today.Month, 1);
+
         var budgets = await db.Budgets
             .IgnoreQueryFilters()
             .OrderByDescending(b => b.CreatedAt)
@@ -34,7 +42,8 @@ public sealed class BudgetListItemReader(AppDbContext db)
             .ToDictionaryAsync(x => x.BudgetBusinessId, ct);
 
         var limits = await db.BudgetItems
-            .Where(i => budgetIds.Contains(i.BudgetBusinessId))
+            .Where(i => budgetIds.Contains(i.BudgetBusinessId)
+                        && i.ValidFrom <= currentMonth && (i.ValidTo == null || i.ValidTo >= currentMonth))
             .GroupBy(i => i.BudgetBusinessId)
             .Select(g => new { BudgetBusinessId = g.Key, Total = g.Sum(i => i.Limit) })
             .ToDictionaryAsync(x => x.BudgetBusinessId, x => x.Total, ct);

@@ -633,6 +633,7 @@ export class Transactions {
   ): Promise<void> {
     const ok = await this.confirmDialog.confirm({
       header: this.translate.instant('transactions.bulkDelete.confirm', { count }),
+      danger: true,
     });
     if (!ok) return;
 
