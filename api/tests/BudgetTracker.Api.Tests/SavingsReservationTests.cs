@@ -16,9 +16,9 @@ namespace BudgetTracker.Api.Tests;
 /// <summary>
 /// Rezerwacje na koncie oszczędnościowym.
 ///
-/// Te testy pilnują trzech reguł, których nie widać z ekranu i których pierwszy odruch przy
-/// refaktorze będzie taki, żeby je „naprawić": kolejka zbierania, stabilność tej kolejki
-/// i to, że rozliczenie NIE zwalnia wolnych środków.
+/// Te testy pilnują reguł z zgłoszenia #23, których nie widać z ekranu: uzbierane to suma WPŁAT (nie rozkład stanu
+/// konta), wpłaty mają dwa limity (brakująca kwota i stan konta), a rozliczona rezerwacja przestaje pomniejszać
+/// wolne środki.
 ///
 /// Wymaga `docker compose up -d db`.
 /// </summary>
@@ -65,7 +65,13 @@ public sealed class SavingsReservationTests : IAsyncLifetime
 
     private ReservationLookup Lookup() => new(_db);
 
-    private GetSavingsReservationsQueryHandler GetHandler() => new(_db, Scope(), new SavingsCategory(_db));
+    private GetSavingsReservationsQueryHandler GetHandler() => new(_db, Scope(), Account());
+
+    private SavingsAccount Account() => new(_db, new SavingsCategory(_db));
+
+    private ContributeToReservationCommandHandler ContributeHandler() => new(_db, Lookup(), Account(), Scope());
+
+    private UpdateSavingsReservationCommandHandler UpdateHandler() => new(_db, Lookup(), Scope());
 
     private GetSettleCandidatesQueryHandler CandidatesHandler() => new(_db, Lookup(), new SavingsCategory(_db));
 
@@ -101,76 +107,101 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         Assert.Equal(_budgetId, Assert.Single(response.SelectedBudgetIds));
     }
 
-    // ── Kolejka zbierania ────────────────────────────────────────────────────────────────
+    // ── Wpłaty na cel ────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Nearest_due_month_collects_first_and_surplus_flows_down()
+    public async Task Nowa_rezerwacja_przy_pelnym_koncie_nie_jest_uzbierana()
     {
-        Deposit(2026, 10, 1000m);
-
-        await Reserve("Ubezpieczenie", 800m, new DateOnly(2026, 12, 1));
-        await Reserve("Aparat", 600m, new DateOnly(2027, 3, 1));
+        // Sedno #23: dawna kolejka pokazywała 100% zaraz po założeniu, bo rozkładała stan konta sama.
+        Deposit(2026, 10, 5000m);
+        await _db.SaveChangesAsync();
+        await Reserve("Aparat", 800m, new DateOnly(2027, 3, 1));
 
         var response = await GetHandler().HandleAsync([_budgetId], default);
-        var byName = response.Reservations.ToDictionary(r => r.Name);
 
-        // Bliższy termin bierze całą swoją kwotę, dalszy dostaje resztę puli — NIE proporcjonalnie.
-        // Podział proporcjonalny (444 / 556) dałby dwie rezerwacje, z których żadna nie jest
-        // gotowa na czas, a to jest gorsze niż jedna gotowa.
-        Assert.Equal(800m, byName["Ubezpieczenie"].Collected);
-        Assert.Equal(200m, byName["Aparat"].Collected);
+        Assert.Equal(0m, response.Reservations.Single().Collected);
+        Assert.Equal((0m, 5000m), (response.CollectedTotal, response.AvailableToContribute));
     }
 
     [Fact]
-    public async Task Adding_a_nearer_reservation_takes_progress_away_from_the_later_one()
+    public async Task Wplata_zwieksza_uzbierane_a_wycofanie_konkretnej_wplaty_je_zmniejsza()
+    {
+        Deposit(2026, 10, 2000m);
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Rower", 2000m, null);
+
+        await ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(400m), default);
+        var view = await ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(600m), default);
+        Assert.Equal(1000m, view.Collected);
+        Assert.Equal(2, view.Contributions.Count);
+
+        var withdrawn = await ContributeHandler().WithdrawAsync(
+            reservation.Id, view.Contributions.Single(c => c.Amount == 400m).Id, default);
+
+        Assert.Equal(600m, withdrawn.Collected);
+        var response = await GetHandler().HandleAsync([_budgetId], default);
+        Assert.Equal((600m, 1400m), (response.CollectedTotal, response.AvailableToContribute));
+    }
+
+    [Fact]
+    public async Task Nie_da_sie_wplacic_wiecej_niz_brakuje_do_celu_ani_wiecej_niz_zostalo_na_koncie()
     {
         Deposit(2026, 10, 1000m);
-        await Reserve("Aparat", 1000m, new DateOnly(2027, 3, 1));
+        await _db.SaveChangesAsync();
+        var small = await Reserve("Kurs", 400m, new DateOnly(2027, 1, 1));
+        var big = await Reserve("Aparat", 1600m, new DateOnly(2027, 3, 1));
 
-        var before = await GetHandler().HandleAsync([_budgetId], default);
-        Assert.Equal(1000m, before.Reservations.Single().Collected);
+        await ContributeHandler().ContributeAsync(small.Id, new ContributeRequestDto(300m), default);
+        await Assert.ThrowsAsync<ContributionAmountInvalidException>(
+            () => ContributeHandler().ContributeAsync(small.Id, new ContributeRequestDto(101m), default));
+        await Assert.ThrowsAsync<ContributionAmountInvalidException>(
+            () => ContributeHandler().ContributeAsync(small.Id, new ContributeRequestDto(0m), default));
 
-        await Reserve("Ubezpieczenie", 800m, new DateOnly(2026, 12, 1));
-
-        // ⚠️ To NIE jest błąd, tylko wprost wynik kolejki — i dlatego modal dodawania ostrzega
-        // o tym ZANIM użytkownik zapisze. Na ekranie wygląda jak utrata postępu.
-        var after = await GetHandler().HandleAsync([_budgetId], default);
-        Assert.Equal(200m, after.Reservations.Single(r => r.Name == "Aparat").Collected);
+        // Na koncie 1000, na „Kurs” wpłacone 300 — na „Aparat” zostaje 700, choć brakuje mu 1600.
+        await Assert.ThrowsAsync<ContributionExceedsBalanceException>(
+            () => ContributeHandler().ContributeAsync(big.Id, new ContributeRequestDto(701m), default));
+        await ContributeHandler().ContributeAsync(big.Id, new ContributeRequestDto(700m), default);
     }
 
     [Fact]
-    public async Task Queue_is_stable_when_due_month_and_priority_are_equal()
+    public async Task Rozliczona_rezerwacja_nie_przyjmuje_wplat_a_wplaty_na_nia_zwalniaja_miejsce_na_koncie()
     {
-        Deposit(2026, 10, 500m);
+        Deposit(2026, 9, 3000m);
+        var withdrawal = Withdraw(2026, 10, 1000m);
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Ubezpieczenie", 1000m, new DateOnly(2026, 10, 1));
+        await ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(1000m), default);
 
-        var due = new DateOnly(2027, 1, 1);
-        await Reserve("Pierwsza", 400m, due);
-        await Reserve("Druga", 400m, due);
+        await SettleHandler().HandleAsync(reservation.Id, new SettleReservationRequestDto(withdrawal), default);
 
-        // Bez trzeciego kryterium sortowania (Id) te dwie zamieniałyby się miejscami między
-        // odczytami, a „uzbierane" skakałoby przy każdym odświeżeniu. Pojedynczy odczyt tego
-        // nie pokaże — stąd trzy z rzędu.
-        var reads = new List<decimal>();
-        for (var i = 0; i < 3; i++)
-        {
-            var response = await GetHandler().HandleAsync([_budgetId], default);
-            reads.Add(response.Reservations.Single(r => r.Name == "Pierwsza").Collected);
-        }
+        await Assert.ThrowsAsync<ReservationAlreadySettledException>(
+            () => ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(1m), default));
+        // Wypłata zeszła z konta (2000 zostało), a wpłaty rozliczonej już się nie liczą.
+        var response = await GetHandler().HandleAsync([_budgetId], default);
+        Assert.Equal((2000m, 0m, 2000m), (response.AccountBalance, response.CollectedTotal, response.AvailableToContribute));
+    }
 
-        Assert.Equal([400m, 400m, 400m], reads);
+    [Fact]
+    public async Task Kwota_rezerwacji_nie_spada_ponizej_wplat_a_nieznana_wplata_to_404()
+    {
+        Deposit(2026, 10, 1000m);
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Aparat", 800m, new DateOnly(2027, 3, 1));
+        await ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(500m), default);
+
+        await Assert.ThrowsAsync<ReservationAmountBelowContributedException>(() => UpdateHandler().HandleAsync(
+            reservation.Id, new SaveReservationRequestDto("Aparat", 499m, new DateOnly(2027, 3, 1)), default));
+        await Assert.ThrowsAsync<ContributionNotFoundException>(
+            () => ContributeHandler().WithdrawAsync(reservation.Id, Guid.NewGuid(), default));
     }
 
     // ── Wolne środki ─────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Settling_does_not_free_up_funds()
+    public async Task Rozliczenie_zwalnia_wolne_srodki()
     {
-        // ⚠️ NAJWAŻNIEJSZY test w tym pliku i celowo napisany wprost. Reguła jest
-        // przeciwintuicyjna (rozliczone pieniądze już zeszły z konta, więc „odejmowanie ich
-        // drugi raz" wygląda na pomyłkę), więc pierwszy odruch przy refaktorze będzie taki,
-        // żeby tę liczbę „naprawić". To jest decyzja użytkownika, nie przeoczenie: karta
-        // nazywa się „Rezerwacje na ten rok", czyli koperta jest ROCZNA (issue #11, makieta
-        // 147:96 pokazuje 9 400 − 5 000 = 4 400 przy rozliczonych 1 800).
+        // Zgłoszenie #23, decyzja użytkownika: zapłacony zakup zszedł już ze stanu konta, więc jego rezerwacja
+        // przestaje pomniejszać wolne środki. Dawniej koperta była roczna i odejmowała się także po rozliczeniu.
         Deposit(2026, 9, 3000m);
         var withdrawal = Withdraw(2026, 10, 1800m);
         await _db.SaveChangesAsync();
@@ -184,26 +215,25 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         await SettleHandler().HandleAsync(reservation.Id, new SettleReservationRequestDto(withdrawal), default);
 
         var after = await GetHandler().HandleAsync([_budgetId], default);
-        Assert.Equal(-600m, after.FreeFunds);
-        Assert.Equal(1800m, after.SettledTotal);
-
-        // Rozliczenie MA widoczny skutek — po prostu innego rodzaju: zamyka rezerwację
-        // i zdejmuje ją z kolejki zbierania.
+        Assert.Equal(1200m, after.FreeFunds);
+        Assert.Equal((1800m, 0m), (after.SettledTotal, after.ReservedTotal));
         Assert.Equal(ReservationStatus.Settled, after.Reservations.Single().Status);
     }
 
     [Fact]
-    public async Task Free_funds_subtract_every_reservation_and_may_go_negative()
+    public async Task Free_funds_subtract_the_full_amount_of_open_reservations_and_may_go_negative()
     {
         Deposit(2026, 10, 1000m);
-        await Reserve("Aparat", 1600m, new DateOnly(2027, 3, 1));
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Aparat", 1600m, new DateOnly(2027, 3, 1));
+        await ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(1000m), default);
 
         var response = await GetHandler().HandleAsync([_budgetId], default);
 
-        // Ujemne wolne środki to poprawna informacja i front pokazuje je jako osobny stan
-        // („rezerwacje przekraczają stan konta o X"), a nie minus w kaflu.
+        // Wolne środki odejmują PEŁNĄ kwotę rezerwacji (decyzja z #23), nie wpłaty. Ujemne to poprawna informacja —
+        // front pokazuje je jako osobny stan („rezerwacje przekraczają stan konta o X"), a nie minus w kaflu.
         Assert.Equal(-600m, response.FreeFunds);
-        Assert.Equal(1000m, response.CollectedTotal);
+        Assert.Equal((1000m, 0m), (response.CollectedTotal, response.AvailableToContribute));
     }
 
     [Fact]
@@ -218,9 +248,9 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         _db.SavingsGoals.Add(new SavingsGoal(_budgetId, 500m, new DateOnly(2026, 1, 1), _clock.GetUtcNow()));
         await _db.SaveChangesAsync();
 
-        // Brakuje 1 500 zł, tempo 500 zł/mies. → trzy miesiące od listopada, czyli luty.
+        // Nic nie wpłacono, brakuje 2 500 zł, tempo 500 zł/mies. → pięć miesięcy od listopada, czyli kwiecień.
         var withGoal = await GetHandler().HandleAsync([_budgetId], default);
-        Assert.Equal(new DateOnly(2027, 2, 1), withGoal.CoveredBy);
+        Assert.Equal(new DateOnly(2027, 4, 1), withGoal.CoveredBy);
     }
 
     // ── Statusy ──────────────────────────────────────────────────────────────────────────
@@ -391,8 +421,7 @@ public sealed class SavingsReservationTests : IAsyncLifetime
 
         await DeleteHandler().HandleAsync(reservation.Id, default);
 
-        // Soft delete: wiersz zostaje w bazie, ale filtr globalny go nie widzi — więc wolne
-        // środki wracają. To odróżnia SKASOWANIE od ROZLICZENIA, które ich nie zwalnia.
+        // Soft delete: wiersz zostaje w bazie, ale filtr globalny go nie widzi — więc wolne środki wracają.
         var response = await GetHandler().HandleAsync([_budgetId], default);
         Assert.Empty(response.Reservations);
         Assert.Equal(1000m, response.FreeFunds);
@@ -410,7 +439,7 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         // karmią komponent JSON-em, który same napisały.
         var view = new SavingsReservationResponseDto(
             Guid.CreateVersion7(), "Ubezpieczenie OC", 1800m, new DateOnly(2026, 5, 1),
-            1800m, ReservationStatus.Settled, new DateOnly(2026, 8, 14), Guid.CreateVersion7());
+            1800m, ReservationStatus.Settled, new DateOnly(2026, 8, 14), Guid.CreateVersion7(), []);
 
         var json = System.Text.Json.JsonSerializer.Serialize(view);
 
@@ -420,7 +449,7 @@ public sealed class SavingsReservationTests : IAsyncLifetime
 
     // ── Pomocnicze ───────────────────────────────────────────────────────────────────────
 
-    private async Task<SavingsReservationResponseDto> Reserve(string name, decimal amount, DateOnly due) =>
+    private async Task<SavingsReservationResponseDto> Reserve(string name, decimal amount, DateOnly? due) =>
         await CreateHandler().HandleAsync(new SaveReservationRequestDto(name, amount, due, 0, _budgetId), default);
 
     /// <summary>Wpłata na oszczędności: z konta bieżącego pieniądze WYCHODZĄ, więc kwota ujemna.</summary>

@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Features.Savings.Contracts;
+using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Features.Savings.Services;
 using BudgetTracker.Api.Infrastructure;
 
@@ -9,8 +10,10 @@ namespace BudgetTracker.Api.Features.Savings.Commands;
 /// </summary>
 /// <remarks>
 /// ⚠️ Budżetu NIE da się zmienić — przeniesienie rezerwacji między budżetami przesunęłoby
-/// ją do innej puli i innej kolejki naraz, a wskazana wypłata została w starym budżecie.
+/// ją do innej puli oszczędności, a wskazana wypłata i wpłaty zostały w starym budżecie.
 /// Kto chce przenieść, zakłada nową.
+///
+/// Kwota nie może spaść poniżej sumy wpłat — wpłacone ponad cel nie miałoby gdzie się podziać.
 /// </remarks>
 public sealed class UpdateSavingsReservationCommandHandler(
     AppDbContext db, ReservationLookup reservations, SavingsBudgetScope scope)
@@ -20,6 +23,7 @@ public sealed class UpdateSavingsReservationCommandHandler(
     {
         var (name, amount) = ReservationRequestValidator.Validate(request);
         var reservation = await reservations.FindAsync(id, ct);
+        if (amount < reservation.Contributed) throw new ReservationAmountBelowContributedException();
 
         reservation.Update(name, amount, SavingsMonths.FirstDayOf(request.DueMonth), request.Priority);
 

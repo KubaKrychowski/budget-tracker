@@ -8,17 +8,23 @@ export interface SavingsReservation {
   readonly id: string;
   readonly name: string;
   readonly amount: number;
-  /** Pierwszy dzień miesiąca terminu (ISO); `null` = „przy okazji” — zbiera na końcu kolejki. */
+  /** Pierwszy dzień miesiąca terminu (ISO); `null` = „przy okazji”. */
   readonly dueMonth: string | null;
-  /**
-   * Ile z tej rezerwacji jest naprawdę pokryte pieniędzmi na koncie — przydział z kolejki
-   * (najbliższy termin pierwszy), nie procent od oka. Rozliczona ma tu pełną kwotę.
-   */
+  /** Suma wpłat na cel (zgłoszenie #23). Rozliczona ma tu pełną kwotę. */
   readonly collected: number;
   readonly status: ReservationStatus;
   /** Data wskazanej wypłaty; `null`, gdy nierozliczona. */
   readonly settledOn: string | null;
   readonly settledTransactionId: string | null;
+  /** Wpłaty od najnowszej — lista z „Wycofaj” w dialogu wpłaty. */
+  readonly contributions: SavingsContribution[];
+}
+
+/** Umowna wpłata na cel — pieniądze zostają na koncie oszczędnościowym. */
+export interface SavingsContribution {
+  readonly id: string;
+  readonly date: string;
+  readonly amount: number;
 }
 
 /** Odpowiednik SavingsReservationsResponse. */
@@ -30,17 +36,18 @@ export interface ReservationsResponse {
    * i bez odsetek. Ekran musi to powiedzieć wprost.
    */
   readonly accountBalance: number;
-  /** Suma kwot WSZYSTKICH rezerwacji, także rozliczonych. */
+  /** Suma kwot rezerwacji NIEROZLICZONYCH. */
   readonly reservedTotal: number;
   readonly settledTotal: number;
+  /** Suma wpłat na rezerwacje nierozliczone. */
   readonly collectedTotal: number;
+  /** Ile jeszcze da się wpłacić na cele: stan konta minus wpłaty na nierozliczone. */
+  readonly availableToContribute: number;
   /**
    * `accountBalance − reservedTotal`. Może być ujemne — wtedy ekran pokazuje osobny stan
    * „rezerwacje przekraczają stan konta o X", a nie minus w kaflu.
    *
-   * ⚠️ Rozliczenie tej liczby NIE zmienia i to jest decyzja, nie przeoczenie: koperta jest
-   * ROCZNA (makieta 147:96 odejmuje też rozliczoną rezerwację). Ekran musi to wytłumaczyć,
-   * inaczej użytkownik rozliczy ubezpieczenie, zobaczy zero zmiany i uzna to za błąd.
+   * Rozliczona rezerwacja przestaje ją pomniejszać (zgłoszenie #23) — zapłacony zakup zszedł już ze stanu konta.
    */
   readonly freeFunds: number;
   /**

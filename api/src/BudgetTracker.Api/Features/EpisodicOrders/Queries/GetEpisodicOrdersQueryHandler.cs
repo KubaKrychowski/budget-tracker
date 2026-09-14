@@ -9,9 +9,8 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Queries;
 /// <summary>Ekran „Zlecenia epizodyczne” — zaplanowane i zrealizowane jednego budżetu.</summary>
 /// <remarks>
 /// <para>
-/// ⚠️ „Uzbierane” bierzemy z <see cref="GetSavingsReservationsQueryHandler"/>, a nie liczymy tu drugi raz. Przydział
-/// zależy od CAŁEJ kolejki rezerwacji i stanu konta oszczędnościowego — policzony osobno rozjechałby się z ekranem
-/// rezerwacji przy pierwszej zmianie reguły kolejki.
+/// ⚠️ „Uzbierane” bierzemy z <see cref="GetSavingsReservationsQueryHandler"/>, a nie liczymy tu drugi raz — policzone
+/// osobno rozjechałoby się z ekranem rezerwacji przy pierwszej zmianie reguły liczenia.
 /// </para>
 /// <para>
 /// ⚠️ Zrealizowane zlecenie, którego transakcji już nie ma (usunięta, reset budżetu), nie jest pokazywane ani

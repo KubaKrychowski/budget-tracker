@@ -20,7 +20,7 @@ export interface EpisodicOrderRow {
   /** Tylko takie zrealizowane da się cofnąć do zaplanowanych. */
   readonly wasPlanned: boolean;
   readonly reservationId: string | null;
-  /** Uzbierane w rezerwacji — przydział z kolejki, jak na ekranie rezerwacji. */
+  /** Uzbierane w rezerwacji — suma ręcznych wpłat, jak na ekranie rezerwacji. */
   readonly collected: number | null;
 }
 

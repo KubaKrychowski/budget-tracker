@@ -6,6 +6,9 @@ using BudgetTracker.Api.Features.EpisodicOrders.Contracts;
 using BudgetTracker.Api.Features.EpisodicOrders.Exceptions;
 using BudgetTracker.Api.Features.EpisodicOrders.Queries;
 using BudgetTracker.Api.Features.EpisodicOrders.Services;
+using BudgetTracker.Api.Features.Savings.Commands;
+using BudgetTracker.Api.Features.Savings.Contracts;
+using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Features.Savings.Queries;
 using BudgetTracker.Api.Features.Savings.Services;
 using BudgetTracker.Api.Features.Transactions.Consts;
@@ -80,7 +83,10 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
     private PurchaseEpisodicOrderCommandHandler Purchase() => new(_db, Lookup(), Transactions(), Scope());
 
     private GetEpisodicOrdersQueryHandler Query() =>
-        new(_db, Scope(), new GetSavingsReservationsQueryHandler(_db, new SavingsBudgetScope(_db, _clock), new SavingsCategory(_db)));
+        new(_db, Scope(), new GetSavingsReservationsQueryHandler(_db, new SavingsBudgetScope(_db, _clock), new SavingsAccount(_db, new SavingsCategory(_db))));
+
+    private ContributeToReservationCommandHandler Contribute() =>
+        new(_db, new ReservationLookup(_db), new SavingsAccount(_db, new SavingsCategory(_db)), new SavingsBudgetScope(_db, _clock));
 
     private GetEpisodicOrderCandidatesQueryHandler Candidates() => new(_db, Scope(), Lookup(), Transactions());
 
@@ -126,7 +132,7 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Zakup_bez_terminu_jest_na_koncu_listy_a_jego_cel_zbiera_po_rezerwacjach_z_terminem()
+    public async Task Zakup_bez_terminu_jest_na_koncu_listy_a_jego_cel_to_rezerwacja_przy_okazji()
     {
         Add(new DateOnly(2026, 8, 5), -3000m, "PRZELEW NA OSZCZEDNOSCI", _savings);
         await _db.SaveChangesAsync();
@@ -139,8 +145,8 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
         var screen = await ScreenAsync();
         Assert.Equal(["Nowy laptop", "Rower"], screen.Planned.Select(r => r.Name));
         Assert.Null(screen.Planned[1].DueMonth);
-        // 3000 zł na koncie: najpierw pełne 2500 dla zakupu z terminem, reszta dla „przy okazji”.
-        Assert.Equal((2500m, 500m), (screen.Planned[0].Collected!.Value, screen.Planned[1].Collected!.Value));
+        // Założenie celu niczego nie wpłaca (#23) — uzbierane rośnie dopiero z wpłatami.
+        Assert.Equal((0m, 0m), (screen.Planned[0].Collected!.Value, screen.Planned[1].Collected!.Value));
         Assert.Null((await _db.SavingsReservations.AsNoTracking().SingleAsync(r => r.Name == "Rower")).DueMonth);
     }
 
@@ -196,10 +202,18 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
         var reservation = await _db.SavingsReservations.AsNoTracking().SingleAsync();
         Assert.Equal(("Laptop", 3500m, new DateOnly(2026, 12, 1)), (reservation.Name, reservation.Amount, reservation.DueMonth));
 
+        var reservationId = (await _db.SavingsReservations.AsNoTracking().SingleAsync()).BusinessId;
+        await Contribute().ContributeAsync(reservationId, new ContributeRequestDto(1500m), default);
+
         var screen = await ScreenAsync();
         var row = Assert.Single(screen.Planned);
-        Assert.Equal(1800m, row.Collected);
-        Assert.Equal((1800m, 3500m, 0), (screen.CollectedTotal, screen.ReservedTotal, screen.WithoutSavingsCount));
+        Assert.Equal(1500m, row.Collected);
+        Assert.Equal((1500m, 3500m, 0), (screen.CollectedTotal, screen.ReservedTotal, screen.WithoutSavingsCount));
+
+        // Planu nie da się obniżyć poniżej tego, co już wpłacono na jego rezerwację.
+        _db.ChangeTracker.Clear();
+        await Assert.ThrowsAsync<ReservationAmountBelowContributedException>(
+            () => Update().HandleAsync(order.Id, Laptop(amount: 1000m), default));
     }
 
     [Fact]

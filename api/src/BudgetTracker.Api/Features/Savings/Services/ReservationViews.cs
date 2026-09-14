@@ -13,18 +13,14 @@ public static class ReservationViews
         : r.DueMonth is { } due && due < currentMonth ? ReservationStatus.Overdue
         : ReservationStatus.Collecting;
 
-    /// <summary>
-    /// Widok POJEDYNCZEJ rezerwacji, zwracany po zapisie.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <c>Collected</c> jest tu zerowe dla nierozliczonej i to jest świadome: przydział
-    /// zależy od CAŁEJ kolejki, więc policzony dla jednego wiersza byłby zgadywanką. Front
-    /// po zapisie i tak przeładowuje listę — tam liczba jest prawdziwa.
-    /// </remarks>
+    /// <summary>Widok jednej rezerwacji: uzbierane to suma wpłat, a rozliczona ma pełną kwotę.</summary>
     public static SavingsReservationResponseDto Single(SavingsReservation r, DateOnly currentMonth) =>
         new(r.BusinessId, r.Name, r.Amount, r.DueMonth,
-            r.SettledAt is not null ? r.Amount : 0m,
+            r.SettledAt is not null ? r.Amount : r.Contributed,
             StatusOf(r, currentMonth),
             r.SettledAt is { } settled ? DateOnly.FromDateTime(settled.UtcDateTime.Date) : null,
-            r.SettledTransactionBusinessId);
+            r.SettledTransactionBusinessId,
+            [.. r.Contributions
+                .OrderByDescending(c => c.Date)
+                .Select(c => new SavingsContributionResponseDto(c.Id, c.Date, c.Amount))]);
 }
