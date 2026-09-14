@@ -60,13 +60,18 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
         var ofBudget = db.Transactions.Where(t => t.BudgetBusinessId == selectedBudgetBusinessId);
         var inRange = ofBudget.Where(t => t.Date >= from && t.Date <= to);
 
-        var totalExpenses = -await inRange.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
-        var totalIncome = await inRange.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        // Przelewy do/z powiązanego budżetu oszczędnościowego (SavingsTransferMatcher) pomijają się
+        // z sum wydatków/przychodów — nie są realnym ruchem majątku. Bilans (BuildBudgetProgressAsync)
+        // liczy się z `ofBudget`, nie z tej zmiennej, i ich celowo NIE pomija.
+        var forTotals = inRange.Where(t => t.SavingsTransferBudgetBusinessId == null);
 
-        var namedCategories = await SpendByNamedCategoryAsync(inRange, ct);
-        var byCategory = await WithUncategorizedAsync(namedCategories, inRange, ct);
+        var totalExpenses = -await forTotals.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        var totalIncome = await forTotals.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
 
-        var largest = await inRange.Where(t => t.Amount < 0)
+        var namedCategories = await SpendByNamedCategoryAsync(forTotals, ct);
+        var byCategory = await WithUncategorizedAsync(namedCategories, forTotals, ct);
+
+        var largest = await forTotals.Where(t => t.Amount < 0)
             .OrderBy(t => t.Amount)
             .Select(t => new { t.Description, t.Amount })
             .FirstOrDefaultAsync(ct);

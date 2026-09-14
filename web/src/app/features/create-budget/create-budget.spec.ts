@@ -90,6 +90,7 @@ describe('CreateBudget', () => {
       name: 'Wrzesień',
       currency: 'PLN',
       initialBalance: 2500.5,
+      linkedSavingsBudgetName: null,
     });
 
     request.flush({ id: 'a1000000-0000-4000-8000-000000000001', name: 'Wrzesień', month: '2026-09-01', currency: 'PLN', initialBalance: 2500.5 });

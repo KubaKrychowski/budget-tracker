@@ -398,6 +398,13 @@
                 <td>{{ item.categoryName ?? ('transactions.filters.uncategorized' | translate) }}</td>
                 <td>
                   <nz-badge [nzStatus]="statusBadge(item.status)" [nzText]="item.status | enumTranslate: 'transactionStatus'" />
+                  <!-- Wzorem #10 (propozycja, node-id=243-8027): drugi znacznik pod statusem,
+                       kropka spięta z tokenem Secondary/500 — jedynym nieużywanym dziś przez
+                       Badge/Status, żeby nie kolidował z error/warn/success/processing/default. -->
+                  @if (item.savingsTransferBudgetId) {
+                    <nz-badge nzStatus="default" class="tx__transfer-badge"
+                      [nzText]="'transactions.savingsTransfer.badge' | translate" />
+                  }
                 </td>
                 <td class="tx__episodic" [title]="item.episodicOrderName ?? ''">{{ item.episodicOrderName ?? '—' }}</td>
                 <td class="tx__right amount" [style.color]="amountColor(item.amount)">
@@ -441,6 +448,14 @@
               ) | translate
             }}
           </li>
+          <!-- „Odepnij transfer" (#10, propozycja) — tylko na wierszach już sparowanych z
+               powiązanym budżetem oszczędnościowym, wzorem stanu-zależnej pozycji wyżej. -->
+          @if (menuRow()?.savingsTransferBudgetId) {
+            <li nz-menu-item tabindex="0"
+              (click)="unpinSavingsTransferMenuRow()" (keydown.enter)="unpinSavingsTransferMenuRow()">
+              {{ 'transactions.rowMenu.unpinSavingsTransfer' | translate }}
+            </li>
+          }
           <!-- Usuwanie ostatnie — akcja nieodwracalna nie może sąsiadować z edycją. -->
           <li nz-menu-item nzDanger tabindex="0" (click)="deleteMenuRow()" (keydown.enter)="deleteMenuRow()">
             {{ 'transactions.rowMenu.delete' | translate }}

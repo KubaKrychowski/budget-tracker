@@ -103,6 +103,7 @@ describe('Transactions', () => {
     episodicOrderId: null,
     episodicOrderName: null,
     confidence: null,
+    savingsTransferBudgetId: null,
     ...over,
   });
 

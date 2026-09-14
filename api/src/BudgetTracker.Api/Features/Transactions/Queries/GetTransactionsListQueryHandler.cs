@@ -85,10 +85,13 @@ public sealed class GetTransactionsListQueryHandler(
     private static async Task<TransactionSummaryResponseDto> BuildSummaryAsync(
         IQueryable<Transaction> filtered, CancellationToken ct)
     {
-        var expenses = filtered.Where(t => t.Amount < 0);
+        // Przelewy do/z powiązanego budżetu oszczędnościowego zostają w `items` (historia 1:1 z bankiem),
+        // ale pomijają się z kafli podsumowania — nie są realnym ruchem majątku.
+        var counted = filtered.Where(t => t.SavingsTransferBudgetBusinessId == null);
+        var expenses = counted.Where(t => t.Amount < 0);
 
         var totalExpenses = -await expenses.SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
-        var totalIncome = await filtered.Where(t => t.Amount > 0)
+        var totalIncome = await counted.Where(t => t.Amount > 0)
             .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
 
         var largestExpense = await expenses.MinAsync(t => (decimal?)t.Amount, ct) ?? 0m;

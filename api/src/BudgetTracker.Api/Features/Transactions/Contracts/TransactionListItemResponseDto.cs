@@ -10,6 +10,10 @@ namespace BudgetTracker.Api.Features.Transactions.Contracts;
 /// <param name="EpisodicOrderName">
 /// Zlecenie epizodyczne, które ta transakcja zrealizowała — kolumna „Epizodyczne” (dawniej flaga „duży wydatek”).
 /// </param>
+/// <param name="SavingsTransferBudgetId">
+/// Budżet oszczędnościowy, z którym ta transakcja jest transferem — <c>null</c>, gdy nie jest.
+/// Znacznik „Transfer" i akcja „Odepnij" w menu wiersza pokazują się TYLKO, gdy to pole nie jest null.
+/// </param>
 public sealed record TransactionListItemResponseDto(
     Guid Id,
     DateOnly Date,
@@ -20,4 +24,5 @@ public sealed record TransactionListItemResponseDto(
     string Status,
     Guid? EpisodicOrderId,
     string? EpisodicOrderName,
-    decimal? Confidence);
+    decimal? Confidence,
+    Guid? SavingsTransferBudgetId);

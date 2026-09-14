@@ -109,6 +109,8 @@ describe('Settings', () => {
     status: 'active',
     disabledAt: null,
     deletedAt: null,
+    linkedSavingsBudgetId: null,
+    savingsTransferRules: [],
     ...over,
   });
 
@@ -406,6 +408,6 @@ describe('Settings', () => {
     expect(actions).not.toContain('disable');
     // Wyłączony budżet dalej daje się edytować, resetować i usuwać — blokada dotyczy
     // wyłącznie dopisywania nowych danych.
-    expect(actions).toEqual(['edit', 'enable', 'reset', 'delete']);
+    expect(actions).toEqual(['edit', 'savingsLink', 'enable', 'reset', 'delete']);
   });
 });

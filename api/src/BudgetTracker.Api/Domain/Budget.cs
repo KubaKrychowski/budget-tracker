@@ -43,6 +43,31 @@ public class Budget(
     public DateTimeOffset CreatedAt { get; protected set; } = createdAt;
 
     /// <summary>
+    /// Budżet oszczędnościowy powiązany z tym budżetem — osobny wiersz, osobny import, ale reguły
+    /// transferu (<see cref="SavingsTransferRules"/>) rozpoznają na TYM budżecie własne transakcje
+    /// będące przelewem do/z niego i wykluczają je z sum wydatków/przychodów.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Jednokierunkowe: wskazuje z budżetu głównego na oszczędnościowy, nie odwrotnie — jedno źródło
+    /// prawdy zamiast dwóch pól do synchronizowania. Zwykła kolumna z publicznym identyfikatorem,
+    /// bez relacji EF (wzorem <see cref="Transaction.BudgetBusinessId"/>).
+    /// </remarks>
+    public Guid? LinkedSavingsBudgetBusinessId { get; protected set; }
+
+    /// <summary>
+    /// Reguły rozpoznające własne transakcje tego budżetu będące transferem do/z
+    /// <see cref="LinkedSavingsBudgetBusinessId"/>. Transakcja jest transferem, gdy pasuje do
+    /// KTÓREJKOLWIEK reguły, niezależnie od znaku kwoty — jedna reguła łapie oba kierunki.
+    /// </summary>
+    public List<TitleAmountRule> SavingsTransferRules { get; protected set; } = [];
+
+    /// <summary>Ustawia albo zdejmuje powiązanie z budżetem oszczędnościowym; <c>null</c> = brak.</summary>
+    public void LinkSavingsBudget(Guid? linkedBudgetBusinessId) => LinkedSavingsBudgetBusinessId = linkedBudgetBusinessId;
+
+    /// <summary>Podmienia reguły transferu w całości — nowa lista, nie edycja w miejscu (kolumna jsonb).</summary>
+    public void ReplaceSavingsTransferRules(IReadOnlyCollection<TitleAmountRule> rules) => SavingsTransferRules = [.. rules];
+
+    /// <summary>
     /// Kiedy budżet wyłączono; <c>null</c> = aktywny.
     /// </summary>
     /// <remarks>

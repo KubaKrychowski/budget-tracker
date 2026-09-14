@@ -61,7 +61,7 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
     private UpdateBudgetCommandHandler Update() => new(_db, Lookup(), Reader());
     private SetBudgetEnabledCommandHandler SetEnabled() => new(_db, Lookup(), Reader(), _clock);
     private ResetBudgetCommandHandler Reset() => new(_db, Lookup(), Children(), Reader(), _clock);
-    private DeleteBudgetCommandHandler Delete() => new(_db, Lookup(), Children(), _clock);
+    private DeleteBudgetCommandHandler Delete() => new(_db, Lookup(), Children(), new SavingsTransferMatcher(_db), _clock);
     private RestoreBudgetCommandHandler Restore() => new(_db, Lookup(), Children(), Reader());
     private PurgeDeletedBudgetsCommandHandler Purge() => new(
         new BudgetPurger(_db), Options.Create(_options), _clock,

@@ -14,8 +14,14 @@ namespace BudgetTracker.Api.Features.Budgets;
 
 /// <summary>Rejestracja DI i endpointy feature'a budżetów — Program.cs tylko woła te metody (CLAUDE.md §4).</summary>
 /// <remarks>
+/// <para>
 /// Endpointy NIE łapią wyjątków: „nieznany BusinessId = 404" i „pusta nazwa = 400" rozstrzyga
 /// <c>DomainExceptionHandler</c>. Kody, które z tego wynikają, deklaruje <c>Produces</c>.
+/// </para>
+/// <para>
+/// „Odepnij" transfer adresuje TRANSAKCJĘ, nie budżet — transakcja jest przypięta do jednego
+/// powiązania naraz (wzorem zleceń stałych).
+/// </para>
 /// </remarks>
 public static class BudgetsModule
 {
@@ -27,6 +33,7 @@ public static class BudgetsModule
         services.AddScoped<BudgetChildren>();
         services.AddScoped<BudgetListItemReader>();
         services.AddScoped<BudgetPurger>();
+        services.AddScoped<SavingsTransferMatcher>();
 
         services.AddScoped<CreateBudgetCommandHandler>();
         services.AddScoped<UpdateBudgetCommandHandler>();
@@ -34,6 +41,8 @@ public static class BudgetsModule
         services.AddScoped<ResetBudgetCommandHandler>();
         services.AddScoped<DeleteBudgetCommandHandler>();
         services.AddScoped<RestoreBudgetCommandHandler>();
+        services.AddScoped<UpdateSavingsLinkCommandHandler>();
+        services.AddScoped<UnpinSavingsTransferCommandHandler>();
 
         services.AddScoped<GetBudgetsListQueryHandler>();
         services.AddScoped<GetAvailableCurrenciesQueryHandler>();
@@ -153,6 +162,26 @@ public static class BudgetsModule
                 return Results.NoContent();
             })
             .WithName("DeleteBudget")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapPut("/api/budgets/{businessId:guid}/savings-link", async (
+                Guid businessId,
+                UpdateSavingsLinkRequestDto request,
+                UpdateSavingsLinkCommandHandler handler,
+                CancellationToken ct) => Results.Ok(await handler.HandleAsync(businessId, request, ct)))
+            .WithName("UpdateBudgetSavingsLink")
+            .Produces<SavingsLinkSavedResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapDelete("/api/budgets/savings-transfer/pins/{transactionId:guid}", async (
+                Guid transactionId, UnpinSavingsTransferCommandHandler handler, CancellationToken ct) =>
+            {
+                await handler.HandleAsync(transactionId, ct);
+                return Results.NoContent();
+            })
+            .WithName("UnpinSavingsTransfer")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound);
 

@@ -499,6 +499,44 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   budżetu. Oznacza je tagiem i gasi kafle dopisujące dane. Ukrycie ich byłoby cichym
 >   skasowaniem widoku na przeszłość.
 
+> **REWIZJA — 2026-09-14: powiązany budżet oszczędnościowy** (zgłoszenie #10). Pierwsza wersja tego
+> zadania próbowała rozwiązać „dwa konta w jednym budżecie" nową encją `Account` biorącą udział
+> w imporcie i parowaniem transakcji między dwoma kontami. User to odrzucił — zbyt duża konstrukcja
+> wbrew zasadzie „budżet to zbiór reguł grupowania zaimportowanych transakcji". Konto **nadal nie
+> bierze udziału w imporcie** (rewizja z §6 zostaje w mocy) — poniższe podejście jej nie odwraca.
+>
+> - **Konto oszczędnościowe importuje się jako OSOBNY budżet**, dokładnie dzisiejszym mechanizmem
+>   („kolejny budżet, kolejny CSV") — zero zmian w `CommitImportCommandHandler` po stronie zapisu wierszy.
+>   `Budget.LinkedSavingsBudgetBusinessId` (bez FK, jednokierunkowo z głównego na oszczędnościowy)
+>   łączy oba budżety. Ekran tworzenia budżetu ma opcję „Dodaj połączony budżet oszczędnościowy",
+>   zakładającą oba budżety jedną operacją.
+> - **Reguła transferu (`Budget.SavingsTransferRules`, jsonb) rozpoznaje WŁASNE transakcje budżetu
+>   głównego** będące przelewem do/z powiązanego — ten sam kształt co `StandingOrderRule` (tytuł
+>   zawiera frazę + zakres kwoty, „lub"), świadomie NIE rozszerza `StandingOrder`: rytm i „czy zeszło
+>   w tym miesiącu" nie mają tu zastosowania. ⚠️ W odróżnieniu od zleceń stałych dopasowanie działa
+>   na WARTOŚCI BEZWZGLĘDNEJ i **niezależnie od znaku kwoty** — transfer do oszczędności jest
+>   wydatkiem, powrotny przychodem, jedna reguła łapie oba kierunki.
+> - **Przypięcie (`Transaction.SavingsTransferBudgetBusinessId`) NIE zmienia kategorii ani opisu** —
+>   historia zostaje 1:1 z bankiem. Wyklucza transakcję z `totalExpenses`/`totalIncome`/rozbicia po
+>   kategoriach na dashboardzie i liście transakcji. **Bilans budżetu — bez zmian, świadomie**:
+>   przelew i tak jest realną operacją na koncie, a wykluczenie zepsułoby stan na dzień, w którym
+>   tylko jedna noga pary mieści się w oknie dat.
+> - **Deduplikacja importu nie wymagała zmian.** Ryzyko z issue („zasięg dedup: budżet czy konto")
+>   okazało się nieaktualne — `IdentityKey()` formatuje kwotę ZE ZNAKIEM, więc -1500 i +1500 tej
+>   samej pary transferowej nigdy nie mają tego samego klucza.
+> - **`SavingsAccount.BalanceAsync` naprawiony przy okazji.** Fallback po kategorii „Oszczędności"
+>   (reguła na słowo „przeniesien") liczy wpłaty i wypłaty ze znakiem, ale w praktyce łapał tylko
+>   wpłaty — wypłaty z konta oszczędnościowego mają inny opis, więc nigdy nie dostawały tej kategorii,
+>   a licznik rósł bez końca. Budżet z powiązaniem czyta teraz PRAWDZIWY bilans budżetu
+>   oszczędnościowego (`InitialBalance` + suma jego transakcji) — fallback zostaje wyłącznie dla
+>   budżetów bez powiązania.
+> - **Usunięcie powiązanego budżetu oszczędnościowego czyści link i reguły na budżecie głównym** —
+>   inaczej zostałoby martwe wskazanie na budżet, którego nie widać. Przywrócenie usuniętego budżetu
+>   NIE oddaje powiązania: user wskazuje je ponownie świadomie.
+>
+> Poza zakresem: integracja z celem oszczędnościowym (#7) — `MonthlyTotalsAsync` w `GetSavingsQueryHandler`
+> dalej czyta „odłożone"/„wypłacone" z kategorii, nie z powiązanego budżetu; to osobne zadanie.
+
 ---
 
 ## 6. Przepływ importu + mapowanie
