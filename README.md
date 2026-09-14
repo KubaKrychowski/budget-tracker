@@ -3,8 +3,9 @@
 Osobisty tracker wydatków: import CSV z banków → kategoryzacja (reguły + ML) → dashboard
 „gdzie ucieka kasa". Single-user MVP.
 
-Decyzje projektowe, model domenowy i zakres etapów żyją w **[CLAUDE.md](CLAUDE.md)** — to źródło
-prawdy, nie ten plik. README opisuje wyłącznie, jak to uruchomić.
+Decyzje projektowe, model domenowy i zakres etapów żyją w **[DECISIONS.md](DECISIONS.md)** — to źródło
+prawdy, nie ten plik. Instrukcje pracy dla agentów: [CLAUDE.md](CLAUDE.md), [api/CLAUDE.md](api/CLAUDE.md),
+[web/CLAUDE.md](web/CLAUDE.md). README opisuje wyłącznie, jak to uruchomić.
 
 ## Stack
 
@@ -60,7 +61,7 @@ Jeśli dostajesz błąd połączenia, prawie zawsze znaczy to, że kontener nie 
 
 ## Dane modelu kategoryzacji
 
-Kategoryzacja działa hybrydowo: **reguły + model ML** (CLAUDE.md §3). Reguły i taksonomia
+Kategoryzacja działa hybrydowo: **reguły + model ML** (DECISIONS.md §3). Reguły i taksonomia
 seedują się same przy starcie — model wymaga danych, których **nie ma w repozytorium**.
 
 Katalog `data/` to **konfiguracja środowiska**, tak samo jak connection string. Trzyma:
@@ -111,7 +112,7 @@ W Claude Code to samo robi `/verify`.
 - **Migracji EF Core** — pierwsza powstanie razem z pierwszymi encjami (slice importu), nie na zapas.
 - **Kodu w `Features/`** — foldery są puste. Vertical slice znaczy, że feature powstaje w całości,
   gdy go ciągniemy; puste rusztowanie „na przyszłość" to dokładnie to, czego ten projekt unika.
-- **Wyboru fontu** — kandydaci (IBM Plex Sans / Inter) czekają na decyzję, patrz CLAUDE.md §7.
+- **Wyboru fontu** — kandydaci (IBM Plex Sans / Inter) czekają na decyzję, patrz DECISIONS.md §7.
   Klasa `.tnum` na cyfry tabelaryczne w kolumnach kwot już jest w `web/src/styles.scss`.
 
 ## Dane
