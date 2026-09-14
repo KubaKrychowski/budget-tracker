@@ -46,7 +46,9 @@ import { BudgetOption } from '../api/models/budget-option';
     </div>
   `,
   styles: `
-    .bsw { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+    /* Bez marginesów — odstęp ustala ekran: na celach to wiersz pod okruszkami, na limitach wnętrze karty „Konfiguracja". */
+    :host { display: block; }
+    .bsw { display: flex; align-items: center; gap: 12px; }
     .bsw__label { white-space: nowrap; }
     .bsw__control { min-width: 240px; }
   `,

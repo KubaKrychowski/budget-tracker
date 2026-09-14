@@ -1,6 +1,10 @@
 .res {
   padding: 16px 24px 48px;
 
+  &__switcher {
+    margin: 16px 0;
+  }
+
   &__head {
     display: flex;
     flex-wrap: wrap;
