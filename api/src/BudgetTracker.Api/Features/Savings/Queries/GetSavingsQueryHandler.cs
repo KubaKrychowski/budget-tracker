@@ -37,7 +37,22 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
         if (selected.Count == 0)
         {
             return new SavingsResponseDto(
-                null, [], EmptyMonth(currentMonth, null), 0, 0m, null, false, false, [], budgets);
+                null, [], EmptyMonth(currentMonth, null), 0, 0m, null, false, false, [], budgets,
+                HasLinkedSavingsBudget: false);
+        }
+
+        // ⚠️ Bez powiązanego budżetu oszczędnościowego (#10) nie ma z czego policzyć „odłożone" —
+        // ekran blokuje wejście zamiast liczyć dawny fallback po kategorii „Oszczędności", którego
+        // świadomie już tu nie wołamy (decyzja użytkownika: liczyć „do wypłaty" wymaga osobnego
+        // zadania na wynagrodzenia, którego jeszcze nie ma).
+        var hasLink = await db.Budgets
+            .Where(b => selected.Contains(b.BusinessId) && b.LinkedSavingsBudgetBusinessId != null)
+            .AnyAsync(ct);
+        if (!hasLink)
+        {
+            return new SavingsResponseDto(
+                null, [], EmptyMonth(currentMonth, null), 0, 0m, null, false, false, selected, budgets,
+                HasLinkedSavingsBudget: false);
         }
 
         var goals = await db.SavingsGoals
@@ -74,7 +89,8 @@ public sealed class GetSavingsQueryHandler(AppDbContext db, SavingsBudgetScope s
             HasAnyEpisodicExpense: months.Any(m => m.OneOffCount > 0),
             HasAnySavings: months.Any(m => m.Deposited > 0),
             SelectedBudgetIds: selected,
-            Budgets: budgets);
+            Budgets: budgets,
+            HasLinkedSavingsBudget: true);
     }
 
     /// <summary>

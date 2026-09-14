@@ -576,6 +576,11 @@
         "title": "Nie masz jeszcze żadnego zrealizowanego zlecenia epizodycznego.",
         "body": "Bez jednorazowych wydatków nie odróżnię trudnego miesiąca od zwykłego, więc dowód nie powstanie. Oznacz je na liście transakcji albo dodaj na ekranie zleceń epizodycznych.",
         "cta": "Przejdź do zleceń epizodycznych"
+      },
+      "needsLink": {
+        "title": "Ten budżet nie ma powiązanego budżetu oszczędnościowego.",
+        "body": "Bez powiązania nie mam skąd wziąć odłożone — zaimportuj konto oszczędnościowe jako osobny budżet i połącz je w ustawieniach.",
+        "cta": "Przejdź do ustawień"
       }
     },
     "noSavingsSeen": {

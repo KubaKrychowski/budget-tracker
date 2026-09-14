@@ -21,6 +21,11 @@ namespace BudgetTracker.Api.Features.Savings.Contracts;
 /// zamiast pokazywać zero jako fakt (patrz ryzyko „przed #10" w planie).
 /// </param>
 /// <param name="Budgets">Budżety do przełącznika nad ekranem — patrz <see cref="SavingsBudgetOptionResponseDto"/>.</param>
+/// <param name="HasLinkedSavingsBudget">
+/// Czy przynajmniej jeden z <see cref="SelectedBudgetIds"/> ma powiązany budżet oszczędnościowy (#10).
+/// <c>false</c> blokuje ekran (front pokazuje stan „brak powiązania") zamiast liczyć dawny fallback
+/// po kategorii „Oszczędności" — do czasu osobnego zadania na wynagrodzenia/bilans-do-wypłaty.
+/// </param>
 public sealed record SavingsResponseDto(
     SavingsGoalResponseDto? Goal,
     IReadOnlyList<SavingsMonthResponseDto> Months,
@@ -31,4 +36,5 @@ public sealed record SavingsResponseDto(
     bool HasAnyEpisodicExpense,
     bool HasAnySavings,
     IReadOnlyList<Guid> SelectedBudgetIds,
-    IReadOnlyList<SavingsBudgetOptionResponseDto> Budgets);
+    IReadOnlyList<SavingsBudgetOptionResponseDto> Budgets,
+    bool HasLinkedSavingsBudget);

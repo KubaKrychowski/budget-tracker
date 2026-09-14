@@ -67,6 +67,7 @@ describe('Savings', () => {
       { id: 'b1', name: 'Budżet domowy', month: '2026-11-01', disabled: false },
       { id: 'b2', name: 'Wariant', month: '2026-10-01', disabled: false },
     ],
+    hasLinkedSavingsBudget: true,
     ...over,
   });
 
@@ -143,6 +144,11 @@ describe('Savings', () => {
           missed: {
             title: 'W {{month}} zabrakło {{missing}} zł do celu.',
             body: 'Doszło {{oneOff}} zł jednorazowych. To informacja, nie ocena.',
+          },
+          needsLink: {
+            title: 'Ten budżet nie ma powiązanego budżetu oszczędnościowego.',
+            body: 'Bez powiązania nie mam skąd wziąć „odłożone".',
+            cta: 'Przejdź do ustawień',
           },
         },
         noSavingsSeen: {
@@ -258,6 +264,17 @@ describe('Savings', () => {
 
     expect(text()).toContain('Nie masz jeszcze celu');
     expect(text()).not.toContain('zabrakło');
+  });
+
+  it('bez powiązanego budżetu oszczędnościowego blokuje ekran zamiast liczyć cokolwiek (#10)', async () => {
+    // Bez powiązania nie ma skąd wziąć „odłożone" — ekran ma to powiedzieć wprost, zamiast
+    // pokazywać dawny fallback po kategorii „Oszczędności" (decyzja użytkownika).
+    await settle(response({ hasLinkedSavingsBudget: false, goal: null, months: [] }));
+
+    expect(text()).toContain('nie ma powiązanego budżetu oszczędnościowego');
+    expect(text()).toContain('Przejdź do ustawień');
+    // Stan „brak celu" normalnie pokazałby się dla `goal: null` — bramka ma go zasłonić.
+    expect(text()).not.toContain('Nie masz jeszcze celu');
   });
 
   it('bez zrealizowanych zleceń epizodycznych mówi, czego potrzebuje — nie „0 dowodów"', async () => {

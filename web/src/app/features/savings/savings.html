@@ -40,6 +40,25 @@
 
     <nz-spin [nzSpinning]="loading() || busy()">
 
+      <!-- Budżet bez powiązanego budżetu oszczędnościowego (#10) nie ma z czego liczyć „odłożone" —
+           dopóki nie ma zadania na wynagrodzenia/bilans-do-wypłaty, ekran świadomie NIE pokazuje
+           dawnego fallbacku po kategorii „Oszczędności": lepiej wprost powiedzieć „brak danych",
+           niż pokazać liczbę, której nikt nie sprawdził. -->
+      @if (needsLink()) {
+        <nz-empty
+          class="sav__banner"
+          [nzNotFoundContent]="needsLinkContent"
+        >
+          <ng-template #needsLinkContent>
+            <p>{{ 'savings.states.needsLink.title' | translate }}</p>
+            <p class="sav__needs-link-body">{{ 'savings.states.needsLink.body' | translate }}</p>
+            <a nz-button nzType="primary" class="sav__cta" routerLink="/settings">
+              {{ 'savings.states.needsLink.cta' | translate }}
+            </a>
+          </ng-template>
+        </nz-empty>
+      } @else {
+
       <!-- ── Baner ──────────────────────────────────────────────────────────────────────
            Ekran istnieje po to, żeby udowodnić JEDNO zdanie. Bez niego zostają same liczby,
            a liczby same z siebie nie zdejmują stresu. -->
@@ -385,6 +404,7 @@
         </div>
       </div>
 
+      }
     </nz-spin>
   }
 

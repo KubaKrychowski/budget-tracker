@@ -513,6 +513,11 @@
         "title": "You have no completed one-off orders yet.",
         "body": "Without one-off expenses I cannot tell a hard month from a normal one, so no proof can be made. Mark them on the transaction list or add them on the one-off orders screen.",
         "cta": "Go to one-off orders"
+      },
+      "needsLink": {
+        "title": "This budget has no linked savings budget.",
+        "body": "Without a link there's nowhere to read \"saved\" from — import your savings account as a separate budget and link it in settings.",
+        "cta": "Go to settings"
       }
     },
     "noSavingsSeen": {

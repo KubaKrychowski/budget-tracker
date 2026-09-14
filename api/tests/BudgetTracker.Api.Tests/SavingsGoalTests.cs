@@ -53,7 +53,15 @@ public sealed class SavingsGoalTests : IAsyncLifetime
         _db.Categories.AddRange(savings, food);
 
         var budget = new Budget("Podstawowy", new DateOnly(2026, 1, 1), 0m, default);
-        _db.Budgets.Add(budget);
+        // Ekran blokuje wejście bez powiązanego budżetu oszczędnościowego (#10) — te testy sprawdzają
+        // WERDYKT (liczony dziś dalej z kategorii, fallback do czasu osobnego zadania), więc potrzebują
+        // JAKIEGOKOLWIEK powiązania, żeby w ogóle minąć bramkę. Sam budżet oszczędnościowy zostaje pusty.
+        // ⚠️ Miesiąc WCZEŚNIEJSZY niż główny budżet — inaczej wygrywa `BudgetScope.Default` (ten sam
+        // miesiąc = remis rozstrzyga wyższe Id, czyli świeżo dołożony budżet oszczędnościowy), i testy
+        // wołające `HandleAsync(null, …)` policzyłyby się dla PUSTEGO budżetu zamiast dla fixture'a.
+        var savingsBudget = new Budget("Podstawowy — Oszczędności", new DateOnly(2025, 12, 1), 0m, default);
+        budget.LinkSavingsBudget(savingsBudget.BusinessId);
+        _db.Budgets.AddRange(budget, savingsBudget);
         await _db.SaveChangesAsync();
 
         _savingsCategoryId = savings.Id;
@@ -412,6 +420,37 @@ public sealed class SavingsGoalTests : IAsyncLifetime
         Assert.Equal(2, response.Months.Select(m => m.Goal).Distinct().Count());
     }
 
+    // ── Powiązanie budżetu oszczędnościowego (#10) ───────────────────────────────────────
+
+    [Fact]
+    public async Task Budzet_bez_powiazanego_budzetu_oszczednosciowego_blokuje_ekran()
+    {
+        // Bez powiązania nie ma skąd wziąć „odłożone" — ekran ma to powiedzieć wprost,
+        // zamiast liczyć dawny fallback po kategorii, którego świadomie już tu nie wołamy.
+        var unlinked = new Budget("Bez powiązania", new DateOnly(2026, 1, 1), 0m, default);
+        _db.Budgets.Add(unlinked);
+        await _db.SaveChangesAsync();
+
+        var response = await GetHandler().HandleAsync([unlinked.BusinessId], default);
+
+        Assert.False(response.HasLinkedSavingsBudget);
+        Assert.Null(response.Goal);
+        Assert.Empty(response.Months);
+    }
+
+    [Fact]
+    public async Task Budzet_z_powiazaniem_przechodzi_bramke()
+    {
+        // Fixture z InitializeAsync ma już powiązanie — to jest przypadek „normalny".
+        Goal(1500m, new DateOnly(2026, 1, 1));
+        await _db.SaveChangesAsync();
+
+        var response = await GetHandler().HandleAsync(null, default);
+
+        Assert.True(response.HasLinkedSavingsBudget);
+        Assert.NotNull(response.Goal);
+    }
+
     // ── Propozycja podniesienia celu ─────────────────────────────────────────────────────
 
     [Fact]
@@ -489,7 +528,11 @@ public sealed class SavingsGoalTests : IAsyncLifetime
 
         var response = await GetHandler().HandleAsync([_budgetId], default);
 
-        Assert.Equal(["Podstawowy", "Zamknięty"], response.Budgets.Select(b => b.Name));
+        // "Podstawowy — Oszczędności" to budżet powiązania z InitializeAsync (#10), starszy
+        // miesiąc niż "Podstawowy" i niż "Zamknięty" utworzony w tym teście (ten ma wyższe Id
+        // przy tym samym miesiącu, więc wygrywa `ThenByDescending(Id)`).
+        Assert.Equal(
+            ["Podstawowy", "Zamknięty", "Podstawowy — Oszczędności"], response.Budgets.Select(b => b.Name));
         Assert.True(response.Budgets.Single(b => b.Id == disabled.BusinessId).Disabled);
         Assert.Equal(_budgetId, Assert.Single(response.SelectedBudgetIds));
     }

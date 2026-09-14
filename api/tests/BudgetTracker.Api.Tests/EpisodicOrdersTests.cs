@@ -337,6 +337,14 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
     {
         var bought = Add(new DateOnly(2026, 8, 20), -1200m, "WARSZTAT");
         Add(new DateOnly(2026, 8, 21), -50m, "KAWA");
+        // Ekran celów blokuje wejście bez powiązanego budżetu oszczędnościowego (#10) — ten test
+        // sam odpytuje GetSavingsQueryHandler, więc potrzebuje JAKIEGOKOLWIEK powiązania. Lokalnie,
+        // nie w InitializeAsync: inne testy w tym pliku liczą dostępne środki z kategorii
+        // „Oszczędności" (SavingsAccount.BalanceAsync), a powiązanie przełączyłoby je na (pusty)
+        // bilans budżetu oszczędnościowego.
+        var savingsBudget = new Budget("Domowy — Oszczędności", new DateOnly(2025, 12, 1), 0m, _clock.GetUtcNow());
+        _budget.LinkSavingsBudget(savingsBudget.BusinessId);
+        _db.Budgets.Add(savingsBudget);
         await _db.SaveChangesAsync();
         await Create().HandleAsync(new SaveEpisodicOrderRequestDto(null, "Serwis auta", null, bought.BusinessId, null, null, null), default);
         _db.ChangeTracker.Clear();
