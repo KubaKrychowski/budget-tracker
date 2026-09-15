@@ -8,6 +8,8 @@ Zlecenie epizodyczne to zaplanowany, jednorazowy wydatek (np. „Nowy laptop") �
   z niej, nie z planu. Plan zostaje widoczny nawet po realizacji, żeby dało się cofnąć „do
   zaplanowanych", jeśli oznaczenie było pomyłką.
 
+![Zaplanowane zlecenia epizodyczne z paskiem postępu oszczędzania i menu akcji](handbook/images/episodic-orders-list.png)
+
 ### Realizację można oznaczyć z dwóch miejsc
 
 Z listy transakcji („Oznacz jako zrealizowane zlecenie") albo z samego ekranu zleceń. Oznaczenie z

@@ -3,6 +3,8 @@
 Limit ustawia się **na kategorię**, a miesięczny limit całego budżetu to po prostu suma limitów
 wszystkich kategorii — nie osobne pole do wypełnienia.
 
+![Limity kategorii z paskami wykorzystania; kreska na pasku to próg ostrzeżenia](handbook/images/limits-overview.png)
+
 ### Jak liczy się zużycie
 
 - Do limitu liczą się wszystkie wydatki z daną kategorią, także te oznaczone jako zlecenie

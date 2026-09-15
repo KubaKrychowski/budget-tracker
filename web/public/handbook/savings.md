@@ -3,6 +3,8 @@
 Ekran pokazuje stan konta oszczędnościowego, cel do niego przypisany oraz rezerwacje — kawałki tego
 stanu odłożone z myślą o konkretnym wydatku.
 
+![Cele oszczędzania: dowód celu, historia miesięcy oraz rezerwacje z wolnymi środkami](handbook/images/savings-overview.png)
+
 ### Warunek wejścia
 
 Ekran jest dostępny tylko dla budżetu, który ma **powiązany budżet oszczędnościowy** (patrz temat

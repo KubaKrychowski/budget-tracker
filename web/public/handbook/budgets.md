@@ -27,6 +27,8 @@ nie wystarcza do policzenia realnego stanu konta.
 
 ### Cykl życia budżetu (Ustawienia → Budżety)
 
+![Lista budżetów w Ustawieniach z otwartym menu akcji: Edytuj, Wyłącz, Zresetuj, Usuń](handbook/images/budgets-list.png)
+
 | Operacja | Co robi | Co zostaje |
 |---|---|---|
 | **Wyłączenie** | zamyka budżet na nowy import i nowe transakcje | wszystko, budżet nadal widoczny |

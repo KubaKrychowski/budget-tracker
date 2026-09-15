@@ -3,6 +3,8 @@
 Pulpit pokazuje stan wybranego budżetu na dziś oraz podsumowanie okresu, który ustawisz w polu
 „Okres" — domyślnie ostatnie 30 dni.
 
+![Pulpit: kafle podsumowania, podział wydatków na kategorie i wykres stanu budżetu](handbook/images/dashboard-overview.png)
+
 ### Co widać na kaflach
 
 - **Suma zaimportowanych wydatków i przychodów** w wybranym okresie.

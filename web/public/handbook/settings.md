@@ -20,3 +20,5 @@ Reguły kategoryzacji, które działają **przed** modelem uczenia maszynowego �
 opisu (albo typu operacji) do konkretnej kategorii, niezależnie od tego, czego nauczył się model.
 Przydają się do oczywistych, powtarzalnych przypadków (stały sprzedawca zawsze w tej samej
 kategorii) oraz do kategoryzowania przychodów, których model w ogóle nie ocenia.
+
+![Lista reguł predykatu posortowana priorytetem, z ostrzeżeniem o remisie priorytetów](handbook/images/settings-rules.png)

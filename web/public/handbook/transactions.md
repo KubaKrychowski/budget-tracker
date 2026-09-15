@@ -4,6 +4,8 @@ Lista transakcji jest **1:1 z tym, co przyszło z banku** — import nigdy nie z
 kwoty. Jedyna rzecz, którą aplikacja dopisuje, to kategoria (i ewentualne przypięcia: zlecenie
 stałe, zlecenie epizodyczne, transfer na budżet oszczędnościowy).
 
+![Lista transakcji z kategoriami, statusem dopasowania i masowymi akcjami dla zaznaczonych wierszy](handbook/images/transactions-list.png)
+
 ### Jak działa kategoryzacja
 
 Podejście jest hybrydowe: **reguły** łapią oczywiste przypadki (np. konkretny sprzedawca zawsze w

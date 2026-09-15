@@ -4,6 +4,8 @@ Zlecenie stałe to nazwany, powtarzający się wydatek (np. „Czynsz", „Abona
 fragment tytułu transakcji + zakres kwoty. Zakres, nie jedna kwota — żeby podwyżka czynszu nadal
 liczyła się jako ten sam czynsz.
 
+![Lista zleceń stałych z rytmem, statusem miesiąca i menu akcji (Zmień/Zakończ/Usuń)](handbook/images/standing-orders-list.png)
+
 ### Zlecenie tylko się przypina
 
 ⚠️ Dopasowanie **nie zmienia kategorii** transakcji — to świadoma decyzja, zgodna z zasadą, że

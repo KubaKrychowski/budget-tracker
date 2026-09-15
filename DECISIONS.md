@@ -642,6 +642,17 @@ z kwotami, żeby liczby wyrównywały się w pionie. Klasa `.tnum` / `.amount` c
 >   (`marked-katex-extension` + `katex` byłyby martwym kodem): `externalDependencies` w
 >   `angular.json` (`projects.web.architect.build.options`), zgodnie z podpowiedzią z komunikatu
 >   błędu esbuild. Gdyby kiedyś doszła obsługa LaTeX-a w podręczniku, to pierwsze miejsce do usunięcia.
+> - **Wyszukiwarka nad listą tematów filtruje po tytule I po treści** wszystkich 9 plików `.md`
+>   naraz (`forkJoin` przy starcie ekranu, `normalizeText` — ten sam mechanizm co wyszukiwarka
+>   akcji w nagłówku). Wyświetlanie nadal ładuje tylko jeden plik przez `<markdown [src]>` —
+>   ładowanie „do szukania" jest od tego niezależne.
+> - **Zrzuty ekranu w treści tematów pochodzą z pliku makiet Figma** (`75y55ipSEgD2YtzJ5z0uH4`),
+>   nie z uruchomionej aplikacji: `get_screenshot` na istniejącej ramce ekranu + `curl` na zwrócony
+>   URL, zapisane w `public/handbook/images/*.png`. Ekrany bez gotowej makiety (dziś: Import) nie
+>   mają zrzutu — dopisanie go wymaga najpierw makiety tego ekranu w Figmie, potem tego samego
+>   mechanizmu. ⚠️ Kilka węzłów w pliku ma mylące nazwy (np. `Lista transakcji` żyje pod węzłem
+>   nazwanym „Dashboard - ikona ustawień" — kopia z innego ekranu, nazwa nigdy nie została
+>   poprawiona) — przed użyciem nowego węzła zweryfikuj treścią zrzutu, nie samą nazwą.
 
 ### Motyw NG-ZORRO ↔ design system
 
