@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { ActiveBudget } from './active-budget';
+
+const STORAGE_KEY = 'budget-tracker:active-budget';
 
 /**
  * Budżet w widoku — reguła „adres wygrywa, gdy coś mówi; gdy milczy, obowiązuje budżet z widoku".
@@ -9,9 +11,12 @@ describe('ActiveBudget', () => {
   let active: ActiveBudget;
 
   beforeEach(() => {
+    localStorage.clear();
     TestBed.configureTestingModule({});
     active = TestBed.inject(ActiveBudget);
   });
+
+  afterEach(() => localStorage.clear());
 
   it('bez niczego w widoku i w adresie zostawia decyzję backendowi (pusta lista)', () => {
     expect(active.resolve([])).toEqual([]);
@@ -46,5 +51,32 @@ describe('ActiveBudget', () => {
     active.set(['domowy']);
     active.forget('inny');
     expect(active.ids()).toEqual(['domowy']);
+  });
+
+  it('#16: przy starcie odczytuje wybór zapamiętany w localStorage z poprzedniej sesji', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(['domowy']));
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    const restarted = TestBed.inject(ActiveBudget);
+    expect(restarted.resolve([])).toEqual(['domowy']);
+  });
+
+  it('#16: uszkodzony wpis w localStorage traktuje jak brak zapamiętanego wyboru', () => {
+    localStorage.setItem(STORAGE_KEY, '{nie json');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    const restarted = TestBed.inject(ActiveBudget);
+    expect(restarted.resolve([])).toEqual([]);
+  });
+
+  it('#16: zmiana budżetu w widoku zapisuje wybór do localStorage', () => {
+    active.set(['domowy']);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!)).toEqual(['domowy']);
+  });
+
+  it('#16: zapomnienie ostatniego budżetu z widoku czyści localStorage', () => {
+    active.set(['domowy']);
+    active.forget('domowy');
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 });

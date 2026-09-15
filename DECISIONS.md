@@ -616,6 +616,14 @@ z kwotami, żeby liczby wyrównywały się w pionie. Klasa `.tnum` / `.amount` c
 > Stan żyje w pamięci karty: przeładowanie wraca do budżetu domyślnego jak dotąd. To, czy domyślny
 > powinien uwzględniać pusty, świeżo utworzony budżet, jest osobną, otwartą decyzją.
 
+> **REWIZJA — 2026-09-15: `ActiveBudget` pamięta wybór w `localStorage` (issue #16, druga wersja).**
+> Powyższy stan żył tylko w pamięci karty — przeładowanie strony (i nowa sesja przeglądarki) wracały
+> do budżetu domyślnego, mimo że użytkownik oglądał akurat inny. Teraz `current` startuje odczytem
+> z `localStorage` i każda zmiana (`set`/`forget`) tam wraca, tym samym wzorcem co
+> `dashboard/budget-range-memory.ts` (klucz `budget-tracker:active-budget`, zapis/odczyt w `try/catch`,
+> uszkodzony wpis = brak zapamiętanego wyboru). Reguła „adres wygrywa, gdy coś mówi" się nie zmienia —
+> to tylko podmiana źródła fallbacku z pustej listy na to, co zostało zapamiętane.
+
 ### Motyw NG-ZORRO ↔ design system
 
 Źródło prawdy dla kolorów i typografii to plik Figma **Design System**
