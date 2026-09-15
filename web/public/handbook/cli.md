@@ -48,3 +48,15 @@ więc żadna walidacja nie jest tu inna ani słabsza.
 Panel w nagłówku to tylko jeden z klientów. Ten sam endpoint (`POST /api/cli/execute`, ciało
 `{"line": "..."}`) da się wywołać spoza przeglądarki — skryptem, `curl`-em albo innym agentem — bez
 otwierania aplikacji w ogóle.
+
+Do pracy z prawdziwej powłoki jest gotowy klient: `tools/bt-cli/` w repo, moduł PowerShell instalowany
+jednym `install.ps1` (jak `az`/`gh` — instalujesz raz, potem `bt` działa w każdym nowym oknie). Ta sama
+składnia co tutaj, tylko bez `curl`-a i JSON-a na wejściu:
+
+```
+bt help
+bt budget list
+bt limit set --category-id <guid> --amount 300 --warning-threshold 80 --valid-from 2026-09-01
+```
+
+Szczegóły instalacji i konfiguracji adresu API w `tools/bt-cli/README.md`.

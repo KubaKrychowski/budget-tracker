@@ -848,3 +848,24 @@ przetrwać zamknięcie przeglądarki.
 > Test na historię komend (strzałka góra) failował mimo poprawnej logiki komponentu (sygnał `input`
 > miał już właściwą wartość), bo DOM input-a jej nie odzwierciedlał — naprawa: `await
 > fixture.whenStable()` po mutacji, zanim odczytasz `input.value` z portalowanej treści.
+
+**Kliencki CLI poza przeglądarką: instalowalny moduł PowerShell (`tools/bt-cli/`), nie tylko `curl`.**
+Panel w nagłówku i sam endpoint spełniały literę issue #25, ale „AI ma korzystać bezpośrednio
+z wbudowanego terminala" w praktyce oznacza prawdziwą komendę w POWŁOCE, nie kopiowanie `curl`-a za
+każdym razem. `tools/bt-cli/install.ps1` kopiuje moduł `Bt` do katalogu modułów bieżącego
+użytkownika (`$env:PSModulePath`, ten pod `$HOME`) i trwale ustawia `BT_API_URL`
+(`[Environment]::SetEnvironmentVariable(..., 'User')`) — PowerShell sam doładowuje moduły z
+`PSModulePath` przy pierwszym użyciu nierozpoznanej komendy, więc po jednorazowej instalacji `bt
+budget list` działa w KAŻDYM nowym oknie, bez importu i bez wpisu w `$PROFILE` (doświadczenie jak
+instalator `az`/`gh`, nie skrypt do dot-source'owania). Żadnego twardego domyślnego adresu API —
+świadomie, bo `bt` ma trafiać czasem w lokalne dev API (5031), czasem w środowisko demo (5099);
+zgadnięty domyślny adres byłby cichą pułapką (komenda z pozoru działa, ale na złej bazie).
+
+> **⚠️ GOTCHA — `Invoke-RestMethod` w Windows PowerShell 5.1 NIE wypełnia `$_.ErrorDetails.Message`
+> tak jak w PowerShell 7.** W 5.1 błąd 4xx/5xx rzuca zwykły `System.Net.WebException` i
+> `ErrorDetails.Message` zostaje pusty — komunikat z API (np. „«not-a-guid» to nie jest poprawny
+> identyfikator") ginie za gołosłownym „The remote server returned an error: (400) Bad Request.",
+> chyba że ręcznie czyta się ciało z `$_.Exception.Response.GetResponseStream()`. Złapane przy
+> ręcznym teście `bt budget disable <zły-guid>` na żywym API, nie przez czytanie dokumentacji —
+> `Bt.psm1` sprawdza najpierw `ErrorDetails.Message` (ścieżka PS7), a dopiero potem strumień
+> odpowiedzi (ścieżka PS 5.1), żeby moduł działał tak samo na obu.
