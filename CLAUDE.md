@@ -106,6 +106,13 @@ Konfiguracje w `.claude/launch.json` **katalogu nadrzędnego** (`workspace/`), u
   (użytkownik bazy to `budget`, nie `postgres`).
 - Pliki tymczasowe trzymaj w katalogu scratchpad sesji, nie w repo.
 - „Docker API not found” = Docker Desktop nie działa. Uruchom go i odczekaj, zanim uznasz, że kod jest zły.
+- **`.ps1`/`.psm1`/`.psd1` — zero polskich znaków i „—”, nawet z BOM UTF-8.** Windows PowerShell 5.1 bez BOM czyta
+  skrypt wg systemowej strony kodowej, więc ogonki i myślnik zamieniają się w krzaki i parser rzuca
+  `Unexpected token`. Dopisanie BOM (`[System.IO.File]::WriteAllText($path, ..., (New-Object System.Text.UTF8Encoding($true)))`)
+  NIE WYSTARCZA na dłuższą metę — zwykły merge PR-a przez GitHub potrafi po cichu zdjąć BOM z powrotem
+  (sprawdzone: lokalny commit miał `EF BB BF` na początku pliku, po zmergowaniu už nie). Jedyna trwała
+  naprawa: pisz te skrypty czystym ASCII (zwykły `-` zamiast „—”, bez ogonków w komentarzach i tekstach)
+  — wtedy strona kodowa nie ma znaczenia. Patrz `tools/bt-cli/`.
 
 ## Decyzje (`DECISIONS.md`) — gdzie szukać
 
