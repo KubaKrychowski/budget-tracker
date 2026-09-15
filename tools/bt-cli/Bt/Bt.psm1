@@ -15,9 +15,9 @@ function bt {
         return
     }
 
-    # PowerShell juz rozdzielil argumenty po spacjach — token ze spacja w srodku (np. wartosc flagi
+    # PowerShell juz rozdzielil argumenty po spacjach - token ze spacja w srodku (np. wartosc flagi
     # albo surowy JSON) trzeba z powrotem opakowac w cudzyslow, zeby CLI-owy tokenizer zobaczyl go
-    # jako jeden token. JSON (zaczyna sie od { albo [) idzie w pojedynczym cudzyslowie — tak samo jak
+    # jako jeden token. JSON (zaczyna sie od { albo [) idzie w pojedynczym cudzyslowie - tak samo jak
     # w panelu terminala w apce, zeby wlasne " w srodku JSON-a nie kolidowaly.
     $line = ($Tokens | ForEach-Object {
         if ($_ -notmatch '\s') {
@@ -36,7 +36,7 @@ function bt {
         $result = Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json; charset=utf-8' -Body $bodyBytes
     } catch {
         # Windows PowerShell 5.1 (WebException) nie wypelnia $_.ErrorDetails.Message dla
-        # Invoke-RestMethod tak jak PowerShell 7 (HttpResponseException) — trzeba samemu
+        # Invoke-RestMethod tak jak PowerShell 7 (HttpResponseException) - trzeba samemu
         # przeczytac cialo odpowiedzi ze strumienia, inaczej blad z API (np. zly GUID) ginie
         # za goloslownym "The remote server returned an error: (400) Bad Request.".
         $body = $_.ErrorDetails.Message
