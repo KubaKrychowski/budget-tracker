@@ -82,6 +82,40 @@
           </div>
         </div>
       </div>
+
+      <!-- Tej opcji NIE MA w makiecie kroku 1 (46:1183) — dopisek z propozycji #10
+           (node-id=243-2541), zanim ekran dostanie właściwą makietę. -->
+      <div class="cbg__group">
+        <div class="cbg__savings-option">
+          <span nz-checkbox [nzId]="'budget-with-savings'"
+            [ngModel]="withLinkedSavings()"
+            (ngModelChange)="withLinkedSavings.set($event)"
+          ></span>
+          <label for="budget-with-savings" class="cbg__savings-label">
+            <strong>{{ 'createBudget.linkedSavings.checkbox' | translate }}</strong>
+            <span class="cbg__savings-hint">{{ 'createBudget.linkedSavings.hint' | translate }}</span>
+          </label>
+        </div>
+
+        @if (withLinkedSavings()) {
+          <div class="cbg__fields">
+            <div class="cbg__field">
+              <label class="cbg__label" for="budget-savings-name">
+                {{ 'createBudget.linkedSavings.name' | translate }}
+              </label>
+              <input
+                id="budget-savings-name"
+                nz-input
+                class="cbg__control"
+                [ngModel]="linkedSavingsName()"
+                (ngModelChange)="linkedSavingsName.set($event)"
+                [placeholder]="'createBudget.linkedSavings.namePlaceholder' | translate"
+                maxlength="100"
+              />
+            </div>
+          </div>
+        }
+      </div>
     </nz-spin>
 
     <footer class="cbg__actions">

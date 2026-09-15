@@ -29,4 +29,6 @@ public sealed record BudgetListItemResponseDto(
     int TransactionCount,
     BudgetStatus Status,
     DateTimeOffset? DisabledAt,
-    DateTimeOffset? DeletedAt);
+    DateTimeOffset? DeletedAt,
+    Guid? LinkedSavingsBudgetId,
+    IReadOnlyList<TitleAmountRuleResponseDto> SavingsTransferRules);

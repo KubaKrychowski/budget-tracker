@@ -36,5 +36,6 @@ public sealed class TransactionListItemReader(AppDbContext db)
         t.Status.ToString(),
         db.EpisodicOrders.Where(o => o.TransactionBusinessId == t.BusinessId).Select(o => (Guid?)o.BusinessId).FirstOrDefault(),
         db.EpisodicOrders.Where(o => o.TransactionBusinessId == t.BusinessId).Select(o => o.Name).FirstOrDefault(),
-        t.Confidence);
+        t.Confidence,
+        t.SavingsTransferBudgetBusinessId);
 }

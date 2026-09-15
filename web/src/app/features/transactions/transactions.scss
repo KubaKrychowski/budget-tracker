@@ -179,6 +179,17 @@
     text-overflow: ellipsis;
   }
 
+  /* Znacznik „Transfer" (#10, propozycja) — kropka spięta z Secondary/500 (fiolet), jedynym
+     tokenem statusu nieużywanym dziś przez żaden inny status (patrz makieta 243-8027). */
+  &__transfer-badge {
+    display: block;
+    margin-top: 2px;
+
+    ::ng-deep .ant-badge-status-dot {
+      background: #8075cd;
+    }
+  }
+
   &__modal-note {
     margin: 0 0 12px;
     font-size: 13px;

@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -32,7 +33,7 @@ import { parseAmount } from '../../core/parse-amount';
   selector: 'app-create-budget',
   imports: [
     FormsModule, RouterLink,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzInputModule, NzInputNumberModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzCheckboxModule, NzInputModule, NzInputNumberModule,
     NzSelectModule, NzSpinModule, NzStepsModule, TranslatePipe, PageHeader,
   ],
   templateUrl: './create-budget.html',
@@ -74,6 +75,13 @@ export class CreateBudget {
    */
   protected readonly initialBalance = signal(0);
 
+  /**
+   * Opcja „Dodaj połączony budżet oszczędnościowy" (#10, propozycja Figma — brak jeszcze
+   * w tej makiecie). Odznaczona domyślnie: dotychczasowy jednobudżetowy flow się nie zmienia.
+   */
+  protected readonly withLinkedSavings = signal(false);
+  protected readonly linkedSavingsName = signal('');
+
   private readonly optionsResource = httpResource<readonly DictionaryEntry[]>(
     () => '/api/budgets/currencies',
   );
@@ -86,8 +94,13 @@ export class CreateBudget {
   );
   protected readonly optionsLoading = this.optionsResource.isLoading;
 
-  /** „Zakończ" ma sens dopiero, gdy budżet ma nazwę — reszta ma wartość domyślną. */
-  protected readonly canFinish = computed(() => this.name().trim().length > 0);
+  /**
+   * „Zakończ" ma sens dopiero, gdy budżet ma nazwę — reszta ma wartość domyślną. Zaznaczenie
+   * opcji budżetu oszczędnościowego wymaga też JEGO nazwy, inaczej powstałby budżet bez nazwy.
+   */
+  protected readonly canFinish = computed(() =>
+    this.name().trim().length > 0
+    && (!this.withLinkedSavings() || this.linkedSavingsName().trim().length > 0));
 
   // ── Akcje ────────────────────────────────────────────────────────────────────────────
 
@@ -103,6 +116,7 @@ export class CreateBudget {
           name: this.name().trim(),
           currency: this.currency(),
           initialBalance: this.initialBalance(),
+          linkedSavingsBudgetName: this.withLinkedSavings() ? this.linkedSavingsName().trim() : null,
         }),
       );
 

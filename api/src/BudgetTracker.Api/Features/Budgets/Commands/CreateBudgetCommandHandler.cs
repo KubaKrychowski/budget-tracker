@@ -38,15 +38,22 @@ public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clo
         }
 
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+        var month = new DateOnly(today.Year, today.Month, 1);
+        var now = clock.GetUtcNow();
 
-        var budget = new Budget(
-            name,
-            new DateOnly(today.Year, today.Month, 1),
-            request.InitialBalance,
-            clock.GetUtcNow(),
-            currency);
-
+        var budget = new Budget(name, month, request.InitialBalance, now, currency);
         db.Budgets.Add(budget);
+
+        // BusinessId istnieje od razu po `new` (inicjalizator właściwości, nie SaveChanges), więc
+        // powiązanie idzie do bazy w JEDNYM SaveChanges razem z oboma budżetami — bez pośredniego zapisu.
+        var linkedSavingsName = request.LinkedSavingsBudgetName?.Trim();
+        if (!string.IsNullOrEmpty(linkedSavingsName))
+        {
+            var savingsBudget = new Budget(linkedSavingsName, month, 0m, now, currency);
+            db.Budgets.Add(savingsBudget);
+            budget.LinkSavingsBudget(savingsBudget.BusinessId);
+        }
+
         await db.SaveChangesAsync(ct);
 
         var budgetResponse = new BudgetResponseDto(
@@ -54,7 +61,8 @@ public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clo
             budget.Name,
             budget.Month,
             budget.Currency,
-            budget.InitialBalance);
+            budget.InitialBalance,
+            budget.LinkedSavingsBudgetBusinessId);
 
         return new CreateBudgetResponseDto(budgetResponse, CreateBudgetError.None);
     }

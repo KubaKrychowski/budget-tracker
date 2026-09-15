@@ -109,6 +109,31 @@ public class Transaction(
         StandingOrderBusinessId = null;
     }
 
+    /// <summary>
+    /// Budżet oszczędnościowy, z którym ta transakcja jest transferem (reguła w jego ustawieniach
+    /// dopasowała tytuł/kwotę). <c>null</c> = nie jest transferem.
+    /// </summary>
+    /// <remarks>
+    /// Zwykła kolumna z publicznym identyfikatorem, bez relacji EF — jak <see cref="StandingOrderBusinessId"/>.
+    /// Przypięcie NIE zmienia kategorii ani opisu: historia zostaje 1:1 z bankiem, zmienia się wyłącznie
+    /// to, co liczą sumy wydatków/przychodów (wykluczają przypięte wiersze; bilans budżetu — nie).
+    /// </remarks>
+    public Guid? SavingsTransferBudgetBusinessId { get; protected set; }
+
+    /// <summary>Budżet oszczędnościowy, od którego użytkownik RĘCZNIE odpiął transakcję.</summary>
+    /// <remarks>Ta sama pamięć co <see cref="StandingOrderUnpinnedFrom"/> i z tego samego powodu.</remarks>
+    public Guid? SavingsTransferUnpinnedFrom { get; protected set; }
+
+    /// <summary>Przypina transakcję jako transfer do/z powiązanego budżetu oszczędnościowego.</summary>
+    public void MarkSavingsTransfer(Guid linkedBudgetBusinessId) => SavingsTransferBudgetBusinessId = linkedBudgetBusinessId;
+
+    /// <summary>Ręczne odpięcie — transakcja nie wróci przy ponownym dopasowaniu reguł.</summary>
+    public void UnpinFromSavingsTransfer()
+    {
+        SavingsTransferUnpinnedFrom = SavingsTransferBudgetBusinessId;
+        SavingsTransferBudgetBusinessId = null;
+    }
+
     /// <summary>Edycja inline z listy transakcji — pola, które widzi użytkownik w wierszu.</summary>
     /// <remarks>
     /// Kategoria NIE jest tu ustawiana, choć edytuje się ją w tym samym wierszu: jej zmiana

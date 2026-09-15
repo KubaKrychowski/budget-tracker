@@ -7,6 +7,13 @@
  */
 export type BudgetStatus = 'active' | 'disabled' | 'deleted';
 
+/** Reguła transferu — tytuł zawiera frazę + zakres kwoty BEZWZGLĘDNEJ. */
+export interface TitleAmountRule {
+  titlePattern: string;
+  amountFrom: number;
+  amountTo: number;
+}
+
 /** Wiersz tabeli „Lista budżetów". */
 export interface BudgetListItem {
   /** Publiczny BusinessId (Guid) — API nie wystawia kluczy z bazy. */
@@ -25,6 +32,10 @@ export interface BudgetListItem {
   status: BudgetStatus;
   disabledAt: string | null;
   deletedAt: string | null;
+  /** Powiązany budżet oszczędnościowy (#10) — `null` = brak powiązania. */
+  linkedSavingsBudgetId: string | null;
+  /** Reguły rozpoznające własne transakcje jako transfer do/z powiązanego budżetu. */
+  savingsTransferRules: TitleAmountRule[];
 }
 
 export interface BudgetListResponse {

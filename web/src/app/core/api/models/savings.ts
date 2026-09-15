@@ -59,4 +59,10 @@ export interface SavingsResponse {
   readonly selectedBudgetIds: string[];
   /** Budżety do przełącznika nad ekranem — wyłączone też, z tagiem. */
   readonly budgets: BudgetOption[];
+  /**
+   * Czy przynajmniej jeden z wybranych budżetów ma powiązany budżet oszczędnościowy (#10).
+   * `false` blokuje ekran — bez powiązania nie ma skąd wziąć „odłożone", a dawny fallback po
+   * kategorii „Oszczędności" świadomie nie jest już używany (decyzja użytkownika).
+   */
+  readonly hasLinkedSavingsBudget: boolean;
 }

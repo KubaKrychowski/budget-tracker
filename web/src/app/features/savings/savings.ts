@@ -125,6 +125,15 @@ export class Savings {
   protected readonly data = computed(() => this.value() ?? null);
 
   /**
+   * Budżet bez powiązanego budżetu oszczędnościowego (#10) nie ma z czego policzyć „odłożone" —
+   * dopóki nie ma zadania na wynagrodzenia/bilans-do-wypłaty, ekran świadomie blokuje wejście
+   * zamiast pokazywać dawny fallback po kategorii „Oszczędności" (decyzja użytkownika).
+   */
+  protected readonly needsLink = computed(
+    () => this.data() !== null && !this.data()!.hasLinkedSavingsBudget,
+  );
+
+  /**
    * Ostatnia odpowiedź, która przyszła — WYŁĄCZNIE dla przełącznika budżetu.
    *
    * Po wyborze innego budżetu zasób ładuje od nowa i `data()` na chwilę jest puste. Bez tej pamięci

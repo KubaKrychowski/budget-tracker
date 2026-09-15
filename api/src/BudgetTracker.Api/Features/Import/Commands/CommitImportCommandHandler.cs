@@ -1,5 +1,6 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Services;
@@ -25,7 +26,8 @@ public sealed class CommitImportCommandHandler(
     ImportBudgetLookup budgets,
     ExistingTransactionKeys existingTransactionKeys,
     ImportConfidenceThreshold threshold,
-    StandingOrderMatcher standingOrders)
+    StandingOrderMatcher standingOrders,
+    SavingsTransferMatcher savingsTransfers)
 {
     /// <summary>Zapisuje import i zwraca liczby na ekran „Podsumowanie".</summary>
     /// <remarks>
@@ -39,6 +41,9 @@ public sealed class CommitImportCommandHandler(
     /// żeby po nieudanym zapisie wierszy nie został pusty ślad importu.</item>
     /// <item>Nowe wydatki są przypinane do zleceń stałych budżetu W TEJ SAMEJ transakcji — import, po którym czynsz
     /// „czeka”, choć właśnie zszedł, byłby gorszy niż brak zleceń. Przypięcie nie zmienia kategorii.</item>
+    /// <item>Analogicznie: nowe transakcje pasujące do reguł transferu budżetu (<see cref="SavingsTransferMatcher"/>)
+    /// dostają od razu <see cref="Transaction.SavingsTransferBudgetBusinessId"/> — bez tego świeży import wyglądałby
+    /// jak realny wydatek/przychód, dopóki ktoś ręcznie nie przeliczyłby reguł.</item>
     /// </list>
     /// </remarks>
     public async Task<ImportSummaryResponseDto> HandleAsync(CommitRequestDto request, CancellationToken ct)
@@ -92,7 +97,9 @@ public sealed class CommitImportCommandHandler(
         }
 
         await db.SaveChangesAsync(ct);
-        await standingOrders.PinAsync(budget.BusinessId, [.. saved.Select(t => t.BusinessId)], ct);
+        var savedIds = saved.Select(t => t.BusinessId).ToList();
+        await standingOrders.PinAsync(budget.BusinessId, savedIds, ct);
+        await savingsTransfers.PinAsync(budget, savedIds, ct);
         await dbTransaction.CommitAsync(ct);
 
         return await BuildSummaryAsync(batch, saved, budget, ct);

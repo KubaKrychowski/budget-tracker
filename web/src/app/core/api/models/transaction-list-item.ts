@@ -13,4 +13,10 @@ export interface TransactionListItem {
   episodicOrderId: string | null;
   episodicOrderName: string | null;
   confidence: number | null;
+  /**
+   * Budżet oszczędnościowy, z którym ta transakcja jest transferem (#10) — `null`, gdy nie
+   * jest. Znacznik „Transfer" i akcja „Odepnij" w menu wiersza pokazują się tylko wtedy,
+   * gdy to pole nie jest `null`.
+   */
+  savingsTransferBudgetId: string | null;
 }

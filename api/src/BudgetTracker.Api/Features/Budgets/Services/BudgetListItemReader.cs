@@ -60,7 +60,10 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             TransactionCount: sums.TryGetValue(b.BusinessId, out var c) ? c.Count : 0,
             Status: StatusOf(b),
             DisabledAt: b.DisabledAt,
-            DeletedAt: b.DeletedAt)).ToList();
+            DeletedAt: b.DeletedAt,
+            LinkedSavingsBudgetId: b.LinkedSavingsBudgetBusinessId,
+            SavingsTransferRules: [.. b.SavingsTransferRules.Select(r =>
+                new TitleAmountRuleResponseDto(r.TitlePattern, r.AmountFrom, r.AmountTo))])).ToList();
     }
 
     /// <summary>Jeden wiersz — ten sam kształt co na liście, więc front może podmienić go w miejscu.</summary>

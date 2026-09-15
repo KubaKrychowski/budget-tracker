@@ -93,6 +93,29 @@
     margin-top: 8px;
     max-width: 600px;
   }
+
+  /* Opcja budżetu oszczędnościowego (#10, propozycja) — bez makiety w step 1, styl
+     wzorem reszty ekranu (etykieta #252B27, podpis #78877C). */
+  &__savings-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 600px;
+  }
+
+  &__savings-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+    color: #252b27;
+    cursor: pointer;
+  }
+
+  &__savings-hint {
+    font-weight: 400;
+    color: #78877c;
+  }
 }
 
 /* Wąski ekran: stepper nad treścią, a etykieta nad kontrolką — przy 225 px kontrolki

@@ -129,6 +129,23 @@
     padding-left: 20px;
     color: #252b27;
   }
+
+  /* Reguły powiązania z budżetem oszczędnościowym (#10) — bez makiety, styl wzorem
+     reszty modali ustawień. */
+  &__savings-rule {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+
+    .set__form-field {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
+
+  &__savings-add {
+    align-self: flex-start;
+  }
 }
 
 .date-filter {

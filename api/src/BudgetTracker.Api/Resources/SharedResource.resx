@@ -15,6 +15,10 @@
   <data name="Import_BudgetDisabled" xml:space="preserve"><value>This budget is switched off and does not accept new data.</value></data>
   <data name="Budget_NameRequired" xml:space="preserve"><value>Give the budget a name.</value></data>
   <data name="Budget_UnsupportedCurrency" xml:space="preserve"><value>That currency is not supported.</value></data>
+  <data name="SavingsTransfer_LinkTargetInvalid" xml:space="preserve"><value>The savings budget you picked doesn't exist, or it's this same budget.</value></data>
+  <data name="SavingsTransfer_RulesInvalid" xml:space="preserve"><value>A linked savings budget needs between 1 and 20 matching rules.</value></data>
+  <data name="SavingsTransfer_PatternInvalid" xml:space="preserve"><value>The title phrase needs at least 3 characters — a shorter one matches almost every transaction.</value></data>
+  <data name="SavingsTransfer_AmountInvalid" xml:space="preserve"><value>The amount must be greater than zero and the “from – to” range cannot be reversed.</value></data>
   <data name="Transaction_DescriptionRequired" xml:space="preserve"><value>Give the transaction a description.</value></data>
   <data name="Transaction_DescriptionTooLong" xml:space="preserve"><value>The description is too long (limit: 500 characters).</value></data>
   <data name="Training_Busy" xml:space="preserve"><value>An import is running. Training would categorise half of it with the old model and half with the new one, so it has to wait.</value></data>

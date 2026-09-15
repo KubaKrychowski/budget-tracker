@@ -212,7 +212,12 @@
       "edit": "Edytuj",
       "delete": "Usuń",
       "markEpisodic": "Oznacz jako zlecenie epizodyczne…",
-      "goToEpisodic": "Przejdź do zlecenia epizodycznego"
+      "goToEpisodic": "Przejdź do zlecenia epizodycznego",
+      "unpinSavingsTransfer": "Odepnij transfer"
+    },
+    "savingsTransfer": {
+      "badge": "Transfer",
+      "unpinned": "Transakcja została odpięta od transferu."
     },
     "edit": {
       "modified": "Zmodyfikowano {{count}} wierszy",
@@ -287,7 +292,13 @@
     },
     "initialBalance": "Bilans początkowy",
     "initialBalancePlaceholder": "np. 2500,00",
-    "back": "Wstecz"
+    "back": "Wstecz",
+    "linkedSavings": {
+      "checkbox": "Dodaj połączony budżet oszczędnościowy",
+      "hint": "Osobny budżet na wyciąg z konta oszczędnościowego. Transfery między nimi rozpoznasz regułą w jego ustawieniach.",
+      "name": "Nazwa budżetu oszczędnościowego",
+      "namePlaceholder": "np. Domowy — Oszczędności"
+    }
   },
   "settings": {
     "title": "Ustawienia aplikacji",
@@ -376,6 +387,7 @@
       },
       "actions": {
         "edit": "Edytuj",
+        "savingsLink": "Reguły powiązania",
         "disable": "Wyłącz",
         "enable": "Włącz",
         "reset": "Zresetuj",
@@ -409,6 +421,24 @@
         "cancel": "Anuluj",
         "header": "Czy na pewno chcesz usunąć budżet: {{name}}?",
         "description": "Po usunięciu operacja będzie odwracalna przez {{days}} dni. Później budżet zostanie bezpowrotnie skasowany z systemu."
+      },
+      "savingsLink": {
+        "title": "Reguły powiązania z budżetem oszczędnościowym",
+        "description": "Reguła rozpoznaje transakcje TEGO budżetu, które są przelewem do/z powiązanego budżetu oszczędnościowego, i wyklucza je z sum wydatków/przychodów. Historia transakcji się nie zmienia.",
+        "budget": "Powiązany budżet",
+        "budgetPlaceholder": "Brak powiązania",
+        "rules": "Reguły dopasowania",
+        "rulesHint": "Transakcja jest transferem, gdy pasuje do KTÓREJKOLWIEK reguły — niezależnie od znaku kwoty.",
+        "pattern": "Tytuł zawiera",
+        "amountFrom": "Kwota od",
+        "amountTo": "Kwota do",
+        "removeRule": "Usuń",
+        "addRule": "+ Dodaj regułę",
+        "save": "Zapisz reguły",
+        "cancel": "Anuluj",
+        "toast": {
+          "updated": "Powiązanie zostało pomyślnie zapisane"
+        }
       },
       "toast": {
         "updated": "Budżet został pomyślnie zapisany",
@@ -546,6 +576,11 @@
         "title": "Nie masz jeszcze żadnego zrealizowanego zlecenia epizodycznego.",
         "body": "Bez jednorazowych wydatków nie odróżnię trudnego miesiąca od zwykłego, więc dowód nie powstanie. Oznacz je na liście transakcji albo dodaj na ekranie zleceń epizodycznych.",
         "cta": "Przejdź do zleceń epizodycznych"
+      },
+      "needsLink": {
+        "title": "Ten budżet nie ma powiązanego budżetu oszczędnościowego.",
+        "body": "Bez powiązania nie mam skąd wziąć odłożone — zaimportuj konto oszczędnościowe jako osobny budżet i połącz je w ustawieniach.",
+        "cta": "Przejdź do ustawień"
       }
     },
     "noSavingsSeen": {

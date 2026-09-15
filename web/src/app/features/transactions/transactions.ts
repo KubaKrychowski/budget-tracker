@@ -692,6 +692,26 @@ export class Transactions {
     }
   }
 
+  // ── Transfer do budżetu oszczędnościowego (#10) ─────────────────────────────────────
+  //
+  // Bez makiety — propozycja Figma (node-id=243-8027). „Odepnij" pokazuje się w menu
+  // TYLKO na wierszach już sparowanych, wzorem „Przejdź do powiązanych"/„Oznacz jako zlecenie".
+
+  protected unpinSavingsTransferMenuRow(): void {
+    const row = this.menuRow();
+    if (row) void this.unpinSavingsTransfer(row.id);
+  }
+
+  private async unpinSavingsTransfer(id: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete(`/api/budgets/savings-transfer/pins/${id}`));
+      this.message.success(this.translate.instant('transactions.savingsTransfer.unpinned'));
+      this.list.reload();
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    }
+  }
+
   // ── Akcje masowe ─────────────────────────────────────────────────────────────────────
   //
   // Te same wywołania obsługują zaznaczenie z toolbara i pojedynczy wiersz z menu „⋮" —

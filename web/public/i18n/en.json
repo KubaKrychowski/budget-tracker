@@ -212,7 +212,12 @@
       "edit": "Edit",
       "delete": "Delete",
       "markEpisodic": "Mark as a one-off order…",
-      "goToEpisodic": "Go to the one-off order"
+      "goToEpisodic": "Go to the one-off order",
+      "unpinSavingsTransfer": "Unpin transfer"
+    },
+    "savingsTransfer": {
+      "badge": "Transfer",
+      "unpinned": "The transaction has been unpinned from the transfer."
     },
     "edit": {
       "modified": "{{count}} rows modified",
@@ -287,7 +292,13 @@
     },
     "initialBalance": "Opening balance",
     "initialBalancePlaceholder": "e.g. 2500.00",
-    "back": "Back"
+    "back": "Back",
+    "linkedSavings": {
+      "checkbox": "Add a linked savings budget",
+      "hint": "A separate budget for your savings account statement. You'll set up a rule in its settings to recognize transfers between the two.",
+      "name": "Savings budget name",
+      "namePlaceholder": "e.g. Household — Savings"
+    }
   },
   "settings": {
     "title": "Application settings",
@@ -374,6 +385,7 @@
       },
       "actions": {
         "edit": "Edit",
+        "savingsLink": "Savings link rules",
         "disable": "Switch off",
         "enable": "Switch on",
         "reset": "Reset",
@@ -408,6 +420,24 @@
         "cancel": "Cancel",
         "header": "Are you sure you want to delete the budget \"{{name}}\"?",
         "description": "After deletion this stays reversible for {{days}} days. After that the budget is gone from the system for good."
+      },
+      "savingsLink": {
+        "title": "Savings budget link rules",
+        "description": "The rule recognizes THIS budget's own transactions that are a transfer to/from the linked savings budget, and excludes them from expense/income totals. Transaction history is unchanged.",
+        "budget": "Linked budget",
+        "budgetPlaceholder": "No link",
+        "rules": "Matching rules",
+        "rulesHint": "A transaction is a transfer when it matches ANY rule — regardless of the amount's sign.",
+        "pattern": "Title contains",
+        "amountFrom": "Amount from",
+        "amountTo": "Amount to",
+        "removeRule": "Remove",
+        "addRule": "+ Add rule",
+        "save": "Save rules",
+        "cancel": "Cancel",
+        "toast": {
+          "updated": "The link has been saved"
+        }
       },
       "toast": {
         "updated": "Budget saved",
@@ -483,6 +513,11 @@
         "title": "You have no completed one-off orders yet.",
         "body": "Without one-off expenses I cannot tell a hard month from a normal one, so no proof can be made. Mark them on the transaction list or add them on the one-off orders screen.",
         "cta": "Go to one-off orders"
+      },
+      "needsLink": {
+        "title": "This budget has no linked savings budget.",
+        "body": "Without a link there's nowhere to read \"saved\" from — import your savings account as a separate budget and link it in settings.",
+        "cta": "Go to settings"
       }
     },
     "noSavingsSeen": {

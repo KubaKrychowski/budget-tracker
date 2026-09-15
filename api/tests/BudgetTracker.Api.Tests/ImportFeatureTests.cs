@@ -7,6 +7,7 @@ using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Models;
 using BudgetTracker.Api.Features.Categorization.Queries;
 using BudgetTracker.Api.Features.Categorization.Services;
+using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Features.Import.Commands;
 using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Models;
@@ -99,7 +100,8 @@ public sealed class ImportFeatureTests : IAsyncLifetime
                 new ModelStore(Options.Create(new CategorizationOptions()), _clock),
                 budgets, existingKeys, confidenceThreshold),
             new CommitImportCommandHandler(
-                _db, _clock, budgets, existingKeys, confidenceThreshold, new StandingOrderMatcher(_db)));
+                _db, _clock, budgets, existingKeys, confidenceThreshold,
+                new StandingOrderMatcher(_db), new SavingsTransferMatcher(_db)));
     }
 
     /// <summary>

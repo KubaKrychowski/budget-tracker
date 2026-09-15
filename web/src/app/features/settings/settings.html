@@ -357,6 +357,89 @@
   </div>
 </nz-modal>
 
+<!-- ── Modal reguł powiązania z budżetem oszczędnościowym (#10) ──────────────────────────
+     Bez makiety — propozycja Figma (node-id=242-3060), zanim ekran dostanie właściwą makietę. -->
+<nz-modal
+  [nzVisible]="dialog() === 'savingsLink'"
+  [nzTitle]="'settings.budgets.savingsLink.title' | translate"
+  (nzOnCancel)="closeDialog()"
+  (nzOnOk)="saveSavingsLink()"
+  [nzOkText]="'settings.budgets.savingsLink.save' | translate"
+  [nzCancelText]="'settings.budgets.savingsLink.cancel' | translate"
+  [nzOkDisabled]="!canSaveSavingsLink()"
+  [nzOkLoading]="busy()"
+  nzWidth="560"
+>
+  <div *nzModalContent class="set__form">
+    <p class="set__hint">{{ 'settings.budgets.savingsLink.description' | translate }}</p>
+
+    <label class="set__form-field" for="savings-link-budget">
+      <span class="set__label">{{ 'settings.budgets.savingsLink.budget' | translate }}</span>
+      <nz-select
+        nzId="savings-link-budget"
+        [nzAllowClear]="true"
+        [nzPlaceHolder]="'settings.budgets.savingsLink.budgetPlaceholder' | translate"
+        [ngModel]="draftLinkedBudgetId()"
+        (ngModelChange)="draftLinkedBudgetId.set($event)"
+      >
+        @for (option of savingsLinkOptions(); track option.id) {
+          <nz-option [nzValue]="option.id" [nzLabel]="option.name"></nz-option>
+        }
+      </nz-select>
+    </label>
+
+    @if (draftLinkedBudgetId() !== null) {
+      <div class="set__form-field">
+        <span class="set__label">{{ 'settings.budgets.savingsLink.rules' | translate }}</span>
+        <span class="set__hint">{{ 'settings.budgets.savingsLink.rulesHint' | translate }}</span>
+      </div>
+
+      @for (rule of draftRules(); track $index) {
+        <div class="set__savings-rule">
+          <label class="set__form-field" [for]="'savings-rule-pattern-' + $index">
+            <span class="set__label">{{ 'settings.budgets.savingsLink.pattern' | translate }}</span>
+            <input
+              [id]="'savings-rule-pattern-' + $index"
+              nz-input
+              [ngModel]="rule.titlePattern"
+              (ngModelChange)="updateSavingsRule($index, { titlePattern: $event })"
+            />
+          </label>
+          <label class="set__form-field" [for]="'savings-rule-from-' + $index">
+            <span class="set__label">{{ 'settings.budgets.savingsLink.amountFrom' | translate }}</span>
+            <nz-input-number
+              [nzParser]="parseAmount"
+              [nzId]="'savings-rule-from-' + $index"
+              [ngModel]="rule.amountFrom"
+              (ngModelChange)="updateSavingsRule($index, { amountFrom: $event ?? 0 })"
+              [nzMin]="0"
+              [nzPrecision]="2"
+            ></nz-input-number>
+          </label>
+          <label class="set__form-field" [for]="'savings-rule-to-' + $index">
+            <span class="set__label">{{ 'settings.budgets.savingsLink.amountTo' | translate }}</span>
+            <nz-input-number
+              [nzParser]="parseAmount"
+              [nzId]="'savings-rule-to-' + $index"
+              [ngModel]="rule.amountTo"
+              (ngModelChange)="updateSavingsRule($index, { amountTo: $event ?? 0 })"
+              [nzMin]="0"
+              [nzPrecision]="2"
+            ></nz-input-number>
+          </label>
+          <button nz-button nzType="text" nzDanger (click)="removeSavingsRule($index)">
+            {{ 'settings.budgets.savingsLink.removeRule' | translate }}
+          </button>
+        </div>
+      }
+
+      <button nz-button nzType="dashed" class="set__savings-add" (click)="addSavingsRule()">
+        {{ 'settings.budgets.savingsLink.addRule' | translate }}
+      </button>
+    }
+  </div>
+</nz-modal>
+
 <!-- Usunięcie (i wyłączenie, w menu wiersza) idą przez ConfirmDialogService — jeden
      wspólny modal dla całej apki, bez własnego <nz-modal> tutaj. -->
 

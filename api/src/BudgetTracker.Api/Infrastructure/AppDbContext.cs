@@ -85,6 +85,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.HasIndex(x => new { x.Date, x.CategoryId });
             e.HasIndex(x => x.Status);
             e.HasIndex(x => x.StandingOrderBusinessId);
+            e.HasIndex(x => x.SavingsTransferBudgetBusinessId);
 
             e.HasOne<Category>().WithMany()
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
@@ -191,6 +192,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.Property(x => x.InitialBalance).HasColumnType("numeric(18,2)");
             e.HasOne<Currency>().WithMany()
                 .HasForeignKey(x => x.Currency).OnDelete(DeleteBehavior.Restrict);
+            // Reguły transferu jako jsonb: część zasad TEGO budżetu, bez własnego cyklu życia —
+            // kasują się, przywracają i purge'ują razem z nim, bez osobnej tabeli.
+            e.ComplexCollection(x => x.SavingsTransferRules, r => r.ToJson());
         });
 
         b.Entity<BudgetItem>(e =>

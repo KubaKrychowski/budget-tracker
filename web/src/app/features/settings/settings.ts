@@ -13,6 +13,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
@@ -22,6 +23,7 @@ import {
   BudgetListItem,
   BudgetListResponse,
   BudgetStatus,
+  TitleAmountRule,
 } from '../../core/api/models/budget-list-item';
 import { NzBreadCrumbComponent, NzBreadCrumbItemComponent } from 'ng-zorro-antd/breadcrumb';
 import { normalizeText } from '../../core/normalize-text';
@@ -62,10 +64,10 @@ const TabParamByIndex: Record<number, string> = {
  * `ConfirmDialogService`, jeden wspólny dla całej apki, więc nie potrzebują własnego
  * stanu w tym komponencie (patrz `deleteBudget`/`disableBudget`).
  */
-type Dialog = 'edit' | 'reset' | null;
+type Dialog = 'edit' | 'reset' | 'savingsLink' | null;
 
 /** Pozycje menu wiersza. Ten sam zestaw kluczy co w `settings.budgets.actions.*`. */
-type MenuAction = 'edit' | 'disable' | 'enable' | 'reset' | 'delete' | 'restore';
+type MenuAction = 'edit' | 'disable' | 'enable' | 'reset' | 'delete' | 'restore' | 'savingsLink';
 
 /**
  * Stan panelu wyszukiwarki tekstowej (`nzCustomFilter`, kolumna „Nazwa").
@@ -144,8 +146,8 @@ function startOfDay(date: Date): number {
   imports: [
     FormsModule,
     NzAlertModule, NzBadgeModule, NzButtonModule, NzDatePickerModule, NzDropdownModule,
-    NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSpinModule,
-    NzTableModule, NzTabsModule, TranslatePipe, NzBreadCrumbComponent, NzBreadCrumbItemComponent,
+    NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSelectModule,
+    NzSpinModule, NzTableModule, NzTabsModule, TranslatePipe, NzBreadCrumbComponent, NzBreadCrumbItemComponent,
     RangeFilter, PageHeader, Rules, Training,
   ],
   templateUrl: './settings.html',
@@ -327,6 +329,7 @@ export class Settings {
 
     return [
       { action: 'edit', danger: false },
+      { action: 'savingsLink', danger: false },
       { action: row.status === 'disabled' ? 'enable' : 'disable', danger: false },
       { action: 'reset', danger: false },
       { action: 'delete', danger: true },
@@ -336,6 +339,7 @@ export class Settings {
   protected runMenu(action: MenuAction): void {
     switch (action) {
       case 'edit': this.openEdit(); break;
+      case 'savingsLink': this.openSavingsLink(); break;
       case 'enable': void this.setEnabled(true); break;
       case 'disable': void this.disableBudget(); break;
       case 'reset': this.openReset(); break;
@@ -395,6 +399,73 @@ export class Settings {
   protected closeDialog(): void {
     this.dialog.set(null);
     this.target.set(null);
+  }
+
+  // ── Modal reguł powiązania z budżetem oszczędnościowym (#10) ────────────────────────
+  //
+  // Bez makiety — propozycja Figma (node-id=242-3060), zanim ekran dostanie właściwą makietę.
+
+  protected readonly draftLinkedBudgetId = signal<string | null>(null);
+  protected readonly draftRules = signal<TitleAmountRule[]>([]);
+
+  /** Budżety, które można wskazać jako powiązane — bez samego siebie i bez usuniętych. */
+  protected readonly savingsLinkOptions = computed(() => {
+    const row = this.target();
+    return this.budgets().filter((b) => b.status !== 'deleted' && b.id !== row?.id);
+  });
+
+  /**
+   * Powiązanie bez ani jednej reguły nigdy niczego by nie wykluczyło z sum — stąd wymóg
+   * co najmniej jednej WYPEŁNIONEJ reguły, gdy budżet jest wskazany. Zdjęcie powiązania
+   * (budżet = null) nie wymaga niczego — reguły idą wtedy w komplet.
+   */
+  protected readonly canSaveSavingsLink = computed(() => {
+    if (this.draftLinkedBudgetId() === null) return true;
+    return this.draftRules().some((r) => r.titlePattern.trim().length >= 3 && r.amountTo > 0);
+  });
+
+  protected openSavingsLink(): void {
+    const row = this.menuRow();
+    if (!row) return;
+
+    this.draftLinkedBudgetId.set(row.linkedSavingsBudgetId);
+    this.draftRules.set(
+      row.savingsTransferRules.length > 0
+        ? row.savingsTransferRules.map((r) => ({ ...r }))
+        : [{ titlePattern: '', amountFrom: 0, amountTo: 0 }],
+    );
+    this.target.set(row);
+    this.dialog.set('savingsLink');
+  }
+
+  protected addSavingsRule(): void {
+    this.draftRules.set([...this.draftRules(), { titlePattern: '', amountFrom: 0, amountTo: 0 }]);
+  }
+
+  protected removeSavingsRule(index: number): void {
+    this.draftRules.set(this.draftRules().filter((_, i) => i !== index));
+  }
+
+  protected updateSavingsRule(index: number, patch: Partial<TitleAmountRule>): void {
+    this.draftRules.set(this.draftRules().map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+
+  protected async saveSavingsLink(): Promise<void> {
+    const row = this.target();
+    if (!row || !this.canSaveSavingsLink()) return;
+
+    const linkedSavingsBudgetId = this.draftLinkedBudgetId();
+    const rules = linkedSavingsBudgetId === null
+      ? []
+      : this.draftRules().filter((r) => r.titlePattern.trim().length > 0);
+
+    await this.run(
+      () => firstValueFrom(this.http.put(`/api/budgets/${row.id}/savings-link`, {
+        linkedSavingsBudgetId,
+        rules,
+      })),
+      'settings.budgets.savingsLink.toast.updated',
+    );
   }
 
   // ── Operacje ─────────────────────────────────────────────────────────────────────────
