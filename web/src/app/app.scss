@@ -67,13 +67,20 @@
     color: #3e9fea; // Info-500 z design-tokens.less
   }
 
-  /* Zębatka stoi przy prawej krawedzi. `margin-left: auto` zamiast rozpychania
-     wyszukiwarki — ta ma trzymac swoje 600px, a nie rosnac razem z oknem. */
-  &__settings {
+  /* Ikony stoją przy prawej krawędzi. `margin-left: auto` na WRAPPERZE, nie na pojedynczej
+     ikonie — inaczej `gap` nagłówka (56px) wepchnąłby się też MIĘDZY dwie ikony, zamiast
+     tylko przed nimi. */
+  &__icons {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+  }
+
+  &__icon-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
     width: 36px;
     height: 36px;
     font-size: 20px;

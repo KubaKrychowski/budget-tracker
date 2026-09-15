@@ -624,6 +624,36 @@ z kwotami, żeby liczby wyrównywały się w pionie. Klasa `.tnum` / `.amount` c
 > uszkodzony wpis = brak zapamiętanego wyboru). Reguła „adres wygrywa, gdy coś mówi" się nie zmienia —
 > to tylko podmiana źródła fallbacku z pustej listy na to, co zostało zapamiętane.
 
+> **REWIZJA — 2026-09-15: podręcznik użytkownika (issue #19).** Nowy ekran `/handbook`
+> (`features/handbook`) — lista tematów po lewej, treść po prawej, renderowana przez `ngx-markdown`
+> (`<markdown [src]>`) z plików `public/handbook/<temat>.md`. Treść to zwykły tekst dla użytkownika,
+> więc leży poza kodem, jak `i18n/*.json` i `SharedResource*.resx`.
+> - **Wybór tematu jeździ w adresie** (`?topic=`), tym samym wzorcem co `?budgetId=` — da się zapisać
+>   w zakładkach, wraca po cofnięciu. Mapowanie klucz→plik i trasa→temat siedzi w
+>   `core/handbook-topics.ts`.
+> - **Ikona w nagłówku jest kontekstowa**: `App.handbookTopic` liczy temat z `router.url` (mapa
+>   `ROUTE_TOPIC`) przy KAŻDEJ nawigacji, więc kliknięcie na ekranie Oszczędności otwiera podręcznik
+>   od razu na temacie oszczędności, a nie zawsze od pierwszego z listy.
+> - ⚠️ **`ngx-markdown` ma jeden dynamiczny `import('marked-katex-extension')`** (opcjonalny plugin
+>   matematyki LaTeX, którego nie używamy) oznaczony `/* @vite-ignore */`. Ten komentarz działa TYLKO
+>   w Vite; esbuild (którego używa też Angularowy dev-server i `ng build`) i tak próbuje go
+>   statycznie rozwiązać i wywala `ng serve` błędem `Could not resolve "marked-katex-extension"`
+>   — mimo że produkcyjny `ng build` przechodzi bez zarzutu. Naprawa **bez** dokładania zależności
+>   (`marked-katex-extension` + `katex` byłyby martwym kodem): `externalDependencies` w
+>   `angular.json` (`projects.web.architect.build.options`), zgodnie z podpowiedzią z komunikatu
+>   błędu esbuild. Gdyby kiedyś doszła obsługa LaTeX-a w podręczniku, to pierwsze miejsce do usunięcia.
+> - **Wyszukiwarka nad listą tematów filtruje po tytule I po treści** wszystkich 9 plików `.md`
+>   naraz (`forkJoin` przy starcie ekranu, `normalizeText` — ten sam mechanizm co wyszukiwarka
+>   akcji w nagłówku). Wyświetlanie nadal ładuje tylko jeden plik przez `<markdown [src]>` —
+>   ładowanie „do szukania" jest od tego niezależne.
+> - **Zrzuty ekranu w treści tematów pochodzą z pliku makiet Figma** (`75y55ipSEgD2YtzJ5z0uH4`),
+>   nie z uruchomionej aplikacji: `get_screenshot` na istniejącej ramce ekranu + `curl` na zwrócony
+>   URL, zapisane w `public/handbook/images/*.png`. Ekrany bez gotowej makiety (dziś: Import) nie
+>   mają zrzutu — dopisanie go wymaga najpierw makiety tego ekranu w Figmie, potem tego samego
+>   mechanizmu. ⚠️ Kilka węzłów w pliku ma mylące nazwy (np. `Lista transakcji` żyje pod węzłem
+>   nazwanym „Dashboard - ikona ustawień" — kopia z innego ekranu, nazwa nigdy nie została
+>   poprawiona) — przed użyciem nowego węzła zweryfikuj treścią zrzutu, nie samą nazwą.
+
 ### Motyw NG-ZORRO ↔ design system
 
 Źródło prawdy dla kolorów i typografii to plik Figma **Design System**

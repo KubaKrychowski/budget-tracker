@@ -926,5 +926,22 @@
     "errors": {
       "loadFailed": "Could not load one-off orders"
     }
+  },
+  "handbook": {
+    "openHandbook": "Handbook",
+    "title": "Handbook",
+    "searchPlaceholder": "Search the handbook",
+    "noResults": "Nothing matches your search.",
+    "topics": {
+      "dashboard": "Dashboard and summary",
+      "budgets": "Budgets",
+      "import": "Bank statement import",
+      "transactions": "Transactions and categories",
+      "limits": "Spending limits",
+      "standingOrders": "Standing orders",
+      "episodicOrders": "One-off orders",
+      "savings": "Savings goals and reservations",
+      "settings": "Settings and rules"
+    }
   }
 }

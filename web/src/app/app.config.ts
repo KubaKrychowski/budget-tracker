@@ -15,6 +15,7 @@ import { APP_ICONS } from './core/icons';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { GlobalErrorHandler } from './core/errors/global-error-handler';
 import { languageInterceptor } from './core/api/language.interceptor';
+import { provideMarkdown } from 'ngx-markdown';
 
 registerLocaleData(pl);
 
@@ -45,6 +46,11 @@ export const appConfig: ApplicationConfig = {
     // języka datepicker mówił „Aug / Mo Tu We” na polskim ekranie.
     provideNzDateFnsAdapter({ locale: plDateFns, firstDayOfWeek: 1 }),
     provideNzIcons(APP_ICONS),
+
+    // Podręcznik (`features/handbook`) ładuje treść z `public/handbook/*.md` przez
+    // `<markdown [src]>` — `provideMarkdown()` rejestruje `MarkdownService` używany przez
+    // ten komponent; sam parser (marked) jest wymaganym peer dependency ngx-markdown.
+    provideMarkdown(),
 
     // `@Injectable()` bez `providedIn: 'root'` (tak jest opakowany w NG-ZORRO) — bez
     // jawnego providera tutaj `ConfirmDialogService` (który go wstrzykuje i SAM jest

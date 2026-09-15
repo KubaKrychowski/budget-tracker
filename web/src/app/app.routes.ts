@@ -62,4 +62,10 @@ export const routes: Routes = [
       import('./features/create-budget/create-budget').then((m) => m.CreateBudget),
     title: 'Tworzenie budzetu',
   },
+  {
+    path: 'handbook',
+    loadComponent: () =>
+      import('./features/handbook/handbook').then((m) => m.Handbook),
+    title: 'Podręcznik — Budżet tracker',
+  },
 ];

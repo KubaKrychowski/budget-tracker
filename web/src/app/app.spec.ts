@@ -31,4 +31,17 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
+
+  it('ikona podręcznika w nagłówku prowadzi do /handbook, obok zębatki ustawień (#19)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const links = compiled.querySelectorAll('.app-header__icon-link');
+    expect(links.length).toBe(2);
+    // Kolejność z makiety: podręcznik przed zębatką.
+    expect(links[0].getAttribute('href')).toContain('/handbook');
+    expect(links[1].getAttribute('href')).toBe('/settings');
+  });
 });

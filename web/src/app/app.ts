@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzAutocompleteModule, NzOptionSelectionChange } from 'ng-zorro-antd/auto-complete';
@@ -10,6 +11,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { SYSTEM_ACTIONS } from './core/system-actions';
 import { SystemAction } from './core/models/system-action';
 import { normalizeText } from './core/normalize-text';
+import { handbookTopicKeyForRoute } from './core/handbook-topics';
 
 @Component({
   imports: [
@@ -32,6 +34,20 @@ export class App {
    * dopasowywać po widocznych etykietach.
    */
   private readonly langLoaded = toSignal(this.translate.onLangChange, { initialValue: null });
+
+  /**
+   * Temat podręcznika dopasowany do bieżącej trasy (issue #19) — ikona w nagłówku otwiera
+   * podręcznik OD RAZU na temacie ekranu, z którego wychodzisz, zamiast zawsze od pierwszego
+   * z listy. `toSignal` na `NavigationEnd`, bo `router.url` samo w sobie nie jest sygnałem.
+   */
+  private readonly navigationEnd = toSignal(
+    this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)),
+    { initialValue: null },
+  );
+  protected readonly handbookTopic = computed(() => {
+    this.navigationEnd();
+    return handbookTopicKeyForRoute(this.router.url);
+  });
 
   /** Podpowiedzi filtrowane bez uwzględniania wielkości liter i polskich ogonków. */
   protected readonly suggestions = computed(() => {
