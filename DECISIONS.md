@@ -790,3 +790,61 @@ W trakcie sesji powstały diagramy (do odtworzenia/rozbudowy w razie potrzeby):
 > Stąd ścieżka bywa ZALEŻNA OD POCHODZENIA: lista transakcji pokazuje „Ustawienia / Dane
 > treningowe / Lista transakcji", gdy przyszło się z zakładki treningowej (`?origin=training`),
 > bo powrót ma prowadzić tam, skąd użytkownik przyszedł — a nie do korzenia.
+
+---
+
+## 11. Wydatki CLI (issue #25)
+
+Issue: *„Wszystkie operacje powinny być wykonywalne z poziomu CLI. W aplikacji powinna być ikona
+terminala w którym można by się do niego podłączyć, ale chciałbym żeby jakiś AI mógł korzystać
+z tej aplikacji bez potrzeby wchodzenia na nią, tylko bezpośrednio z wbudowanego terminala."*
+
+**Architektura: cienka warstwa NAD istniejącymi handlerami, zero duplikacji logiki.** Jeden nowy
+endpoint, `POST /api/cli/execute`, przyjmuje całą linię komendy (`{"line": "budget list"}`) i woła
+DOKŁADNIE te same handlery co odpowiedni endpoint REST — ta sama walidacja, te same DTO, ten sam
+`DomainExceptionHandler`. `Features/Cli/Services/CliCommandRegistry` trzyma rejestr `rzeczownik
+czasownik → delegat`, budowany raz w `Program.cs` przez `Map<Feature>Cli()` w każdym istniejącym
+`<Feature>Module.cs` (dokładnie ten sam wzorzec co lista `app.Map<Feature>()` dla REST) — zero
+nowych plików na komendę, moduł nadal zna tylko swój feature.
+
+- **Składnia: `rzeczownik czasownik --flagi`**, jak `gh`/`kubectl` — decyzja użytkownika, nie
+  domysł. Nazwy flag = nazwy pól istniejącego Request DTO, żeby nie utrzymywać drugiego słownika.
+- **Wyjątek domenowy z handlera NIE jest łapany w dispatcherze.** Leci dalej przez pipeline ASP.NET
+  do TEGO SAMEGO `DomainExceptionHandler`, który już mapuje wyjątki na 400/404/409 dla REST —
+  zero nowego mapowania błędów do napisania i utrzymania. Dispatcher łapie WYŁĄCZNIE
+  `CliArgumentException` (brakująca/zła flaga) — to błąd składni CLI, nie reguły biznesowej.
+- **Pola złożone (jsonb: reguły zleceń stałych, reguły transferu) idą jako `--pole-json '<JSON>'`**
+  zamiast wymyślonego mini-języka do zagnieżdżonych flag — AI generujące komendy pisze JSON bez
+  wysiłku, człowiek kopiuje z przykładu w `help`.
+- **Import (jedyny endpoint z uploadem pliku): `--content <base64>` zamiast strumienia.** Świadomie
+  BEZ nowej ścieżki czytania z dysku serwera — CLI nie ma być furtką do systemu plików hosta.
+- **`help` i `<rzeczownik> help`** zwracają pełną listę komend z opisem, przykładem użycia i listą
+  flag — kluczowe, żeby AI (albo user) mogło poznać składnię BEZ dokumentacji poza samym API.
+
+> **⚠️ GOTCHA — tokenizacja i podwójny cudzysłów w JSON-ie.** Pierwsza wersja tokenizera rozumiała
+> tylko `"…"` jako cudzysłów. Wartość flagi z surowym JSON-em (`--rules-json "[{\"a\":1}]"`) ma
+> WŁASNE podwójne cudzysłowy w środku — naiwne parowanie `"`...`"` ucinało token na PIERWSZYM z nich,
+> rozbijając JSON na kawałki bez żadnego czytelnego błędu (po prostu zła wartość flagi). Złapał to
+> test integracyjny `standing-order create` z regułami, nie przegląd kodu. Naprawa: tokenizer
+> rozumie TAKŻE `'…'` (pojedynczy cudzysłów), który nie koliduje ze składnią JSON — konwencja: JSON
+> zawsze w pojedynczym cudzysłowie, zwykły tekst ze spacją w podwójnym. Patrz `CliCommandDispatcher.Tokenize`.
+
+**Zakres: wszystkie 12 rzeczowników = wszystkie dzisiejsze endpointy** (`budget`, `transaction`,
+`category`, `dashboard`, `import`, `limit`, `standing-order`, `episodic-order`, `savings`,
+`reservation`, `model`, `rule`) — decyzja usera, nie faza „na start". `model train/recategorize/
+activate` w CLI są cienkim wrapperem jak reszta; ich WŁASNĄ logikę (pliki modelu ML.NET) sprawdzają
+już `CategoryModelTrainingTests`/`ModelStoreTests` — CLI niczego tam nie duplikuje.
+
+**Frontend: panel terminala jako `nz-drawer`, nie osobna trasa.** Otwierany z nowej ikony w nagłówku
+(obok zębatki), NIE zmienia adresu — to nakładka nad bieżącym ekranem, nie ekran sam w sobie.
+Ciemne tło (jedyne miejsce w aplikacji, które ma wyglądać jak prawdziwy terminal, nie jak reszta
+UI) i monospace systemowy zamiast doładowanej czcionki. Historia komend (strzałki góra/dół) w
+`sessionStorage` — pamięć TEJ karty na czas wizyty, jak `budget-range-memory.ts`, nie coś, co ma
+przetrwać zamknięcie przeglądarki.
+
+> **⚠️ GOTCHA — `*nzDrawerContent` renderuje przez CDK Portal, poza drzewem komponentu.**
+> `fixture.detectChanges()` w teście nie zawsze dociera do treści portalowanej przez `nz-drawer` —
+> ten sam rodzaj niedopasowania cyklu change detection co przy `router.navigate` (`web/CLAUDE.md`).
+> Test na historię komend (strzałka góra) failował mimo poprawnej logiki komponentu (sygnał `input`
+> miał już właściwą wartość), bo DOM input-a jej nie odzwierciedlał — naprawa: `await
+> fixture.whenStable()` po mutacji, zanim odczytasz `input.value` z portalowanej treści.

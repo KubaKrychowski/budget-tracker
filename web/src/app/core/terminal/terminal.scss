@@ -1,0 +1,110 @@
+// Monospace systemowy, nie doładowana czcionka: to jedyny ekran w aplikacji, który chce
+// wyglądać jak prawdziwy terminal, a każdy system ma już czym to narysować.
+$mono: ui-monospace, 'SFMono-Regular', 'Roboto Mono', 'Cascadia Code', Consolas, monospace;
+
+.term {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #121814;
+  color: #fff;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: #1e2621;
+    flex: none;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__close {
+    color: #96a59b;
+    font-size: 16px;
+    line-height: 1;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  &__scrollback {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__hint {
+    margin: 0;
+    color: #96a59b;
+    font-size: 12px;
+  }
+
+  &__line {
+    margin: 0;
+    font-family: $mono;
+    font-size: 13px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    &--command {
+      color: #66f08f; // Primary-300 z design-tokens.less — czytelny na ciemnym tle
+      font-weight: 600;
+
+      &::before {
+        content: '> ';
+      }
+    }
+
+    &--result {
+      color: #fff;
+    }
+
+    &--error {
+      color: #fac574; // Warn-300
+    }
+  }
+
+  &__input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    background: #1e2621;
+    flex: none;
+  }
+
+  &__prompt {
+    font-family: $mono;
+    font-size: 14px;
+    font-weight: 700;
+    color: #66f08f;
+  }
+
+  &__input {
+    flex: 1 1 auto;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #fff;
+    font-family: $mono;
+    font-size: 14px;
+
+    &::placeholder {
+      color: #5c685f; // Neutral-600
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
