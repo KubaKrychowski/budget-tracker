@@ -2,6 +2,8 @@ using Microsoft.Extensions.Options;
 using System.Globalization;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Categorization;
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.Dashboard;
 using BudgetTracker.Api.Features.Import;
 using BudgetTracker.Api.Features.Limits;
@@ -103,6 +105,20 @@ app.MapEpisodicOrders();
 app.MapImport();
 app.MapBudgets();
 app.MapTransactions();
+
+// Wydatki CLI (issue #25) — każdy Map<Feature>Cli() dopisuje swoje komendy do wspólnego rejestru,
+// dokładnie tak jak lista app.Map<Feature>() wyżej dopisuje endpointy REST.
+var cli = new CliCommandRegistry()
+    .MapDashboardCli()
+    .MapCategorizationCli()
+    .MapImportCli()
+    .MapLimitsCli()
+    .MapStandingOrdersCli()
+    .MapEpisodicOrdersCli()
+    .MapSavingsCli()
+    .MapBudgetsCli()
+    .MapTransactionsCli();
+app.MapCli(cli);
 
 app.Run();
 

@@ -4,6 +4,8 @@ using BudgetTracker.Api.Features.Budgets.Consts;
 using BudgetTracker.Api.Features.Budgets.Contracts;
 using BudgetTracker.Api.Features.Budgets.Queries;
 using BudgetTracker.Api.Features.Budgets.Services;
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Infrastructure.Contracts;
 using BudgetTracker.Api.Resources;
 using Hangfire;
@@ -186,6 +188,116 @@ public static class BudgetsModule
             .Produces(StatusCodes.Status404NotFound);
 
         return app;
+    }
+
+    /// <summary>
+    /// Komendy CLI (issue #25) — każda woła TEN SAM handler co odpowiedni endpoint REST wyżej. Błędy
+    /// walidacji zwracane jako wynik (np. <see cref="CreateBudgetResponseDto.Error"/>) wracają wprost —
+    /// bez tłumaczenia na komunikat: CLI mówi kodem błędu, nie zdaniem dla ekranu. Wyjątki domenowe
+    /// (np. <see cref="Exceptions.BudgetNameRequiredException"/>) lecą dalej do <c>DomainExceptionHandler</c>.
+    /// </summary>
+    public static CliCommandRegistry MapBudgetsCli(this CliCommandRegistry registry)
+    {
+        registry.Register("budget", "list", "Lista budżetów, także usuniętych.", "budget list", [],
+            async (sp, _, ct) =>
+            {
+                var handler = sp.GetRequiredService<GetBudgetsListQueryHandler>();
+                return new BudgetListResponseDto(await handler.HandleAsync(ct), handler.RetentionDays);
+            });
+
+        registry.Register("budget", "currencies", "Dostępne kody walut.", "budget currencies", [],
+            async (sp, _, ct) =>
+                await sp.GetRequiredService<GetAvailableCurrenciesQueryHandler>().HandleAsync(ct));
+
+        registry.Register("budget", "create", "Tworzy budżet (miesiąc = bieżący).",
+            "budget create --name <nazwa> --currency <PLN> --initial-balance <kwota> [--linked-savings-name <nazwa>]",
+            [
+                CliFlag.Required("name", "Nazwa budżetu."),
+                CliFlag.Required("currency", "Kod waluty (patrz „budget currencies”)."),
+                CliFlag.Required("initial-balance", "Saldo początkowe."),
+                CliFlag.Optional("linked-savings-name",
+                    "Niepuste = od razu tworzy i łączy drugi budżet o tej nazwie jako oszczędnościowy."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var request = new CreateBudgetRequestDto(
+                    args.GetRequiredFlag("name"),
+                    args.GetRequiredFlag("currency"),
+                    args.GetRequiredDecimalFlag("initial-balance"),
+                    args.GetFlag("linked-savings-name"));
+                return await sp.GetRequiredService<CreateBudgetCommandHandler>().HandleAsync(request, ct);
+            });
+
+        registry.Register("budget", "update", "Zmienia nazwę i saldo początkowe.",
+            "budget update <id> --name <nazwa> --initial-balance <kwota>",
+            [CliFlag.Required("name", "Nowa nazwa."), CliFlag.Required("initial-balance", "Nowe saldo początkowe.")],
+            async (sp, args, ct) =>
+            {
+                var request = new UpdateBudgetRequestDto(
+                    args.GetRequiredFlag("name"), args.GetRequiredDecimalFlag("initial-balance"));
+                return await sp.GetRequiredService<UpdateBudgetCommandHandler>()
+                    .HandleAsync(args.GetGuid(0), request, ct);
+            });
+
+        registry.Register("budget", "disable", "Zamyka budżet na nowy import i nowe transakcje.",
+            "budget disable <id>", [],
+            async (sp, args, ct) => await sp.GetRequiredService<SetBudgetEnabledCommandHandler>()
+                .HandleAsync(args.GetGuid(0), enabled: false, ct));
+
+        registry.Register("budget", "enable", "Otwiera z powrotem wyłączony budżet.",
+            "budget enable <id>", [],
+            async (sp, args, ct) => await sp.GetRequiredService<SetBudgetEnabledCommandHandler>()
+                .HandleAsync(args.GetGuid(0), enabled: true, ct));
+
+        registry.Register("budget", "reset", "Usuwa transakcje, importy i limity — zostaje nazwa, saldo, cel i rezerwacje.",
+            "budget reset <id>", [],
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<ResetBudgetCommandHandler>().HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("budget", "restore", "Cofa usunięcie budżetu i jego danych (w oknie retencji).",
+            "budget restore <id>", [],
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<RestoreBudgetCommandHandler>().HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("budget", "delete", "Usuwa budżet: to co reset, plus cele i rezerwacje.",
+            "budget delete <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<DeleteBudgetCommandHandler>().HandleAsync(id, ct);
+                return new { deleted = true, id };
+            });
+
+        registry.Register("budget", "link-savings",
+            "Zmienia powiązanie z budżetem oszczędnościowym i jego reguły transferu.",
+            "budget link-savings <id> [--linked-budget-id <guid>] [--rules-json <json>]",
+            [
+                CliFlag.Optional("linked-budget-id", "BusinessId budżetu oszczędnościowego; pomiń, żeby zdjąć powiązanie."),
+                CliFlag.Optional("rules-json",
+                    "Tablica reguł JSON: [{\"titlePattern\":\"...\",\"amountFrom\":10,\"amountTo\":50}]. Wymagane, gdy podajesz --linked-budget-id."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var linkedId = args.GetGuidFlag("linked-budget-id");
+                var rules = linkedId is not null
+                    ? args.GetRequiredJsonFlag<IReadOnlyList<TitleAmountRuleRequestDto>>("rules-json")
+                    : [];
+                var request = new UpdateSavingsLinkRequestDto(linkedId, rules);
+                return await sp.GetRequiredService<UpdateSavingsLinkCommandHandler>()
+                    .HandleAsync(args.GetGuid(0), request, ct);
+            });
+
+        registry.Register("budget", "unpin-transfer",
+            "Ręcznie odpina transakcję od transferu na budżet oszczędnościowy.",
+            "budget unpin-transfer <transactionId>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<UnpinSavingsTransferCommandHandler>().HandleAsync(id, ct);
+                return new { unpinned = true, transactionId = id };
+            });
+
+        return registry;
     }
 
     private static IResult BadRequest(IStringLocalizer<SharedResource> localizer, string resourceKey) =>

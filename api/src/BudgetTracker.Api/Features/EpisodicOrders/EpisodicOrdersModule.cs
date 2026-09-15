@@ -1,3 +1,5 @@
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.EpisodicOrders.Commands;
 using BudgetTracker.Api.Features.EpisodicOrders.Contracts;
 using BudgetTracker.Api.Features.EpisodicOrders.Queries;
@@ -113,4 +115,100 @@ public static class EpisodicOrdersModule
 
         return app;
     }
+
+    /// <summary>Komendy CLI (issue #25) — te same handlery co endpointy REST wyżej.</summary>
+    public static CliCommandRegistry MapEpisodicOrdersCli(this CliCommandRegistry registry)
+    {
+        registry.Register("episodic-order", "list", "Zaplanowane i zrealizowane zlecenia epizodyczne.",
+            "episodic-order list [--budget-id <guid>]",
+            [CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego.")],
+            async (sp, args, ct) => await sp.GetRequiredService<GetEpisodicOrdersQueryHandler>()
+                .HandleAsync(args.GetGuidFlag("budget-id"), ct));
+
+        registry.Register("episodic-order", "candidates", "Wydatki, które mogą zrealizować zlecenie.",
+            "episodic-order candidates [--budget-id <guid>] [--order-id <guid>] [--search <fraza>]",
+            [
+                CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego."),
+                CliFlag.Optional("order-id", "Zlecenie, dla którego szukamy kandydatów (dialog „Oznacz jako kupione”)."),
+                CliFlag.Optional("search", "Fraza w opisie transakcji."),
+            ],
+            async (sp, args, ct) => await sp.GetRequiredService<GetEpisodicOrderCandidatesQueryHandler>()
+                .HandleAsync(args.GetGuidFlag("budget-id"), args.GetGuidFlag("order-id"), args.GetFlag("search"), ct));
+
+        registry.Register("episodic-order", "create", "Tworzy zlecenie epizodyczne — zaplanowane albo od razu zrealizowane.",
+            EpisodicOrderUsage("create"), EpisodicOrderFlags(),
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<CreateEpisodicOrderCommandHandler>().HandleAsync(ToSaveRequest(args), ct));
+
+        registry.Register("episodic-order", "update", "Zmienia zlecenie epizodyczne (budżet i transakcja są ignorowane przy zmianie).",
+            EpisodicOrderUsage("update <id>"), EpisodicOrderFlags(),
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<UpdateEpisodicOrderCommandHandler>().HandleAsync(id, ToSaveRequest(args), ct);
+                return new { updated = true, id };
+            });
+
+        registry.Register("episodic-order", "delete", "Usuwa zlecenie epizodyczne (razem z nierozliczoną rezerwacją, jeśli jest).",
+            "episodic-order delete <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<DeleteEpisodicOrderCommandHandler>().HandleAsync(id, ct);
+                return new { deleted = true, id };
+            });
+
+        registry.Register("episodic-order", "add-goal", "„Załóż cel oszczędzania” — tworzy rezerwację rządzoną przez to zlecenie.",
+            "episodic-order add-goal <id>", [],
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<CreateEpisodicOrderReservationCommandHandler>()
+                    .HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("episodic-order", "realize", "„Oznacz jako kupione” — rozlicza plan wskazaną transakcją.",
+            "episodic-order realize <id> --transaction-id <guid>",
+            [CliFlag.Required("transaction-id", "Transakcja, którą zapłacono zaplanowany zakup.")],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                var request = new PurchaseEpisodicOrderRequestDto(args.GetRequiredGuidFlag("transaction-id"));
+                await sp.GetRequiredService<PurchaseEpisodicOrderCommandHandler>().PurchaseAsync(id, request, ct);
+                return new { realized = true, id };
+            });
+
+        registry.Register("episodic-order", "unrealize", "Cofa realizację do zaplanowanych (tylko jeśli było zaplanowane).",
+            "episodic-order unrealize <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<PurchaseEpisodicOrderCommandHandler>().UndoAsync(id, ct);
+                return new { unrealized = true, id };
+            });
+
+        return registry;
+    }
+
+    private static string EpisodicOrderUsage(string verbAndArgs) =>
+        $"episodic-order {verbAndArgs} --name <nazwa> [--description <opis>] [--transaction-id <guid>] "
+        + "[--category-id <guid>] [--amount <kwota>] [--due-month <RRRR-MM>] [--budget-id <guid>]";
+
+    private static IReadOnlyList<CliFlagDefinition> EpisodicOrderFlags() =>
+    [
+        CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego. Przy „update” ignorowany."),
+        CliFlag.Required("name", "Nazwa zlecenia (np. „Nowy laptop”)."),
+        CliFlag.Optional("description", "Opis — po co, jakie parametry."),
+        CliFlag.Optional("transaction-id",
+            "Podaj, żeby utworzyć OD RAZU zrealizowane (kwotę/datę/kategorię bierze z transakcji) — wtedy plan pomiń."),
+        CliFlag.Optional("category-id", "Kategoria planu — pomiń przy --transaction-id."),
+        CliFlag.Optional("amount", "Kwota planu — pomiń przy --transaction-id."),
+        CliFlag.Optional("due-month", "Termin planu (dowolny dzień miesiąca) — pomiń przy --transaction-id."),
+    ];
+
+    private static SaveEpisodicOrderRequestDto ToSaveRequest(CliArgs args) => new(
+        args.GetGuidFlag("budget-id"),
+        args.GetRequiredFlag("name"),
+        args.GetFlag("description"),
+        args.GetGuidFlag("transaction-id"),
+        args.GetGuidFlag("category-id"),
+        args.GetDecimalFlag("amount"),
+        args.GetDateFlag("due-month"));
 }

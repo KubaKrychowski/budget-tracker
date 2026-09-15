@@ -1,4 +1,7 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Exceptions;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.Import.Commands;
 using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Exceptions;
@@ -123,4 +126,106 @@ public static class ImportModule
 
     private static IResult BadRequest(IStringLocalizer<SharedResource> localizer, string resourceKey) =>
         Results.BadRequest(new { error = localizer[resourceKey].Value });
+
+    /// <summary>
+    /// Komendy CLI (issue #25). Bez uploadu strumienia: plik idzie jako <c>--content</c> zakodowany base64 —
+    /// serwer nie dostaje nowej ścieżki czytania z dysku, a wynik jest tym samym <c>byte[]</c>, który dziś
+    /// dostaje parser z <see cref="IFormFile.OpenReadStream"/>.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ REST celowo zamienia <see cref="EntityNotFoundException"/> (nieznany budżet) na 400, nie 404 —
+    /// budżet przychodzi w parametrze/ciele, nie w adresie zasobu (patrz doc klasy). Dispatcher CLI tego
+    /// rozróżnienia nie zna (dla niego to zwykły wyjątek domenowy → 404 przez <c>DomainExceptionHandler</c>),
+    /// więc obie komendy łapią go tu i zamieniają na <see cref="CliArgumentException"/>, żeby zachowanie
+    /// zostało spójne z REST.
+    /// </remarks>
+    public static CliCommandRegistry MapImportCli(this CliCommandRegistry registry)
+    {
+        registry.Register("import", "sources", "Banki, budżety i kategorie potrzebne do kroku importu.",
+            "import sources", [],
+            async (sp, _, ct) => await sp.GetRequiredService<GetImportSourcesQueryHandler>().HandleAsync(ct));
+
+        registry.Register("import", "preview", "Parsuje wyciąg i pokazuje, co zaimportowałby zapis — bez zapisu.",
+            "import preview --bank <klucz> --budget-id <guid> --content <base64>",
+            [
+                CliFlag.Required("bank", "Klucz banku z „import sources” (np. pko, mbank)."),
+                CliFlag.Required("budget-id", "BusinessId budżetu, na który trafiłby import."),
+                CliFlag.Required("content", "Zawartość pliku CSV zakodowana base64."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var bank = args.GetRequiredFlag("bank");
+                var parser = sp.GetServices<IStatementParser>()
+                    .FirstOrDefault(p => string.Equals(p.BankKey, bank, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new CliArgumentException($"Nieznany bank „{bank}”. Sprawdź „import sources”.");
+
+                var bytes = DecodeBase64(args, "content");
+
+                IReadOnlyList<ParsedRow> rows;
+                try
+                {
+                    using var stream = new MemoryStream(bytes);
+                    rows = await parser.ParseAsync(stream, ct);
+                }
+                catch (StatementFormatException ex)
+                {
+                    throw new CliArgumentException(ex.Message);
+                }
+
+                try
+                {
+                    return await sp.GetRequiredService<GetImportPreviewQueryHandler>()
+                        .HandleAsync(rows, args.GetRequiredGuidFlag("budget-id"), ct);
+                }
+                catch (EntityNotFoundException)
+                {
+                    throw new CliArgumentException("Nieznany --budget-id.");
+                }
+            });
+
+        registry.Register("import", "run", "Zapisuje przejrzane wiersze (wynik „import preview”, ewentualnie poprawiony).",
+            "import run --budget-id <guid> --bank <klucz> --file-name <nazwa> --rows-json <json>",
+            [
+                CliFlag.Required("budget-id", "BusinessId budżetu docelowego."),
+                CliFlag.Required("bank", "Klucz banku — tylko do zapisania w historii importu."),
+                CliFlag.Required("file-name", "Nazwa pliku — tylko do zapisania w historii importu."),
+                CliFlag.Required("rows-json",
+                    "Tablica JSON wierszy z „import preview” (po usunięciach/korektach): "
+                    + "[{\"date\":\"RRRR-MM-DD\",\"amount\":0,\"description\":\"...\",\"transactionType\":\"...\","
+                    + "\"externalReference\":null,\"categoryId\":\"guid|null\",\"confidence\":null,\"edited\":false}]."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var request = new CommitRequestDto(
+                    args.GetRequiredGuidFlag("budget-id"),
+                    args.GetRequiredFlag("bank"),
+                    args.GetRequiredFlag("file-name"),
+                    args.GetRequiredJsonFlag<IReadOnlyList<CommitRowRequestDto>>("rows-json"));
+
+                if (request.Rows.Count == 0) throw new CliArgumentException("--rows-json: pusta lista wierszy.");
+
+                try
+                {
+                    return await sp.GetRequiredService<CommitImportCommandHandler>().HandleAsync(request, ct);
+                }
+                catch (EntityNotFoundException)
+                {
+                    throw new CliArgumentException("Nieznany --budget-id.");
+                }
+            });
+
+        return registry;
+    }
+
+    private static byte[] DecodeBase64(CliArgs args, string flag)
+    {
+        try
+        {
+            return Convert.FromBase64String(args.GetRequiredFlag(flag));
+        }
+        catch (FormatException)
+        {
+            throw new CliArgumentException($"--{flag}: niepoprawny base64.");
+        }
+    }
 }
