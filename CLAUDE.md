@@ -19,6 +19,7 @@ tak, a nie inaczej, opisuje [DECISIONS.md](DECISIONS.md) — patrz „Decyzje”
 | `web/src/app/core/` | wspólne: `api/models`, `active-budget`, `budget-switcher`, `confirm-dialog`, `icons.ts`, `parse-amount` |
 | `web/public/i18n/pl.json`, `en.json` | wszystkie teksty UI |
 | `web/projects/landing/` | publiczna strona projektu (osobna aplikacja) |
+| `tools/bt-cli/` | instalowalny moduł PowerShell `bt` — kliencki CLI do `POST /api/cli/execute` spoza przeglądarki (issue #25) |
 | `DECISIONS.md` | dziennik decyzji z uzasadnieniami (dawny `CLAUDE.md`; odwołania „CLAUDE.md §N” w kodzie prowadzą tam) |
 | `plans/`, `docs/`, `.claude/` | lokalne plany i rusztowanie — **w `.gitignore`**, nie przenoś tam niczego, co ma zostać w repo |
 | `data/` | lokalne dane modelu i prywatne reguły — **poza gitem, nie commituj** |
