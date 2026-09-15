@@ -8,12 +8,14 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { provideMarkdown } from 'ngx-markdown';
 import { APP_ICONS } from '../../core/icons';
+import { HANDBOOK_TOPICS } from '../../core/handbook-topics';
 import { Handbook } from './handbook';
 
 /**
  * Podręcznik (issue #19) — lista tematów po lewej, treść z `public/handbook/*.md` po prawej,
- * wybór w adresie (`?topic=`). Testujemy dopasowanie adresu na plik i na podświetlenie
- * w liście, nie samą treść markdown (to odpowiedzialność `ngx-markdown`/`marked`, nie nasza).
+ * wybór w adresie (`?topic=`), wyszukiwarka po tytule i po treści wszystkich tematów.
+ * Testujemy dopasowanie adresu/zapytania na plik i na podświetlenie w liście, nie samą treść
+ * markdown (to odpowiedzialność `ngx-markdown`/`marked`, nie nasza).
  */
 describe('Handbook', () => {
   let http: HttpTestingController;
@@ -35,7 +37,7 @@ describe('Handbook', () => {
   });
 
   afterEach(() => {
-    http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush('treść'); });
+    http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush(''); });
     http.verify({ ignoreCancelled: true });
   });
 
@@ -44,12 +46,20 @@ describe('Handbook', () => {
   // sprawdzałby DOM, zanim ngx-markdown zdąży wstawić wynik.
   const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve));
 
+  /**
+   * Ekran ładuje treść wybranego tematu (do wyświetlenia) I treść WSZYSTKICH tematów naraz
+   * (do wyszukiwania) — stąd naraz może wisieć nawet 10 żądań do 9 plików. Jedno wywołanie
+   * odpowiada na wszystkie pending naraz: podane URL-e dostają swoją treść, reszta pustą.
+   */
+  const flushHandbookFiles = (contentByUrl: Record<string, string> = {}) => {
+    http.match(() => true).forEach((r) => r.flush(contentByUrl[r.request.url] ?? ''));
+  };
+
   it('bez ?topic= w adresie pokazuje pierwszy temat z listy', async () => {
     const harness = await RouterTestingHarness.create('/handbook');
     harness.detectChanges();
 
-    const req = http.expectOne('handbook/dashboard.md');
-    req.flush('## Pulpit i podsumowanie');
+    flushHandbookFiles({ 'handbook/dashboard.md': '## Pulpit i podsumowanie' });
     await flushMicrotasks();
     harness.detectChanges();
 
@@ -61,8 +71,7 @@ describe('Handbook', () => {
     const harness = await RouterTestingHarness.create('/handbook?topic=savings');
     harness.detectChanges();
 
-    const req = http.expectOne('handbook/savings.md');
-    req.flush('## Cele oszczędzania i rezerwacje');
+    flushHandbookFiles({ 'handbook/savings.md': '## Cele oszczędzania i rezerwacje' });
     await flushMicrotasks();
     harness.detectChanges();
 
@@ -77,11 +86,76 @@ describe('Handbook', () => {
     const harness = await RouterTestingHarness.create('/handbook?topic=nieistniejacy');
     harness.detectChanges();
 
-    http.expectOne('handbook/dashboard.md').flush('## Pulpit i podsumowanie');
-    await harness.fixture.whenStable();
+    flushHandbookFiles({ 'handbook/dashboard.md': '## Pulpit i podsumowanie' });
+    await flushMicrotasks();
     harness.detectChanges();
 
     const selected = harness.routeNativeElement?.querySelector('.hb__topic--selected');
     expect(selected?.textContent?.trim()).toBe('handbook.topics.dashboard');
+  });
+
+  describe('wyszukiwarka', () => {
+    const search = (harness: RouterTestingHarness, phrase: string) => {
+      const input = harness.routeNativeElement!.querySelector('input') as HTMLInputElement;
+      input.value = phrase;
+      input.dispatchEvent(new Event('input'));
+      harness.detectChanges();
+    };
+
+    const topicLabels = (harness: RouterTestingHarness) =>
+      [...harness.routeNativeElement!.querySelectorAll('.hb__topic')].map((el) => el.textContent?.trim());
+
+    it('filtruje listę po tytule tematu, bez uwzględniania wielkości liter', async () => {
+      const harness = await RouterTestingHarness.create('/handbook');
+      harness.detectChanges();
+      flushHandbookFiles();
+      await flushMicrotasks();
+      harness.detectChanges();
+
+      // Bez tłumaczeń w teście `translate.instant` zwraca sam klucz — „savings" jest
+      // podciągiem WYŁĄCZNIE `handbook.topics.savings`, więc to jednoznaczne zapytanie.
+      search(harness, 'SAVINGS');
+
+      expect(topicLabels(harness)).toEqual(['handbook.topics.savings']);
+    });
+
+    it('filtruje listę też po treści tematu, nie tylko po tytule', async () => {
+      const harness = await RouterTestingHarness.create('/handbook');
+      harness.detectChanges();
+      flushHandbookFiles({ 'handbook/transactions.md': 'Rozpoznaje sprzedawcę „Kaczka i Spółka".' });
+      await flushMicrotasks();
+      harness.detectChanges();
+
+      search(harness, 'kaczka');
+
+      expect(topicLabels(harness)).toEqual(['handbook.topics.transactions']);
+    });
+
+    it('brak dopasowania pokazuje komunikat zamiast pustej listy', async () => {
+      const harness = await RouterTestingHarness.create('/handbook');
+      harness.detectChanges();
+      flushHandbookFiles();
+      await flushMicrotasks();
+      harness.detectChanges();
+
+      search(harness, 'cos-czego-na-pewno-nie-ma-w-podreczniku');
+
+      expect(topicLabels(harness)).toEqual([]);
+      expect(harness.routeNativeElement?.querySelector('.hb__no-results')?.textContent?.trim())
+        .toBe('handbook.noResults');
+    });
+
+    it('puste zapytanie pokazuje z powrotem wszystkie tematy', async () => {
+      const harness = await RouterTestingHarness.create('/handbook');
+      harness.detectChanges();
+      flushHandbookFiles();
+      await flushMicrotasks();
+      harness.detectChanges();
+
+      search(harness, 'savings');
+      search(harness, '');
+
+      expect(topicLabels(harness).length).toBe(HANDBOOK_TOPICS.length);
+    });
   });
 });

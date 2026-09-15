@@ -993,6 +993,8 @@
   "handbook": {
     "openHandbook": "Podręcznik",
     "title": "Podręcznik",
+    "searchPlaceholder": "Szukaj w podręczniku",
+    "noResults": "Nic nie pasuje do wyszukiwanej frazy.",
     "topics": {
       "dashboard": "Pulpit i podsumowanie",
       "budgets": "Budżety",

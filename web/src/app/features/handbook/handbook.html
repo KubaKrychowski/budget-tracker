@@ -10,15 +10,29 @@
 
   <div class="hb__cols">
     <nav class="hb__sidebar">
-      @for (topic of topics; track topic.key) {
-        <a
-          class="hb__topic"
-          [class.hb__topic--selected]="topic.key === selected().key"
-          [routerLink]="['/handbook']"
-          [queryParams]="{ topic: topic.key }"
-        >
-          {{ topic.labelKey | translate }}
-        </a>
+      <nz-input-wrapper class="hb__search">
+        <nz-icon nzInputPrefix nzType="search" />
+        <input
+          nz-input
+          [placeholder]="'handbook.searchPlaceholder' | translate"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+        />
+      </nz-input-wrapper>
+
+      @if (filteredTopics().length === 0) {
+        <p class="hb__no-results">{{ 'handbook.noResults' | translate }}</p>
+      } @else {
+        @for (topic of filteredTopics(); track topic.key) {
+          <a
+            class="hb__topic"
+            [class.hb__topic--selected]="topic.key === selected().key"
+            [routerLink]="['/handbook']"
+            [queryParams]="{ topic: topic.key }"
+          >
+            {{ topic.labelKey | translate }}
+          </a>
+        }
       }
     </nav>
 

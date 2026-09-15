@@ -930,6 +930,8 @@
   "handbook": {
     "openHandbook": "Handbook",
     "title": "Handbook",
+    "searchPlaceholder": "Search the handbook",
+    "noResults": "Nothing matches your search.",
     "topics": {
       "dashboard": "Dashboard and summary",
       "budgets": "Budgets",

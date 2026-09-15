@@ -31,6 +31,17 @@
     overflow: hidden;
   }
 
+  &__search {
+    margin: 8px;
+    width: auto;
+  }
+
+  &__no-results {
+    margin: 4px 16px 12px;
+    color: #78877c;
+    font-size: 13px;
+  }
+
   &__topic {
     padding: 10px 16px;
     color: rgb(0 0 0 / 85%);
