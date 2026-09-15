@@ -1,0 +1,51 @@
+<nz-drawer
+  [nzVisible]="service.isOpen()"
+  (nzOnClose)="close()"
+  nzPlacement="right"
+  [nzWidth]="560"
+  [nzClosable]="false"
+  [nzMaskStyle]="{ background: 'rgba(0, 0, 0, 0.35)' }"
+  [nzBodyStyle]="{ padding: '0' }"
+  nzWrapClassName="term-wrap"
+>
+  <ng-container *nzDrawerContent>
+    <div class="term">
+      <header class="term__header">
+        <span class="term__title">{{ 'terminal.title' | translate }}</span>
+        <button
+          type="button"
+          class="term__close"
+          (click)="close()"
+          [attr.aria-label]="'terminal.close' | translate"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div class="term__scrollback">
+        @if (entries().length === 0) {
+          <p class="term__hint">{{ 'terminal.hint' | translate }}</p>
+        }
+        @for (entry of entries(); track $index) {
+          <p class="term__line" [class]="'term__line--' + entry.kind">{{ entry.text }}</p>
+        }
+      </div>
+
+      <div class="term__input-row">
+        <span class="term__prompt">&gt;</span>
+        <input
+          class="term__input"
+          [ngModel]="input()"
+          (ngModelChange)="input.set($event)"
+          (keydown.enter)="submit()"
+          (keydown.arrowUp)="historyUp()"
+          (keydown.arrowDown)="historyDown()"
+          [disabled]="busy()"
+          [placeholder]="'terminal.placeholder' | translate"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+    </div>
+  </ng-container>
+</nz-drawer>

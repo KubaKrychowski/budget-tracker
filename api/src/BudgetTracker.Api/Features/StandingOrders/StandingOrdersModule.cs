@@ -1,3 +1,6 @@
+using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.StandingOrders.Commands;
 using BudgetTracker.Api.Features.StandingOrders.Contracts;
 using BudgetTracker.Api.Features.StandingOrders.Queries;
@@ -107,4 +110,108 @@ public static class StandingOrdersModule
 
         return app;
     }
+
+    /// <summary>Komendy CLI (issue #25) — te same handlery co endpointy REST wyżej.</summary>
+    public static CliCommandRegistry MapStandingOrdersCli(this CliCommandRegistry registry)
+    {
+        registry.Register("standing-order", "list", "Zlecenia stałe, ich stan w miesiącu i ostatnio przypięte.",
+            "standing-order list [--budget-id <guid>] [--month <RRRR-MM-01>]",
+            [
+                CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego."),
+                CliFlag.Optional("month", "Oglądany miesiąc (dzień ignorowany); domyślnie bieżący."),
+            ],
+            async (sp, args, ct) => await sp.GetRequiredService<GetStandingOrdersQueryHandler>()
+                .HandleAsync(args.GetGuidFlag("budget-id"), args.GetDateFlag("month"), ct));
+
+        registry.Register("standing-order", "preview",
+            "Ile transakcji z historii budżetu już pasuje do reguł — bez zapisu.",
+            "standing-order preview --rules-json <json> [--budget-id <guid>] [--standing-order-id <guid>]",
+            [
+                CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego."),
+                CliFlag.Optional("standing-order-id",
+                    "Zlecenie w edycji — jego ręczne odpięcia nie liczą się do podglądu."),
+                CliFlag.Required("rules-json",
+                    "Tablica JSON: [{\"titlePattern\":\"...\",\"amountFrom\":10,\"amountTo\":50}]."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var request = new StandingOrderPreviewRequestDto(
+                    args.GetGuidFlag("budget-id"),
+                    args.GetGuidFlag("standing-order-id"),
+                    args.GetRequiredJsonFlag<IReadOnlyList<StandingOrderRuleRequestDto>>("rules-json"));
+                return await sp.GetRequiredService<PreviewStandingOrderQueryHandler>().HandleAsync(request, ct);
+            });
+
+        registry.Register("standing-order", "create", "Tworzy zlecenie stałe.", StandingOrderUsage("create"),
+            StandingOrderFlags(),
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<CreateStandingOrderCommandHandler>().HandleAsync(ToSaveRequest(args), ct));
+
+        registry.Register("standing-order", "update", "Zmienia zlecenie stałe (budżet nie przechodzi między zleceniami).",
+            StandingOrderUsage("update <id>"), StandingOrderFlags(),
+            async (sp, args, ct) => await sp.GetRequiredService<UpdateStandingOrderCommandHandler>()
+                .HandleAsync(args.GetGuid(0), ToSaveRequest(args), ct));
+
+        registry.Register("standing-order", "delete", "Usuwa zlecenie stałe.", "standing-order delete <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<DeleteStandingOrderCommandHandler>().HandleAsync(id, ct);
+                return new { deleted = true, id };
+            });
+
+        registry.Register("standing-order", "end", "Kończy zlecenie od wskazanego miesiąca (dalej nieoczekiwane, nieprzypinane).",
+            "standing-order end <id> --last-month <RRRR-MM-01>",
+            [CliFlag.Required("last-month", "Dowolny dzień ostatniego miesiąca zlecenia; liczy się rok i miesiąc.")],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<EndStandingOrderCommandHandler>()
+                    .EndAsync(id, new EndStandingOrderRequestDto(args.GetRequiredDateFlag("last-month")), ct);
+                return new { ended = true, id };
+            });
+
+        registry.Register("standing-order", "reopen", "Cofa zakończenie zlecenia stałego („Wznów”).",
+            "standing-order reopen <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<EndStandingOrderCommandHandler>().ResumeAsync(id, ct);
+                return new { resumed = true, id };
+            });
+
+        registry.Register("standing-order", "unpin", "Ręcznie odpina transakcję od zlecenia stałego.",
+            "standing-order unpin <transactionId>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<UnpinTransactionCommandHandler>().HandleAsync(id, ct);
+                return new { unpinned = true, transactionId = id };
+            });
+
+        return registry;
+    }
+
+    private static string StandingOrderUsage(string verbAndArgs) =>
+        $"standing-order {verbAndArgs} --name <nazwa> --expected-amount <kwota> --rhythm Monthly|Quarterly|Yearly "
+        + "--rules-json <json> [--due-month <1-12>] [--budget-id <guid>]";
+
+    private static IReadOnlyList<CliFlagDefinition> StandingOrderFlags() =>
+    [
+        CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego. Przy „update” ignorowany."),
+        CliFlag.Required("name", "Nazwa zlecenia (np. „Czynsz”)."),
+        CliFlag.Required("expected-amount", "Zwykła kwota zlecenia."),
+        CliFlag.Required("rhythm", "Monthly / Quarterly / Yearly."),
+        CliFlag.Optional("due-month", "Miesiąc 1–12 dla rytmu kwartalnego/rocznego; przy miesięcznym pomiń."),
+        CliFlag.Required("rules-json",
+            "Tablica JSON, co najmniej jedna reguła: [{\"titlePattern\":\"...\",\"amountFrom\":10,\"amountTo\":50}]."),
+    ];
+
+    private static SaveStandingOrderRequestDto ToSaveRequest(CliArgs args) => new(
+        args.GetGuidFlag("budget-id"),
+        args.GetRequiredFlag("name"),
+        args.GetRequiredDecimalFlag("expected-amount"),
+        args.GetEnumFlag("rhythm", StandingOrderRhythm.Monthly),
+        args.GetIntFlag("due-month"),
+        args.GetRequiredJsonFlag<IReadOnlyList<StandingOrderRuleRequestDto>>("rules-json"));
 }

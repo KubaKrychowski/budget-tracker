@@ -1,3 +1,6 @@
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Exceptions;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.Dashboard.Contracts;
 using BudgetTracker.Api.Features.Dashboard.Queries;
 using BudgetTracker.Api.Features.Dashboard.Services;
@@ -48,5 +51,33 @@ public static class DashboardModule
         .Produces(StatusCodes.Status404NotFound);
 
         return app;
+    }
+
+    /// <summary>Komenda CLI (issue #25) — ten sam handler i ta sama reguła domyślnego okresu co endpoint REST wyżej.</summary>
+    public static CliCommandRegistry MapDashboardCli(this CliCommandRegistry registry)
+    {
+        registry.Register("dashboard", "show", "Podsumowanie budżetu za okres (domyślnie ostatnie 30 dni).",
+            "dashboard show [--from <data>] [--to <data>] [--budget-id <guid>]",
+            [
+                CliFlag.Optional("from", "Data od (RRRR-MM-DD); domyślnie 30 dni wstecz."),
+                CliFlag.Optional("to", "Data do (RRRR-MM-DD); domyślnie dziś."),
+                CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var clock = sp.GetRequiredService<TimeProvider>();
+                var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime.Date);
+                var (defaultFrom, defaultTo) = DashboardPeriod.Default(today);
+                var from = args.GetDateFlag("from") ?? defaultFrom;
+                var to = args.GetDateFlag("to") ?? defaultTo;
+
+                if (to < from)
+                    throw new CliArgumentException("--to nie może być wcześniejsze niż --from.");
+
+                var handler = sp.GetRequiredService<GetDashboardQueryHandler>();
+                return await handler.HandleAsync(from, to, args.GetGuidFlag("budget-id"), ct);
+            });
+
+        return registry;
     }
 }

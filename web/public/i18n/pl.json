@@ -1004,7 +1004,15 @@
       "standingOrders": "Zlecenia stałe",
       "episodicOrders": "Zlecenia epizodyczne",
       "savings": "Cele oszczędzania i rezerwacje",
-      "settings": "Ustawienia i reguły"
+      "settings": "Ustawienia i reguły",
+      "cli": "Terminal (CLI)"
     }
+  },
+  "terminal": {
+    "openTerminal": "Terminal",
+    "title": "Terminal",
+    "close": "Zamknij terminal",
+    "hint": "Wpisz „help”, żeby zobaczyć wszystkie dostępne komendy.",
+    "placeholder": "rzeczownik czasownik --flagi"
   }
 }

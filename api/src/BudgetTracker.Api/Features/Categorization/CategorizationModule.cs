@@ -1,7 +1,10 @@
+using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Categorization.Commands;
 using BudgetTracker.Api.Features.Categorization.Contracts;
 using BudgetTracker.Api.Features.Categorization.Queries;
 using BudgetTracker.Api.Features.Categorization.Services;
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 
 namespace BudgetTracker.Api.Features.Categorization;
 
@@ -131,4 +134,83 @@ public static class CategorizationModule
 
         return app;
     }
+
+    /// <summary>Komendy CLI (issue #25): rzeczownik <c>model</c> (trening/przeliczenie) i <c>rule</c> (reguły predykatu).</summary>
+    public static CliCommandRegistry MapCategorizationCli(this CliCommandRegistry registry)
+    {
+        registry.Register("model", "training-set", "Podgląd danych, na których uczy się model.",
+            "model training-set", [],
+            async (sp, _, ct) => await sp.GetRequiredService<GetTrainingSetQueryHandler>().HandleAsync(ct));
+
+        registry.Register("model", "train", "Trenuje nowy model na dotychczasowych poprawkach.",
+            "model train", [],
+            async (sp, _, ct) => await sp.GetRequiredService<TrainCategoryModelCommandHandler>().HandleAsync(ct));
+
+        registry.Register("model", "recategorize", "Przelicza kategorie istniejących transakcji aktywnym modelem.",
+            "model recategorize", [],
+            async (sp, _, ct) =>
+                await sp.GetRequiredService<RecategorizeTransactionsCommandHandler>().HandleAsync(ct));
+
+        registry.Register("model", "activate", "Przywraca wskazaną wersję modelu jako aktywną.",
+            "model activate --version <wersja>",
+            [CliFlag.Required("version", "Wersja z listy „model training-set”.")],
+            (sp, args, _) =>
+            {
+                sp.GetRequiredService<ActivateCategoryModelCommandHandler>().Handle(args.GetRequiredFlag("version"));
+                return Task.FromResult<object?>(new { activated = true });
+            });
+
+        registry.Register("rule", "list", "Lista reguł predykatu, posortowana priorytetem.", "rule list", [],
+            async (sp, _, ct) => await sp.GetRequiredService<GetCategoryRulesQueryHandler>().HandleAsync(ct));
+
+        registry.Register("rule", "preview", "Podgląd, ile i które transakcje złapałaby reguła — bez zapisu.",
+            RuleUsage("preview"), RuleFlags(),
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<PreviewCategoryRuleQueryHandler>().HandleAsync(ToRequest(args), ct));
+
+        registry.Register("rule", "create", "Tworzy regułę kategoryzacji.", RuleUsage("create"), RuleFlags(),
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<CreateCategoryRuleCommandHandler>().HandleAsync(ToRequest(args), ct));
+
+        registry.Register("rule", "update", "Zmienia regułę kategoryzacji.", RuleUsage("update <id>"), RuleFlags(),
+            async (sp, args, ct) => await sp.GetRequiredService<UpdateCategoryRuleCommandHandler>()
+                .HandleAsync(args.GetGuid(0), ToRequest(args), ct));
+
+        registry.Register("rule", "delete", "Usuwa regułę kategoryzacji.", "rule delete <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<DeleteCategoryRuleCommandHandler>().HandleAsync(id, ct);
+                return new { deleted = true, id };
+            });
+
+        return registry;
+    }
+
+    private static string RuleUsage(string verbAndArgs) =>
+        $"rule {verbAndArgs} --category-id <guid> --priority <n> [--pattern <fraza>] "
+        + "[--transaction-type-pattern <fraza>] [--direction Any|Expense|Income] "
+        + "[--min-amount <kwota>] [--max-amount <kwota>] [--note <tekst>]";
+
+    private static IReadOnlyList<CliFlagDefinition> RuleFlags() =>
+    [
+        CliFlag.Required("category-id", "BusinessId docelowej kategorii."),
+        CliFlag.Required("priority", "Niższa liczba = wyższy priorytet, wygrywa przy remisie."),
+        CliFlag.Optional("pattern", "Fraza w opisie transakcji. Opcjonalne osobno, ale nie razem z pustym --transaction-type-pattern."),
+        CliFlag.Optional("transaction-type-pattern", "Fraza w typie operacji z wyciągu."),
+        CliFlag.Optional("direction", "Any (domyślnie) / Expense / Income."),
+        CliFlag.Optional("min-amount", "Dolna granica kwoty."),
+        CliFlag.Optional("max-amount", "Górna granica kwoty."),
+        CliFlag.Optional("note", "Notatka — po co ta reguła istnieje."),
+    ];
+
+    private static CategoryRuleRequestDto ToRequest(CliArgs args) => new(
+        args.GetFlag("pattern"),
+        args.GetFlag("transaction-type-pattern"),
+        args.GetEnumFlag("direction", RuleDirection.Any),
+        args.GetRequiredGuidFlag("category-id"),
+        args.GetRequiredIntFlag("priority"),
+        args.GetDecimalFlag("min-amount"),
+        args.GetDecimalFlag("max-amount"),
+        args.GetFlag("note"));
 }

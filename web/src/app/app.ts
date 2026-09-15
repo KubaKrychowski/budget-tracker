@@ -12,11 +12,13 @@ import { SYSTEM_ACTIONS } from './core/system-actions';
 import { SystemAction } from './core/models/system-action';
 import { normalizeText } from './core/normalize-text';
 import { handbookTopicKeyForRoute } from './core/handbook-topics';
+import { Terminal } from './core/terminal/terminal';
+import { TerminalService } from './core/terminal/terminal.service';
 
 @Component({
   imports: [
     RouterLink, RouterOutlet, FormsModule,
-    NzAutocompleteModule, NzInputModule, NzIconModule, TranslatePipe,
+    NzAutocompleteModule, NzInputModule, NzIconModule, TranslatePipe, Terminal,
   ],
   selector: 'app-root',
   styleUrl: './app.scss',
@@ -26,6 +28,7 @@ export class App {
   private readonly message = inject(NzMessageService);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
+  protected readonly terminal = inject(TerminalService);
   protected readonly query = signal('');
 
   /**

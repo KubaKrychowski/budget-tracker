@@ -1,3 +1,5 @@
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.Savings.Commands;
 using BudgetTracker.Api.Features.Savings.Contracts;
 using BudgetTracker.Api.Features.Savings.Queries;
@@ -147,4 +149,119 @@ public static class SavingsModule
 
         return app;
     }
+
+    /// <summary>Komendy CLI (issue #25): rzeczownik <c>savings</c> (cel) i <c>reservation</c> (rezerwacje).</summary>
+    public static CliCommandRegistry MapSavingsCli(this CliCommandRegistry registry)
+    {
+        registry.Register("savings", "show", "Stan konta oszczędnościowego, cel i dowód.",
+            "savings show [--budget-id <guid,...>]",
+            [CliFlag.Optional("budget-id", "Lista BusinessId budżetów po przecinku; puste = budżet domyślny.")],
+            async (sp, args, ct) => await sp.GetRequiredService<GetSavingsQueryHandler>()
+                .HandleAsync(args.GetGuidArrayFlag("budget-id"), ct));
+
+        registry.Register("savings", "set-goal", "Ustawia albo zmienia cel oszczędnościowy.",
+            "savings set-goal --amount <kwota> [--budget-id <guid>] [--started-on <RRRR-MM-01>]",
+            [
+                CliFlag.Required("amount", "Nowa kwota miesięczna celu."),
+                CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego."),
+                CliFlag.Optional("started-on",
+                    "Od którego miesiąca cel obowiązuje — honorowane TYLKO przy pierwszym celu budżetu."),
+            ],
+            async (sp, args, ct) =>
+            {
+                var request = new SetSavingsGoalRequestDto(
+                    args.GetRequiredDecimalFlag("amount"), args.GetGuidFlag("budget-id"), args.GetDateFlag("started-on"));
+                return await sp.GetRequiredService<SetSavingsGoalCommandHandler>().HandleAsync(request, ct);
+            });
+
+        registry.Register("savings", "end-goal", "Rezygnuje z celu (kończy go datą, nie kasuje historii).",
+            "savings end-goal [--budget-id <guid>]",
+            [CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego.")],
+            async (sp, args, ct) =>
+            {
+                var budgetId = args.GetGuidFlag("budget-id");
+                await sp.GetRequiredService<EndSavingsGoalCommandHandler>().HandleAsync(budgetId, ct);
+                return new { ended = true };
+            });
+
+        registry.Register("reservation", "list", "Rezerwacje na ten rok.",
+            "reservation list [--budget-id <guid,...>]",
+            [CliFlag.Optional("budget-id", "Lista BusinessId budżetów po przecinku; puste = budżet domyślny.")],
+            async (sp, args, ct) => await sp.GetRequiredService<GetSavingsReservationsQueryHandler>()
+                .HandleAsync(args.GetGuidArrayFlag("budget-id"), ct));
+
+        registry.Register("reservation", "create", "Zakłada rezerwację.", ReservationUsage("create"), ReservationFlags(),
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<CreateSavingsReservationCommandHandler>().HandleAsync(ToSaveRequest(args), ct));
+
+        registry.Register("reservation", "update", "Zmienia rezerwację (budżet ignorowany przy zmianie).",
+            ReservationUsage("update <id>"), ReservationFlags(),
+            async (sp, args, ct) => await sp.GetRequiredService<UpdateSavingsReservationCommandHandler>()
+                .HandleAsync(args.GetGuid(0), ToSaveRequest(args), ct));
+
+        registry.Register("reservation", "delete", "Usuwa rezerwację.", "reservation delete <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<DeleteSavingsReservationCommandHandler>().HandleAsync(id, ct);
+                return new { deleted = true, id };
+            });
+
+        registry.Register("reservation", "settle-candidates", "Wypłaty z oszczędności, którymi można rozliczyć rezerwację.",
+            "reservation settle-candidates <id>", [],
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<GetSettleCandidatesQueryHandler>().HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("reservation", "settle", "Rozlicza rezerwację wskazaną wypłatą.",
+            "reservation settle <id> --transaction-id <guid>",
+            [CliFlag.Required("transaction-id", "Wypłata z oszczędności z „reservation settle-candidates”.")],
+            async (sp, args, ct) =>
+            {
+                var request = new SettleReservationRequestDto(args.GetRequiredGuidFlag("transaction-id"));
+                return await sp.GetRequiredService<SettleSavingsReservationCommandHandler>()
+                    .HandleAsync(args.GetGuid(0), request, ct);
+            });
+
+        registry.Register("reservation", "unsettle", "Cofa rozliczenie rezerwacji.",
+            "reservation unsettle <id>", [],
+            async (sp, args, ct) =>
+                await sp.GetRequiredService<UnsettleSavingsReservationCommandHandler>().HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("reservation", "contribute", "Wpłaca na cel — kwota umownie odłożona z oszczędności.",
+            "reservation contribute <id> --amount <kwota>",
+            [CliFlag.Required("amount", "Kwota wpłaty.")],
+            async (sp, args, ct) =>
+            {
+                var request = new ContributeRequestDto(args.GetRequiredDecimalFlag("amount"));
+                return await sp.GetRequiredService<ContributeToReservationCommandHandler>()
+                    .ContributeAsync(args.GetGuid(0), request, ct);
+            });
+
+        registry.Register("reservation", "remove-contribution", "Cofa jedną wpłatę na cel.",
+            "reservation remove-contribution <id> <contributionId>", [],
+            async (sp, args, ct) => await sp.GetRequiredService<ContributeToReservationCommandHandler>()
+                .WithdrawAsync(args.GetGuid(0), args.GetGuid(1), ct));
+
+        return registry;
+    }
+
+    private static string ReservationUsage(string verbAndArgs) =>
+        $"reservation {verbAndArgs} --name <nazwa> --amount <kwota> [--due-month <RRRR-MM-01>] "
+        + "[--priority <n>] [--budget-id <guid>]";
+
+    private static IReadOnlyList<CliFlagDefinition> ReservationFlags() =>
+    [
+        CliFlag.Required("name", "Nazwa rezerwacji."),
+        CliFlag.Required("amount", "Docelowa kwota."),
+        CliFlag.Optional("due-month", "Dowolny dzień miesiąca terminu; pomiń dla „przy okazji”."),
+        CliFlag.Optional("priority", "Kolejność wśród rezerwacji, domyślnie 0."),
+        CliFlag.Optional("budget-id", "BusinessId budżetu; pomiń dla budżetu domyślnego. Przy „update” ignorowany."),
+    ];
+
+    private static SaveReservationRequestDto ToSaveRequest(CliArgs args) => new(
+        args.GetRequiredFlag("name"),
+        args.GetRequiredDecimalFlag("amount"),
+        args.GetDateFlag("due-month"),
+        args.GetIntFlag("priority", defaultValue: 0),
+        args.GetGuidFlag("budget-id"));
 }

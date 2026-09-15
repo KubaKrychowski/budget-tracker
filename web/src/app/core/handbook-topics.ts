@@ -21,6 +21,7 @@ export const HANDBOOK_TOPICS: readonly HandbookTopic[] = [
   { key: 'episodic-orders', labelKey: 'handbook.topics.episodicOrders', file: 'handbook/episodic-orders.md' },
   { key: 'savings', labelKey: 'handbook.topics.savings', file: 'handbook/savings.md' },
   { key: 'settings', labelKey: 'handbook.topics.settings', file: 'handbook/settings.md' },
+  { key: 'cli', labelKey: 'handbook.topics.cli', file: 'handbook/cli.md' },
 ];
 
 /** Nieznany/pusty klucz wraca do pierwszego tematu, zamiast pokazać pusty ekran. */

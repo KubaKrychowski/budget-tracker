@@ -41,8 +41,9 @@
     }
   </nz-autocomplete>
 
-  <!-- Ikony po prawej. Obie jako <a routerLink>, nie <button>: to nawigacja, więc mają
-       działać środkowym klikiem i „otwórz w nowej karcie" jak każdy link. -->
+  <!-- Ikony po prawej. Podręcznik i zębatka jako <a routerLink> (to nawigacja, ma działać
+       środkowym klikiem i „otwórz w nowej karcie"); terminal to <button> — otwiera panel
+       w TYM samym widoku, nie zmienia trasy. -->
   <div class="app-header__icons">
     <!-- Podręcznik (#19): temat dobrany do bieżącego ekranu, patrz `handbookTopic` w app.ts. -->
     <a
@@ -54,6 +55,16 @@
     >
       <nz-icon nzType="read" />
     </a>
+    <!-- Terminal CLI (#25): panel komend, patrz core/terminal. -->
+    <button
+      type="button"
+      class="app-header__icon-link"
+      (click)="terminal.toggle()"
+      [attr.aria-label]="'terminal.openTerminal' | translate"
+      [title]="'terminal.openTerminal' | translate"
+    >
+      <nz-icon nzType="code" />
+    </button>
     <a
       routerLink="/settings"
       class="app-header__icon-link"
@@ -68,3 +79,5 @@
 <main class="app-main">
   <router-outlet />
 </main>
+
+<app-terminal />
