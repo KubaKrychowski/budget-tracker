@@ -1,4 +1,4 @@
-@{
+﻿@{
     RootModule        = 'Bt.psm1'
     ModuleVersion     = '1.0.0'
     GUID              = 'da40e404-4fa9-4a08-9713-d0768d96805c'

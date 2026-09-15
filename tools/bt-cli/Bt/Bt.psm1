@@ -1,4 +1,4 @@
-function bt {
+﻿function bt {
     <#
         .SYNOPSIS
         Klient budget-tracker CLI. `bt <rzeczownik> <czasownik> --flagi`, np. `bt budget list`.

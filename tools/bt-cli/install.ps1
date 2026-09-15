@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
     Instaluje modul 'Bt' do katalogu modulow biezacego uzytkownika i ustawia BT_API_URL
     (trwale, per-uzytkownik). Po tym, w KAZDYM nowym oknie PowerShell, `bt` dziala od razu —
