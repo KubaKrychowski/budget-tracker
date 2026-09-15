@@ -64,6 +64,27 @@
       > :last-child {
         margin-bottom: 0;
       }
+
+      // `marked` renderuje tabelę GFM jako zwykły <table> bez żadnego stylu — bez tego
+      // wygląda jak kolumny tekstu, nie jak tabela (patrz komentarz w PR #20).
+      table {
+        width: 100%;
+        margin: 16px 0;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 8px 12px;
+        border: 1px solid #d9e8dd;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f5faf6;
+        font-weight: 600;
+      }
     }
   }
 }
