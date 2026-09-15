@@ -1,0 +1,32 @@
+<app-page-header [title]="'handbook.title' | translate" />
+
+<div class="hb__body">
+  <nz-breadcrumb class="hb__crumbs">
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ 'handbook.title' | translate }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <div class="hb__cols">
+    <nav class="hb__sidebar">
+      @for (topic of topics; track topic.key) {
+        <a
+          class="hb__topic"
+          [class.hb__topic--selected]="topic.key === selected().key"
+          [routerLink]="['/handbook']"
+          [queryParams]="{ topic: topic.key }"
+        >
+          {{ topic.labelKey | translate }}
+        </a>
+      }
+    </nav>
+
+    <!-- `[src]` ładuje plik z `public/handbook/` przez HttpClient — ngx-markdown cachuje
+         wynik pod tym samym kluczem, więc powrót do już otwartego tematu nie odpytuje sieci
+         drugi raz. -->
+    <section class="hb__content">
+      <markdown [src]="selected().file" />
+    </section>
+  </div>
+</div>

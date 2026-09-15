@@ -41,16 +41,28 @@
     }
   </nz-autocomplete>
 
-  <!-- Zębatka z makiety ustawień. Jako <a routerLink>, nie <button>: to nawigacja,
-       więc ma działać środkowym klikiem i „otwórz w nowej karcie" jak każdy link. -->
-  <a
-    routerLink="/settings"
-    class="app-header__settings"
-    [attr.aria-label]="'settings.openSettings' | translate"
-    [title]="'settings.openSettings' | translate"
-  >
-    <nz-icon nzType="setting" />
-  </a>
+  <!-- Ikony po prawej. Obie jako <a routerLink>, nie <button>: to nawigacja, więc mają
+       działać środkowym klikiem i „otwórz w nowej karcie" jak każdy link. -->
+  <div class="app-header__icons">
+    <!-- Podręcznik (#19): temat dobrany do bieżącego ekranu, patrz `handbookTopic` w app.ts. -->
+    <a
+      [routerLink]="['/handbook']"
+      [queryParams]="{ topic: handbookTopic() }"
+      class="app-header__icon-link"
+      [attr.aria-label]="'handbook.openHandbook' | translate"
+      [title]="'handbook.openHandbook' | translate"
+    >
+      <nz-icon nzType="read" />
+    </a>
+    <a
+      routerLink="/settings"
+      class="app-header__icon-link"
+      [attr.aria-label]="'settings.openSettings' | translate"
+      [title]="'settings.openSettings' | translate"
+    >
+      <nz-icon nzType="setting" />
+    </a>
+  </div>
 </header>
 
 <main class="app-main">
