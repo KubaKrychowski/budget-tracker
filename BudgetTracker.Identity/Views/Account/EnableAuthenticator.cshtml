@@ -1,0 +1,31 @@
+@model EnableAuthenticatorViewModel
+@{
+    ViewData["Title"] = "Włącz weryfikację dwuetapową";
+}
+
+<div class="auth-header">
+    <h1>Włącz weryfikację dwuetapową</h1>
+    <p>Zeskanuj kod QR aplikacją uwierzytelniającą, np. Google Authenticator</p>
+</div>
+
+<div class="auth-qr-box">
+    <img src="@Url.Action("AuthenticatorQrCode")" alt="Kod QR do zeskanowania aplikacją uwierzytelniającą"/>
+</div>
+
+<div class="auth-manual-code">
+    <span>Nie możesz zeskanować? Wpisz kod ręcznie:</span>
+    <span class="code-value">@Model.SharedKey</span>
+</div>
+
+<form asp-action="EnableAuthenticator" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly"></div>
+    <input asp-for="ReturnUrl" type="hidden"/>
+
+    <div class="auth-field">
+        <label asp-for="Code">Kod z aplikacji</label>
+        <input asp-for="Code" placeholder="123 456" autocomplete="one-time-code" inputmode="numeric" autofocus/>
+        <span asp-validation-for="Code"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">Włącz weryfikację dwuetapową</button>
+</form>

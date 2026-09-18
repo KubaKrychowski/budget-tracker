@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Nie udało się potwierdzić adresu e-mail";
+}
+
+<div class="auth-header">
+    <h1>Nie udało się potwierdzić adresu e-mail</h1>
+    <p>Link mógł wygasnąć albo zostać już wcześniej użyty.</p>
+</div>
+
+<div class="auth-actions">
+    <a asp-action="ResendEmailConfirmation" class="auth-link">Wyślij link ponownie</a>
+    <a asp-action="Login" class="auth-link">Wróć do logowania</a>
+</div>

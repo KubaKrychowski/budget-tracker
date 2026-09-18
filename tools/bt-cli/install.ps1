@@ -47,4 +47,4 @@ if ($ApiUrl) {
 }
 
 Write-Host ''
-Write-Host "Gotowe. Otworz NOWE okno PowerShell i sprawdz:  bt help"
+Write-Host "Gotowe. Otworz NOWE okno PowerShell i sprawdz:  bt login"

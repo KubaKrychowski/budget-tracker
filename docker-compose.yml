@@ -19,5 +19,16 @@ services:
       timeout: 5s
       retries: 10
 
+  # Przechwytuje maile z BudgetTracker.Identity (potwierdzenie konta, reset hasła, kod 2FA) zamiast
+  # je realnie wysyłać — appsettings.Development.json celuje w port SMTP 1025. Podgląd na
+  # http://localhost:8025. Na środowiskach docelowy SMTP jest z Azure, nie MailHog.
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: budget-tracker-mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+
 volumes:
   pgdata:

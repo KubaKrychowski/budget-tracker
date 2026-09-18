@@ -1,0 +1,46 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Rejestracja";
+}
+
+<div class="auth-header">
+    <h1>Utwórz konto</h1>
+    <p>Załóż konto, aby zacząć zarządzać swoim budżetem</p>
+</div>
+
+<form asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="Email">Adres e-mail</label>
+        <input asp-for="Email" placeholder="np. jan.kowalski@poczta.pl" autocomplete="username" autofocus/>
+        <span asp-validation-for="Email"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="Password">Hasło</label>
+        <input asp-for="Password" placeholder="min. 8 znaków" autocomplete="new-password"/>
+        <p class="auth-hint">Min. 8 znaków, w tym wielka litera, cyfra i znak specjalny.</p>
+        <span asp-validation-for="Password"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="ConfirmPassword">Powtórz hasło</label>
+        <input asp-for="ConfirmPassword" placeholder="powtórz hasło" autocomplete="new-password"/>
+        <span asp-validation-for="ConfirmPassword"></span>
+    </div>
+
+    <div class="auth-checkbox">
+        <input asp-for="AcceptTerms" type="checkbox"/>
+        <label asp-for="AcceptTerms">Akceptuję regulamin i politykę prywatności</label>
+    </div>
+    <span asp-validation-for="AcceptTerms"></span>
+
+    <div class="auth-actions">
+        <button type="submit" class="btn-primary">Utwórz konto</button>
+        <div class="auth-footer-row">
+            <span>Masz już konto?</span>
+            <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Zaloguj się</a>
+        </div>
+    </div>
+</form>

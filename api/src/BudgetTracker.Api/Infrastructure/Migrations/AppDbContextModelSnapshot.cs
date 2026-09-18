@@ -122,6 +122,9 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.ComplexCollection(typeof(List<Dictionary<string, object>>), "SavingsTransferRules", "BudgetTracker.Api.Domain.Budget.SavingsTransferRules#TitleAmountRule", b1 =>
                         {
                             b1.IsRequired();
@@ -144,6 +147,8 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("Currency");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Budgets");
                 });

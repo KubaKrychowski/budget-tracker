@@ -10,8 +10,22 @@ namespace BudgetTracker.Api.Infrastructure;
 /// żyje w handlerach feature'ów (patrz CLAUDE.md §4), żeby przyszły multi-user dało się
 /// dołożyć jednym global query filter zamiast przepisywania warstwy dostępu.
 /// </summary>
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+/// <remarks>
+/// <paramref name="currentUser"/> jest opcjonalny (domyślnie <c>null</c>) świadomie: testy i seedy
+/// (<c>DevSeed</c>, <c>DemoSeed</c>, <c>BaselineSeed</c>) konstruują ten kontekst wprost, bez żadnego
+/// żądania HTTP w tle, więc nie mają skąd wziąć zalogowanego użytkownika. <see cref="CurrentUserId"/>
+/// będące <c>null</c> wyłącza filtr właściciela zamiast dopasowywać pustkę — patrz filtr „Owner" niżej.
+/// </remarks>
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserAccessor? currentUser = null)
+    : DbContext(options)
 {
+    /// <summary>
+    /// Identyfikator zalogowanego użytkownika (roszczenie <c>sub</c> tokenu) albo <c>null</c> poza
+    /// kontekstem żądania HTTP. Realne żądania API zawsze mają tu wartość — fallback policy w
+    /// <c>Program.cs</c> odrzuca nieuwierzytelnione żądania, zanim dotrą do handlera.
+    /// </summary>
+    private Guid? CurrentUserId => currentUser?.UserId;
+
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Account> Accounts => Set<Account>();
@@ -195,6 +209,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             // Reguły transferu jako jsonb: część zasad TEGO budżetu, bez własnego cyklu życia —
             // kasują się, przywracają i purge'ują razem z nim, bez osobnej tabeli.
             e.ComplexCollection(x => x.SavingsTransferRules, r => r.ToJson());
+
+            e.HasIndex(x => x.UserId);
+            // Filtr NAZWANY (nie zastępuje filtra soft-delete z pętli niżej — EF Core łączy
+            // nazwane filtry przez AND). `CurrentUserId == null` poza żądaniem HTTP (testy/seedy/
+            // Hangfire) świadomie WYŁĄCZA filtr, zamiast dopasować pustkę — patrz komentarz przy
+            // właściwości. Budżety innych użytkowników mają zniknąć tylko realnym żądaniom API.
+            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<BudgetItem>(e =>
@@ -251,7 +272,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
             b.Entity(type).HasIndex(nameof(Entity.BusinessId)).IsUnique();
             b.Entity(type).Property(nameof(Entity.DeletedAt)).HasColumnType("timestamptz");
-            b.Entity(type).HasQueryFilter(SoftDeleteFilter(type));
+            // Nazwany filtr (nie anonimowy) — na `Budget` dochodzi jeszcze filtr "Owner" niżej,
+            // a EF Core łączy WSZYSTKIE nazwane filtry jednej encji przez AND. Anonimowy nadpisałby
+            // ten drugi zamiast się z nim złożyć.
+            b.Entity(type).HasQueryFilter("SoftDelete", SoftDeleteFilter(type));
         }
     }
 

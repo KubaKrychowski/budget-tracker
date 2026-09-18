@@ -46,7 +46,7 @@ public sealed class CreateBudgetCommandHandlerTests : IAsyncLifetime
         await _db.DisposeAsync();
     }
 
-    private CreateBudgetCommandHandler Handler() => new(_db, _clock);
+    private CreateBudgetCommandHandler Handler() => new(_db, _clock, new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     [Fact]
     public async Task Creates_a_budget_for_the_current_month()

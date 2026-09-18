@@ -114,11 +114,15 @@ public static class DevSeed
         db.Transactions.AddRange(transactions);
 
         var budgetBusinessId = DeterministicGuid.For("budget:podstawowy");
+        // Ten sam identyfikator musi mieć konto w BudgetTracker.Identity (patrz IdentitySeeder) —
+        // inaczej zalogowany deweloper nie zobaczy własnych, zaseedowanych danych.
+        var ownerId = DeterministicGuid.For("dev:user:owner");
         db.Budgets.Add(new Budget(
                 "Podstawowy",
                 new DateOnly(today.Year, today.Month, 1),
                 initialBalance: 0m,
-                createdAt: nowOffset)
+                createdAt: nowOffset,
+                userId: ownerId)
             .WithSeedBusinessId<Budget>(budgetBusinessId));
 
         db.BudgetItems.AddRange(categories.Values

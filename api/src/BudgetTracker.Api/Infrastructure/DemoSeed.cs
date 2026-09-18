@@ -117,7 +117,11 @@ public static class DemoSeed
                 return order;
             }));
 
-        db.Budgets.Add(new Budget("Domowy", new DateOnly(today.Year, today.Month, 1), initialBalance: 0m, createdAt: now)
+        // Ten sam identyfikator musi mieć konto w BudgetTracker.Identity (patrz IdentitySeeder) —
+        // inaczej zalogowany właściciel demo nie zobaczy własnych, zaseedowanych danych.
+        var ownerId = DeterministicGuid.For("demo:user:owner");
+        db.Budgets.Add(new Budget(
+                "Domowy", new DateOnly(today.Year, today.Month, 1), initialBalance: 0m, createdAt: now, userId: ownerId)
             .WithSeedBusinessId<Budget>(budgetId));
 
         db.BudgetItems.AddRange(categories.Values

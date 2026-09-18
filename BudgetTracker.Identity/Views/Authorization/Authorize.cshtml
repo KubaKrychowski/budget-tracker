@@ -1,0 +1,41 @@
+@model AuthorizeViewModel
+@{
+    ViewData["Title"] = "Zgoda";
+
+    var scopeLabels = new Dictionary<string, string>
+    {
+        ["email"] = "Widzieć Twój adres e-mail i nazwę konta",
+        ["profile"] = "Widzieć Twoją nazwę użytkownika",
+        ["budgettracker_api"] = "Odczytywać i zarządzać Twoimi budżetami, transakcjami i limitami w Twoim imieniu",
+    };
+}
+
+<div class="auth-header">
+    <h1>@Model.ApplicationName prosi o dostęp</h1>
+    <p>Aplikacja @Model.ApplicationName chce uzyskać dostęp do Twojego konta jako @Model.UserEmail</p>
+</div>
+
+<div class="auth-scopes-box">
+    <span class="scope-label">Ta aplikacja będzie mogła:</span>
+    <ul>
+        @foreach (var scope in Model.Scopes)
+        {
+            <li>@(scopeLabels.GetValueOrDefault(scope, scope))</li>
+        }
+    </ul>
+</div>
+
+<form action="~/connect/authorize" method="post" class="auth-consent-actions">
+    @Html.AntiForgeryToken()
+    @* OpenIddict czyta parametry POST-a WYŁĄCZNIE z ciała formularza (nie z query stringu) —
+       przepisujemy więc oryginalne parametry żądania z GET jako pola ukryte. *@
+    @foreach (var (key, values) in Context.Request.Query)
+    {
+        foreach (var value in values)
+        {
+            <input type="hidden" name="@key" value="@value"/>
+        }
+    }
+    <button type="submit" name="submit.Deny" value="true" class="btn-secondary">Odrzuć</button>
+    <button type="submit" name="submit.Accept" value="true" class="btn-primary">Zezwól</button>
+</form>

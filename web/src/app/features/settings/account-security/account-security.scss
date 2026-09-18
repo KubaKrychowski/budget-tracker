@@ -1,0 +1,54 @@
+/* Te same neutralne co reszta ustawień: #252B27 tekst, #78877C tekst wygaszony, #C0D7C6 obramowanie. */
+
+.acs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+
+  &__caption {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__subcaption {
+    margin: 12px 0 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__description {
+    margin: 0;
+    max-width: 760px;
+    color: #78877c;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid #c0d7c6;
+  }
+
+  &__label {
+    font-size: 13px;
+    color: #78877c;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__logout {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #c0d7c6;
+  }
+}

@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzAutocompleteModule, NzOptionSelectionChange } from 'ng-zorro-antd/auto-complete';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -28,8 +29,14 @@ export class App {
   private readonly message = inject(NzMessageService);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
+  private readonly oidcSecurityService = inject(OidcSecurityService);
   protected readonly terminal = inject(TerminalService);
   protected readonly query = signal('');
+
+  /** Wylogowanie po stronie klienta — kończy sesję też na serwerze tożsamości (RP-initiated logout). */
+  protected logout(): void {
+    this.oidcSecurityService.logoff().subscribe();
+  }
 
   /**
    * Tłumaczenia ładują się asynchronicznie (HTTP). Bez tej zależności `computed`

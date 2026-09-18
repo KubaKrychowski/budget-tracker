@@ -1,0 +1,20 @@
+@model ConfirmEmailSuccessViewModel
+@{
+    ViewData["Title"] = "Adres e-mail potwierdzony";
+}
+
+<div class="auth-header">
+    <h1>Adres e-mail potwierdzony</h1>
+    <p>Konto jest aktywne. Możesz wrócić do aplikacji.</p>
+</div>
+
+<div class="auth-actions">
+    @if (Model.SpaUrl is { Length: > 0 } spaUrl)
+    {
+        <a href="@spaUrl" class="btn-primary">Wróć do aplikacji</a>
+    }
+    else
+    {
+        <a asp-action="Login" class="btn-primary">Przejdź do logowania</a>
+    }
+</div>

@@ -11,8 +11,9 @@ namespace BudgetTracker.Api.Features.Budgets.Services;
 /// które po zmianie oddają zaktualizowany wiersz.
 /// </summary>
 /// <remarks>
-/// Lista widzi TAKŻE usunięte (<c>IgnoreQueryFilters</c>) — to jedyne miejsce w aplikacji, gdzie
-/// usunięty budżet jest widoczny, bo tylko tu da się go przywrócić.
+/// Lista widzi TAKŻE usunięte (pomija TYLKO filtr „SoftDelete", nie „Owner") — to jedyne miejsce
+/// w aplikacji, gdzie usunięty budżet jest widoczny, bo tylko tu da się go przywrócić. Cudzych
+/// budżetów dalej nie widać — pominięcie filtra właściciela ujawniłoby dane innego użytkownika.
 /// </remarks>
 public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
 {
@@ -28,7 +29,7 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
         var currentMonth = new DateOnly(today.Year, today.Month, 1);
 
         var budgets = await db.Budgets
-            .IgnoreQueryFilters()
+            .IgnoreQueryFilters(["SoftDelete"])
             .OrderByDescending(b => b.CreatedAt)
             .ThenByDescending(b => b.Id)
             .ToListAsync(ct);

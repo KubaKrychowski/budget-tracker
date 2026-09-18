@@ -19,6 +19,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
     <PackageReference Include="Microsoft.ML" Version="5.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="8.0.0-preview.4.26456.66" />
+    <PackageReference Include="OpenIddict.Validation.SystemNetHttp" Version="8.0.0-preview.4.26456.66" />
   </ItemGroup>
 
 </Project>

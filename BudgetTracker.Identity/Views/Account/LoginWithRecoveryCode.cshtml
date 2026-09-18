@@ -1,0 +1,21 @@
+@model LoginWithRecoveryCodeViewModel
+@{
+    ViewData["Title"] = "Kod zapasowy";
+}
+
+<div class="auth-header">
+    <h1>Użyj kodu zapasowego</h1>
+    <p>Wpisz jeden z kodów zapasowych, które otrzymałeś przy włączaniu weryfikacji dwuetapowej</p>
+</div>
+
+<form asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="RecoveryCode">Kod zapasowy</label>
+        <input asp-for="RecoveryCode" placeholder="np. abcd1234" autocomplete="off" autofocus/>
+        <span asp-validation-for="RecoveryCode"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">Zweryfikuj</button>
+</form>

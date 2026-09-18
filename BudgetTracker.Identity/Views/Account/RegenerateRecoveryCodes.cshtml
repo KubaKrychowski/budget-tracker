@@ -1,0 +1,19 @@
+@model ReturnUrlViewModel
+@{
+    ViewData["Title"] = "Nowe kody zapasowe";
+}
+
+<div class="auth-header">
+    <h1>Wygenerować nowe kody zapasowe?</h1>
+    <p>Stare kody zapasowe przestaną działać. Nowe kody pokażemy tylko raz — zapisz je od razu.</p>
+</div>
+
+<form asp-action="RegenerateRecoveryCodes" method="post" class="auth-actions">
+    @Html.AntiForgeryToken()
+    <input asp-for="ReturnUrl" type="hidden"/>
+    <button type="submit" class="btn-primary">Wygeneruj nowe kody</button>
+    @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+    {
+        <a href="@Model.ReturnUrl" class="auth-link">Anuluj</a>
+    }
+</form>

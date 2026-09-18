@@ -263,7 +263,7 @@ public sealed class SavingsTransferTests : IAsyncLifetime
     [Fact]
     public async Task Tworzenie_budzetu_z_opcja_zakada_powiazany_budzet_oszczednosciowy_jedna_operacja()
     {
-        var handler = new CreateBudgetCommandHandler(_db, _clock);
+        var handler = new CreateBudgetCommandHandler(_db, _clock, new FakeCurrentUserAccessor(Guid.NewGuid()));
         if (!await _db.Currencies.AnyAsync(c => c.Code == "PLN"))
         {
             _db.Currencies.Add(new Currency("PLN"));

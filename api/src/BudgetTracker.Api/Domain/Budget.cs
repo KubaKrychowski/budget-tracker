@@ -9,10 +9,23 @@ public class Budget(
     DateOnly month,
     decimal initialBalance,
     DateTimeOffset createdAt,
-    string currency = "PLN") : Entity
+    string currency = "PLN",
+    Guid userId = default) : Entity
 {
     /// <summary>Nazwa widoczna w selektorze na dashboardzie (np. „Podstawowy").</summary>
     public string Name { get; protected set; } = name;
+
+    /// <summary>
+    /// Właściciel budżetu — <c>sub</c> z tokenu OpenIddict wystawionego przez BudgetTracker.Identity.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Domyślne <c>default</c> (<see cref="Guid.Empty"/>) istnieje WYŁĄCZNIE, żeby nie trzeba było
+    /// dopisywać tego argumentu do dziesiątek istniejących testów, które nie sprawdzają multi-usera —
+    /// prawdziwi wywołujący (<c>CreateBudgetCommandHandler</c>, seedy) zawsze przekazują realny
+    /// identyfikator. Filtr właściciela w <c>AppDbContext</c> i tak jest wyłączony poza kontekstem
+    /// żądania HTTP, więc <see cref="Guid.Empty"/> nigdy nie trafia na filtrowane zapytanie.
+    /// </remarks>
+    public Guid UserId { get; protected set; } = userId;
 
     /// <summary>Miesiąc, którego dotyczy budżet — zawsze pierwszy dzień miesiąca.</summary>
     public DateOnly Month { get; protected set; } = month;

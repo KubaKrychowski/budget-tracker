@@ -1,6 +1,7 @@
 import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { authInterceptor, provideAuth, withAppInitializerAuthCheck } from 'angular-auth-oidc-client';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -19,13 +20,50 @@ import { provideMarkdown } from 'ngx-markdown';
 
 registerLocaleData(pl);
 
+/**
+ * Adres BudgetTracker.Identity — poza `provideAuth` poniżej używa go też ekran „Konto
+ * i bezpieczeństwo" (`features/settings/account-security`) do zbudowania linków na strony
+ * zmiany hasła/2FA, które mieszkają wyłącznie po stronie Identity (Razor), nie w Angularze.
+ */
+export const IDENTITY_AUTHORITY = 'http://localhost:5172';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     // Interceptor jezyka: front startuje na sztywno z `pl`, a backend bez nagłówka slucha
     // przegladarki — bez tego polski ekran potrafil pokazac angielski komunikat z API.
-    provideHttpClient(withFetch(), withInterceptors([languageInterceptor])),
+    // authInterceptor dokleja token do zapytań pod `secureRoutes` (patrz provideAuth niżej).
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor(), languageInterceptor])),
+
+    // Logowanie przez BudgetTracker.Identity (OpenIddict) — kod autoryzacyjny + PKCE,
+    // bez własnego ekranu logowania: front tylko przekierowuje i odbiera token.
+    // Odnawianie sesji: CICHY IFRAME (silent renew), NIE refresh token — refresh token to
+    // długożyjący, samodzielny sekret; gdyby ktoś wykradł go z sessionStorage (np. przez XSS),
+    // mógłby się nim logować miesiącami. Silent renew nie trzyma na froncie NIC długożyjącego:
+    // ukryta ramka dogaduje się z Identity przez ciasteczko sesji (samo jest httpOnly, JS go nie
+    // widzi) i dostaje świeży, krótkożyjący access token — dokładnie tak samo jak w klasycznej
+    // appce serwerowej, tylko że "sesja" jest ciasteczkiem na Identity, a nie na tej domenie.
+    // Wymaga trampoliny `public/silent-renew.html` zarejestrowanej jako dodatkowy redirect_uri
+    // klienta SPA w OpenIddictSeeder.
+    provideAuth({
+      config: {
+        authority: IDENTITY_AUTHORITY,
+        redirectUrl: `${window.location.origin}/auth-callback`,
+        postLogoutRedirectUri: `${window.location.origin}/`,
+        clientId: 'budgettracker-spa',
+        scope: 'openid profile email budgettracker_api',
+        responseType: 'code',
+        silentRenew: true,
+        silentRenewUrl: `${window.location.origin}/silent-renew.html`,
+        useRefreshToken: false,
+        secureRoutes: ['/api'],
+        // Token dostępu ma audience zawężone do "budgettracker_api" (patrz OpenIddictSeeder w
+        // BudgetTracker.Identity) — świadomie nie działa na /connect/userinfo tego serwera.
+        // Dane użytkownika front bierze z id_tokenu (userData$), nie z osobnego wywołania userinfo.
+        autoUserInfo: false,
+      },
+    }, withAppInitializerAuthCheck()),
     // NG-ZORRO animuje dropdowny, tooltipy i datepickery — bez tego komponenty
     // overlayowe potrafią zostać w stanie pośrednim.
     provideAnimationsAsync(),

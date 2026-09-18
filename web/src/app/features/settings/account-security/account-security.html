@@ -1,0 +1,43 @@
+<section class="acs">
+  <h2 class="acs__caption">{{ 'settings.account.caption' | translate }}</h2>
+  <p class="acs__description">{{ 'settings.account.description' | translate }}</p>
+
+  <div class="acs__field">
+    <span class="acs__label">{{ 'settings.account.email' | translate }}</span>
+    <span>{{ email() ?? '—' }}</span>
+  </div>
+
+  <h3 class="acs__subcaption">{{ 'settings.account.twoFactor.caption' | translate }}</h3>
+  <p class="acs__description">{{ 'settings.account.twoFactor.description' | translate }}</p>
+
+  @if (twoFactorEnabled()) {
+    <nz-tag nzColor="success">{{ 'settings.account.twoFactor.enabled' | translate }}</nz-tag>
+
+    <div class="acs__actions">
+      <a nz-button nzDanger [href]="disableTwoFactorUrl">
+        {{ 'settings.account.twoFactor.disable' | translate }}
+      </a>
+      <a nz-button [href]="regenerateRecoveryCodesUrl">
+        {{ 'settings.account.twoFactor.showRecoveryCodes' | translate }}
+      </a>
+    </div>
+  } @else {
+    <nz-tag>{{ 'settings.account.twoFactor.disabled' | translate }}</nz-tag>
+
+    <div class="acs__actions">
+      <a nz-button nzType="primary" [href]="enableTwoFactorUrl">
+        {{ 'settings.account.twoFactor.enable' | translate }}
+      </a>
+    </div>
+  }
+
+  <h3 class="acs__subcaption">{{ 'settings.account.password.caption' | translate }}</h3>
+  <p class="acs__description">{{ 'settings.account.password.description' | translate }}</p>
+  <div class="acs__actions">
+    <a nz-button [href]="changePasswordUrl()">{{ 'settings.account.password.reset' | translate }}</a>
+  </div>
+
+  <div class="acs__logout">
+    <button nz-button nzDanger (click)="logout()">{{ 'settings.account.logout' | translate }}</button>
+  </div>
+</section>
