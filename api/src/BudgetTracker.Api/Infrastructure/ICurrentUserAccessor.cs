@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using BudgetTracker.Api.Infrastructure.Exceptions;
 
 namespace BudgetTracker.Api.Infrastructure;
 
@@ -9,8 +10,19 @@ namespace BudgetTracker.Api.Infrastructure;
 /// </summary>
 public interface ICurrentUserAccessor
 {
-    /// <summary>Roszczenie <c>sub</c> tokenu; <c>null</c> poza kontekstem żądania HTTP.</summary>
-    Guid? UserId { get; }
+    /// <summary>
+    /// Roszczenie <c>sub</c> tokenu. Handler, który potrzebuje właściciela, czyta to wprost i nie robi
+    /// własnego guarda.
+    /// </summary>
+    /// <exception cref="UserNotAuthenticatedException">Brak <c>sub</c> — warstwa HTTP tłumaczy na 401.</exception>
+    Guid UserId { get; }
+
+    /// <summary>
+    /// To samo co <see cref="UserId"/>, ale <c>null</c> zamiast wyjątku. Dla infrastruktury, która
+    /// działa także bez żądania HTTP (filtr „Owner" w <see cref="AppDbContext"/>, seedy, Hangfire) —
+    /// tam brak użytkownika jest normalnym stanem, nie błędem uwierzytelnienia.
+    /// </summary>
+    Guid? UserIdOrNull { get; }
 }
 
 /// <remarks>
@@ -20,13 +32,17 @@ public interface ICurrentUserAccessor
 /// </remarks>
 public sealed class HttpContextCurrentUserAccessor(IHttpContextAccessor httpContextAccessor) : ICurrentUserAccessor
 {
-    public Guid? UserId
+    public Guid UserId => UserIdOrNull ?? throw new UserNotAuthenticatedException();
+
+    public Guid? UserIdOrNull
     {
         get
         {
             var user = httpContextAccessor.HttpContext?.User;
-            var sub = user?.FindFirst("sub")?.Value ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var sub = user?.FindFirst(SubjectClaimType)?.Value ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return Guid.TryParse(sub, out var id) ? id : null;
         }
     }
+
+    private const string SubjectClaimType = "sub";
 }

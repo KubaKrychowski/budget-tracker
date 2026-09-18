@@ -2,11 +2,13 @@ using System.Collections.Immutable;
 using System.Security.Claims;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
+using BudgetTracker.Identity.Resources;
 using Microsoft.AspNetCore; // GetOpenIddictServerRequest() itp. — helpery leżą w tej przestrzeni nazw w 8.0-preview.
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenIddict.Validation.AspNetCore;
@@ -16,23 +18,21 @@ namespace BudgetTracker.Identity.Controllers;
 
 /// <summary>
 /// Endpointy <c>/connect/*</c> serwera OpenIddict: ekran zgody (authorize), wymiana kodu/odświeżenia
-/// i logowania hasłem na token (token), oraz wylogowanie RP-initiated (logout). Wzorzec jak w oficjalnych
-/// przykładach OpenIddict (Velusia/Zirku), dopasowany pod ASP.NET Identity jako magazyn kont.
+/// i logowania hasłem na token (token), oraz wylogowanie RP-initiated (logout).
+/// <para>
+/// Ekran zgody, kod + PKCE i wymiana kodu/odświeżenia wzorowane na przykładzie Velusia:
+/// <see href="https://github.com/openiddict/openiddict-samples/blob/dev/samples/Velusia/Velusia.Server/Controllers/AuthorizationController.cs"/>.
+/// Dopasowane pod ASP.NET Identity jako magazyn kont; grant hasła (bt-cli) jest naszym dodatkiem, nie częścią tego przykładu.
+/// </para>
 /// </summary>
 public sealed class AuthorizationController(
     IOpenIddictApplicationManager applicationManager,
     IOpenIddictAuthorizationManager authorizationManager,
     IOpenIddictScopeManager scopeManager,
     SignInManager<ApplicationUser> signInManager,
-    UserManager<ApplicationUser> userManager) : Controller
+    UserManager<ApplicationUser> userManager,
+    IStringLocalizer<SharedResource> localizer) : Controller
 {
-    /// <summary>
-    /// Niestandardowe roszczenie odczytywane przez ekran „Konto i bezpieczeństwo" w Angularze
-    /// (z <c>userData</c> OIDC) — front nie ma dostępu do bazy Identity, więc status 2FA musi
-    /// jechać w tokenie. Wartość to dosłowne "true"/"false", nie C#-owe "True"/"False".
-    /// </summary>
-    private const string TwoFactorEnabledClaimType = "two_factor_enabled";
-
     [HttpGet("~/connect/authorize")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Authorize()
@@ -48,7 +48,7 @@ public sealed class AuthorizationController(
             // błąd — front sam wie, że trzeba przelogować interaktywnie.
             if (request.HasPromptValue(PromptValues.None))
             {
-                return ForbidWithError(Errors.LoginRequired, "Użytkownik nie jest zalogowany.");
+                return ForbidWithError(Errors.LoginRequired, localizer["OAuth_NotSignedIn"]);
             }
 
             return Challenge(
@@ -84,7 +84,7 @@ public sealed class AuthorizationController(
             // więc do tego miejsca z prompt=none trafiamy tylko, gdy zgoda jeszcze nie istnieje.
             if (request.HasPromptValue(PromptValues.None))
             {
-                return ForbidWithError(Errors.ConsentRequired, "Użytkownik nie wyraził jeszcze zgody.");
+                return ForbidWithError(Errors.ConsentRequired, localizer["OAuth_ConsentMissing"]);
             }
 
             return View("Authorize", new AuthorizeViewModel
@@ -142,7 +142,7 @@ public sealed class AuthorizationController(
     [HttpPost("~/connect/authorize"), ActionName(nameof(Authorize))]
     [FormValueRequired("submit.Deny")]
     [ValidateAntiForgeryToken]
-    public IActionResult Deny() => ForbidWithError(Errors.AccessDenied, "Użytkownik odrzucił żądanie autoryzacji.");
+    public IActionResult Deny() => ForbidWithError(Errors.AccessDenied, localizer["OAuth_Denied"]);
 
     /// <summary>Odpowiedź błędem OAuth zamiast przekierowania/UI — patrz obsługa <c>prompt=none</c> wyżej.</summary>
     private IActionResult ForbidWithError(string error, string description) =>
@@ -166,7 +166,7 @@ public sealed class AuthorizationController(
         // (ClaimTypes.Email), nie pod krótką nazwą OpenIddict — bez jawnego SetClaim tutaj
         // GetDestinations niżej nigdy nie trafia w "case Claims.Email" i mail nie wchodzi do tokenu.
         principal.SetClaim(Claims.Email, await userManager.GetEmailAsync(user));
-        principal.SetClaim(TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
+        principal.SetClaim(OAuthDefaults.TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
         principal.SetScopes(request.GetScopes());
         principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
 
@@ -224,20 +224,13 @@ public sealed class AuthorizationController(
             var user = await userManager.GetUserAsync(result.Principal!);
             if (user is null)
             {
-                return Forbid(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(new Dictionary<string, string?>
-                    {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
-                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                            "Token stracił ważność — konto zostało usunięte albo zablokowane.",
-                    }));
+                return ForbidWithError(Errors.InvalidGrant, localizer["OAuth_TokenNoLongerValid"]);
             }
 
             var principal = await signInManager.CreateUserPrincipalAsync(user);
             principal.SetClaim(Claims.Subject, await userManager.GetUserIdAsync(user));
             principal.SetClaim(Claims.Email, await userManager.GetEmailAsync(user));
-            principal.SetClaim(TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
+            principal.SetClaim(OAuthDefaults.TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
             principal.SetScopes(result.Principal!.GetScopes());
             principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
             principal.SetAuthorizationId(result.Principal!.GetAuthorizationId());
@@ -258,40 +251,19 @@ public sealed class AuthorizationController(
             var user = await userManager.FindByEmailAsync(request.Username!);
             if (user is null || !await userManager.CheckPasswordAsync(user, request.Password!))
             {
-                return Forbid(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(new Dictionary<string, string?>
-                    {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
-                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                            "Nieprawidłowy e-mail lub hasło.",
-                    }));
+                return ForbidWithError(Errors.InvalidGrant, localizer["Login_InvalidCredentials"]);
             }
 
             if (!await userManager.IsEmailConfirmedAsync(user))
             {
                 // Ten sam wymóg co logowanie webowe (RequireConfirmedAccount, patrz Program.cs) — password
                 // grant idzie bezpośrednio przez UserManager i pomija automatyczne egzekwowanie SignInManagera.
-                return Forbid(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(new Dictionary<string, string?>
-                    {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
-                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                            "Musisz potwierdzić adres e-mail, zanim zalogujesz się przez bt-cli. Sprawdź skrzynkę albo zaloguj się w aplikacji webowej, żeby wysłać link ponownie.",
-                    }));
+                return ForbidWithError(Errors.InvalidGrant, localizer["OAuth_CliEmailNotConfirmed"]);
             }
 
             if (await userManager.GetTwoFactorEnabledAsync(user))
             {
-                return Forbid(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(new Dictionary<string, string?>
-                    {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
-                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                            "Konto ma włączoną weryfikację dwuetapową — bt-cli jej jeszcze nie obsługuje. Zaloguj się w aplikacji webowej.",
-                    }));
+                return ForbidWithError(Errors.InvalidGrant, localizer["OAuth_CliTwoFactor"]);
             }
 
             var principal = await signInManager.CreateUserPrincipalAsync(user);
@@ -385,7 +357,7 @@ public sealed class AuthorizationController(
                 if (principal.HasScope(Scopes.Email)) yield return Destinations.IdentityToken;
                 yield break;
 
-            case TwoFactorEnabledClaimType:
+            case OAuthDefaults.TwoFactorEnabledClaimType:
                 yield return Destinations.AccessToken;
                 if (principal.HasScope(Scopes.Profile)) yield return Destinations.IdentityToken;
                 yield break;
@@ -397,11 +369,4 @@ public sealed class AuthorizationController(
                 yield break;
         }
     }
-}
-
-public sealed class AuthorizeViewModel
-{
-    public required string ApplicationName { get; init; }
-    public required ImmutableArray<string> Scopes { get; init; }
-    public required string UserEmail { get; init; }
 }

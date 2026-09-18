@@ -1,20 +1,20 @@
-@model ConfirmEmailSuccessViewModel
+@model SpaLinkViewModel
 @{
-    ViewData["Title"] = "Adres e-mail potwierdzony";
+    ViewData["Title"] = L["ConfirmEmailSuccess_Title"];
 }
 
 <div class="auth-header">
-    <h1>Adres e-mail potwierdzony</h1>
-    <p>Konto jest aktywne. Możesz wrócić do aplikacji.</p>
+    <h1>@L["ConfirmEmailSuccess_Title"]</h1>
+    <p>@L["ConfirmEmailSuccess_Text"]</p>
 </div>
 
 <div class="auth-actions">
     @if (Model.SpaUrl is { Length: > 0 } spaUrl)
     {
-        <a href="@spaUrl" class="btn-primary">Wróć do aplikacji</a>
+        <a href="@spaUrl" class="btn-primary">@L["Common_BackToApp"]</a>
     }
     else
     {
-        <a asp-action="Login" class="btn-primary">Przejdź do logowania</a>
+        <a asp-action="Login" class="btn-primary">@L["Common_GoToLogin"]</a>
     }
 </div>

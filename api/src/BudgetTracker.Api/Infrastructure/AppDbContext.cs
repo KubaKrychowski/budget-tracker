@@ -24,7 +24,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     /// kontekstem żądania HTTP. Realne żądania API zawsze mają tu wartość — fallback policy w
     /// <c>Program.cs</c> odrzuca nieuwierzytelnione żądania, zanim dotrą do handlera.
     /// </summary>
-    private Guid? CurrentUserId => currentUser?.UserId;
+    private Guid? CurrentUserId => currentUser?.UserIdOrNull;
 
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Category> Categories => Set<Category>();
@@ -215,7 +215,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             // nazwane filtry przez AND). `CurrentUserId == null` poza żądaniem HTTP (testy/seedy/
             // Hangfire) świadomie WYŁĄCZA filtr, zamiast dopasować pustkę — patrz komentarz przy
             // właściwości. Budżety innych użytkowników mają zniknąć tylko realnym żądaniom API.
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<BudgetItem>(e =>
@@ -272,10 +272,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
 
             b.Entity(type).HasIndex(nameof(Entity.BusinessId)).IsUnique();
             b.Entity(type).Property(nameof(Entity.DeletedAt)).HasColumnType("timestamptz");
-            // Nazwany filtr (nie anonimowy) — na `Budget` dochodzi jeszcze filtr "Owner" niżej,
+            // Nazwany filtr (nie anonimowy) — na `Budget` dochodzi jeszcze filtr „Owner" niżej,
             // a EF Core łączy WSZYSTKIE nazwane filtry jednej encji przez AND. Anonimowy nadpisałby
             // ten drugi zamiast się z nim złożyć.
-            b.Entity(type).HasQueryFilter("SoftDelete", SoftDeleteFilter(type));
+            b.Entity(type).HasQueryFilter(QueryFilterNames.SoftDelete, SoftDeleteFilter(type));
         }
     }
 

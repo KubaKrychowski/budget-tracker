@@ -1,11 +1,11 @@
 @model RecoveryCodesViewModel
 @{
-    ViewData["Title"] = "Kody zapasowe";
+    ViewData["Title"] = L["RecoveryCodes_Title"];
 }
 
 <div class="auth-header">
-    <h1>Zapisz kody zapasowe</h1>
-    <p>Każdego kodu możesz użyć raz, jeśli stracisz dostęp do aplikacji uwierzytelniającej. Zapisz je w bezpiecznym miejscu — nie pokażemy ich ponownie.</p>
+    <h1>@L["RecoveryCodes_Heading"]</h1>
+    <p>@L["RecoveryCodes_Text"]</p>
 </div>
 
 <div class="auth-scopes-box">
@@ -19,9 +19,5 @@
 
 @if (!string.IsNullOrEmpty(Model.SpaUrl))
 {
-    <a href="@Model.SpaUrl" class="btn-primary" style="text-decoration:none; align-self:center;">Zapisałem kody, wróć do aplikacji</a>
-}
-else
-{
-    <a asp-controller="Home" asp-action="Index" class="btn-primary" style="text-decoration:none; align-self:center;">Zapisałem kody, przejdź dalej</a>
+    <a href="@Model.SpaUrl" class="btn-primary" style="text-decoration:none; align-self:center;">@L["RecoveryCodes_BackToApp"]</a>
 }

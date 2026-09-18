@@ -17,7 +17,7 @@ public sealed class BudgetLookup(AppDbContext db)
     /// </summary>
     /// <exception cref="BudgetNotFoundException">Nieznany identyfikator — nigdy cichy fallback na inny budżet.</exception>
     public async Task<Budget> FindIncludingDeletedAsync(Guid businessId, CancellationToken ct) =>
-        await db.Budgets.IgnoreQueryFilters(["SoftDelete"])
+        await db.Budgets.IgnoreQueryFilters([QueryFilterNames.SoftDelete])
             .FirstOrDefaultAsync(b => b.BusinessId == businessId, ct)
         ?? throw new BudgetNotFoundException(businessId);
 }

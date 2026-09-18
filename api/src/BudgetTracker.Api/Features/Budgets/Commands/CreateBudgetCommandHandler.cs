@@ -25,8 +25,7 @@ public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clo
 {
     public async Task<CreateBudgetResponseDto> HandleAsync(CreateBudgetRequestDto request, CancellationToken ct)
     {
-        var userId = currentUser.UserId
-            ?? throw new InvalidOperationException("Brak zalogowanego użytkownika — endpoint wymaga uwierzytelnienia.");
+        var userId = currentUser.UserId;
 
         var name = request.Name?.Trim() ?? string.Empty;
         if (name.Length == 0)

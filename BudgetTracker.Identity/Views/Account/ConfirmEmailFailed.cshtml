@@ -1,13 +1,13 @@
 @{
-    ViewData["Title"] = "Nie udało się potwierdzić adresu e-mail";
+    ViewData["Title"] = L["ConfirmEmailFailed_Title"];
 }
 
 <div class="auth-header">
-    <h1>Nie udało się potwierdzić adresu e-mail</h1>
-    <p>Link mógł wygasnąć albo zostać już wcześniej użyty.</p>
+    <h1>@L["ConfirmEmailFailed_Title"]</h1>
+    <p>@L["ConfirmEmailFailed_Text"]</p>
 </div>
 
 <div class="auth-actions">
-    <a asp-action="ResendEmailConfirmation" class="auth-link">Wyślij link ponownie</a>
-    <a asp-action="Login" class="auth-link">Wróć do logowania</a>
+    <a asp-action="ResendEmailConfirmation" class="auth-link">@L["ConfirmEmailFailed_Resend"]</a>
+    <a asp-action="Login" class="auth-link">@L["Common_BackToLogin"]</a>
 </div>

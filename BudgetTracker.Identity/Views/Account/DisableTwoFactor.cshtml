@@ -1,19 +1,19 @@
 @model ReturnUrlViewModel
 @{
-    ViewData["Title"] = "Wyłącz weryfikację dwuetapową";
+    ViewData["Title"] = L["DisableTwoFactor_Title"];
 }
 
 <div class="auth-header">
-    <h1>Wyłączyć weryfikację dwuetapową?</h1>
-    <p>Logowanie będzie odtąd wymagało tylko hasła. Będziesz mógł/mogła włączyć 2FA ponownie w dowolnym momencie.</p>
+    <h1>@L["DisableTwoFactor_Heading"]</h1>
+    <p>@L["DisableTwoFactor_Text"]</p>
 </div>
 
 <form asp-action="DisableTwoFactor" method="post" class="auth-actions">
     @Html.AntiForgeryToken()
     <input asp-for="ReturnUrl" type="hidden"/>
-    <button type="submit" class="btn-primary">Wyłącz 2FA</button>
+    <button type="submit" class="btn-primary">@L["DisableTwoFactor_Submit"]</button>
     @if (!string.IsNullOrEmpty(Model.ReturnUrl))
     {
-        <a href="@Model.ReturnUrl" class="auth-link">Anuluj</a>
+        <a href="@Model.ReturnUrl" class="auth-link">@L["Common_Cancel"]</a>
     }
 </form>

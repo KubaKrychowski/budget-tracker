@@ -1,24 +1,24 @@
 @model ResendEmailConfirmationViewModel
 @{
-    ViewData["Title"] = "Wyślij link potwierdzający ponownie";
+    ViewData["Title"] = L["Resend_Title"];
 }
 
 <div class="auth-header">
-    <h1>Wyślij link potwierdzający ponownie</h1>
-    <p>Podaj adres e-mail użyty przy rejestracji</p>
+    <h1>@L["Resend_Title"]</h1>
+    <p>@L["Resend_Subtitle"]</p>
 </div>
 
 <form asp-action="ResendEmailConfirmation" method="post" class="auth-form">
     <div asp-validation-summary="ModelOnly"></div>
 
     <div class="auth-field">
-        <label asp-for="Email">Adres e-mail</label>
-        <input asp-for="Email" placeholder="np. jan.kowalski@poczta.pl" autocomplete="username" autofocus/>
+        <label asp-for="Email">@L["Field_Email"]</label>
+        <input asp-for="Email" placeholder="@L["Placeholder_Email"]" autocomplete="username" autofocus/>
         <span asp-validation-for="Email"></span>
     </div>
 
     <div class="auth-actions">
-        <button type="submit" class="btn-primary">Wyślij ponownie</button>
-        <a asp-action="Login" class="auth-link">Wróć do logowania</a>
+        <button type="submit" class="btn-primary">@L["Resend_Submit"]</button>
+        <a asp-action="Login" class="auth-link">@L["Common_BackToLogin"]</a>
     </div>
 </form>

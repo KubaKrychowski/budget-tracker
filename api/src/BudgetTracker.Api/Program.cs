@@ -47,9 +47,9 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddOpenIddict()
     .AddValidation(options =>
     {
-        options.SetIssuer(builder.Configuration["Identity:Issuer"]
-            ?? throw new InvalidOperationException("Brak konfiguracji Identity:Issuer."));
-        options.AddAudiences("budgettracker_api");
+        options.SetIssuer(builder.Configuration[IdentityServerDefaults.IssuerConfigKey]
+            ?? throw new InvalidOperationException($"Brak konfiguracji {IdentityServerDefaults.IssuerConfigKey}."));
+        options.AddAudiences(IdentityServerDefaults.ApiAudience);
         options.UseSystemNetHttp();
         options.UseAspNetCore();
     });

@@ -29,7 +29,7 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
         var currentMonth = new DateOnly(today.Year, today.Month, 1);
 
         var budgets = await db.Budgets
-            .IgnoreQueryFilters(["SoftDelete"])
+            .IgnoreQueryFilters([QueryFilterNames.SoftDelete])
             .OrderByDescending(b => b.CreatedAt)
             .ThenByDescending(b => b.Id)
             .ToListAsync(ct);

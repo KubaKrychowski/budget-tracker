@@ -1,0 +1,14 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = L["Error_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["Error_Heading"]</h1>
+    <p>@L["Error_Text"]</p>
+</div>
+
+@if (Model.ShowRequestId)
+{
+    <p class="auth-hint"><strong>@L["Error_RequestId"]:</strong> <code>@Model.RequestId</code></p>
+}

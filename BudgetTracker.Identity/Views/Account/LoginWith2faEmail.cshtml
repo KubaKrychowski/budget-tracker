@@ -1,11 +1,11 @@
 @model LoginWith2faEmailViewModel
 @{
-    ViewData["Title"] = "Weryfikacja dwuetapowa";
+    ViewData["Title"] = L["TwoFactor_Title"];
 }
 
 <div class="auth-header">
-    <h1>Weryfikacja dwuetapowa</h1>
-    <p>Wysłaliśmy kod weryfikacyjny na Twój adres e-mail</p>
+    <h1>@L["TwoFactor_Title"]</h1>
+    <p>@L["TwoFactor_EmailSubtitle"]</p>
 </div>
 
 <form asp-action="LoginWith2faEmail" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" method="post" class="auth-form">
@@ -13,19 +13,19 @@
     <input asp-for="ReturnUrl" type="hidden"/>
 
     <div class="auth-field">
-        <label asp-for="TwoFactorCode">Kod weryfikacyjny</label>
+        <label asp-for="TwoFactorCode">@L["Field_VerificationCode"]</label>
         <input asp-for="TwoFactorCode" placeholder="123 456" autocomplete="one-time-code" inputmode="numeric" autofocus/>
         <span asp-validation-for="TwoFactorCode"></span>
     </div>
 
     <div class="auth-checkbox">
         <input asp-for="RememberMachine" type="checkbox"/>
-        <label asp-for="RememberMachine">Zapamiętaj to urządzenie</label>
+        <label asp-for="RememberMachine">@L["TwoFactor_RememberDevice"]</label>
     </div>
 
     <div class="auth-actions">
-        <button type="submit" class="btn-primary">Zweryfikuj</button>
-        <a asp-action="LoginWith2faEmail" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" class="auth-link">Wyślij kod ponownie</a>
-        <a asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Użyj kodu zapasowego</a>
+        <button type="submit" class="btn-primary">@L["TwoFactor_Verify"]</button>
+        <a asp-action="LoginWith2faEmail" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" class="auth-link">@L["TwoFactor_ResendEmail"]</a>
+        <a asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">@L["TwoFactor_UseRecoveryCode"]</a>
     </div>
 </form>

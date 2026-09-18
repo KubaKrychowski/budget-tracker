@@ -1,8 +1,10 @@
 using BudgetTracker.Identity.Data;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
+using BudgetTracker.Identity.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -16,7 +18,11 @@ namespace BudgetTracker.Identity.Services;
 /// inaczej zalogowany dev/demo user nie zobaczyłby własnych danych. Idempotentne — sprawdza istnienie
 /// przed utworzeniem.
 /// </summary>
-public sealed class OpenIddictSeeder(IServiceProvider serviceProvider, IConfiguration configuration, IWebHostEnvironment environment) : IHostedService
+public sealed class OpenIddictSeeder(
+    IServiceProvider serviceProvider,
+    IConfiguration configuration,
+    IOptions<SpaClientOptions> spaClient,
+    IWebHostEnvironment environment) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -59,7 +65,7 @@ public sealed class OpenIddictSeeder(IServiceProvider serviceProvider, IConfigur
     private static async Task SeedFixedUserAsync(
         UserManager<ApplicationUser> userManager, Guid id, string email, string password)
     {
-        if (await userManager.FindByIdAsync(id.ToString()) is not null) return;
+        if (await userManager.FindByGuidAsync(id) is not null) return;
 
         var user = new ApplicationUser { Id = id, UserName = email, Email = email, EmailConfirmed = true };
         var result = await userManager.CreateAsync(user, password);
@@ -74,25 +80,20 @@ public sealed class OpenIddictSeeder(IServiceProvider serviceProvider, IConfigur
 
     private static async Task SeedScopeAsync(IOpenIddictScopeManager scopeManager, CancellationToken ct)
     {
-        if (await scopeManager.FindByNameAsync("budgettracker_api", ct) is not null) return;
+        if (await scopeManager.FindByNameAsync(OAuthDefaults.ApiScope, ct) is not null) return;
 
         await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
         {
-            Name = "budgettracker_api",
+            Name = OAuthDefaults.ApiScope,
             DisplayName = "Budżet tracker API",
-            Resources = { "budgettracker_api" },
+            Resources = { OAuthDefaults.ApiScope },
         }, ct);
     }
 
     private async Task SeedSpaClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
     {
-        const string clientId = "budgettracker-spa";
+        const string clientId = OAuthDefaults.SpaClientId;
         if (await appManager.FindByClientIdAsync(clientId, ct) is not null) return;
-
-        var redirectUris = configuration.GetSection("Clients:Spa:RedirectUris").Get<string[]>()
-            ?? ["http://localhost:4200/auth-callback", "http://localhost:4310/auth-callback"];
-        var postLogoutRedirectUris = configuration.GetSection("Clients:Spa:PostLogoutRedirectUris").Get<string[]>()
-            ?? ["http://localhost:4200/", "http://localhost:4310/"];
 
         var descriptor = new OpenIddictApplicationDescriptor
         {
@@ -112,20 +113,20 @@ public sealed class OpenIddictSeeder(IServiceProvider serviceProvider, IConfigur
                 Permissions.ResponseTypes.Code,
                 Permissions.Scopes.Email,
                 Permissions.Scopes.Profile,
-                Permissions.Prefixes.Scope + "budgettracker_api",
+                Permissions.Prefixes.Scope + OAuthDefaults.ApiScope,
             },
             Requirements = { Requirements.Features.ProofKeyForCodeExchange },
         };
 
-        foreach (var uri in redirectUris) descriptor.RedirectUris.Add(new Uri(uri));
-        foreach (var uri in postLogoutRedirectUris) descriptor.PostLogoutRedirectUris.Add(new Uri(uri));
+        foreach (var uri in spaClient.Value.RedirectUris) descriptor.RedirectUris.Add(new Uri(uri));
+        foreach (var uri in spaClient.Value.PostLogoutRedirectUris) descriptor.PostLogoutRedirectUris.Add(new Uri(uri));
 
         await appManager.CreateAsync(descriptor, ct);
     }
 
     private async Task SeedCliClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
     {
-        const string clientId = "bt-cli";
+        const string clientId = OAuthDefaults.CliClientId;
         if (await appManager.FindByClientIdAsync(clientId, ct) is not null) return;
 
         // Sekret deweloperski — jedyny użytkownik jest też jedynym deweloperem (CLAUDE.md), więc
@@ -150,7 +151,7 @@ public sealed class OpenIddictSeeder(IServiceProvider serviceProvider, IConfigur
                 Permissions.Scopes.Email,
                 Permissions.Scopes.Profile,
                 Permissions.Prefixes.Scope + "offline_access",
-                Permissions.Prefixes.Scope + "budgettracker_api",
+                Permissions.Prefixes.Scope + OAuthDefaults.ApiScope,
             },
         }, ct);
     }

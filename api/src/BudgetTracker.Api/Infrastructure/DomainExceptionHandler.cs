@@ -109,6 +109,8 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         // Nigdy cichy fallback na „pierwszy z brzegu" — patrz EntityNotFoundException.
         EntityNotFoundException => (StatusCodes.Status404NotFound, null),
 
+        UserNotAuthenticatedException => (StatusCodes.Status401Unauthorized, "Auth_NotAuthenticated"),
+
         // ⚠️ To NIE jest wyjątek domenowy i nie ma go tu przez przypadek.
         // ASP.NET rzuca go przy zepsutym ciele żądania i sam niesie właściwy kod (400).
         // Bez tej gałęzi samo dołożenie UseExceptionHandler zamieniłoby niepoprawny JSON

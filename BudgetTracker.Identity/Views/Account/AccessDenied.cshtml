@@ -1,10 +1,18 @@
+@model SpaLinkViewModel
 @{
-    ViewData["Title"] = "Brak dostępu";
+    ViewData["Title"] = L["AccessDenied_Title"];
 }
 
 <div class="auth-header">
-    <h1>Brak dostępu</h1>
-    <p>Nie masz uprawnień, żeby zobaczyć tę stronę.</p>
+    <h1>@L["AccessDenied_Title"]</h1>
+    <p>@L["AccessDenied_Text"]</p>
 </div>
 
-<a asp-controller="Home" asp-action="Index" class="auth-link">Wróć na stronę główną</a>
+@if (Model.SpaUrl is { Length: > 0 } spaUrl)
+{
+    <a href="@spaUrl" class="auth-link">@L["Common_BackToApp"]</a>
+}
+else
+{
+    <a asp-action="Login" class="auth-link">@L["Common_BackToLogin"]</a>
+}

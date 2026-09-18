@@ -1,47 +1,47 @@
 @model LoginViewModel
 @{
-    ViewData["Title"] = "Logowanie";
+    ViewData["Title"] = L["Login_Title"];
 }
 
 <div class="auth-header">
-    <h1>Budżet tracker</h1>
-    <p>Zaloguj się, aby zarządzać swoim budżetem</p>
+    <h1>@L["App_Name"]</h1>
+    <p>@L["Login_Subtitle"]</p>
 </div>
 
 <form asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
     <div asp-validation-summary="ModelOnly"></div>
 
     <div class="auth-field">
-        <label asp-for="Email">Adres e-mail</label>
-        <input asp-for="Email" placeholder="np. jan.kowalski@poczta.pl" autocomplete="username" autofocus/>
+        <label asp-for="Email">@L["Field_Email"]</label>
+        <input asp-for="Email" placeholder="@L["Placeholder_Email"]" autocomplete="username" autofocus/>
         <span asp-validation-for="Email"></span>
     </div>
 
     <div class="auth-field">
-        <label asp-for="Password">Hasło</label>
+        <label asp-for="Password">@L["Field_Password"]</label>
         <input asp-for="Password" placeholder="••••••••" autocomplete="current-password"/>
         <span asp-validation-for="Password"></span>
     </div>
 
     <div class="auth-row">
         <label class="auth-checkbox">
-            <input asp-for="RememberMe" type="checkbox"/> Zapamiętaj mnie
+            <input asp-for="RememberMe" type="checkbox"/> @L["Login_RememberMe"]
         </label>
-        <a asp-action="ForgotPassword" class="auth-link">Nie pamiętasz hasła?</a>
+        <a asp-action="ForgotPassword" class="auth-link">@L["Login_ForgotPassword"]</a>
     </div>
 
-    @if (ViewData["ShowResendConfirmation"] is true)
+    @if (Model.ShowResendConfirmation)
     {
         <div class="auth-row">
-            <a asp-action="ResendEmailConfirmation" class="auth-link">Wyślij link potwierdzający ponownie</a>
+            <a asp-action="ResendEmailConfirmation" class="auth-link">@L["Login_ResendConfirmation"]</a>
         </div>
     }
 
     <div class="auth-actions">
-        <button type="submit" class="btn-primary">Zaloguj się</button>
+        <button type="submit" class="btn-primary">@L["Login_Submit"]</button>
         <div class="auth-footer-row">
-            <span>Nie masz konta?</span>
-            <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Załóż konto</a>
+            <span>@L["Login_NoAccount"]</span>
+            <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">@L["Login_CreateAccount"]</a>
         </div>
     </div>
 </form>

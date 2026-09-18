@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
+  <data name="App_Name" xml:space="preserve"><value>Budżet tracker</value></data>
+  <data name="Common_BackToLogin" xml:space="preserve"><value>Wróć do logowania</value></data>
+  <data name="Common_GoToLogin" xml:space="preserve"><value>Przejdź do logowania</value></data>
+  <data name="Common_BackToApp" xml:space="preserve"><value>Wróć do aplikacji</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Anuluj</value></data>
+  <data name="Password_Hint" xml:space="preserve"><value>Min. {0} znaków, w tym wielka litera, cyfra i znak specjalny.</value></data>
+  <data name="Field_Email" xml:space="preserve"><value>Adres e-mail</value></data>
+  <data name="Field_Password" xml:space="preserve"><value>Hasło</value></data>
+  <data name="Field_NewPassword" xml:space="preserve"><value>Nowe hasło</value></data>
+  <data name="Field_ConfirmPassword" xml:space="preserve"><value>Powtórz hasło</value></data>
+  <data name="Field_ConfirmNewPassword" xml:space="preserve"><value>Powtórz nowe hasło</value></data>
+  <data name="Field_VerificationCode" xml:space="preserve"><value>Kod weryfikacyjny</value></data>
+  <data name="Field_RecoveryCode" xml:space="preserve"><value>Kod zapasowy</value></data>
+  <data name="Field_AuthenticatorCode" xml:space="preserve"><value>Kod z aplikacji</value></data>
+  <data name="Placeholder_Email" xml:space="preserve"><value>np. jan.kowalski@poczta.pl</value></data>
+  <data name="Placeholder_PasswordMin" xml:space="preserve"><value>min. {0} znaków</value></data>
+  <data name="Placeholder_RepeatPassword" xml:space="preserve"><value>powtórz hasło</value></data>
+  <data name="Placeholder_RecoveryCode" xml:space="preserve"><value>np. abcd1234</value></data>
+  <data name="Validation_EmailRequired" xml:space="preserve"><value>Podaj adres e-mail.</value></data>
+  <data name="Validation_EmailInvalid" xml:space="preserve"><value>Podaj poprawny adres e-mail.</value></data>
+  <data name="Validation_PasswordRequired" xml:space="preserve"><value>Podaj hasło.</value></data>
+  <data name="Validation_NewPasswordRequired" xml:space="preserve"><value>Podaj nowe hasło.</value></data>
+  <data name="Validation_PasswordMinLength" xml:space="preserve"><value>Hasło musi mieć co najmniej {2} znaków.</value></data>
+  <data name="Validation_ConfirmPasswordRequired" xml:space="preserve"><value>Powtórz hasło.</value></data>
+  <data name="Validation_ConfirmNewPasswordRequired" xml:space="preserve"><value>Powtórz nowe hasło.</value></data>
+  <data name="Validation_PasswordsDiffer" xml:space="preserve"><value>Hasła nie są identyczne.</value></data>
+  <data name="Validation_CodeRequired" xml:space="preserve"><value>Podaj kod weryfikacyjny.</value></data>
+  <data name="Validation_CodeLength" xml:space="preserve"><value>Kod ma nieprawidłową długość.</value></data>
+  <data name="Validation_RecoveryCodeRequired" xml:space="preserve"><value>Podaj kod zapasowy.</value></data>
+  <data name="Validation_AuthenticatorCodeRequired" xml:space="preserve"><value>Podaj kod z aplikacji.</value></data>
+  <data name="Validation_TermsRequired" xml:space="preserve"><value>Musisz zaakceptować regulamin i politykę prywatności.</value></data>
+  <data name="Login_LockedOut" xml:space="preserve"><value>Konto zostało tymczasowo zablokowane po zbyt wielu nieudanych próbach logowania. Możesz poczekać albo od razu odzyskać dostęp, resetując hasło poniżej.</value></data>
+  <data name="Login_EmailNotConfirmed" xml:space="preserve"><value>Musisz potwierdzić adres e-mail, zanim się zalogujesz.</value></data>
+  <data name="Login_InvalidCredentials" xml:space="preserve"><value>Nieprawidłowy e-mail lub hasło.</value></data>
+  <data name="TwoFactor_LockedOut" xml:space="preserve"><value>Konto zostało tymczasowo zablokowane po zbyt wielu nieudanych próbach.</value></data>
+  <data name="TwoFactor_InvalidCode" xml:space="preserve"><value>Nieprawidłowy kod weryfikacyjny.</value></data>
+  <data name="TwoFactor_InvalidRecoveryCode" xml:space="preserve"><value>Nieprawidłowy kod zapasowy.</value></data>
+  <data name="Login_Title" xml:space="preserve"><value>Logowanie</value></data>
+  <data name="Login_Subtitle" xml:space="preserve"><value>Zaloguj się, aby zarządzać swoim budżetem</value></data>
+  <data name="Login_RememberMe" xml:space="preserve"><value>Zapamiętaj mnie</value></data>
+  <data name="Login_ForgotPassword" xml:space="preserve"><value>Nie pamiętasz hasła?</value></data>
+  <data name="Login_ResendConfirmation" xml:space="preserve"><value>Wyślij link potwierdzający ponownie</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Zaloguj się</value></data>
+  <data name="Login_NoAccount" xml:space="preserve"><value>Nie masz konta?</value></data>
+  <data name="Login_CreateAccount" xml:space="preserve"><value>Załóż konto</value></data>
+  <data name="Register_Title" xml:space="preserve"><value>Rejestracja</value></data>
+  <data name="Register_Heading" xml:space="preserve"><value>Utwórz konto</value></data>
+  <data name="Register_Subtitle" xml:space="preserve"><value>Załóż konto, aby zacząć zarządzać swoim budżetem</value></data>
+  <data name="Register_AcceptTerms" xml:space="preserve"><value>Akceptuję regulamin i politykę prywatności</value></data>
+  <data name="Register_Submit" xml:space="preserve"><value>Utwórz konto</value></data>
+  <data name="Register_HaveAccount" xml:space="preserve"><value>Masz już konto?</value></data>
+  <data name="CheckInbox_Title" xml:space="preserve"><value>Sprawdź skrzynkę</value></data>
+  <data name="CheckInbox_Heading" xml:space="preserve"><value>Sprawdź skrzynkę e-mail</value></data>
+  <data name="RegisterConfirmation_Text" xml:space="preserve"><value>Jeśli podany adres jest zarejestrowany i jeszcze niepotwierdzony, wysłaliśmy na niego link potwierdzający konto.</value></data>
+  <data name="ConfirmEmailFailed_Title" xml:space="preserve"><value>Nie udało się potwierdzić adresu e-mail</value></data>
+  <data name="ConfirmEmailFailed_Text" xml:space="preserve"><value>Link mógł wygasnąć albo zostać już wcześniej użyty.</value></data>
+  <data name="ConfirmEmailFailed_Resend" xml:space="preserve"><value>Wyślij link ponownie</value></data>
+  <data name="ConfirmEmailSuccess_Title" xml:space="preserve"><value>Adres e-mail potwierdzony</value></data>
+  <data name="ConfirmEmailSuccess_Text" xml:space="preserve"><value>Konto jest aktywne. Możesz wrócić do aplikacji.</value></data>
+  <data name="Resend_Title" xml:space="preserve"><value>Wyślij link potwierdzający ponownie</value></data>
+  <data name="Resend_Subtitle" xml:space="preserve"><value>Podaj adres e-mail użyty przy rejestracji</value></data>
+  <data name="Resend_Submit" xml:space="preserve"><value>Wyślij ponownie</value></data>
+  <data name="ForgotPassword_Subtitle" xml:space="preserve"><value>Podaj adres e-mail, a wyślemy link do zresetowania hasła</value></data>
+  <data name="ForgotPassword_Submit" xml:space="preserve"><value>Wyślij link resetujący</value></data>
+  <data name="ForgotPasswordConfirmation_Text" xml:space="preserve"><value>Jeśli podany adres jest zarejestrowany, wysłaliśmy na niego link do zresetowania hasła.</value></data>
+  <data name="ResetPassword_Title" xml:space="preserve"><value>Ustaw nowe hasło</value></data>
+  <data name="ResetPassword_Submit" xml:space="preserve"><value>Zapisz nowe hasło</value></data>
+  <data name="ResetPasswordConfirmation_Title" xml:space="preserve"><value>Hasło zmienione</value></data>
+  <data name="ResetPasswordConfirmation_Heading" xml:space="preserve"><value>Hasło zostało zmienione</value></data>
+  <data name="ResetPasswordConfirmation_Text" xml:space="preserve"><value>Możesz się teraz zalogować nowym hasłem.</value></data>
+  <data name="TwoFactor_Title" xml:space="preserve"><value>Weryfikacja dwuetapowa</value></data>
+  <data name="TwoFactor_AuthenticatorSubtitle" xml:space="preserve"><value>Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej</value></data>
+  <data name="TwoFactor_EmailSubtitle" xml:space="preserve"><value>Wysłaliśmy kod weryfikacyjny na Twój adres e-mail</value></data>
+  <data name="TwoFactor_RememberDevice" xml:space="preserve"><value>Zapamiętaj to urządzenie</value></data>
+  <data name="TwoFactor_Verify" xml:space="preserve"><value>Zweryfikuj</value></data>
+  <data name="TwoFactor_SendEmailInstead" xml:space="preserve"><value>Wyślij kod na e-mail zamiast</value></data>
+  <data name="TwoFactor_ResendEmail" xml:space="preserve"><value>Wyślij kod ponownie</value></data>
+  <data name="TwoFactor_UseRecoveryCode" xml:space="preserve"><value>Użyj kodu zapasowego</value></data>
+  <data name="RecoveryCode_Title" xml:space="preserve"><value>Kod zapasowy</value></data>
+  <data name="RecoveryCode_Subtitle" xml:space="preserve"><value>Wpisz jeden z kodów zapasowych, które otrzymałeś przy włączaniu weryfikacji dwuetapowej</value></data>
+  <data name="EnableAuthenticator_Title" xml:space="preserve"><value>Włącz weryfikację dwuetapową</value></data>
+  <data name="EnableAuthenticator_Subtitle" xml:space="preserve"><value>Zeskanuj kod QR aplikacją uwierzytelniającą, np. Google Authenticator</value></data>
+  <data name="EnableAuthenticator_QrAlt" xml:space="preserve"><value>Kod QR do zeskanowania aplikacją uwierzytelniającą</value></data>
+  <data name="EnableAuthenticator_ManualCode" xml:space="preserve"><value>Nie możesz zeskanować? Wpisz kod ręcznie:</value></data>
+  <data name="RecoveryCodes_Title" xml:space="preserve"><value>Kody zapasowe</value></data>
+  <data name="RecoveryCodes_Heading" xml:space="preserve"><value>Zapisz kody zapasowe</value></data>
+  <data name="RecoveryCodes_Text" xml:space="preserve"><value>Każdego kodu możesz użyć raz, jeśli stracisz dostęp do aplikacji uwierzytelniającej. Zapisz je w bezpiecznym miejscu — nie pokażemy ich ponownie.</value></data>
+  <data name="RecoveryCodes_BackToApp" xml:space="preserve"><value>Zapisałem kody, wróć do aplikacji</value></data>
+  <data name="DisableTwoFactor_Title" xml:space="preserve"><value>Wyłącz weryfikację dwuetapową</value></data>
+  <data name="DisableTwoFactor_Heading" xml:space="preserve"><value>Wyłączyć weryfikację dwuetapową?</value></data>
+  <data name="DisableTwoFactor_Text" xml:space="preserve"><value>Logowanie będzie odtąd wymagało tylko hasła. Będziesz mógł/mogła włączyć 2FA ponownie w dowolnym momencie.</value></data>
+  <data name="DisableTwoFactor_Submit" xml:space="preserve"><value>Wyłącz 2FA</value></data>
+  <data name="RegenerateRecoveryCodes_Title" xml:space="preserve"><value>Nowe kody zapasowe</value></data>
+  <data name="RegenerateRecoveryCodes_Heading" xml:space="preserve"><value>Wygenerować nowe kody zapasowe?</value></data>
+  <data name="RegenerateRecoveryCodes_Text" xml:space="preserve"><value>Stare kody zapasowe przestaną działać. Nowe kody pokażemy tylko raz — zapisz je od razu.</value></data>
+  <data name="RegenerateRecoveryCodes_Submit" xml:space="preserve"><value>Wygeneruj nowe kody</value></data>
+  <data name="AccessDenied_Title" xml:space="preserve"><value>Brak dostępu</value></data>
+  <data name="AccessDenied_Text" xml:space="preserve"><value>Nie masz uprawnień, żeby zobaczyć tę stronę.</value></data>
+  <data name="Authorize_Title" xml:space="preserve"><value>Zgoda</value></data>
+  <data name="Authorize_Heading" xml:space="preserve"><value>{0} prosi o dostęp</value></data>
+  <data name="Authorize_Text" xml:space="preserve"><value>Aplikacja {0} chce uzyskać dostęp do Twojego konta jako {1}</value></data>
+  <data name="Authorize_ScopesLabel" xml:space="preserve"><value>Ta aplikacja będzie mogła:</value></data>
+  <data name="Authorize_Deny" xml:space="preserve"><value>Odrzuć</value></data>
+  <data name="Authorize_Allow" xml:space="preserve"><value>Zezwól</value></data>
+  <data name="Scope_email" xml:space="preserve"><value>Widzieć Twój adres e-mail i nazwę konta</value></data>
+  <data name="Scope_profile" xml:space="preserve"><value>Widzieć Twoją nazwę użytkownika</value></data>
+  <data name="Scope_budgettracker_api" xml:space="preserve"><value>Odczytywać i zarządzać Twoimi budżetami, transakcjami i limitami w Twoim imieniu</value></data>
+  <data name="Logout_Title" xml:space="preserve"><value>Wylogowanie</value></data>
+  <data name="Logout_Heading" xml:space="preserve"><value>Wylogować się?</value></data>
+  <data name="Logout_Text" xml:space="preserve"><value>Zostaniesz wylogowany ze wszystkich aplikacji korzystających z tego konta.</value></data>
+  <data name="Logout_Submit" xml:space="preserve"><value>Wyloguj się</value></data>
+  <data name="Error_Title" xml:space="preserve"><value>Błąd</value></data>
+  <data name="Error_Heading" xml:space="preserve"><value>Coś poszło nie tak</value></data>
+  <data name="Error_Text" xml:space="preserve"><value>Wystąpił błąd podczas przetwarzania żądania.</value></data>
+  <data name="Error_RequestId" xml:space="preserve"><value>Identyfikator żądania</value></data>
+  <data name="OAuth_NotSignedIn" xml:space="preserve"><value>Użytkownik nie jest zalogowany.</value></data>
+  <data name="OAuth_ConsentMissing" xml:space="preserve"><value>Użytkownik nie wyraził jeszcze zgody.</value></data>
+  <data name="OAuth_Denied" xml:space="preserve"><value>Użytkownik odrzucił żądanie autoryzacji.</value></data>
+  <data name="OAuth_TokenNoLongerValid" xml:space="preserve"><value>Token stracił ważność — konto zostało usunięte albo zablokowane.</value></data>
+  <data name="OAuth_CliEmailNotConfirmed" xml:space="preserve"><value>Musisz potwierdzić adres e-mail, zanim zalogujesz się przez bt-cli. Sprawdź skrzynkę albo zaloguj się w aplikacji webowej, żeby wysłać link ponownie.</value></data>
+  <data name="OAuth_CliTwoFactor" xml:space="preserve"><value>Konto ma włączoną weryfikację dwuetapową — bt-cli jej jeszcze nie obsługuje. Zaloguj się w aplikacji webowej.</value></data>
+  <data name="Identity_DefaultError" xml:space="preserve"><value>Wystąpił nieoczekiwany błąd.</value></data>
+  <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>Dane zostały zmienione przez inną operację. Spróbuj ponownie.</value></data>
+  <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Nieprawidłowe hasło.</value></data>
+  <data name="Identity_InvalidToken" xml:space="preserve"><value>Token jest nieprawidłowy albo wygasł.</value></data>
+  <data name="Identity_LoginAlreadyAssociated" xml:space="preserve"><value>Konto z tym loginem już istnieje.</value></data>
+  <data name="Identity_InvalidUserName" xml:space="preserve"><value>Nazwa użytkownika jest nieprawidłowa.</value></data>
+  <data name="Identity_InvalidEmail" xml:space="preserve"><value>Adres e-mail jest nieprawidłowy.</value></data>
+  <data name="Identity_DuplicateUserName" xml:space="preserve"><value>Konto z tym adresem e-mail już istnieje.</value></data>
+  <data name="Identity_DuplicateEmail" xml:space="preserve"><value>Konto z tym adresem e-mail już istnieje.</value></data>
+  <data name="Identity_InvalidRoleName" xml:space="preserve"><value>Nazwa roli jest nieprawidłowa.</value></data>
+  <data name="Identity_DuplicateRoleName" xml:space="preserve"><value>Taka rola już istnieje.</value></data>
+  <data name="Identity_UserAlreadyHasPassword" xml:space="preserve"><value>Konto ma już ustawione hasło.</value></data>
+  <data name="Identity_UserLockoutNotEnabled" xml:space="preserve"><value>Blokada konta nie jest włączona dla tego użytkownika.</value></data>
+  <data name="Identity_UserAlreadyInRole" xml:space="preserve"><value>Użytkownik ma już tę rolę.</value></data>
+  <data name="Identity_UserNotInRole" xml:space="preserve"><value>Użytkownik nie ma tej roli.</value></data>
+  <data name="Identity_PasswordTooShort" xml:space="preserve"><value>Hasło musi mieć co najmniej {0} znaków.</value></data>
+  <data name="Identity_PasswordRequiresUniqueChars" xml:space="preserve"><value>Hasło musi zawierać co najmniej {0} różnych znaków.</value></data>
+  <data name="Identity_PasswordRequiresNonAlphanumeric" xml:space="preserve"><value>Hasło musi zawierać co najmniej jeden znak specjalny.</value></data>
+  <data name="Identity_PasswordRequiresDigit" xml:space="preserve"><value>Hasło musi zawierać co najmniej jedną cyfrę.</value></data>
+  <data name="Identity_PasswordRequiresLower" xml:space="preserve"><value>Hasło musi zawierać co najmniej jedną małą literę.</value></data>
+  <data name="Identity_PasswordRequiresUpper" xml:space="preserve"><value>Hasło musi zawierać co najmniej jedną wielką literę.</value></data>
+  <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>Nie udało się użyć kodu zapasowego.</value></data>
+</root>

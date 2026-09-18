@@ -1,9 +1,13 @@
+using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
+using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Localization;
+using OpenIddict.Abstractions;
 using QRCoder;
 
 namespace BudgetTracker.Identity.Controllers;
@@ -16,10 +20,15 @@ public sealed class AccountController(
     SignInManager<ApplicationUser> signInManager,
     UserManager<ApplicationUser> userManager,
     IEmailSender emailSender,
-    IWebHostEnvironment environment,
-    IConfiguration configuration,
+    SpaOrigins spaOrigins,
+    IStringLocalizer<SharedResource> localizer,
     ILogger<AccountController> logger) : Controller
 {
+    private const int RecoveryCodeCount = 10;
+
+    /// <summary>Wystawca w aplikacji uwierzytelniającej — stały, żeby zmiana języka nie zdublowała wpisu w aplikacji.</summary>
+    private const string AuthenticatorIssuer = "Budżet tracker";
+
     [HttpGet]
     public IActionResult Login(string? returnUrl = null) => View(new LoginViewModel { ReturnUrl = returnUrl });
 
@@ -41,8 +50,7 @@ public sealed class AccountController(
 
         if (result.IsLockedOut)
         {
-            ModelState.AddModelError("", "Konto zostało tymczasowo zablokowane po zbyt wielu nieudanych " +
-                "próbach logowania. Możesz poczekać albo od razu odzyskać dostęp, resetując hasło poniżej.");
+            ModelState.AddModelError(string.Empty, localizer["Login_LockedOut"]);
             return View(model);
         }
 
@@ -50,12 +58,12 @@ public sealed class AccountController(
         {
             // RequireConfirmedAccount = true (patrz Program.cs) — PasswordSignInAsync odmawia, dopóki
             // e-mail nie zostanie potwierdzony, zamiast zwrócić Succeeded/RequiresTwoFactor.
-            ModelState.AddModelError("", "Musisz potwierdzić adres e-mail, zanim się zalogujesz.");
-            ViewData["ShowResendConfirmation"] = true;
+            ModelState.AddModelError(string.Empty, localizer["Login_EmailNotConfirmed"]);
+            model.ShowResendConfirmation = true;
             return View(model);
         }
 
-        ModelState.AddModelError("", "Nieprawidłowy e-mail lub hasło.");
+        ModelState.AddModelError(string.Empty, localizer["Login_InvalidCredentials"]);
         return View(model);
     }
 
@@ -68,7 +76,7 @@ public sealed class AccountController(
     {
         if (!model.AcceptTerms)
         {
-            ModelState.AddModelError(nameof(model.AcceptTerms), "Musisz zaakceptować regulamin i politykę prywatności.");
+            ModelState.AddModelError(nameof(model.AcceptTerms), localizer["Validation_TermsRequired"]);
         }
 
         if (!ModelState.IsValid) return View(model);
@@ -78,14 +86,13 @@ public sealed class AccountController(
 
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
         }
 
         // Konto istnieje, ale RequireConfirmedAccount blokuje logowanie do kliknięcia w link —
-        // zamiast SignInAsync tak jak wcześniej, wysyłamy potwierdzenie i pokazujemy ekran "sprawdź skrzynkę".
-        var confirmLink = await SendConfirmationEmailAsync(user, model.ReturnUrl);
-        TempData["DevConfirmLink"] = environment.IsDevelopment() ? confirmLink : null;
+        // zamiast SignInAsync wysyłamy potwierdzenie i pokazujemy ekran „sprawdź skrzynkę".
+        await SendConfirmationEmailAsync(user, model.ReturnUrl);
         return RedirectToAction(nameof(RegisterConfirmation));
     }
 
@@ -95,7 +102,7 @@ public sealed class AccountController(
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(Guid userId, string token, string? returnUrl = null)
     {
-        var user = await userManager.FindByIdAsync(userId.ToString());
+        var user = await userManager.FindByGuidAsync(userId);
         if (user is null) return RedirectToAction(nameof(Login));
 
         var result = await userManager.ConfirmEmailAsync(user, token);
@@ -111,7 +118,7 @@ public sealed class AccountController(
         // Zamiast tego logujemy w Identity (cookie, bezpiecznie międzykartowo) i odsyłamy do frontu,
         // który sam zainicjuje świeże logowanie — dzięki cookie przejdzie bez ponownego podawania hasła.
         await signInManager.SignInAsync(user, isPersistent: false);
-        return View("ConfirmEmailSuccess", new ConfirmEmailSuccessViewModel { SpaUrl = ExtractSpaOrigin(returnUrl) });
+        return View("ConfirmEmailSuccess", new SpaLinkViewModel { SpaUrl = ResolveSpaOrigin(returnUrl) });
     }
 
     [HttpGet]
@@ -124,11 +131,10 @@ public sealed class AccountController(
         if (!ModelState.IsValid) return View(model);
 
         var user = await userManager.FindByEmailAsync(model.Email);
-        string? devLink = null;
 
         if (user is not null && !await userManager.IsEmailConfirmedAsync(user))
         {
-            devLink = await SendConfirmationEmailAsync(user, returnUrl: null);
+            await SendConfirmationEmailAsync(user, returnUrl: null);
         }
         else
         {
@@ -139,7 +145,6 @@ public sealed class AccountController(
 
         // Ten sam ekran niezależnie od wyniku — jak przy ForgotPassword, żeby nie zdradzać,
         // które adresy są zarejestrowane.
-        TempData["DevConfirmLink"] = environment.IsDevelopment() ? devLink : null;
         return RedirectToAction(nameof(RegisterConfirmation));
     }
 
@@ -154,13 +159,11 @@ public sealed class AccountController(
         if (!ModelState.IsValid) return View(model);
 
         var user = await userManager.FindByEmailAsync(model.Email);
-        string? devLink = null;
 
         if (user is not null)
         {
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
-            var link = Url.Action(nameof(ResetPassword), "Account",
-                new { email = model.Email, token }, Request.Scheme)!;
+            var link = Url.ActionLink(nameof(ResetPassword), values: new { email = model.Email, token })!;
 
             var html = $"""
                 <p>Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w Budżet tracker.</p>
@@ -168,7 +171,6 @@ public sealed class AccountController(
                 <p>Jeśli to nie Ty prosiłeś/aś o reset hasła, zignoruj tę wiadomość.</p>
                 """;
             await emailSender.SendAsync(model.Email, "Reset hasła — Budżet tracker", html, HttpContext.RequestAborted);
-            if (environment.IsDevelopment()) devLink = link;
         }
         else
         {
@@ -177,7 +179,6 @@ public sealed class AccountController(
 
         // Zawsze ten sam ekran, niezależnie czy konto istnieje — inaczej formularz zdradzałby,
         // które adresy e-mail są zarejestrowane.
-        TempData["DevResetLink"] = devLink;
         return RedirectToAction(nameof(ForgotPasswordConfirmation));
     }
 
@@ -207,7 +208,7 @@ public sealed class AccountController(
         var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors) ModelState.AddModelError("", error.Description);
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
         }
 
@@ -241,18 +242,13 @@ public sealed class AccountController(
         var user = await signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null) return RedirectToAction(nameof(Login));
 
-        var code = model.TwoFactorCode.Replace(" ", "").Replace("-", "");
-        var result = await signInManager.TwoFactorAuthenticatorSignInAsync(code, rememberMe, model.RememberMachine);
+        var result = await signInManager.TwoFactorAuthenticatorSignInAsync(
+            NormalizeCode(model.TwoFactorCode), rememberMe, model.RememberMachine);
 
         if (result.Succeeded) return RedirectToLocal(model.ReturnUrl);
 
-        if (result.IsLockedOut)
-        {
-            ModelState.AddModelError("", "Konto zostało tymczasowo zablokowane po zbyt wielu nieudanych próbach.");
-            return View(model);
-        }
-
-        ModelState.AddModelError("", "Nieprawidłowy kod weryfikacyjny.");
+        ModelState.AddModelError(string.Empty,
+            localizer[result.IsLockedOut ? "TwoFactor_LockedOut" : "TwoFactor_InvalidCode"]);
         return View(model);
     }
 
@@ -276,18 +272,13 @@ public sealed class AccountController(
         var user = await signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null) return RedirectToAction(nameof(Login));
 
-        var code = model.TwoFactorCode.Replace(" ", "").Replace("-", "");
-        var result = await signInManager.TwoFactorSignInAsync("Email", code, rememberMe, model.RememberMachine);
+        var result = await signInManager.TwoFactorSignInAsync(
+            TokenOptions.DefaultEmailProvider, NormalizeCode(model.TwoFactorCode), rememberMe, model.RememberMachine);
 
         if (result.Succeeded) return RedirectToLocal(model.ReturnUrl);
 
-        if (result.IsLockedOut)
-        {
-            ModelState.AddModelError("", "Konto zostało tymczasowo zablokowane po zbyt wielu nieudanych próbach.");
-            return View(model);
-        }
-
-        ModelState.AddModelError("", "Nieprawidłowy kod weryfikacyjny.");
+        ModelState.AddModelError(string.Empty,
+            localizer[result.IsLockedOut ? "TwoFactor_LockedOut" : "TwoFactor_InvalidCode"]);
         return View(model);
     }
 
@@ -309,18 +300,12 @@ public sealed class AccountController(
         var user = await signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null) return RedirectToAction(nameof(Login));
 
-        var code = model.RecoveryCode.Replace(" ", "");
-        var result = await signInManager.TwoFactorRecoveryCodeSignInAsync(code);
+        var result = await signInManager.TwoFactorRecoveryCodeSignInAsync(model.RecoveryCode.Replace(" ", ""));
 
         if (result.Succeeded) return RedirectToLocal(model.ReturnUrl);
 
-        if (result.IsLockedOut)
-        {
-            ModelState.AddModelError("", "Konto zostało tymczasowo zablokowane po zbyt wielu nieudanych próbach.");
-            return View(model);
-        }
-
-        ModelState.AddModelError("", "Nieprawidłowy kod zapasowy.");
+        ModelState.AddModelError(string.Empty,
+            localizer[result.IsLockedOut ? "TwoFactor_LockedOut" : "TwoFactor_InvalidRecoveryCode"]);
         return View(model);
     }
 
@@ -355,32 +340,22 @@ public sealed class AccountController(
     {
         var user = await userManager.GetUserAsync(User) ?? throw new InvalidOperationException();
 
-        if (!ModelState.IsValid)
-        {
-            var key = await userManager.GetAuthenticatorKeyAsync(user);
-            model.SharedKey = FormatKey(key!);
-            model.AuthenticatorUri = BuildAuthenticatorUri((await userManager.GetEmailAsync(user))!, key!);
-            return View(model);
-        }
+        if (!ModelState.IsValid) return await EnableAuthenticatorViewAsync(user, model);
 
-        var code = model.Code.Replace(" ", "").Replace("-", "");
         var isValid = await userManager.VerifyTwoFactorTokenAsync(
-            user, userManager.Options.Tokens.AuthenticatorTokenProvider, code);
+            user, userManager.Options.Tokens.AuthenticatorTokenProvider, NormalizeCode(model.Code));
 
         if (!isValid)
         {
-            ModelState.AddModelError(nameof(model.Code), "Nieprawidłowy kod weryfikacyjny.");
-            var key = await userManager.GetAuthenticatorKeyAsync(user);
-            model.SharedKey = FormatKey(key!);
-            model.AuthenticatorUri = BuildAuthenticatorUri((await userManager.GetEmailAsync(user))!, key!);
-            return View(model);
+            ModelState.AddModelError(nameof(model.Code), localizer["TwoFactor_InvalidCode"]);
+            return await EnableAuthenticatorViewAsync(user, model);
         }
 
         await userManager.SetTwoFactorEnabledAsync(user, true);
-        var recoveryCodes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        var recoveryCodes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, RecoveryCodeCount);
 
-        TempData["RecoveryCodes"] = recoveryCodes?.ToArray() ?? [];
-        TempData["RecoveryCodesReturnUrl"] = ValidateReturnUrl(model.ReturnUrl);
+        TempData[TempDataKeys.RecoveryCodes] = recoveryCodes?.ToArray() ?? [];
+        TempData[TempDataKeys.RecoveryCodesReturnUrl] = ValidateReturnUrl(model.ReturnUrl);
         return RedirectToAction(nameof(ShowRecoveryCodes));
     }
 
@@ -388,15 +363,15 @@ public sealed class AccountController(
     [HttpGet]
     public IActionResult ShowRecoveryCodes()
     {
-        if (TempData["RecoveryCodes"] is not string[] codes || codes.Length == 0)
+        if (TempData[TempDataKeys.RecoveryCodes] is not string[] codes || codes.Length == 0)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToDefault();
         }
 
         return View(new RecoveryCodesViewModel
         {
             Codes = codes,
-            SpaUrl = TempData["RecoveryCodesReturnUrl"] as string,
+            SpaUrl = TempData[TempDataKeys.RecoveryCodesReturnUrl] as string ?? spaOrigins.Default,
         });
     }
 
@@ -452,10 +427,10 @@ public sealed class AccountController(
     public async Task<IActionResult> RegenerateRecoveryCodesConfirmed(string? returnUrl = null)
     {
         var user = await userManager.GetUserAsync(User) ?? throw new InvalidOperationException();
-        var recoveryCodes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        var recoveryCodes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, RecoveryCodeCount);
 
-        TempData["RecoveryCodes"] = recoveryCodes?.ToArray() ?? [];
-        TempData["RecoveryCodesReturnUrl"] = ValidateReturnUrl(returnUrl);
+        TempData[TempDataKeys.RecoveryCodes] = recoveryCodes?.ToArray() ?? [];
+        TempData[TempDataKeys.RecoveryCodesReturnUrl] = ValidateReturnUrl(returnUrl);
         return RedirectToAction(nameof(ShowRecoveryCodes));
     }
 
@@ -464,11 +439,11 @@ public sealed class AccountController(
     public async Task<IActionResult> Logout()
     {
         await signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
+        return RedirectToDefault();
     }
 
     [HttpGet]
-    public IActionResult AccessDenied() => View();
+    public IActionResult AccessDenied() => View(new SpaLinkViewModel { SpaUrl = spaOrigins.Default });
 
     /// <summary>Kod QR renderowany jako obraz PNG osadzony data-URI — bez wywołania zewnętrznego API.</summary>
     [Authorize]
@@ -488,9 +463,22 @@ public sealed class AccountController(
         return File(png, "image/png");
     }
 
-    private static string BuildAuthenticatorUri(string email, string unformattedKey) =>
-        $"otpauth://totp/Bud%C5%BCet%20tracker:{Uri.EscapeDataString(email)}" +
-        $"?secret={unformattedKey}&issuer=Bud%C5%BCet%20tracker&digits=6";
+    /// <summary>Ponownie pokazuje formularz włączania 2FA — z kluczem i adresem QR, których nie ma w odesłanym modelu.</summary>
+    private async Task<IActionResult> EnableAuthenticatorViewAsync(ApplicationUser user, EnableAuthenticatorViewModel model)
+    {
+        var key = await userManager.GetAuthenticatorKeyAsync(user);
+        model.SharedKey = FormatKey(key!);
+        model.AuthenticatorUri = BuildAuthenticatorUri((await userManager.GetEmailAsync(user))!, key!);
+        return View(model);
+    }
+
+    private static string NormalizeCode(string code) => code.Replace(" ", "").Replace("-", "");
+
+    private static string BuildAuthenticatorUri(string email, string unformattedKey)
+    {
+        var issuer = Uri.EscapeDataString(AuthenticatorIssuer);
+        return $"otpauth://totp/{issuer}:{Uri.EscapeDataString(email)}?secret={unformattedKey}&issuer={issuer}&digits=6";
+    }
 
     private static string FormatKey(string unformattedKey)
     {
@@ -506,8 +494,15 @@ public sealed class AccountController(
         return string.Join(' ', chunks);
     }
 
+    /// <summary>
+    /// Dokąd po zalogowaniu bez własnego adresu powrotu: do zarejestrowanego frontu, a gdy żaden nie jest
+    /// skonfigurowany — z powrotem na ekran logowania.
+    /// </summary>
+    private IActionResult RedirectToDefault() =>
+        spaOrigins.Default is { } origin ? Redirect(origin) : RedirectToAction(nameof(Login));
+
     private IActionResult RedirectToLocal(string? returnUrl) =>
-        Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction("Index", "Home");
+        Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToDefault();
 
     /// <summary>
     /// Jak <see cref="RedirectToLocal"/>, ale dopuszcza też pełny URL do SPA (np. konkretną podstronę
@@ -515,39 +510,24 @@ public sealed class AccountController(
     /// (<see cref="DisableTwoFactor(string?)"/>, <see cref="RegenerateRecoveryCodes(string?)"/>).
     /// Bez sprawdzenia originu wobec skonfigurowanych klientów SPA byłoby to open redirect.
     /// </summary>
-    private IActionResult RedirectToLocalOrSpaOrigin(string? returnUrl)
-    {
-        var validated = ValidateReturnUrl(returnUrl);
-        return validated is not null ? Redirect(validated) : RedirectToAction("Index", "Home");
-    }
+    private IActionResult RedirectToLocalOrSpaOrigin(string? returnUrl) =>
+        ValidateReturnUrl(returnUrl) is { } validated ? Redirect(validated) : RedirectToDefault();
 
     private string? ValidateReturnUrl(string? returnUrl)
     {
         if (Url.IsLocalUrl(returnUrl)) return returnUrl;
 
-        if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri) && IsAllowedSpaOrigin(uri.GetLeftPart(UriPartial.Authority)))
-        {
-            return returnUrl;
-        }
-
-        return null;
+        return Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri)
+               && spaOrigins.IsAllowed(uri.GetLeftPart(UriPartial.Authority))
+            ? returnUrl
+            : null;
     }
 
-    private bool IsAllowedSpaOrigin(string origin)
-    {
-        var spaOrigins = configuration.GetSection("Clients:Spa:RedirectUris").Get<string[]>()
-            ?.Select(uri => new Uri(uri).GetLeftPart(UriPartial.Authority))
-            ?? [];
-
-        return spaOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase);
-    }
-
-    /// <summary>Generuje token potwierdzający i wysyła link, zwracając go też do trybu deweloperskiego.</summary>
-    private async Task<string> SendConfirmationEmailAsync(ApplicationUser user, string? returnUrl)
+    /// <summary>Generuje token potwierdzający i wysyła link na adres konta.</summary>
+    private async Task SendConfirmationEmailAsync(ApplicationUser user, string? returnUrl)
     {
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var link = Url.Action(nameof(ConfirmEmail), "Account",
-            new { userId = user.Id, token, returnUrl }, Request.Scheme)!;
+        var link = Url.ActionLink(nameof(ConfirmEmail), values: new { userId = user.Id, token, returnUrl })!;
 
         var html = $"""
             <p>Cześć!</p>
@@ -557,7 +537,6 @@ public sealed class AccountController(
             """;
 
         await emailSender.SendAsync(user.Email!, "Potwierdź adres e-mail — Budżet tracker", html, HttpContext.RequestAborted);
-        return link;
     }
 
     /// <summary>
@@ -566,7 +545,7 @@ public sealed class AccountController(
     /// </summary>
     private async Task SendTwoFactorEmailCodeAsync(ApplicationUser user)
     {
-        var code = await userManager.GenerateTwoFactorTokenAsync(user, "Email");
+        var code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
         var html = $"""
             <p>Twój kod weryfikacyjny do logowania w Budżet tracker:</p>
             <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">{code}</p>
@@ -577,12 +556,14 @@ public sealed class AccountController(
     }
 
     /// <summary>
-    /// Wyciąga origin SPA (np. "http://localhost:4200") z "redirect_uri" zaszytego w returnUrl —
+    /// Origin SPA, do którego wraca przycisk po potwierdzeniu maila: ten z <c>redirect_uri</c> zaszytego
+    /// w returnUrl (dev 4200 / demo 4310), o ile to zarejestrowany klient — inaczej domyślny origin.
     /// returnUrl to zwykle oryginalny query string "/connect/authorize?...&amp;redirect_uri=...".
-    /// Pozwala po potwierdzeniu maila odesłać do właściwej instancji frontu (4200 dev / 4310 demo)
-    /// zamiast próbować dokończyć stan OIDC z innej karty (patrz komentarz w ConfirmEmail).
     /// </summary>
-    private static string? ExtractSpaOrigin(string? returnUrl)
+    private string? ResolveSpaOrigin(string? returnUrl) =>
+        ExtractOrigin(returnUrl) is { } origin && spaOrigins.IsAllowed(origin) ? origin : spaOrigins.Default;
+
+    private static string? ExtractOrigin(string? returnUrl)
     {
         if (string.IsNullOrEmpty(returnUrl)) return null;
 
@@ -590,7 +571,7 @@ public sealed class AccountController(
         if (queryStart < 0) return null;
 
         var query = QueryHelpers.ParseQuery(returnUrl[queryStart..]);
-        if (!query.TryGetValue("redirect_uri", out var redirectUri)) return null;
+        if (!query.TryGetValue(OpenIddictConstants.Parameters.RedirectUri, out var redirectUri)) return null;
 
         return Uri.TryCreate(redirectUri, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null;
     }

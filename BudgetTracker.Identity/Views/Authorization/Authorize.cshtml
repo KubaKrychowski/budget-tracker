@@ -1,26 +1,20 @@
 @model AuthorizeViewModel
 @{
-    ViewData["Title"] = "Zgoda";
-
-    var scopeLabels = new Dictionary<string, string>
-    {
-        ["email"] = "Widzieć Twój adres e-mail i nazwę konta",
-        ["profile"] = "Widzieć Twoją nazwę użytkownika",
-        ["budgettracker_api"] = "Odczytywać i zarządzać Twoimi budżetami, transakcjami i limitami w Twoim imieniu",
-    };
+    ViewData["Title"] = L["Authorize_Title"];
 }
 
 <div class="auth-header">
-    <h1>@Model.ApplicationName prosi o dostęp</h1>
-    <p>Aplikacja @Model.ApplicationName chce uzyskać dostęp do Twojego konta jako @Model.UserEmail</p>
+    <h1>@L["Authorize_Heading", Model.ApplicationName]</h1>
+    <p>@L["Authorize_Text", Model.ApplicationName, Model.UserEmail]</p>
 </div>
 
 <div class="auth-scopes-box">
-    <span class="scope-label">Ta aplikacja będzie mogła:</span>
+    <span class="scope-label">@L["Authorize_ScopesLabel"]</span>
     <ul>
         @foreach (var scope in Model.Scopes)
         {
-            <li>@(scopeLabels.GetValueOrDefault(scope, scope))</li>
+            var label = L[$"Scope_{scope}"];
+            <li>@(label.ResourceNotFound ? scope : label.Value)</li>
         }
     </ul>
 </div>
@@ -36,6 +30,6 @@
             <input type="hidden" name="@key" value="@value"/>
         }
     }
-    <button type="submit" name="submit.Deny" value="true" class="btn-secondary">Odrzuć</button>
-    <button type="submit" name="submit.Accept" value="true" class="btn-primary">Zezwól</button>
+    <button type="submit" name="submit.Deny" value="true" class="btn-secondary">@L["Authorize_Deny"]</button>
+    <button type="submit" name="submit.Accept" value="true" class="btn-primary">@L["Authorize_Allow"]</button>
 </form>

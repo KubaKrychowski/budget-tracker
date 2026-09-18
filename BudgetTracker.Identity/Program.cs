@@ -2,16 +2,25 @@ using BudgetTracker.Identity.Data;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Options;
+using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddLocalization();
+
+// ErrorMessage w atrybutach walidacji modeli to klucz z SharedResource — patrz AccountViewModels.
+builder.Services.AddControllersWithViews()
+    .AddDataAnnotationsLocalization(options =>
+        options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
 
 if (builder.Environment.IsDevelopment())
 {
@@ -33,7 +42,7 @@ builder.Services
         // Rejestracja wysyła link potwierdzający (patrz AccountController.Register) — bez
         // kliknięcia w niego logowanie ma być zablokowane, inaczej mail byłby czysto dekoracyjny.
         options.SignIn.RequireConfirmedAccount = true;
-        options.Password.RequiredLength = 8;
+        options.Password.RequiredLength = PasswordPolicy.MinLength;
         options.Password.RequireNonAlphanumeric = true;
         options.Password.RequireUppercase = true;
         options.Password.RequireDigit = true;
@@ -46,7 +55,7 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddErrorDescriber<PolishIdentityErrorDescriber>()
+    .AddErrorDescriber<LocalizedIdentityErrorDescriber>()
     .AddDefaultTokenProviders();
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -56,8 +65,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-var identityIssuer = builder.Configuration["Identity:Issuer"]
-    ?? throw new InvalidOperationException("Brak konfiguracji Identity:Issuer.");
+var identityIssuer = builder.Configuration[OAuthDefaults.IssuerConfigKey]
+    ?? throw new InvalidOperationException($"Brak konfiguracji {OAuthDefaults.IssuerConfigKey}.");
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>
@@ -74,7 +83,7 @@ builder.Services.AddOpenIddict()
             .SetEndSessionEndpointUris("connect/logout");
 
         options.RegisterScopes(
-            Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.OfflineAccess, "budgettracker_api");
+            Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.OfflineAccess, OAuthDefaults.ApiScope);
 
         options
             .AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange()
@@ -118,16 +127,16 @@ builder.Services.AddOptions<SmtpOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
+builder.Services.AddOptions<SpaClientOptions>().Bind(builder.Configuration.GetSection(SpaClientOptions.SectionName));
+builder.Services.AddSingleton<SpaOrigins>();
+
 // SPA odpytuje discovery/JWKS i wymienia kod na token przez fetch() z INNEGO originu
 // (localhost:4200/4310) — to podlega CORS, w przeciwieństwie do przekierowania na /connect/authorize
 // (pełna nawigacja, CORS jej nie dotyczy). Te same originy co zarejestrowane redirect_uris klienta SPA.
 const string spaCors = "spa-client";
-var spaOrigins = builder.Configuration.GetSection("Clients:Spa:RedirectUris").Get<string[]>()
-    ?.Select(uri => new Uri(uri).GetLeftPart(UriPartial.Authority)).Distinct().ToArray()
-    ?? ["http://localhost:4200", "http://localhost:4310"];
-builder.Services.AddCors(options =>
-    options.AddPolicy(spaCors, policy => policy
-        .WithOrigins(spaOrigins)
+builder.Services.AddOptions<CorsOptions>().Configure<SpaOrigins>((cors, spa) =>
+    cors.AddPolicy(spaCors, policy => policy
+        .WithOrigins([.. spa.All])
         .AllowAnyHeader()
         .AllowAnyMethod()));
 
@@ -135,9 +144,18 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error/Index");
     app.UseHsts();
 }
+
+// Domyślnie polski (jak API); język przeglądarki (Accept-Language) wybiera angielski, gdy go zażąda.
+var supportedCultures = new[] { new CultureInfo("pl"), new CultureInfo("en") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("pl"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures,
+});
 
 // W Development NIE przekierowujemy na https: SPA na plain http (localhost:4200/4310) robi
 // fetch() na discovery/token, a przekierowanie 307 nie niesie nagłówków CORS — przeglądarka
@@ -159,7 +177,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
         name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}")
+        pattern: "{controller=Account}/{action=Login}/{id?}")
     .WithStaticAssets();
 
 app.Run();

@@ -1,10 +1,10 @@
 @{
-    ViewData["Title"] = "Wylogowanie";
+    ViewData["Title"] = L["Logout_Title"];
 }
 
 <div class="auth-header">
-    <h1>Wylogować się?</h1>
-    <p>Zostaniesz wylogowany ze wszystkich aplikacji korzystających z tego konta.</p>
+    <h1>@L["Logout_Heading"]</h1>
+    <p>@L["Logout_Text"]</p>
 </div>
 
 <form asp-controller="Authorization" asp-action="Logout" method="post" class="auth-actions">
@@ -19,5 +19,5 @@
             <input type="hidden" name="@key" value="@value"/>
         }
     }
-    <button type="submit" class="btn-primary">Wyloguj się</button>
+    <button type="submit" class="btn-primary">@L["Logout_Submit"]</button>
 </form>
