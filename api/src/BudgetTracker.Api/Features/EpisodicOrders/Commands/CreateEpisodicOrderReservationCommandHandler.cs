@@ -30,7 +30,7 @@ public sealed class CreateEpisodicOrderReservationCommandHandler(
         }
 
         var reservation = new SavingsReservation(
-            order.BudgetBusinessId, order.Name, amount, order.DueMonth, 0, scope.Now(), currentUser.UserId ?? default);
+            order.BudgetBusinessId, order.Name, amount, order.DueMonth, 0, scope.Now(), currentUser.UserId);
         order.AttachReservation(reservation.BusinessId);
         db.SavingsReservations.Add(reservation);
         await db.SaveChangesAsync(ct);

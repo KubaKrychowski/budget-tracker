@@ -21,7 +21,7 @@ public sealed class CreateStandingOrderCommandHandler(
 
         var order = new StandingOrder(
             budget, valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth, scope.Now(),
-            currentUser.UserId ?? default);
+            currentUser.UserId);
         order.ReplaceRules(valid.Rules);
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);

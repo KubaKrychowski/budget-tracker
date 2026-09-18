@@ -22,7 +22,7 @@ public sealed class CreateSavingsReservationCommandHandler(
             SavingsMonths.FirstDayOf(request.DueMonth),
             request.Priority,
             clock.GetUtcNow(),
-            currentUser.UserId ?? default);
+            currentUser.UserId);
 
         db.SavingsReservations.Add(reservation);
         await db.SaveChangesAsync(ct);

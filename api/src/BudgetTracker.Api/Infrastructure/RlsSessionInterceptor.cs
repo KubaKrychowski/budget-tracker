@@ -19,7 +19,7 @@ namespace BudgetTracker.Api.Infrastructure;
 /// najemca zawsze nadpisuje wartość poprzedniego, zanim cokolwiek zapyta.
 /// </para>
 /// <para>
-/// Poza kontekstem żądania HTTP (testy, seedy, Hangfire) <see cref="ICurrentUserAccessor.UserId"/>
+/// Poza kontekstem żądania HTTP (testy, seedy, Hangfire) <see cref="ICurrentUserAccessor.UserIdOrNull"/>
 /// jest <c>null</c> — ustawiamy wtedy pusty string, żeby <c>current_setting(..., true)</c> w polityce
 /// dał NULL zamiast poprzedniej wartości z puli połączeń. Te ścieżki i tak omijają RLS przez rolę
 /// z <c>BYPASSRLS</c> (<c>budget_jobs</c>, patrz <see cref="Features.Budgets.Services.BudgetPurger"/>)
@@ -57,7 +57,7 @@ public sealed class RlsSessionInterceptor(ICurrentUserAccessor currentUser) : Db
     {
         var command = ((NpgsqlConnection)connection).CreateCommand();
         command.CommandText = "SELECT set_config('app.current_user_id', @value, false)";
-        command.Parameters.AddWithValue("value", currentUser.UserId?.ToString() ?? "");
+        command.Parameters.AddWithValue("value", currentUser.UserIdOrNull?.ToString() ?? "");
         return command;
     }
 }

@@ -118,7 +118,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
                 .HasForeignKey(x => x.ImportBatchId).OnDelete(DeleteBehavior.Restrict);
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<CategoryRule>(e =>
@@ -143,7 +143,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
                 .HasForeignKey(x => x.BudgetId).OnDelete(DeleteBehavior.Restrict);
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<Currency>(e =>
@@ -189,7 +189,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => x.BudgetBusinessId);
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<EpisodicOrder>(e =>
@@ -206,7 +206,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
                 .HasFilter($"\"TransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<Budget>(e =>
@@ -239,7 +239,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<SavingsGoal>(e =>
@@ -249,7 +249,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => new { x.BudgetBusinessId, x.StartedOn });
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<SavingsReservation>(e =>
@@ -266,7 +266,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
                 .HasFilter($"\"SettledTransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
 
             e.HasIndex(x => x.UserId);
-            e.HasQueryFilter("Owner", x => CurrentUserId == null || x.UserId == CurrentUserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
     }
 

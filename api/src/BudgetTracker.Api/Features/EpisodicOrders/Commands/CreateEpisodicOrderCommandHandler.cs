@@ -26,7 +26,7 @@ public sealed class CreateEpisodicOrderCommandHandler(
         var budget = request is { BudgetId: null, TransactionId: { } fromList }
             ? await transactions.BudgetOfAsync(fromList, ct)
             : await scope.SingleAsync(request.BudgetId, ct);
-        var order = new EpisodicOrder(budget, name, description, scope.Now(), currentUser.UserId ?? default);
+        var order = new EpisodicOrder(budget, name, description, scope.Now(), currentUser.UserId);
 
         if (request.TransactionId is { } transactionId)
         {

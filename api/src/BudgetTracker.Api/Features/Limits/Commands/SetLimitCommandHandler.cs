@@ -80,7 +80,7 @@ public sealed class SetLimitCommandHandler(
         }
 
         var item = new BudgetItem(
-            budget, category.Id, request.Amount, validFrom, request.WarningThreshold, currentUser.UserId ?? default);
+            budget, category.Id, request.Amount, validFrom, request.WarningThreshold, currentUser.UserId);
         db.BudgetItems.Add(item);
         await db.SaveChangesAsync(ct);
 

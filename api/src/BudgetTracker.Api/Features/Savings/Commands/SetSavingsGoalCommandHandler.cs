@@ -71,7 +71,7 @@ public sealed class SetSavingsGoalCommandHandler(
             }
         }
 
-        var goal = new SavingsGoal(budgetId, request.Amount, startsOn, clock.GetUtcNow(), currentUser.UserId ?? default);
+        var goal = new SavingsGoal(budgetId, request.Amount, startsOn, clock.GetUtcNow(), currentUser.UserId);
 
         db.SavingsGoals.Add(goal);
         await db.SaveChangesAsync(ct);
