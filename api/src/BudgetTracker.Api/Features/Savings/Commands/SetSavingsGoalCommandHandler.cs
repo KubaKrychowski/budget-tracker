@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace BudgetTracker.Api.Features.Savings.Commands;
 
 /// <summary>Ustawia albo zmienia cel oszczędnościowy budżetu.</summary>
-public sealed class SetSavingsGoalCommandHandler(AppDbContext db, SavingsBudgetScope scope, TimeProvider clock)
+public sealed class SetSavingsGoalCommandHandler(
+    AppDbContext db, SavingsBudgetScope scope, TimeProvider clock, ICurrentUserAccessor currentUser)
 {
     /// <summary>
     /// Ustawia albo zmienia cel. Zmiana KOŃCZY poprzedni datą i zakłada nowy — nie nadpisuje.
@@ -70,7 +71,7 @@ public sealed class SetSavingsGoalCommandHandler(AppDbContext db, SavingsBudgetS
             }
         }
 
-        var goal = new SavingsGoal(budgetId, request.Amount, startsOn, clock.GetUtcNow());
+        var goal = new SavingsGoal(budgetId, request.Amount, startsOn, clock.GetUtcNow(), currentUser.UserId ?? default);
 
         db.SavingsGoals.Add(goal);
         await db.SaveChangesAsync(ct);

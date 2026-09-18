@@ -77,7 +77,8 @@ public sealed class LimitsTests : IAsyncLifetime
 
     private GetLimitsQueryHandler Query() => new(_db, Scope(), new LimitCategories(_db));
 
-    private SetLimitCommandHandler Set() => new(_db, Scope(), new LimitCategories(_db));
+    private SetLimitCommandHandler Set() =>
+        new(_db, Scope(), new LimitCategories(_db), new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     private RemoveLimitCommandHandler Remove() => new(_db, Scope());
 

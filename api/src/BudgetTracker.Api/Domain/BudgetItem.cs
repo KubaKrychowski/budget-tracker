@@ -11,7 +11,9 @@ namespace BudgetTracker.Api.Domain;
 /// Miesięczny limit budżetu to SUMA limitów kategorii obowiązujących w danym miesiącu — nie osobne pole.
 /// </para>
 /// </remarks>
-public class BudgetItem(Guid budgetBusinessId, int categoryId, decimal limit, DateOnly validFrom, int warningThreshold)
+public class BudgetItem(
+    Guid budgetBusinessId, int categoryId, decimal limit, DateOnly validFrom, int warningThreshold,
+    Guid userId = default)
     : Entity
 {
     /// <summary>
@@ -20,6 +22,10 @@ public class BudgetItem(Guid budgetBusinessId, int categoryId, decimal limit, Da
     /// łączona z <see cref="Budget.BusinessId"/> w zapytaniach.
     /// </summary>
     public Guid BudgetBusinessId { get; protected set; } = budgetBusinessId;
+
+    /// <summary>Właściciel — powielony z <see cref="Budget.UserId"/>, wyłącznie pod RLS w Postgresie.</summary>
+    /// <remarks>Domyślne <c>default</c> z tego samego powodu co <see cref="Budget.UserId"/>.</remarks>
+    public Guid UserId { get; protected set; } = userId;
 
     public int CategoryId { get; protected set; } = categoryId;
 

@@ -15,7 +15,8 @@ namespace BudgetTracker.Api.Domain;
 /// (potencjał = minimum z kwalifikujących się miesięcy) i cały spór „minimum czy średnia" znikł
 /// dopiero wtedy, gdy przestaliśmy cokolwiek wyprowadzać z danych.
 /// </remarks>
-public class SavingsGoal(Guid budgetBusinessId, decimal amount, DateOnly startedOn, DateTimeOffset createdAt)
+public class SavingsGoal(
+    Guid budgetBusinessId, decimal amount, DateOnly startedOn, DateTimeOffset createdAt, Guid userId = default)
     : Entity
 {
     /// <summary>
@@ -27,6 +28,10 @@ public class SavingsGoal(Guid budgetBusinessId, decimal amount, DateOnly started
     /// łączona z <see cref="Budget.BusinessId"/> w kodzie zapytań, nigdy kluczem obcym.
     /// </remarks>
     public Guid BudgetBusinessId { get; protected set; } = budgetBusinessId;
+
+    /// <summary>Właściciel — powielony z <see cref="Budget.UserId"/>, wyłącznie pod RLS w Postgresie.</summary>
+    /// <remarks>Domyślne <c>default</c> z tego samego powodu co <see cref="Budget.UserId"/>.</remarks>
+    public Guid UserId { get; protected set; } = userId;
 
     /// <summary>Kwota miesięczna, zawsze dodatnia. <c>numeric(18,2)</c> jak wszystkie kwoty.</summary>
     public decimal Amount { get; protected set; } = amount;

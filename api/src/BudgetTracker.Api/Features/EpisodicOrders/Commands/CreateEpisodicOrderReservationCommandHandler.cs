@@ -18,7 +18,7 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Commands;
 /// </para>
 /// </remarks>
 public sealed class CreateEpisodicOrderReservationCommandHandler(
-    AppDbContext db, EpisodicOrderLookup orders, EpisodicOrdersBudgetScope scope)
+    AppDbContext db, EpisodicOrderLookup orders, EpisodicOrdersBudgetScope scope, ICurrentUserAccessor currentUser)
 {
     public async Task<EpisodicOrderSavedResponseDto> HandleAsync(Guid id, CancellationToken ct)
     {
@@ -29,7 +29,8 @@ public sealed class CreateEpisodicOrderReservationCommandHandler(
             throw new EpisodicOrderStateConflictException();
         }
 
-        var reservation = new SavingsReservation(order.BudgetBusinessId, order.Name, amount, order.DueMonth, 0, scope.Now());
+        var reservation = new SavingsReservation(
+            order.BudgetBusinessId, order.Name, amount, order.DueMonth, 0, scope.Now(), currentUser.UserId ?? default);
         order.AttachReservation(reservation.BusinessId);
         db.SavingsReservations.Add(reservation);
         await db.SaveChangesAsync(ct);

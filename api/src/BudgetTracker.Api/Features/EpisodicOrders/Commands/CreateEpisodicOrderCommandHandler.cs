@@ -17,7 +17,8 @@ public sealed class CreateEpisodicOrderCommandHandler(
     AppDbContext db,
     EpisodicOrdersBudgetScope scope,
     EpisodicOrderRequestValidator validator,
-    EpisodicOrderTransactions transactions)
+    EpisodicOrderTransactions transactions,
+    ICurrentUserAccessor currentUser)
 {
     public async Task<EpisodicOrderSavedResponseDto> HandleAsync(SaveEpisodicOrderRequestDto request, CancellationToken ct)
     {
@@ -25,7 +26,7 @@ public sealed class CreateEpisodicOrderCommandHandler(
         var budget = request is { BudgetId: null, TransactionId: { } fromList }
             ? await transactions.BudgetOfAsync(fromList, ct)
             : await scope.SingleAsync(request.BudgetId, ct);
-        var order = new EpisodicOrder(budget, name, description, scope.Now());
+        var order = new EpisodicOrder(budget, name, description, scope.Now(), currentUser.UserId ?? default);
 
         if (request.TransactionId is { } transactionId)
         {

@@ -15,8 +15,21 @@ public class Transaction(
     string? externalReference = null,
     Guid? budgetBusinessId = null,
     int? accountId = null,
-    int? importBatchId = null) : Entity
+    int? importBatchId = null,
+    Guid userId = default) : Entity
 {
+    /// <summary>
+    /// Właściciel transakcji — powielony z <see cref="Budget.UserId"/> budżetu, na który zaksięgowano
+    /// (CLAUDE.md §5: kolumny łączące z budżetem są zwykłymi kolumnami bez relacji EF, ta jest taka sama).
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Domyślne <c>default</c> z tego samego powodu co <see cref="Budget.UserId"/> — nie trzeba
+    /// dopisywać tego argumentu do istniejących testów. Kolumna istnieje wyłącznie pod RLS w Postgresie
+    /// (polityka porównuje ją z <c>current_setting('app.current_user_id')</c>) — filtr Owner w EF Core
+    /// nadal jedzie na tej samej wartości.
+    /// </remarks>
+    public Guid UserId { get; protected set; } = userId;
+
     /// <summary>Data księgowania. DateOnly → kolumna `date`, bez strefy czasowej.</summary>
     public DateOnly Date { get; protected set; } = date;
 
