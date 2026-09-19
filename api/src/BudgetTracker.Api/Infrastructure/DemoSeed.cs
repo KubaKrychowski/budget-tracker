@@ -141,21 +141,14 @@ public static class DemoSeed
     }
 
     /// <summary>Dwa konta, po których rozkładają się transakcje demo.</summary>
-    private static async Task<Account[]> CreateAccountsAsync(AppDbContext db, CancellationToken ct)
-    {
-        Account[] accounts =
+    private static Task<Account[]> CreateAccountsAsync(AppDbContext db, CancellationToken ct) =>
+        SeedAccounts.EnsureAsync(db,
         [
             new Account("Konto osobiste", AccountType.Bank)
                 .WithSeedBusinessId<Account>(DeterministicGuid.For("demo:account:osobiste")),
             new Account("Konto wspólne", AccountType.Bank)
                 .WithSeedBusinessId<Account>(DeterministicGuid.For("demo:account:wspolne")),
-        ];
-
-        db.Accounts.AddRange(accounts);
-        await db.SaveChangesAsync(ct);
-
-        return accounts;
-    }
+        ], ct);
 
     /// <summary>Rocznik transakcji: zwykłe zakupy plus stałe pozycje każdego miesiąca.</summary>
     /// <remarks>
