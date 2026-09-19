@@ -21,4 +21,9 @@
       <PackageReference Include="QRCoder" Version="1.6.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <!-- Szablony maili wbudowane w assembly, żeby renderer nie zależał od katalogu roboczego ani od publikacji plików. -->
+      <EmbeddedResource Include="Emails\*.html;Emails\*.css" LogicalName="Emails.%(Filename)%(Extension)" />
+    </ItemGroup>
+
 </Project>

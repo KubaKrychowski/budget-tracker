@@ -1,0 +1,114 @@
+/* Style maili transakcyjnych (potwierdzenie konta, reset hasła, kod 2FA). Makiety: Figma, plik „Dashboard",
+   strona „Logowanie (Identity)" — ramki „Mail — …". Tokeny jak w wwwroot/css/auth.css (Design System).
+   Wstawiane do <style> w Layout.html: klienci poczty ignorują zewnętrzne arkusze, a <style> w <head> obsługują
+   Gmail, Apple Mail i Outlook.com. Outlook desktop pomija border-radius — układ zostaje czytelny bez zaokrągleń. */
+
+body, table, td, p, a, h1 {
+  font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #F7FAF8;
+  -webkit-text-size-adjust: 100%;
+}
+
+.wrapper-cell {
+  padding: 48px 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+  background-color: #FFFFFF;
+  border: 1px solid #D9E8DD;
+  border-radius: 16px;
+}
+
+.card-cell {
+  padding: 40px;
+}
+
+.brand {
+  margin: 0 0 24px;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  color: #419F5F;
+}
+
+.heading {
+  margin: 0 0 24px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+  color: #252B27;
+}
+
+.text {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 22px;
+  color: #595959;
+}
+
+.button-cell {
+  background-color: #51C273;
+  border-radius: 2px;
+  text-align: center;
+}
+
+.button {
+  display: block;
+  padding: 9px 24px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #FFFFFF;
+  text-decoration: none;
+}
+
+.fallback {
+  margin: 24px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: #78877C;
+}
+
+.link {
+  color: #419F5F;
+  word-break: break-all;
+}
+
+.code-cell {
+  padding: 20px 24px;
+  background-color: #F7FAF8;
+  border: 1px solid #D9E8DD;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: 8px;
+  color: #252B27;
+}
+
+.divider {
+  height: 1px;
+  margin: 24px 0;
+  background-color: #D9E8DD;
+  font-size: 1px;
+  line-height: 1px;
+}
+
+.footer {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: #78877C;
+}
+
+@media (max-width: 600px) {
+  .wrapper-cell { padding: 24px 12px !important; }
+  .card-cell { padding: 28px 20px !important; }
+}

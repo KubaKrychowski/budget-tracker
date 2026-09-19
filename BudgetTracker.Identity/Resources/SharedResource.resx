@@ -125,6 +125,22 @@
   <data name="OAuth_TokenNoLongerValid" xml:space="preserve"><value>The token is no longer valid — the account was deleted or locked.</value></data>
   <data name="OAuth_CliEmailNotConfirmed" xml:space="preserve"><value>You must confirm your email address before signing in through bt-cli. Check your inbox or sign in to the web app to resend the link.</value></data>
   <data name="OAuth_CliTwoFactor" xml:space="preserve"><value>This account has two-step verification turned on — bt-cli does not support it yet. Sign in to the web app.</value></data>
+  <data name="Mail_LinkFallback" xml:space="preserve"><value>Button not working? Copy this address into your browser:</value></data>
+  <data name="Mail_Confirm_Subject" xml:space="preserve"><value>Confirm your email address — Budget Tracker</value></data>
+  <data name="Mail_Confirm_Heading" xml:space="preserve"><value>Confirm your email address</value></data>
+  <data name="Mail_Confirm_Body" xml:space="preserve"><value>Hi! Thanks for creating an account in Budget Tracker. Confirm your email address to activate the account and be able to sign in.</value></data>
+  <data name="Mail_Confirm_Button" xml:space="preserve"><value>Confirm email address</value></data>
+  <data name="Mail_Confirm_Footer" xml:space="preserve"><value>If you didn't create this account, ignore this message — without confirmation the account stays inactive.</value></data>
+  <data name="Mail_Reset_Subject" xml:space="preserve"><value>Reset your password — Budget Tracker</value></data>
+  <data name="Mail_Reset_Heading" xml:space="preserve"><value>Reset your password</value></data>
+  <data name="Mail_Reset_Body" xml:space="preserve"><value>We received a request to reset the password for your Budget Tracker account. Click the button to set a new password. The reset also unlocks the account if it was locked after failed sign-in attempts.</value></data>
+  <data name="Mail_Reset_Button" xml:space="preserve"><value>Set a new password</value></data>
+  <data name="Mail_Reset_Footer" xml:space="preserve"><value>If you didn't ask for a password reset, ignore this message — your password won't change.</value></data>
+  <data name="Mail_Code_Subject" xml:space="preserve"><value>Verification code — Budget Tracker</value></data>
+  <data name="Mail_Code_Heading" xml:space="preserve"><value>Verification code</value></data>
+  <data name="Mail_Code_Body" xml:space="preserve"><value>Use this code to finish signing in to Budget Tracker:</value></data>
+  <data name="Mail_Code_Hint" xml:space="preserve"><value>The code is valid for a short time — enter it right away in the sign-in window.</value></data>
+  <data name="Mail_Code_Footer" xml:space="preserve"><value>If you're not the one signing in, ignore this message and consider changing your password.</value></data>
   <data name="Identity_DefaultError" xml:space="preserve"><value>An unexpected error occurred.</value></data>
   <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>The data was changed by another operation. Try again.</value></data>
   <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Incorrect password.</value></data>

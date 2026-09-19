@@ -4,6 +4,7 @@ using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Options;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
+using BudgetTracker.Identity.Services.Emails;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.DataProtection;
@@ -126,6 +127,8 @@ builder.Services.AddOptions<SmtpOptions>()
     .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName))
     .ValidateOnStart();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+builder.Services.AddSingleton<EmailTemplateRenderer>();
+builder.Services.AddScoped<IAccountEmailService, AccountEmailService>();
 
 builder.Services.AddOptions<SpaClientOptions>().Bind(builder.Configuration.GetSection(SpaClientOptions.SectionName));
 builder.Services.AddSingleton<SpaOrigins>();

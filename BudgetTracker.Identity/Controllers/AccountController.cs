@@ -2,6 +2,7 @@ using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
+using BudgetTracker.Identity.Services.Emails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace BudgetTracker.Identity.Controllers;
 public sealed class AccountController(
     SignInManager<ApplicationUser> signInManager,
     UserManager<ApplicationUser> userManager,
-    IEmailSender emailSender,
+    IAccountEmailService accountEmails,
     SpaOrigins spaOrigins,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AccountController> logger) : Controller
@@ -165,12 +166,7 @@ public sealed class AccountController(
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
             var link = Url.ActionLink(nameof(ResetPassword), values: new { email = model.Email, token })!;
 
-            var html = $"""
-                <p>Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w Budżet tracker.</p>
-                <p><a href="{link}">Zresetuj hasło</a></p>
-                <p>Jeśli to nie Ty prosiłeś/aś o reset hasła, zignoruj tę wiadomość.</p>
-                """;
-            await emailSender.SendAsync(model.Email, "Reset hasła — Budżet tracker", html, HttpContext.RequestAborted);
+            await accountEmails.SendPasswordResetAsync(model.Email, link, HttpContext.RequestAborted);
         }
         else
         {
@@ -529,14 +525,7 @@ public sealed class AccountController(
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var link = Url.ActionLink(nameof(ConfirmEmail), values: new { userId = user.Id, token, returnUrl })!;
 
-        var html = $"""
-            <p>Cześć!</p>
-            <p>Dziękujemy za założenie konta w Budżet tracker. Potwierdź adres e-mail, klikając poniższy link:</p>
-            <p><a href="{link}">Potwierdź adres e-mail</a></p>
-            <p>Jeśli to nie Ty zakładałeś/aś to konto, zignoruj tę wiadomość.</p>
-            """;
-
-        await emailSender.SendAsync(user.Email!, "Potwierdź adres e-mail — Budżet tracker", html, HttpContext.RequestAborted);
+        await accountEmails.SendConfirmationAsync(user.Email!, link, HttpContext.RequestAborted);
     }
 
     /// <summary>
@@ -546,13 +535,7 @@ public sealed class AccountController(
     private async Task SendTwoFactorEmailCodeAsync(ApplicationUser user)
     {
         var code = await userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
-        var html = $"""
-            <p>Twój kod weryfikacyjny do logowania w Budżet tracker:</p>
-            <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">{code}</p>
-            <p>Jeśli to nie Ty próbujesz się zalogować, zignoruj tę wiadomość.</p>
-            """;
-
-        await emailSender.SendAsync(user.Email!, "Kod weryfikacyjny — Budżet tracker", html, HttpContext.RequestAborted);
+        await accountEmails.SendTwoFactorCodeAsync(user.Email!, code, HttpContext.RequestAborted);
     }
 
     /// <summary>

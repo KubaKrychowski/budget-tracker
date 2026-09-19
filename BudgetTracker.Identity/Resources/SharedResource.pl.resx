@@ -125,6 +125,22 @@
   <data name="OAuth_TokenNoLongerValid" xml:space="preserve"><value>Token stracił ważność — konto zostało usunięte albo zablokowane.</value></data>
   <data name="OAuth_CliEmailNotConfirmed" xml:space="preserve"><value>Musisz potwierdzić adres e-mail, zanim zalogujesz się przez bt-cli. Sprawdź skrzynkę albo zaloguj się w aplikacji webowej, żeby wysłać link ponownie.</value></data>
   <data name="OAuth_CliTwoFactor" xml:space="preserve"><value>Konto ma włączoną weryfikację dwuetapową — bt-cli jej jeszcze nie obsługuje. Zaloguj się w aplikacji webowej.</value></data>
+  <data name="Mail_LinkFallback" xml:space="preserve"><value>Przycisk nie działa? Skopiuj ten adres do przeglądarki:</value></data>
+  <data name="Mail_Confirm_Subject" xml:space="preserve"><value>Potwierdź adres e-mail — Budżet tracker</value></data>
+  <data name="Mail_Confirm_Heading" xml:space="preserve"><value>Potwierdź adres e-mail</value></data>
+  <data name="Mail_Confirm_Body" xml:space="preserve"><value>Cześć! Dziękujemy za założenie konta w Budżet tracker. Potwierdź adres e-mail, żeby aktywować konto i móc się zalogować.</value></data>
+  <data name="Mail_Confirm_Button" xml:space="preserve"><value>Potwierdź adres e-mail</value></data>
+  <data name="Mail_Confirm_Footer" xml:space="preserve"><value>Jeśli to nie Ty zakładałeś/aś konto, zignoruj tę wiadomość — bez potwierdzenia konto pozostanie nieaktywne.</value></data>
+  <data name="Mail_Reset_Subject" xml:space="preserve"><value>Reset hasła — Budżet tracker</value></data>
+  <data name="Mail_Reset_Heading" xml:space="preserve"><value>Zresetuj hasło</value></data>
+  <data name="Mail_Reset_Body" xml:space="preserve"><value>Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w Budżet tracker. Kliknij przycisk, żeby ustawić nowe hasło. Reset odblokuje też konto, jeśli zostało zablokowane po nieudanych próbach logowania.</value></data>
+  <data name="Mail_Reset_Button" xml:space="preserve"><value>Ustaw nowe hasło</value></data>
+  <data name="Mail_Reset_Footer" xml:space="preserve"><value>Jeśli to nie Ty prosiłeś/aś o reset hasła, zignoruj tę wiadomość — Twoje hasło się nie zmieni.</value></data>
+  <data name="Mail_Code_Subject" xml:space="preserve"><value>Kod weryfikacyjny — Budżet tracker</value></data>
+  <data name="Mail_Code_Heading" xml:space="preserve"><value>Kod weryfikacyjny</value></data>
+  <data name="Mail_Code_Body" xml:space="preserve"><value>Użyj tego kodu, żeby dokończyć logowanie w Budżet tracker:</value></data>
+  <data name="Mail_Code_Hint" xml:space="preserve"><value>Kod jest ważny krótko — wpisz go od razu w oknie logowania.</value></data>
+  <data name="Mail_Code_Footer" xml:space="preserve"><value>Jeśli to nie Ty próbujesz się zalogować, zignoruj tę wiadomość i rozważ zmianę hasła.</value></data>
   <data name="Identity_DefaultError" xml:space="preserve"><value>Wystąpił nieoczekiwany błąd.</value></data>
   <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>Dane zostały zmienione przez inną operację. Spróbuj ponownie.</value></data>
   <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Nieprawidłowe hasło.</value></data>
