@@ -27,10 +27,14 @@ public sealed class AdminController(
     IUserDataClient data,
     UserDeletionService deletion,
     IAdminAuditLog audit,
+    IAdminAuditReader auditReader,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AdminController> logger) : Controller
 {
     private const int PageSize = 20;
+
+    /// <summary>Wpisy historii są krótkie i jest ich dużo, więc strona jest większa niż lista kont.</summary>
+    private const int HistoryPageSize = 50;
 
     /// <summary>Ile znaków identyfikatora właściciela trzeba wpisać, żeby potwierdzić usunięcie jego danych.</summary>
     private const int ConfirmationLength = 8;
@@ -70,8 +74,37 @@ public sealed class AdminController(
             PageSize = PageSize,
             Total = total,
             OrphanOwnersCount = orphans?.Count,
+            HistoryCount = await auditReader.CountAsync(ct),
             DataAvailable = summaries is not null,
             Flash = ReadFlash(),
+        });
+    }
+
+    /// <summary>
+    /// Dziennik audytu (tylko odczyt). Świadomie NIE woła API budżetu: to ekran, na który zagląda się właśnie wtedy, gdy
+    /// coś poszło nie tak (także z API), więc zakładka „Dane bez właściciela" jest tu bez liczby.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> History(int page = 1, CancellationToken ct = default)
+    {
+        var total = await auditReader.CountAsync(ct);
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(total / (double)HistoryPageSize)));
+
+        var entries = await auditReader.PageAsync(page, HistoryPageSize, ct);
+
+        // Adres wykonawcy pokazujemy, dopóki jego konto istnieje; po usunięciu zostaje sam identyfikator.
+        var actorIds = entries.Select(e => e.ActorId).Distinct().ToList();
+        var actorEmails = (await userManager.Users.Where(u => actorIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Email, u.UserName }).ToListAsync(ct))
+            .ToDictionary(u => u.Id, u => u.Email ?? u.UserName ?? "");
+
+        return View(new AdminHistoryViewModel
+        {
+            Rows = entries.Select(e => AdminHistoryRow.From(e, actorEmails)).ToList(),
+            Page = page,
+            PageSize = HistoryPageSize,
+            Total = total,
+            UsersCount = await userManager.Users.CountAsync(ct),
         });
     }
 
@@ -130,6 +163,7 @@ public sealed class AdminController(
         {
             Owners = owners ?? [],
             UserCount = userIds.Count,
+            HistoryCount = await auditReader.CountAsync(ct),
             DataAvailable = owners is not null,
             Flash = ReadFlash(),
         });

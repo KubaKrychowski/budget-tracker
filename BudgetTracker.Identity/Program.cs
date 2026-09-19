@@ -170,6 +170,7 @@ builder.Services.AddSingleton<ServiceTokenProvider>();
 builder.Services.AddScoped<IUserDataClient, ApiUserDataClient>();
 builder.Services.AddScoped<IAccountStore, IdentityAccountStore>();
 builder.Services.AddScoped<IAdminAuditLog, DbAdminAuditLog>();
+builder.Services.AddScoped<IAdminAuditReader, DbAdminAuditReader>();
 builder.Services.AddScoped<UserDeletionService>();
 builder.Services.AddScoped<AdminRoleService>();
 

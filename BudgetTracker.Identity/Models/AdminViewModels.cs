@@ -30,6 +30,8 @@ public sealed class AdminUsersViewModel
     /// <summary><c>null</c>, gdy API nie odpowiedziało — zakładka pokazuje wtedy tytuł bez liczby.</summary>
     public int? OrphanOwnersCount { get; init; }
 
+    public int HistoryCount { get; init; }
+
     /// <summary><c>false</c>, gdy API nie odpowiedziało: kolumna „Dane w aplikacji" pokazuje kreski, a usuwanie jest ostrzeżone.</summary>
     public bool DataAvailable { get; init; }
 
@@ -60,6 +62,8 @@ public sealed class AdminOrphansViewModel
     public required IReadOnlyList<OrphanedOwner> Owners { get; init; }
 
     public int UserCount { get; init; }
+
+    public int HistoryCount { get; init; }
 
     public bool DataAvailable { get; init; }
 
@@ -94,6 +98,99 @@ public sealed class DeleteOrphansViewModel
     public string Confirmation { get; set; } = "";
 }
 
+/// <summary>Zakładki ekranów administratora.</summary>
+public enum AdminTab
+{
+    Users,
+    Orphans,
+    History,
+}
+
 /// <summary>Nagłówek wspólny dla list administratora: tytuł, zakładki z liczbami i komunikat po operacji.</summary>
+/// <param name="OrphansCount"><c>null</c>, gdy nie znamy liczby (API nie odpowiada albo ekran jej nie potrzebuje) — zakładka jest wtedy bez liczby.</param>
 public sealed record AdminHeaderModel(
-    string TitleKey, string SubtitleKey, bool UsersTabActive, int UsersCount, int? OrphansCount, AdminFlash? Flash);
+    string TitleKey, string SubtitleKey, AdminTab Active, int UsersCount, int? OrphansCount, int HistoryCount, AdminFlash? Flash);
+
+/// <summary>Co pokazać pod identyfikatorem konta w historii, skoro adresu e-mail w dzienniku nie ma.</summary>
+public enum AdminHistorySubjectNote
+{
+    /// <summary>Skrót adresu — po nim można sprawdzić, czy to było konto o danym adresie.</summary>
+    EmailHash,
+
+    /// <summary>Wykonawca i konto to ta sama osoba (próba usunięcia siebie, „Usuń moje konto").</summary>
+    SubjectIsActor,
+
+    /// <summary>Przepisanie danych: pokazujemy konto docelowe.</summary>
+    AssignedTo,
+
+    /// <summary>Dane bez właściciela albo konto, którego nie było — nie ma czego opisać.</summary>
+    NoAccount,
+}
+
+/// <summary>Jeden wpis dziennika audytu w postaci gotowej do wyświetlenia.</summary>
+public sealed record AdminHistoryRow(
+    DateTimeOffset OccurredAt,
+    Guid ActorId,
+    string? ActorEmail,
+    AdminAuditAction Action,
+    AdminAuditOutcome Outcome,
+    Guid SubjectId,
+    string? SubjectEmailHash,
+    Guid? TargetId,
+    int? Rows)
+{
+    /// <summary>Tyle znaków identyfikatora pokazujemy w tabeli; pełny jest w podpowiedzi po najechaniu.</summary>
+    private const int ShortIdLength = 18;
+
+    private const int ShortHashLength = 8;
+
+    public string ActionKey => $"Admin_History_Action_{Action}";
+
+    public string OutcomeKey => $"Admin_History_Outcome_{Outcome}";
+
+    /// <summary>Klasa kropki wyniku: zielona = udane, żółta = odmowa, czerwona = awaria, szara = brak konta.</summary>
+    public string OutcomeCss => Outcome switch
+    {
+        AdminAuditOutcome.Succeeded => "ok",
+        AdminAuditOutcome.RefusedSelf or AdminAuditOutcome.RefusedLastAdmin => "warn",
+        AdminAuditOutcome.DataServiceUnavailable => "bad",
+        _ => "",
+    };
+
+    public string ActorShort => ShortId(ActorId);
+
+    public string SubjectShort => ShortId(SubjectId);
+
+    public string? TargetShort => TargetId is { } target ? ShortId(target) : null;
+
+    public string? HashShort => SubjectEmailHash is { Length: > 0 } hash ? hash[..Math.Min(ShortHashLength, hash.Length)] + "…" : null;
+
+    public AdminHistorySubjectNote SubjectNote =>
+        Action == AdminAuditAction.OrphanDataAssigned && TargetId is not null ? AdminHistorySubjectNote.AssignedTo
+        : SubjectEmailHash is not null ? AdminHistorySubjectNote.EmailHash
+        : SubjectId == ActorId ? AdminHistorySubjectNote.SubjectIsActor
+        : AdminHistorySubjectNote.NoAccount;
+
+    public static AdminHistoryRow From(AdminAuditEntry entry, IReadOnlyDictionary<Guid, string> actorEmails) => new(
+        entry.OccurredAt, entry.ActorId, actorEmails.GetValueOrDefault(entry.ActorId),
+        entry.Action, entry.Outcome, entry.SubjectId, entry.SubjectEmailHash, entry.TargetId, entry.Rows);
+
+    private static string ShortId(Guid id) => id.ToString()[..ShortIdLength] + "…";
+}
+
+public sealed class AdminHistoryViewModel
+{
+    public required IReadOnlyList<AdminHistoryRow> Rows { get; init; }
+
+    public int Page { get; init; }
+
+    public int PageSize { get; init; }
+
+    public int Total { get; init; }
+
+    public int UsersCount { get; init; }
+
+    public bool HasPrevious => Page > 1;
+
+    public bool HasNext => Page * PageSize < Total;
+}

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using BudgetTracker.Identity.Models;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -99,6 +100,22 @@ public sealed partial class ResourceKeysTests
 
         var missing = required.Where(k => !known.Contains(k)).ToList();
         Assert.True(missing.Count == 0, $"Brakuje kluczy: {string.Join(", ", missing)}");
+    }
+
+    [Fact]
+    public void Every_audit_action_and_outcome_has_a_history_label_in_both_languages()
+    {
+        // Widok historii buduje klucz z nazwy wartości enuma (L[row.ActionKey]) — regex niżej go nie widzi, więc nowa
+        // wartość bez tekstu wyszłaby dopiero jako surowy klucz na ekranie.
+        var expected = Enum.GetNames<AdminAuditAction>().Select(n => $"Admin_History_Action_{n}")
+            .Concat(Enum.GetNames<AdminAuditOutcome>().Select(n => $"Admin_History_Outcome_{n}"))
+            .ToList();
+
+        foreach (var (file, texts) in new[] { ("en", ReadResx("SharedResource.resx")), ("pl", ReadResx("SharedResource.pl.resx")) })
+        {
+            var missing = expected.Where(k => !texts.ContainsKey(k)).ToList();
+            Assert.True(missing.Count == 0, $"Brak etykiet historii ({file}): {string.Join(", ", missing)}");
+        }
     }
 
     [GeneratedRegex(@"(?:\bL|localizer)\[\s*""([A-Za-z0-9_]+)""")]

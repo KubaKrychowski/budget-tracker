@@ -236,4 +236,31 @@
   <data name="Identity_PasswordRequiresLower" xml:space="preserve"><value>The password must contain at least one lowercase letter.</value></data>
   <data name="Identity_PasswordRequiresUpper" xml:space="preserve"><value>The password must contain at least one uppercase letter.</value></data>
   <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>Could not use the recovery code.</value></data>
+  <data name="Admin_Tab_History" xml:space="preserve"><value>History ({0})</value></data>
+  <data name="Admin_History_Title" xml:space="preserve"><value>Operation history</value></data>
+  <data name="Admin_History_Subtitle" xml:space="preserve"><value>Who deleted accounts and data in the app, and when. Entries are read-only.</value></data>
+  <data name="Admin_History_AlertTitle" xml:space="preserve"><value>There are no email addresses here</value></data>
+  <data name="Admin_History_AlertText" xml:space="preserve"><value>An entry stores the account ID and a hash of its address, so that it survives the account being deleted. The person who performed the operation is shown with their address for as long as their account exists. Times are in UTC.</value></data>
+  <data name="Admin_History_Empty" xml:space="preserve"><value>Nothing has been recorded yet.</value></data>
+  <data name="Admin_History_Col_When" xml:space="preserve"><value>When (UTC)</value></data>
+  <data name="Admin_History_Col_Actor" xml:space="preserve"><value>Performed by</value></data>
+  <data name="Admin_History_Col_Action" xml:space="preserve"><value>Operation</value></data>
+  <data name="Admin_History_Col_Subject" xml:space="preserve"><value>Account</value></data>
+  <data name="Admin_History_Col_Outcome" xml:space="preserve"><value>Result</value></data>
+  <data name="Admin_History_Col_Rows" xml:space="preserve"><value>Rows</value></data>
+  <data name="Admin_History_ActorDeleted" xml:space="preserve"><value>account deleted</value></data>
+  <data name="Admin_History_Note_EmailHash" xml:space="preserve"><value>address hash {0}</value></data>
+  <data name="Admin_History_Note_SubjectIsActor" xml:space="preserve"><value>the performer's own account</value></data>
+  <data name="Admin_History_Note_AssignedTo" xml:space="preserve"><value>to account {0}</value></data>
+  <data name="Admin_History_Note_NoAccount" xml:space="preserve"><value>no account</value></data>
+  <data name="Admin_History_Paging_Shown" xml:space="preserve"><value>Showing {0} of {1} entries</value></data>
+  <data name="Admin_History_Action_UserDeleted" xml:space="preserve"><value>Account deleted</value></data>
+  <data name="Admin_History_Action_OwnAccountDeleted" xml:space="preserve"><value>Own account deleted</value></data>
+  <data name="Admin_History_Action_OrphanDataAssigned" xml:space="preserve"><value>Ownerless data reassigned</value></data>
+  <data name="Admin_History_Action_OrphanDataDeleted" xml:space="preserve"><value>Ownerless data deleted</value></data>
+  <data name="Admin_History_Outcome_Succeeded" xml:space="preserve"><value>Done</value></data>
+  <data name="Admin_History_Outcome_NotFound" xml:space="preserve"><value>Account not found</value></data>
+  <data name="Admin_History_Outcome_RefusedSelf" xml:space="preserve"><value>Refused: own account</value></data>
+  <data name="Admin_History_Outcome_RefusedLastAdmin" xml:space="preserve"><value>Refused: last administrator</value></data>
+  <data name="Admin_History_Outcome_DataServiceUnavailable" xml:space="preserve"><value>App data service unavailable</value></data>
 </root>
