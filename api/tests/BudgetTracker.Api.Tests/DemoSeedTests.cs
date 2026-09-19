@@ -116,6 +116,25 @@ public sealed class DemoSeedTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Runs_again_after_the_owners_data_was_deleted_without_duplicating_accounts()
+    {
+        // ⚠️ To samo, co w DevSeed: konta demo mają stałe BusinessId i przeżywają usunięcie danych właściciela,
+        // a strażnik „są transakcje” widzi wtedy pustą bazę.
+        await DemoSeed.SeedAsync(_db, _clock);
+        var accountsBefore = await _db.Accounts.CountAsync();
+
+        var service = new BudgetTracker.Api.Features.Admin.Services.OwnerDataService(_db);
+        await service.AsSystemAsync(
+            () => service.DeleteAsync(DeterministicGuid.For("demo:user:owner"), default), default);
+        Assert.Empty(await _db.Transactions.ToListAsync());
+
+        await DemoSeed.SeedAsync(_db, _clock);
+
+        Assert.Equal(accountsBefore, await _db.Accounts.CountAsync());
+        Assert.NotEmpty(await _db.Transactions.ToListAsync());
+    }
+
+    [Fact]
     public async Task Refuses_to_touch_a_database_that_already_has_transactions()
     {
         // Trzeci z trzech zamków (obok Development i flagi `Demo:Seed`). Ten jest najważniejszy:

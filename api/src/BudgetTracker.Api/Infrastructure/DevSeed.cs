@@ -24,17 +24,15 @@ public static class DevSeed
         var categories = await db.Categories.ToDictionaryAsync(c => c.Name, ct);
         if (categories.Count == 0) return; // BaselineSeed jeszcze nie przeszedł — nie ma czego użyć
 
-        var accounts = new[]
-        {
+        var accounts = await SeedAccounts.EnsureAsync(db,
+        [
             new Account("Konto osobiste", AccountType.Bank)
                 .WithSeedBusinessId<Account>(DeterministicGuid.For("account:osobiste")),
             new Account("Konto wspólne", AccountType.Bank)
                 .WithSeedBusinessId<Account>(DeterministicGuid.For("account:wspolne")),
             new Account("Karta lunchowa", AccountType.LunchCard)
                 .WithSeedBusinessId<Account>(DeterministicGuid.For("account:lunchowa")),
-        };
-        db.Accounts.AddRange(accounts);
-        await db.SaveChangesAsync(ct);
+        ], ct);
 
         // Sprzedawcy w formie, w jakiej wychodzą z wyciągów bankowych (wersaliki, doklejone kody),
         // żeby ICategorizer i normalizator miały realistyczne wejście.
