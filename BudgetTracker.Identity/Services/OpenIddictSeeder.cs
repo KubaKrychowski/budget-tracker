@@ -93,7 +93,6 @@ public sealed class OpenIddictSeeder(
     private async Task SeedSpaClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
     {
         const string clientId = OAuthDefaults.SpaClientId;
-        if (await appManager.FindByClientIdAsync(clientId, ct) is not null) return;
 
         var descriptor = new OpenIddictApplicationDescriptor
         {
@@ -120,6 +119,15 @@ public sealed class OpenIddictSeeder(
 
         foreach (var uri in spaClient.Value.RedirectUris) descriptor.RedirectUris.Add(new Uri(uri));
         foreach (var uri in spaClient.Value.PostLogoutRedirectUris) descriptor.PostLogoutRedirectUris.Add(new Uri(uri));
+
+        // Konfiguracja jest źródłem prawdy przy KAŻDYM starcie, nie tylko przy pierwszym: zmiana adresów
+        // (np. przejście z http na https) musi dojść do klienta zapisanego już w bazie, inaczej Identity dalej
+        // odrzucałoby nowy redirect_uri jako niezarejestrowany.
+        if (await appManager.FindByClientIdAsync(clientId, ct) is { } existing)
+        {
+            await appManager.UpdateAsync(existing, descriptor, ct);
+            return;
+        }
 
         await appManager.CreateAsync(descriptor, ct);
     }

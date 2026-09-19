@@ -39,3 +39,6 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Lokalne certyfikaty https (klucz prywatny) - tools/dev-certs.ps1
+web/.certs/
