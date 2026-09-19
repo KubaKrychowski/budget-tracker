@@ -32,7 +32,7 @@ obj/
 !**/testdata/**/*.zip
 
 # Dane osobiste — wyciągi bankowe NIGDY do repo
-data/
+/data/
 *.csv
 !**/testdata/**/*.csv
 
