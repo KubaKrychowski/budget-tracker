@@ -42,3 +42,13 @@ Thumbs.db
 
 # Lokalne certyfikaty https (klucz prywatny) - tools/dev-certs.ps1
 web/.certs/
+
+# Certyfikaty i klucze prywatne (lokalne https, PFX serwera tożsamości) - nigdy do repo
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+*.jks
+*.keystore
