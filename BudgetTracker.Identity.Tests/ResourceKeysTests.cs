@@ -86,6 +86,12 @@ public sealed partial class ResourceKeysTests
             "Mail_Code_Subject", "Mail_Code_Heading", "Mail_Code_Body", "Mail_Code_Hint", "Mail_Code_Footer",
             // Authorize.cshtml: Scope_<zakres> dla zakresów, o które prosi SPA.
             "Scope_email", "Scope_profile", "Scope_budgettracker_api",
+            // AdminController przekazuje klucze komunikatów jako argument (FlashAndRedirect), a widoki wybierają
+            // klucz warunkiem (L[cond ? "A" : "B"]) — regex powyżej ich nie widzi, więc są tu wprost.
+            "Admin_Flash_Deleted", "Admin_Flash_NotFound", "Admin_Flash_CannotDeleteSelf", "Admin_Flash_LastAdmin",
+            "Admin_Flash_DataUnavailable", "Admin_Flash_OrphanGone", "Admin_Flash_Assigned", "Admin_Flash_OrphansDeleted",
+            "Admin_Status_Confirmed", "Admin_Status_Unconfirmed", "Admin_Orphans_EmptyOwnerNote", "Admin_Orphans_UnknownOwnerNote",
+            "Admin_ConfirmMismatch", "Admin_TargetRequired", "DeleteAccount_WrongPassword",
             // LocalizedIdentityErrorDescriber: Identity_<kod błędu>.
             "Identity_DefaultError", "Identity_PasswordTooShort", "Identity_PasswordRequiresNonAlphanumeric",
             "Identity_PasswordRequiresDigit", "Identity_PasswordRequiresUpper", "Identity_DuplicateEmail",

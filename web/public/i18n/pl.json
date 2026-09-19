@@ -544,6 +544,16 @@
         "description": "Min. 8 znaków, w tym wielka litera, cyfra i znak specjalny. Konto blokuje się po 3 nieudanych próbach logowania — reset hasła mailem od razu zdejmuje blokadę.",
         "reset": "Wyślij link do zmiany hasła"
       },
+      "admin": {
+        "caption": "Administracja",
+        "description": "Konta użytkowników i ich dane. Sekcja widoczna wyłącznie dla administratora; otwiera ekran w usłudze uwierzytelniania.",
+        "manage": "Zarządzaj użytkownikami"
+      },
+      "delete": {
+        "caption": "Usuń konto",
+        "description": "Trwale usuwa Twoje konto i wszystkie dane: budżety, transakcje, cele oszczędzania, zlecenia i reguły. Tej operacji nie można cofnąć.",
+        "action": "Usuń konto…"
+      },
       "logout": "Wyloguj się"
     }
   },

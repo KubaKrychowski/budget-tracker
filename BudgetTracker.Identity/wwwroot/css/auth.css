@@ -175,3 +175,126 @@ body.auth-page {
   font-size: 13px;
   word-break: break-all;
 }
+
+/* ===== Administracja (lista użytkowników, dane bez właściciela, okna potwierdzenia) ===== */
+body.admin-page { align-items: flex-start; padding-top: 56px; }
+.auth-card.auth-card-wide { max-width: 1100px; gap: 24px; }
+
+.admin-header { display: flex; align-items: center; justify-content: space-between; }
+.admin-brand { font-size: 18px; font-weight: 600; color: var(--ds-primary-600); }
+.admin-titles h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+.admin-titles p { font-size: 14px; color: var(--ds-neutral-500); margin: 0; }
+
+.admin-tabs { display: flex; gap: 28px; border-bottom: 1px solid var(--ds-neutral-200); }
+.admin-tab {
+  padding-bottom: 8px;
+  margin-bottom: -1px;
+  font-size: 14px;
+  color: var(--ds-neutral-500);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.admin-tab.active { color: var(--ds-neutral-900); font-weight: 500; border-bottom-color: var(--ds-primary-500); }
+
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-neutral-500);
+  padding: 10px 16px 10px 0;
+  border-bottom: 1px solid var(--ds-neutral-200);
+}
+.admin-table td { padding: 14px 16px 14px 0; font-size: 14px; border-bottom: 1px solid var(--ds-neutral-200); vertical-align: middle; }
+.admin-table th:last-child, .admin-table td:last-child { padding-right: 0; }
+.admin-actions { text-align: right; white-space: nowrap; }
+.admin-actions > * + * { margin-left: 8px; }
+
+.admin-chips { display: flex; flex-wrap: wrap; gap: 14px; }
+.admin-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.admin-chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ds-neutral-400); }
+.admin-chip.ok::before { background: var(--ds-primary-500); }
+.admin-chip.bad::before { background: var(--ds-error-500); }
+
+.admin-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  border-radius: 10px;
+  border: 1px solid var(--ds-neutral-200);
+  background: var(--ds-neutral-50);
+  color: var(--ds-neutral-500);
+}
+.admin-badge.admin { background: var(--ds-neutral-100); color: var(--ds-primary-600); }
+
+.admin-muted { color: var(--ds-neutral-500); }
+.admin-small { font-size: 12px; }
+.admin-mono { font-family: monospace; font-size: 13px; }
+.admin-pager { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+.admin-pager-buttons { display: flex; gap: 8px; }
+
+/* Alert: ostrzeżenia i komunikaty. W oknach potwierdzenia jest PIERWSZYM elementem treści. */
+.alert {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--ds-neutral-200);
+  background: var(--ds-neutral-50);
+}
+.alert::before {
+  content: '!';
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ds-primary-600);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+}
+.alert-danger { background: var(--ds-error-50); border-color: var(--ds-error-200); }
+.alert-danger::before { background: var(--ds-error-500); }
+.alert-body { display: flex; flex-direction: column; gap: 4px; color: rgba(0, 0, 0, 0.65); }
+.alert-title { font-weight: 600; color: var(--ds-neutral-900); }
+
+.btn-danger, .btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--ds-error-500);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-danger { background: var(--ds-error-500); color: #fff; }
+.btn-danger:hover { background: #cf3f36; border-color: #cf3f36; }
+.btn-danger-outline { background: #fff; color: var(--ds-error-500); }
+.btn-danger-outline:hover { background: var(--ds-error-50); }
+.admin-table .btn-secondary, .admin-table .btn-danger-outline { height: 32px; }
+
+/* Dolna belka okna potwierdzenia: przyciski zawsze do prawej. */
+.dialog-footer { display: flex; justify-content: flex-end; gap: 12px; }
+
+.auth-select {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--ds-neutral-200);
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ds-neutral-900);
+}
+.auth-select:focus { outline: none; border-color: var(--ds-primary-500); box-shadow: 0 0 0 3px rgba(91, 216, 128, 0.25); }

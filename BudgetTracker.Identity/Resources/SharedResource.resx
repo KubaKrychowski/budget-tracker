@@ -141,6 +141,79 @@
   <data name="Mail_Code_Body" xml:space="preserve"><value>Use this code to finish signing in to Budget Tracker:</value></data>
   <data name="Mail_Code_Hint" xml:space="preserve"><value>The code is valid for a short time — enter it right away in the sign-in window.</value></data>
   <data name="Mail_Code_Footer" xml:space="preserve"><value>If you're not the one signing in, ignore this message and consider changing your password.</value></data>
+  <data name="Admin_Brand" xml:space="preserve"><value>Budget Tracker · Administration</value></data>
+  <data name="Admin_Users_Title" xml:space="preserve"><value>Users</value></data>
+  <data name="Admin_Users_Subtitle" xml:space="preserve"><value>Accounts in the identity server and how much data they have in the app. Deleting an account also deletes its data.</value></data>
+  <data name="Admin_Tab_Users" xml:space="preserve"><value>Users ({0})</value></data>
+  <data name="Admin_Tab_Orphans" xml:space="preserve"><value>Data without an owner ({0})</value></data>
+  <data name="Admin_Tab_OrphansNoCount" xml:space="preserve"><value>Data without an owner</value></data>
+  <data name="Admin_Col_Account" xml:space="preserve"><value>Account</value></data>
+  <data name="Admin_Col_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Admin_Col_Data" xml:space="preserve"><value>Data in the app</value></data>
+  <data name="Admin_Badge_Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Admin_Badge_You" xml:space="preserve"><value>You</value></data>
+  <data name="Admin_Status_Confirmed" xml:space="preserve"><value>Confirmed</value></data>
+  <data name="Admin_Status_Unconfirmed" xml:space="preserve"><value>Unconfirmed</value></data>
+  <data name="Admin_Status_TwoFactor" xml:space="preserve"><value>2FA</value></data>
+  <data name="Admin_Status_Locked" xml:space="preserve"><value>Locked</value></data>
+  <data name="Admin_Data_Summary" xml:space="preserve"><value>Budgets: {0} · Transactions: {1}</value></data>
+  <data name="Admin_Data_None" xml:space="preserve"><value>no data</value></data>
+  <data name="Admin_Data_Unavailable" xml:space="preserve"><value>—</value></data>
+  <data name="Admin_Data_Detail" xml:space="preserve"><value>budgets: {0}, transactions: {1}, savings goals: {2}, reservations: {3}, standing orders: {4}, episodic orders: {5}</value></data>
+  <data name="Admin_Delete" xml:space="preserve"><value>Delete…</value></data>
+  <data name="Admin_Paging_Shown" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
+  <data name="Admin_Paging_Prev" xml:space="preserve"><value>Previous</value></data>
+  <data name="Admin_Paging_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Admin_DataUnavailable_Title" xml:space="preserve"><value>The app data service is not responding</value></data>
+  <data name="Admin_DataUnavailable_Text" xml:space="preserve"><value>Data counts are hidden. Deleting accounts won't go through until the service responds; nothing is deleted without its data.</value></data>
+  <data name="Admin_Flash_Deleted" xml:space="preserve"><value>Account {0} and its data have been deleted.</value></data>
+  <data name="Admin_Flash_NotFound" xml:space="preserve"><value>There is no such account (it may have been deleted a moment ago).</value></data>
+  <data name="Admin_Flash_CannotDeleteSelf" xml:space="preserve"><value>You cannot delete your own account here. Use “Delete account” in Settings.</value></data>
+  <data name="Admin_Flash_LastAdmin" xml:space="preserve"><value>This is the only administrator, so it cannot be deleted. Give the admin role to someone else first.</value></data>
+  <data name="Admin_Flash_DataUnavailable" xml:space="preserve"><value>The app data service did not respond and nothing was deleted. If it was an account deletion, the account is locked; try again in a moment.</value></data>
+  <data name="Admin_Flash_OrphanGone" xml:space="preserve"><value>This data no longer exists or now has an account.</value></data>
+  <data name="Admin_Flash_Assigned" xml:space="preserve"><value>The data has been moved to the chosen account.</value></data>
+  <data name="Admin_Flash_OrphansDeleted" xml:space="preserve"><value>The data of owner {0} has been deleted.</value></data>
+  <data name="Admin_DeleteUser_Title" xml:space="preserve"><value>Delete user?</value></data>
+  <data name="Admin_DeleteUser_AlertTitle" xml:space="preserve"><value>This can't be undone</value></data>
+  <data name="Admin_DeleteUser_AlertText" xml:space="preserve"><value>We will permanently delete the account {0} and its data in the app: {1}.</value></data>
+  <data name="Admin_DeleteUser_AlertTextNoData" xml:space="preserve"><value>We will permanently delete the account {0}. It has no data in the app.</value></data>
+  <data name="Admin_DeleteUser_AlertTextUnknown" xml:space="preserve"><value>We will permanently delete the account {0} and its data in the app. The number of rows is unavailable right now.</value></data>
+  <data name="Admin_DeleteUser_ConfirmLabel" xml:space="preserve"><value>Type the account's email address to confirm</value></data>
+  <data name="Admin_DeleteUser_Note" xml:space="preserve"><value>First we lock the account, then delete its data in the app, and finally the account and its tokens. If something fails you can repeat the deletion — the operation is safe to repeat.</value></data>
+  <data name="Admin_DeleteUser_Submit" xml:space="preserve"><value>Delete permanently</value></data>
+  <data name="Admin_ConfirmMismatch" xml:space="preserve"><value>What you typed doesn't match.</value></data>
+  <data name="Admin_ConfirmationRequired" xml:space="preserve"><value>Type the value to confirm.</value></data>
+  <data name="Admin_TargetRequired" xml:space="preserve"><value>Choose an existing account.</value></data>
+  <data name="Admin_Orphans_Title" xml:space="preserve"><value>Data without an owner</value></data>
+  <data name="Admin_Orphans_Subtitle" xml:space="preserve"><value>Data in the app whose owner has no account in the identity server.</value></data>
+  <data name="Admin_Orphans_AlertTitle" xml:space="preserve"><value>Check before you do anything</value></data>
+  <data name="Admin_Orphans_AlertText" xml:space="preserve"><value>This is data whose owner ID matches no account, e.g. from before sign-in was introduced (empty ID). Assigning it to an account deletes nothing; deleting is permanent.</value></data>
+  <data name="Admin_Orphans_Empty" xml:space="preserve"><value>There is no data without an owner.</value></data>
+  <data name="Admin_Orphans_Col_Owner" xml:space="preserve"><value>Owner ID</value></data>
+  <data name="Admin_Orphans_Col_Changed" xml:space="preserve"><value>Last change</value></data>
+  <data name="Admin_Orphans_EmptyOwnerNote" xml:space="preserve"><value>empty — data from before sign-in</value></data>
+  <data name="Admin_Orphans_UnknownOwnerNote" xml:space="preserve"><value>the account was deleted outside the app</value></data>
+  <data name="Admin_Orphans_Assign" xml:space="preserve"><value>Assign to account…</value></data>
+  <data name="Admin_Assign_Title" xml:space="preserve"><value>Assign data to an account?</value></data>
+  <data name="Admin_Assign_AlertTitle" xml:space="preserve"><value>We only change the owner</value></data>
+  <data name="Admin_Assign_AlertText" xml:space="preserve"><value>The data of owner {0} ({1}) will move to the chosen account. The account’s own data is not changed and nothing is deleted.</value></data>
+  <data name="Admin_Assign_Label" xml:space="preserve"><value>Target account</value></data>
+  <data name="Admin_Assign_Placeholder" xml:space="preserve"><value>Choose an account…</value></data>
+  <data name="Admin_Assign_Submit" xml:space="preserve"><value>Assign data</value></data>
+  <data name="Admin_DeleteOrphans_Title" xml:space="preserve"><value>Delete this data?</value></data>
+  <data name="Admin_DeleteOrphans_AlertText" xml:space="preserve"><value>We will permanently delete the data of owner {0}: {1}.</value></data>
+  <data name="Admin_DeleteOrphans_ConfirmLabel" xml:space="preserve"><value>Type the first {0} characters of the owner ID to confirm</value></data>
+  <data name="DeleteAccount_Title" xml:space="preserve"><value>Delete account?</value></data>
+  <data name="DeleteAccount_AlertText" xml:space="preserve"><value>We will permanently delete the account {0} and all your data: budgets, transactions, savings goals, standing orders and rules. You will be signed out on all devices.</value></data>
+  <data name="DeleteAccount_PasswordLabel" xml:space="preserve"><value>Confirm with your password</value></data>
+  <data name="DeleteAccount_TwoFactorNote" xml:space="preserve"><value>If you have two-step verification turned on, we'll also ask for a verification code.</value></data>
+  <data name="DeleteAccount_Submit" xml:space="preserve"><value>Delete my account</value></data>
+  <data name="DeleteAccount_WrongPassword" xml:space="preserve"><value>Incorrect password.</value></data>
+  <data name="DeleteAccount_LastAdmin" xml:space="preserve"><value>You are the only administrator, so the account can't be deleted. Give the admin role to someone else first.</value></data>
+  <data name="DeleteAccount_DataUnavailable" xml:space="preserve"><value>The app data service did not respond. Nothing has been changed — try again in a moment.</value></data>
+  <data name="AccountDeleted_Title" xml:space="preserve"><value>Account deleted</value></data>
+  <data name="AccountDeleted_Text" xml:space="preserve"><value>Your account and all your data have been deleted.</value></data>
   <data name="Identity_DefaultError" xml:space="preserve"><value>An unexpected error occurred.</value></data>
   <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>The data was changed by another operation. Try again.</value></data>
   <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Incorrect password.</value></data>

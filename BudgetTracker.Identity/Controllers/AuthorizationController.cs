@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Localization;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -163,12 +164,7 @@ public sealed class AuthorizationController(
         object? existingAuthorization)
     {
         var principal = await signInManager.CreateUserPrincipalAsync(user);
-        principal.SetClaim(Claims.Subject, await userManager.GetUserIdAsync(user));
-        // CreateUserPrincipalAsync dokłada e-mail pod długim URI ASP.NET Identity
-        // (ClaimTypes.Email), nie pod krótką nazwą OpenIddict — bez jawnego SetClaim tutaj
-        // GetDestinations niżej nigdy nie trafia w "case Claims.Email" i mail nie wchodzi do tokenu.
-        principal.SetClaim(Claims.Email, await userManager.GetEmailAsync(user));
-        principal.SetClaim(OAuthDefaults.TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
+        await AddUserClaimsAsync(principal, user);
         principal.SetScopes(request.GetScopes());
         principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
 
@@ -201,6 +197,21 @@ public sealed class AuthorizationController(
         return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
+    /// <summary>Roszczenia użytkownika w tokenach: identyfikator, e-mail, status 2FA i role.</summary>
+    /// <remarks>
+    /// ⚠️ <c>CreateUserPrincipalAsync</c> dokłada e-mail i role pod długimi URI ASP.NET Identity
+    /// (<c>ClaimTypes.Email</c>, <c>ClaimTypes.Role</c>), nie pod krótkimi nazwami OpenIddict — bez jawnego zapisu
+    /// tutaj <see cref="GetDestinations"/> nigdy nie trafia w `case Claims.Email` / `Claims.Role` i nic z tego nie
+    /// wchodzi do tokenu. Rola `admin` w id_tokenie jest tym, po czym Angular pokazuje sekcję „Administracja".
+    /// </remarks>
+    private async Task AddUserClaimsAsync(ClaimsPrincipal principal, ApplicationUser user)
+    {
+        principal.SetClaim(Claims.Subject, await userManager.GetUserIdAsync(user));
+        principal.SetClaim(Claims.Email, await userManager.GetEmailAsync(user));
+        principal.SetClaim(OAuthDefaults.TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
+        principal.SetClaims(Claims.Role, [.. await userManager.GetRolesAsync(user)]);
+    }
+
     /// <summary>Zbiera <c>IAsyncEnumerable</c> z <see cref="IOpenIddictScopeManager.ListResourcesAsync"/> w listę.</summary>
     private async Task<List<string>> ListResourcesAsync(ImmutableArray<string> scopes)
     {
@@ -230,9 +241,7 @@ public sealed class AuthorizationController(
             }
 
             var principal = await signInManager.CreateUserPrincipalAsync(user);
-            principal.SetClaim(Claims.Subject, await userManager.GetUserIdAsync(user));
-            principal.SetClaim(Claims.Email, await userManager.GetEmailAsync(user));
-            principal.SetClaim(OAuthDefaults.TwoFactorEnabledClaimType, await userManager.GetTwoFactorEnabledAsync(user) ? "true" : "false");
+            await AddUserClaimsAsync(principal, user);
             principal.SetScopes(result.Principal!.GetScopes());
             principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
             principal.SetAuthorizationId(result.Principal!.GetAuthorizationId());
@@ -277,6 +286,27 @@ public sealed class AuthorizationController(
             {
                 claim.SetDestinations(GetDestinations(claim, principal));
             }
+
+            return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+        }
+
+        if (request.IsClientCredentialsGrantType())
+        {
+            // Klient serwisowy serwera tożsamości (budgettracker-admin): token bez użytkownika, którym Identity woła
+            // /api/admin API budżetu. Tylko ten klient ma zezwolenie na zakres admin (patrz OpenIddictSeeder), więc
+            // ani SPA, ani bt-cli nie wyprosi takiego tokenu, a rola admin użytkownika go nie zastępuje.
+            var application = await applicationManager.FindByClientIdAsync(request.ClientId!)
+                ?? throw new InvalidOperationException("Nieznana aplikacja kliencka.");
+
+            var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType, Claims.Name, Claims.Role);
+            identity.SetClaim(Claims.Subject, await applicationManager.GetClientIdAsync(application));
+            identity.SetClaim(Claims.Name, await applicationManager.GetDisplayNameAsync(application));
+
+            var principal = new ClaimsPrincipal(identity);
+            principal.SetScopes(request.GetScopes());
+            principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
+
+            foreach (var claim in principal.Claims) claim.SetDestinations(Destinations.AccessToken);
 
             return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }
@@ -359,7 +389,7 @@ public sealed class AuthorizationController(
                 if (principal.HasScope(Scopes.Email)) yield return Destinations.IdentityToken;
                 yield break;
 
-            case OAuthDefaults.TwoFactorEnabledClaimType:
+            case OAuthDefaults.TwoFactorEnabledClaimType or Claims.Role:
                 yield return Destinations.AccessToken;
                 if (principal.HasScope(Scopes.Profile)) yield return Destinations.IdentityToken;
                 yield break;
