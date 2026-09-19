@@ -23,7 +23,8 @@ public class SavingsReservation(
     decimal amount,
     DateOnly? dueMonth,
     int priority,
-    DateTimeOffset createdAt) : Entity
+    DateTimeOffset createdAt,
+    Guid userId = default) : Entity
 {
     /// <summary>
     /// Budżet, którego dotyczy rezerwacja — publiczny identyfikator, tak samo jak
@@ -34,6 +35,10 @@ public class SavingsReservation(
     /// w kodzie zapytań, nigdy kluczem obcym.
     /// </remarks>
     public Guid BudgetBusinessId { get; protected set; } = budgetBusinessId;
+
+    /// <summary>Właściciel — powielony z <see cref="Budget.UserId"/>, wyłącznie pod RLS w Postgresie.</summary>
+    /// <remarks>Domyślne <c>default</c> z tego samego powodu co <see cref="Budget.UserId"/>.</remarks>
+    public Guid UserId { get; protected set; } = userId;
 
     /// <summary>Nazwa koperty — „Ubezpieczenie OC". To ona identyfikuje rezerwację dla człowieka.</summary>
     public string Name { get; protected set; } = name;

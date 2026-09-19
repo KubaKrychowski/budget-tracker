@@ -7,7 +7,7 @@ namespace BudgetTracker.Api.Features.StandingOrders.Commands;
 
 /// <summary>Zakłada zlecenie stałe i od razu przypina do niego pasujące transakcje z historii budżetu.</summary>
 public sealed class CreateStandingOrderCommandHandler(
-    AppDbContext db, StandingOrdersBudgetScope scope, StandingOrderMatcher matcher)
+    AppDbContext db, StandingOrdersBudgetScope scope, StandingOrderMatcher matcher, ICurrentUserAccessor currentUser)
 {
     /// <summary>Zapis zlecenia i przypięcia wstecz w JEDNEJ transakcji bazodanowej.</summary>
     /// <remarks>
@@ -19,7 +19,9 @@ public sealed class CreateStandingOrderCommandHandler(
         var valid = StandingOrderRuleValidator.Validate(request);
         var budget = await scope.SingleAsync(valid.BudgetId, ct);
 
-        var order = new StandingOrder(budget, valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth, scope.Now());
+        var order = new StandingOrder(
+            budget, valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth, scope.Now(),
+            currentUser.UserId);
         order.ReplaceRules(valid.Rules);
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);

@@ -104,22 +104,24 @@ public static class DemoSeed
         var firstMonth = new DateOnly(today.Year, today.Month, 1).AddMonths(-(MonthsOfHistory - 1));
         var budgetId = DeterministicGuid.For("demo:budget:domowy");
 
-        var transactions = BuildTransactions(categories, accounts, budgetId, firstMonth, today, now).ToList();
+        // Ten sam identyfikator musi mieć konto w BudgetTracker.Identity (patrz IdentitySeeder) —
+        // inaczej zalogowany właściciel demo nie zobaczy własnych, zaseedowanych danych. Zadeklarowany
+        // wcześnie, bo transakcje i dzieci budżetu niżej też dostają go jako UserId (RLS w Postgresie).
+        var ownerId = DeterministicGuid.For("demo:user:owner");
+
+        var transactions = BuildTransactions(categories, accounts, budgetId, ownerId, firstMonth, today, now).ToList();
         db.Transactions.AddRange(transactions);
 
         db.EpisodicOrders.AddRange(transactions
             .Where(t => OneOffOrders.ContainsKey(t.Description))
             .Select(t =>
             {
-                var order = new EpisodicOrder(budgetId, OneOffOrders[t.Description], null, now)
+                var order = new EpisodicOrder(budgetId, OneOffOrders[t.Description], null, now, ownerId)
                     .WithSeedBusinessId<EpisodicOrder>(DeterministicGuid.For($"demo:episodicorder:{t.Description}"));
                 order.Realize(t.BusinessId);
                 return order;
             }));
 
-        // Ten sam identyfikator musi mieć konto w BudgetTracker.Identity (patrz IdentitySeeder) —
-        // inaczej zalogowany właściciel demo nie zobaczy własnych, zaseedowanych danych.
-        var ownerId = DeterministicGuid.For("demo:user:owner");
         db.Budgets.Add(new Budget(
                 "Domowy", new DateOnly(today.Year, today.Month, 1), initialBalance: 0m, createdAt: now, userId: ownerId)
             .WithSeedBusinessId<Budget>(budgetId));
@@ -128,10 +130,11 @@ public static class DemoSeed
             .Where(c => Merchants.ContainsKey(c.Name))
             // Od pierwszego miesiąca historii — ekran limitów ma co pokazać także po cofnięciu się w czasie.
             .Select(c => new BudgetItem(
-                    budgetId, c.Id, c.Name == "Jedzenie" ? 1400m : 700m, firstMonth, LimitWarning.DefaultThreshold)
+                    budgetId, c.Id, c.Name == "Jedzenie" ? 1400m : 700m, firstMonth, LimitWarning.DefaultThreshold,
+                    ownerId)
                 .WithSeedBusinessId<BudgetItem>(DeterministicGuid.For($"demo:budgetitem:{c.Name}"))));
 
-        db.SavingsGoals.Add(new SavingsGoal(budgetId, MonthlyGoal, firstMonth, now)
+        db.SavingsGoals.Add(new SavingsGoal(budgetId, MonthlyGoal, firstMonth, now, ownerId)
             .WithSeedBusinessId<SavingsGoal>(DeterministicGuid.For("demo:savingsgoal")));
 
         await db.SaveChangesAsync(ct);
@@ -166,6 +169,7 @@ public static class DemoSeed
         IReadOnlyDictionary<string, Category> categories,
         Account[] accounts,
         Guid budgetId,
+        Guid ownerId,
         DateOnly firstMonth,
         DateOnly today,
         DateTimeOffset now)
@@ -206,11 +210,12 @@ public static class DemoSeed
                     categoryId: status == TransactionStatus.PendingReview ? null : categories[categoryName].Id,
                     confidence: confidence,
                     budgetBusinessId: budgetId,
-                    accountId: accounts[rng.Next(accounts.Length)].Id));
+                    accountId: accounts[rng.Next(accounts.Length)].Id,
+                    userId: ownerId));
             }
 
             transactions.AddRange(
-                MonthlyFixtures(monthStart, monthsAgo, today, now, categories, accounts, budgetId, rng));
+                MonthlyFixtures(monthStart, monthsAgo, today, now, categories, accounts, budgetId, ownerId, rng));
         }
 
         return transactions;
@@ -249,6 +254,7 @@ public static class DemoSeed
         IReadOnlyDictionary<string, Category> categories,
         Account[] accounts,
         Guid budgetId,
+        Guid ownerId,
         Random rng)
     {
         var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
@@ -269,7 +275,8 @@ public static class DemoSeed
                 TransactionStatus.Confirmed,
                 categoryId: categories["Wynagrodzenie"].Id,
                 budgetBusinessId: budgetId,
-                accountId: accounts[0].Id);
+                accountId: accounts[0].Id,
+                userId: ownerId);
         }
 
         if (DayInPast(4) is { } depositDay)
@@ -282,7 +289,8 @@ public static class DemoSeed
                 TransactionStatus.Confirmed,
                 categoryId: categories["Oszczędności"].Id,
                 budgetBusinessId: budgetId,
-                accountId: accounts[0].Id);
+                accountId: accounts[0].Id,
+                userId: ownerId);
         }
 
         if (monthsAgo == ProofMonthsAgo && DayInPast(18) is { } proofDay)
@@ -295,7 +303,8 @@ public static class DemoSeed
                 TransactionStatus.Confirmed,
                 categoryId: categories["Samochód"].Id,
                 budgetBusinessId: budgetId,
-                accountId: accounts[0].Id);
+                accountId: accounts[0].Id,
+                userId: ownerId);
         }
         else if (monthsAgo is 9 or 5 or 0 && DayInPast(monthsAgo == 0 ? 2 : 22) is { } bigDay)
         {
@@ -312,7 +321,8 @@ public static class DemoSeed
                 TransactionStatus.Confirmed,
                 categoryId: categories["Wyposażenie domu"].Id,
                 budgetBusinessId: budgetId,
-                accountId: accounts[0].Id);
+                accountId: accounts[0].Id,
+                userId: ownerId);
         }
     }
 }

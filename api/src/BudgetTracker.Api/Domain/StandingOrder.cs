@@ -28,10 +28,15 @@ public class StandingOrder(
     decimal expectedAmount,
     StandingOrderRhythm rhythm,
     int? dueMonth,
-    DateTimeOffset createdAt) : Entity
+    DateTimeOffset createdAt,
+    Guid userId = default) : Entity
 {
     /// <summary>Budżet zlecenia — zwykła kolumna z publicznym identyfikatorem, bez relacji EF (jak przy transakcji).</summary>
     public Guid BudgetBusinessId { get; protected set; } = budgetBusinessId;
+
+    /// <summary>Właściciel — powielony z <see cref="Budget.UserId"/>, wyłącznie pod RLS w Postgresie.</summary>
+    /// <remarks>Domyślne <c>default</c> z tego samego powodu co <see cref="Budget.UserId"/>.</remarks>
+    public Guid UserId { get; protected set; } = userId;
 
     public string Name { get; protected set; } = name;
 

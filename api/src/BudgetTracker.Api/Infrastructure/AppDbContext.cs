@@ -116,6 +116,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
 
             e.HasOne<ImportBatch>().WithMany()
                 .HasForeignKey(x => x.ImportBatchId).OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<CategoryRule>(e =>
@@ -138,6 +141,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.Property(x => x.ImportedAt).HasColumnType("timestamptz");
             e.HasOne<Budget>().WithMany()
                 .HasForeignKey(x => x.BudgetId).OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<Currency>(e =>
@@ -181,6 +187,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasOne<StandingOrderRhythmDictionary>().WithMany()
                 .HasForeignKey(x => x.Rhythm).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.BudgetBusinessId);
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<EpisodicOrder>(e =>
@@ -195,6 +204,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => x.TransactionBusinessId)
                 .IsUnique()
                 .HasFilter($"\"TransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<Budget>(e =>
@@ -225,6 +237,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => new { x.BudgetBusinessId, x.CategoryId, x.ValidFrom }).IsUnique().HasFilter(AliveOnly);
             e.HasOne<Category>().WithMany()
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<SavingsGoal>(e =>
@@ -232,6 +247,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.Property(x => x.Amount).HasColumnType("numeric(18,2)");
             e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
             e.HasIndex(x => new { x.BudgetBusinessId, x.StartedOn });
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 
         b.Entity<SavingsReservation>(e =>
@@ -246,6 +264,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => x.SettledTransactionBusinessId)
                 .IsUnique()
                 .HasFilter($"\"SettledTransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
     }
 

@@ -9,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace BudgetTracker.Api.Features.Limits.Commands;
 
 /// <summary>Ustawia albo zmienia limit kategorii w budżecie.</summary>
-public sealed class SetLimitCommandHandler(AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories)
+public sealed class SetLimitCommandHandler(
+    AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories, ICurrentUserAccessor currentUser)
 {
     /// <summary>
     /// Ustawia limit od wskazanego miesiąca. Zmiana KOŃCZY poprzedni limit miesiąc wcześniej i zakłada nowy — nie nadpisuje.
@@ -78,7 +79,8 @@ public sealed class SetLimitCommandHandler(AppDbContext db, LimitsBudgetScope sc
             latest.End(validFrom.AddMonths(-1));
         }
 
-        var item = new BudgetItem(budget, category.Id, request.Amount, validFrom, request.WarningThreshold);
+        var item = new BudgetItem(
+            budget, category.Id, request.Amount, validFrom, request.WarningThreshold, currentUser.UserId);
         db.BudgetItems.Add(item);
         await db.SaveChangesAsync(ct);
 

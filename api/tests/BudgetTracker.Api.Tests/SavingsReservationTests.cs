@@ -75,7 +75,8 @@ public sealed class SavingsReservationTests : IAsyncLifetime
 
     private GetSettleCandidatesQueryHandler CandidatesHandler() => new(_db, Lookup(), new SavingsCategory(_db));
 
-    private CreateSavingsReservationCommandHandler CreateHandler() => new(_db, Scope(), _clock);
+    private CreateSavingsReservationCommandHandler CreateHandler() =>
+        new(_db, Scope(), _clock, new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     private DeleteSavingsReservationCommandHandler DeleteHandler() => new(_db, Lookup());
 

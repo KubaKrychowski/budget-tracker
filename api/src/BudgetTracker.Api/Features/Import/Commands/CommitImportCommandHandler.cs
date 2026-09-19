@@ -59,7 +59,7 @@ public sealed class CommitImportCommandHandler(
             rows.Select(r => r.ToParsedRow()).ToList(), budget.BusinessId, ct);
 
         var now = clock.GetUtcNow();
-        var batch = new ImportBatch(budget.Id, request.Bank, request.FileName, rows.Count, now);
+        var batch = new ImportBatch(budget.Id, request.Bank, request.FileName, rows.Count, now, budget.UserId);
         db.ImportBatches.Add(batch);
 
         await using var dbTransaction = await db.Database.BeginTransactionAsync(ct);
@@ -90,7 +90,8 @@ public sealed class CommitImportCommandHandler(
                 transactionType: row.TransactionType,
                 externalReference: row.ExternalReference,
                 budgetBusinessId: budget.BusinessId,
-                importBatchId: batch.Id);
+                importBatchId: batch.Id,
+                userId: budget.UserId);
 
             db.Transactions.Add(transaction);
             saved.Add(transaction);
