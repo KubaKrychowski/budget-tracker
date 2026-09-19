@@ -37,6 +37,20 @@
     <a nz-button [href]="changePasswordUrl()">{{ 'settings.account.password.reset' | translate }}</a>
   </div>
 
+  @if (isAdmin()) {
+    <h3 class="acs__subcaption">{{ 'settings.account.admin.caption' | translate }}</h3>
+    <p class="acs__description">{{ 'settings.account.admin.description' | translate }}</p>
+    <div class="acs__actions">
+      <a nz-button [href]="adminUsersUrl">{{ 'settings.account.admin.manage' | translate }}</a>
+    </div>
+  }
+
+  <h3 class="acs__subcaption">{{ 'settings.account.delete.caption' | translate }}</h3>
+  <p class="acs__description">{{ 'settings.account.delete.description' | translate }}</p>
+  <div class="acs__actions">
+    <a nz-button nzDanger [href]="deleteAccountUrl">{{ 'settings.account.delete.action' | translate }}</a>
+  </div>
+
   <div class="acs__logout">
     <button nz-button nzDanger (click)="logout()">{{ 'settings.account.logout' | translate }}</button>
   </div>

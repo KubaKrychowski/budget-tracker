@@ -1,0 +1,37 @@
+@model AssignOrphansViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = L["Admin_Assign_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["Admin_Assign_Title"]</h1>
+</div>
+
+<form asp-action="AssignOrphans" asp-route-ownerId="@Model.OwnerId" method="post" class="auth-form">
+    <div class="alert" role="note">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_Assign_AlertTitle"]</span>
+            <span>@L["Admin_Assign_AlertText", Model.OwnerId, L["Admin_Data_Detail", Model.Counts.Budgets, Model.Counts.Transactions, Model.Counts.SavingsGoals, Model.Counts.SavingsReservations, Model.Counts.StandingOrders, Model.Counts.EpisodicOrders].Value]</span>
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="TargetUserId">@L["Admin_Assign_Label"]</label>
+        <select asp-for="TargetUserId" class="auth-select">
+            <option value="">@L["Admin_Assign_Placeholder"]</option>
+            @foreach (var account in Model.Accounts)
+            {
+                <option value="@account.Id" selected="@(account.Id == Model.TargetUserId)">@account.Email</option>
+            }
+        </select>
+        <span asp-validation-for="TargetUserId"></span>
+    </div>
+
+    <div class="dialog-footer">
+        <a asp-action="Orphans" class="btn-secondary">@L["Common_Cancel"]</a>
+        <button type="submit" class="btn-primary">@L["Admin_Assign_Submit"]</button>
+    </div>
+</form>

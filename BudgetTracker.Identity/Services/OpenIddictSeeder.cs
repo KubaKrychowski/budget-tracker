@@ -2,6 +2,7 @@ using BudgetTracker.Identity.Data;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Options;
+using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -37,6 +38,7 @@ public sealed class OpenIddictSeeder(
         var appManager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
         await SeedSpaClientAsync(appManager, cancellationToken);
         await SeedCliClientAsync(appManager, cancellationToken);
+        await SeedAdminClientAsync(appManager, cancellationToken);
 
         if (environment.IsDevelopment())
         {
@@ -56,6 +58,10 @@ public sealed class OpenIddictSeeder(
             await SeedFixedUserAsync(
                 userManager, DeterministicGuid.For("demo:user:owner"), "demo@budgettracker.local", demoPassword);
         }
+
+        // Rola admin po utworzeniu kont dev/demo, żeby adres z Admin:Emails, który akurat jest kontem seedowanym,
+        // dostał ją już przy pierwszym starcie.
+        await scope.ServiceProvider.GetRequiredService<AdminRoleService>().GrantConfiguredAdminsAsync();
     }
 
     /// <summary>
@@ -80,12 +86,30 @@ public sealed class OpenIddictSeeder(
 
     private static async Task SeedScopeAsync(IOpenIddictScopeManager scopeManager, CancellationToken ct)
     {
+        await SeedAdminScopeAsync(scopeManager, ct);
+
         if (await scopeManager.FindByNameAsync(OAuthDefaults.ApiScope, ct) is not null) return;
 
         await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
         {
             Name = OAuthDefaults.ApiScope,
             DisplayName = "Budżet tracker API",
+            Resources = { OAuthDefaults.ApiScope },
+        }, ct);
+    }
+
+    /// <summary>
+    /// Zakres tokenów serwisowych. Zasobem (odbiorcą, <c>aud</c>) jest to samo API budżetu — endpointy /api/admin są jego
+    /// częścią i odróżnia je dopiero zakres, którego zwykłe tokeny użytkowników nie mają.
+    /// </summary>
+    private static async Task SeedAdminScopeAsync(IOpenIddictScopeManager scopeManager, CancellationToken ct)
+    {
+        if (await scopeManager.FindByNameAsync(OAuthDefaults.AdminApiScope, ct) is not null) return;
+
+        await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
+        {
+            Name = OAuthDefaults.AdminApiScope,
+            DisplayName = "Budżet tracker API — polecenia administracyjne",
             Resources = { OAuthDefaults.ApiScope },
         }, ct);
     }
@@ -124,6 +148,40 @@ public sealed class OpenIddictSeeder(
         // (np. przejście z http na https) musi dojść do klienta zapisanego już w bazie, inaczej Identity dalej
         // odrzucałoby nowy redirect_uri jako niezarejestrowany.
         if (await appManager.FindByClientIdAsync(clientId, ct) is { } existing)
+        {
+            await appManager.UpdateAsync(existing, descriptor, ct);
+            return;
+        }
+
+        await appManager.CreateAsync(descriptor, ct);
+    }
+
+    /// <summary>
+    /// Klient serwisowy, którym serwer tożsamości woła /api/admin API budżetu (client credentials). Jedyny z zezwoleniem
+    /// na zakres <c>budgettracker_admin</c>. Uzgadniany przy KAŻDYM starcie (jak klient SPA), żeby zmiana sekretu
+    /// w konfiguracji dochodziła do bazy; sekret bez wartości domyślnej — wymagany w każdym środowisku.
+    /// </summary>
+    private async Task SeedAdminClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
+    {
+        var secret = configuration[OAuthDefaults.AdminClientSecretConfigKey]
+            ?? throw new InvalidOperationException(
+                $"Brak {OAuthDefaults.AdminClientSecretConfigKey} w konfiguracji. Ustaw: dotnet user-secrets set \"{OAuthDefaults.AdminClientSecretConfigKey}\" \"...\"");
+
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = OAuthDefaults.AdminClientId,
+            ClientSecret = secret,
+            DisplayName = "Serwer tożsamości — polecenia administracyjne API",
+            ClientType = ClientTypes.Confidential,
+            Permissions =
+            {
+                Permissions.Endpoints.Token,
+                Permissions.GrantTypes.ClientCredentials,
+                Permissions.Prefixes.Scope + OAuthDefaults.AdminApiScope,
+            },
+        };
+
+        if (await appManager.FindByClientIdAsync(OAuthDefaults.AdminClientId, ct) is { } existing)
         {
             await appManager.UpdateAsync(existing, descriptor, ct);
             return;

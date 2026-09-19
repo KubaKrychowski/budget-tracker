@@ -3,6 +3,7 @@ using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
 using BudgetTracker.Identity.Services.Emails;
+using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,8 @@ public sealed class AccountController(
     UserManager<ApplicationUser> userManager,
     IAccountEmailService accountEmails,
     SpaOrigins spaOrigins,
+    UserDeletionService userDeletion,
+    AdminRoleService adminRoles,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AccountController> logger) : Controller
 {
@@ -118,6 +121,9 @@ public sealed class AccountController(
         // przepływu tutaj kończy się u klienta błędem "could not find matching config for state ...".
         // Zamiast tego logujemy w Identity (cookie, bezpiecznie międzykartowo) i odsyłamy do frontu,
         // który sam zainicjuje świeże logowanie — dzięki cookie przejdzie bez ponownego podawania hasła.
+        // Adres z Admin:Emails dostaje rolę dopiero po potwierdzeniu — inaczej ktoś mógłby zarejestrować cudzy adres.
+        await adminRoles.GrantIfConfiguredAsync(user);
+
         await signInManager.SignInAsync(user, isPersistent: false);
         return View("ConfirmEmailSuccess", new SpaLinkViewModel { SpaUrl = ResolveSpaOrigin(returnUrl) });
     }
@@ -211,8 +217,15 @@ public sealed class AccountController(
         // Reset hasła to jedyny sposób odzyskania dostępu przed upływem blokady po 3 nieudanych
         // próbach (patrz Lockout w Program.cs) — ResetPasswordAsync sam z siebie NIE czyści blokady,
         // więc bez tego użytkownik miałby nowe hasło, ale nadal zablokowane konto.
-        await userManager.SetLockoutEndDateAsync(user, null);
-        await userManager.ResetAccessFailedCountAsync(user);
+        //
+        // ⚠️ Wyjątek: blokada na stałe (koniec = MaxValue) to nie anty-bruteforce, tylko pierwszy krok usuwania konta
+        // (patrz UserDeletionService). Zdjęcie jej przez reset hasła pozwoliłoby użytkownikowi wrócić na konto, które
+        // administrator właśnie kasuje, więc tę blokadę zostawiamy.
+        if (await userManager.GetLockoutEndDateAsync(user) != DateTimeOffset.MaxValue)
+        {
+            await userManager.SetLockoutEndDateAsync(user, null);
+            await userManager.ResetAccessFailedCountAsync(user);
+        }
 
         return RedirectToAction(nameof(ResetPasswordConfirmation));
     }
@@ -429,6 +442,70 @@ public sealed class AccountController(
         TempData[TempDataKeys.RecoveryCodesReturnUrl] = ValidateReturnUrl(returnUrl);
         return RedirectToAction(nameof(ShowRecoveryCodes));
     }
+
+    /// <summary>
+    /// „Usuń moje konto" — wołane z linku w Ustawieniach (Angular). GET tylko pokazuje ostrzeżenie; kasuje dopiero POST
+    /// po podaniu hasła (i kodu 2FA, jeśli jest włączone), więc samo otwarcie linku niczego nie zmienia.
+    /// </summary>
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> DeleteAccount(string? returnUrl = null)
+    {
+        var user = await userManager.GetUserAsync(User) ?? throw new InvalidOperationException();
+        return View(await BuildDeleteAccountModelAsync(user, returnUrl));
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAccount(DeleteAccountViewModel model)
+    {
+        var user = await userManager.GetUserAsync(User) ?? throw new InvalidOperationException();
+        model.Email = user.Email ?? "";
+        model.RequiresTwoFactor = await userManager.GetTwoFactorEnabledAsync(user);
+        model.ReturnUrl = ValidateReturnUrl(model.ReturnUrl);
+
+        if (!ModelState.IsValid) return View(model);
+
+        if (!await userManager.CheckPasswordAsync(user, model.Password))
+        {
+            ModelState.AddModelError(nameof(model.Password), localizer["DeleteAccount_WrongPassword"]);
+            return View(model);
+        }
+
+        if (model.RequiresTwoFactor && !await userManager.VerifyTwoFactorTokenAsync(
+                user, userManager.Options.Tokens.AuthenticatorTokenProvider, NormalizeCode(model.TwoFactorCode ?? "")))
+        {
+            ModelState.AddModelError(nameof(model.TwoFactorCode), localizer["TwoFactor_InvalidCode"]);
+            return View(model);
+        }
+
+        var outcome = await userDeletion.DeleteOwnAccountAsync(user.Id, HttpContext.RequestAborted);
+        switch (outcome)
+        {
+            case UserDeletionOutcome.Deleted or UserDeletionOutcome.NotFound:
+                await signInManager.SignOutAsync();
+                return RedirectToAction(nameof(AccountDeleted));
+
+            case UserDeletionOutcome.LastAdmin:
+                ModelState.AddModelError(string.Empty, localizer["DeleteAccount_LastAdmin"]);
+                return View(model);
+
+            default:
+                ModelState.AddModelError(string.Empty, localizer["DeleteAccount_DataUnavailable"]);
+                return View(model);
+        }
+    }
+
+    [HttpGet]
+    public IActionResult AccountDeleted() => View(new SpaLinkViewModel { SpaUrl = spaOrigins.Default });
+
+    private async Task<DeleteAccountViewModel> BuildDeleteAccountModelAsync(ApplicationUser user, string? returnUrl) => new()
+    {
+        Email = user.Email ?? "",
+        RequiresTwoFactor = await userManager.GetTwoFactorEnabledAsync(user),
+        ReturnUrl = ValidateReturnUrl(returnUrl),
+    };
 
     [HttpPost]
     [ValidateAntiForgeryToken]

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using BudgetTracker.Api.Features.Admin;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Categorization;
 using BudgetTracker.Api.Features.Cli;
@@ -43,9 +44,13 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 // (SetIssuer + UseSystemNetHttp), bez wspólnej bazy z serwerem tożsamości.
 builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 builder.Services.AddAuthorization(options =>
+{
     options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
-        .Build());
+        .Build();
+
+    AdminModule.ConfigureAdminPolicy(options);
+});
 
 builder.Services.AddOpenIddict()
     .AddValidation(options =>
@@ -59,6 +64,7 @@ builder.Services.AddOpenIddict()
 
 builder.Services.AddJobs(builder.Configuration);
 
+builder.Services.AddAdmin();
 builder.Services.AddDashboard();
 builder.Services.AddCategorization(builder.Configuration);
 builder.Services.AddImport();
@@ -147,6 +153,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken ct) =>
             : Results.Problem("Brak połączenia z Postgresem — czy `docker compose up -d db` działa?"))
     .AllowAnonymous();
 
+app.MapAdmin();
 app.MapDashboard();
 app.MapCategorization();
 app.MapSavings();

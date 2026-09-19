@@ -19,4 +19,10 @@ public sealed class TokenLifetimeOptions
     public TimeSpan IdentityToken { get; init; } = TimeSpan.FromMinutes(15);
 
     public TimeSpan RefreshToken { get; init; } = TimeSpan.FromDays(14);
+
+    /// <summary>Tokeny i autoryzacje starsze niż tyle (od wygaśnięcia) usuwa zadanie czyszczące OpenIddictPruningService.</summary>
+    public TimeSpan PruneAfter { get; init; } = TimeSpan.FromDays(14);
+
+    /// <summary>Jak często zadanie czyszczące sprząta bazę.</summary>
+    public TimeSpan PruneInterval { get; init; } = TimeSpan.FromHours(6);
 }

@@ -1,0 +1,48 @@
+@model DeleteAccountViewModel
+@{
+    ViewData["Title"] = L["DeleteAccount_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["DeleteAccount_Title"]</h1>
+</div>
+
+<form asp-action="DeleteAccount" method="post" class="auth-form">
+    <input asp-for="ReturnUrl" type="hidden"/>
+
+    <div class="alert alert-danger" role="alert">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_DeleteUser_AlertTitle"]</span>
+            <span>@L["DeleteAccount_AlertText", Model.Email]</span>
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="Password">@L["DeleteAccount_PasswordLabel"]</label>
+        <input asp-for="Password" placeholder="••••••••" autocomplete="current-password" autofocus/>
+        <span asp-validation-for="Password"></span>
+    </div>
+
+    @if (Model.RequiresTwoFactor)
+    {
+        <div class="auth-field">
+            <label asp-for="TwoFactorCode">@L["Field_AuthenticatorCode"]</label>
+            <input asp-for="TwoFactorCode" placeholder="123 456" autocomplete="one-time-code" inputmode="numeric"/>
+            <span asp-validation-for="TwoFactorCode"></span>
+        </div>
+    }
+    else
+    {
+        <p class="auth-hint">@L["DeleteAccount_TwoFactorNote"]</p>
+    }
+
+    <div class="dialog-footer">
+        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+        {
+            <a href="@Model.ReturnUrl" class="btn-secondary">@L["Common_Cancel"]</a>
+        }
+        <button type="submit" class="btn-danger">@L["DeleteAccount_Submit"]</button>
+    </div>
+</form>

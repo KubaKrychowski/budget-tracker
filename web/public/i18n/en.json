@@ -481,6 +481,16 @@
         "description": "At least 8 characters, including an uppercase letter, a digit and a special character. The account locks after 3 failed login attempts — resetting your password by email lifts the lock immediately.",
         "reset": "Send password reset link"
       },
+      "admin": {
+        "caption": "Administration",
+        "description": "User accounts and their data. Visible to administrators only; opens a screen in the identity service.",
+        "manage": "Manage users"
+      },
+      "delete": {
+        "caption": "Delete account",
+        "description": "Permanently deletes your account and all your data: budgets, transactions, savings goals, standing orders and rules. This cannot be undone.",
+        "action": "Delete account…"
+      },
       "logout": "Log out"
     }
   },

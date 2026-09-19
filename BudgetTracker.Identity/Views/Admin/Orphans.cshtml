@@ -1,0 +1,60 @@
+@model AdminOrphansViewModel
+@{
+    ViewData["Title"] = L["Admin_Orphans_Title"];
+}
+
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_Orphans_Title", "Admin_Orphans_Subtitle", false, Model.UserCount, Model.DataAvailable ? Model.Owners.Count : null, Model.Flash))"/>
+
+@if (!Model.DataAvailable)
+{
+    <div class="alert alert-danger" role="alert">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_DataUnavailable_Title"]</span>
+            <span>@L["Admin_DataUnavailable_Text"]</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert" role="note">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_Orphans_AlertTitle"]</span>
+            <span>@L["Admin_Orphans_AlertText"]</span>
+        </div>
+    </div>
+
+    @if (Model.Owners.Count == 0)
+    {
+        <p class="admin-muted">@L["Admin_Orphans_Empty"]</p>
+    }
+    else
+    {
+        <table class="admin-table">
+            <thead>
+            <tr>
+                <th>@L["Admin_Orphans_Col_Owner"]</th>
+                <th>@L["Admin_Col_Data"]</th>
+                <th>@L["Admin_Orphans_Col_Changed"]</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var owner in Model.Owners)
+            {
+                <tr>
+                    <td>
+                        <div class="admin-mono">@owner.OwnerId</div>
+                        <div class="admin-muted admin-small">@L[owner.OwnerId == Guid.Empty ? "Admin_Orphans_EmptyOwnerNote" : "Admin_Orphans_UnknownOwnerNote"]</div>
+                    </td>
+                    <td>@L["Admin_Data_Summary", owner.Counts.Budgets, owner.Counts.Transactions]</td>
+                    <td>@(owner.LastChangedAt is { } changed ? changed.ToString("d") : "—")</td>
+                    <td class="admin-actions">
+                        <a asp-action="AssignOrphans" asp-route-ownerId="@owner.OwnerId" class="btn-secondary">@L["Admin_Orphans_Assign"]</a>
+                        <a asp-action="DeleteOrphans" asp-route-ownerId="@owner.OwnerId" class="btn-danger-outline">@L["Admin_Delete"]</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}

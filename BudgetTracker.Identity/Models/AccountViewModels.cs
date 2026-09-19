@@ -146,3 +146,19 @@ public sealed class ReturnUrlViewModel
 {
     public string? ReturnUrl { get; set; }
 }
+
+/// <summary>„Usuń moje konto": potwierdzenie hasłem i, gdy konto ma 2FA, kodem z aplikacji uwierzytelniającej.</summary>
+public sealed class DeleteAccountViewModel
+{
+    public string Email { get; set; } = "";
+
+    public bool RequiresTwoFactor { get; set; }
+
+    [Required(ErrorMessage = "Validation_PasswordRequired")]
+    [DataType(DataType.Password)]
+    public string Password { get; set; } = "";
+
+    public string? TwoFactorCode { get; set; }
+
+    public string? ReturnUrl { get; set; }
+}

@@ -952,3 +952,43 @@ teksty Identity w `Resources/SharedResource*.resx` (en + pl; test pilnuje komple
 
 **Czego to nie zamyka.** Brak testów end-to-end logowania w CI (sprawdzane ręcznie w przeglądarce), brak plain-text alternatywy w mailach,
 brak rotacji kluczy podpisujących i brak listy unieważnionych tokenów.
+
+### 12a. Zarządzanie użytkownikami i usuwanie danych kont
+
+**Gdzie żyje.** Ekrany administratora i „Usuń moje konto" są w Identity (Razor), nie w Angularze: konta to domena serwera
+tożsamości, dostęp chroni ciasteczko z rolą, więc nie ma nowego REST-a dla przeglądarki (ani CORS). Angular tylko linkuje
+(zakładka „Konto i bezpieczeństwo": sekcja „Administracja" widoczna po roli `admin` z id_tokenu oraz „Usuń konto").
+Makiety: Figma, strona „Logowanie (Identity)", ramki „Admin — …" i „Usuń moje konto".
+
+**Rola admin.** Rola `admin` (ASP.NET Identity) jest nadawana adresom z konfiguracji `Admin:Emails` (user-secrets / zmienne
+środowiskowe, nie repo) przy starcie serwera i po potwierdzeniu adresu e-mail. ⚠️ Tylko kontom z POTWIERDZONYM adresem, inaczej
+ktoś mógłby zarejestrować cudzy adres z listy. Nie da się jej nadać przez rejestrację ani ekran w aplikacji.
+
+**Dwie bazy, jedna kolejność.** Konta leżą w bazie Identity, dane w bazie API, więc usunięcie nie jest jedną transakcją i
+kolejność kroków decyduje, co zostaje po awarii (`UserDeletionService`, testowane bez bazy):
+- **admin usuwa cudze konto:** blokada konta → dane w API → sesje (tokeny i autoryzacje OpenIddict) → konto. Blokada pierwsza, bo
+  użytkownik mógłby w trakcie dokładać dane. Awaria API zostawia konto ZABLOKOWANE i nietknięte; ponowienie jest bezpieczne;
+- **użytkownik usuwa własne konto:** dane w API → blokada → sesje → konto. Dane PRZED blokadą, żeby awaria API nie zamknęła
+  użytkownikowi drogi do ponowienia;
+- ⚠️ nigdy konto przed danymi: dane bez konta trafiają do zakładki „Dane bez właściciela".
+Zabezpieczenia: admin nie usuwa siebie z ekranu admina, nikt nie usuwa ostatniego admina, potwierdzenie przez wpisanie adresu
+e-mail (admin) albo hasła i kodu 2FA (właściciel). ⚠️ Blokada na stałe z usuwania NIE jest zdejmowana przez reset hasła
+(`LockoutEnd = MaxValue`), w odróżnieniu od blokady anty-bruteforce.
+
+**Identity → API: token serwisowy.** Serwer tożsamości woła `/api/admin` API budżetu tokenem client credentials klienta
+`budgettracker-admin` (zakres `budgettracker_admin`), który pobiera od WŁASNEGO `/connect/token`. Zakres ma tylko ten klient
+(SPA i `bt-cli` dostają `invalid_scope`), a API wymaga go osobną polityką: rola `admin` użytkownika NIE otwiera surowego API danych.
+Endpointy działają w jednej transakcji na roli `budget_jobs` (omija RLS, jak `BudgetPurger`), kasują też wiersze skasowane
+logicznie i są idempotentne. Zakładka „Dane bez właściciela" pozwala PRZEPISAĆ dane na konto (nic nie kasuje) albo skasować.
+
+**Czyszczenie tokenów.** `OpenIddictPruningService` co 6 h usuwa tokeny i autoryzacje starsze niż 14 dni od wygaśnięcia
+(sekcja `Tokens`: `PruneAfter`, `PruneInterval`). Bez niego tabela rosła przy każdym odnowieniu sesji.
+
+**Konfiguracja, której trzeba lokalnie (Identity nie wstanie bez pierwszej):**
+- `Clients:Admin:Secret`: `dotnet user-secrets set "Clients:Admin:Secret" "<losowy>"` w `BudgetTracker.Identity` (wymagany w każdym
+  środowisku; przy każdym starcie uzgadniany z klientem w bazie);
+- `Admin:Emails:0` (user-secrets / zmienna `Admin__Emails__0`): adres administratora;
+- `Api:BaseUrl`: dev ma `https://localhost:7133` w `appsettings.Development.json`, inne środowiska muszą podać własny (tylko https).
+
+**Czego to nie zamyka.** Brak dziennika audytu (kto kogo usunął, poza logiem serwera), brak cofania usunięcia, liczba danych w tabeli
+używa formy bez odmiany („Budżety: 3"), bo polska odmiana liczebników nie ma tu prostej reguły w zasobach.

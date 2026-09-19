@@ -1,0 +1,29 @@
+@model AdminHeaderModel
+@inject BudgetTracker.Identity.Services.SpaOrigins Spa
+
+<div class="admin-header">
+    <span class="admin-brand">@L["Admin_Brand"]</span>
+    @if (Spa.Default is { } spaUrl)
+    {
+        <a href="@spaUrl" class="auth-link">@L["Common_BackToApp"]</a>
+    }
+</div>
+
+<div class="admin-titles">
+    <h1>@L[Model.TitleKey]</h1>
+    <p>@L[Model.SubtitleKey]</p>
+</div>
+
+<nav class="admin-tabs">
+    <a asp-action="Users" class="admin-tab @(Model.UsersTabActive ? "active" : "")">@L["Admin_Tab_Users", Model.UsersCount]</a>
+    <a asp-action="Orphans" class="admin-tab @(Model.UsersTabActive ? "" : "active")">
+        @(Model.OrphansCount is { } n ? L["Admin_Tab_Orphans", n] : L["Admin_Tab_OrphansNoCount"])
+    </a>
+</nav>
+
+@if (Model.Flash is { } flash)
+{
+    <div class="alert @(flash.IsError ? "alert-danger" : "alert-ok")" role="status">
+        <div class="alert-body"><span>@flash.Text</span></div>
+    </div>
+}

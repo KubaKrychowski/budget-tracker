@@ -4,12 +4,15 @@ using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Options;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
+using BudgetTracker.Identity.Services.Api;
 using BudgetTracker.Identity.Services.Emails;
+using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Globalization;
 using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
@@ -99,12 +102,14 @@ builder.Services.AddOpenIddict()
             .SetEndSessionEndpointUris("connect/logout");
 
         options.RegisterScopes(
-            Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.OfflineAccess, OAuthDefaults.ApiScope);
+            Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.OfflineAccess, OAuthDefaults.ApiScope,
+            OAuthDefaults.AdminApiScope);
 
         options
             .AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange()
             .AllowRefreshTokenFlow()
-            .AllowPasswordFlow();
+            .AllowPasswordFlow()
+            .AllowClientCredentialsFlow();
 
         // Tokeny dostępu jako podpisane JWT (nie szyfrowane) — API weryfikuje je zdalnie przez
         // klucze publiczne z /.well-known/jwks (patrz JwtBearer w BudgetTracker.Api), bez wspólnej bazy.
@@ -145,6 +150,26 @@ builder.Services.AddOpenIddict()
     });
 
 builder.Services.AddHostedService<OpenIddictSeeder>();
+builder.Services.AddHostedService<OpenIddictPruningService>();
+
+builder.Services.AddOptions<TokenLifetimeOptions>().Bind(builder.Configuration.GetSection(TokenLifetimeOptions.SectionName));
+builder.Services.AddOptions<AdminOptions>().Bind(builder.Configuration.GetSection(AdminOptions.SectionName));
+builder.Services.AddOptions<ApiOptions>()
+    .Bind(builder.Configuration.GetSection(ApiOptions.SectionName))
+    .Validate(options => options.HasValidBaseUrl, $"Brak albo zły adres https w konfiguracji {ApiOptions.SectionName}:BaseUrl.")
+    .ValidateOnStart();
+
+// Usuwanie kont: serwer tożsamości woła /api/admin API budżetu tokenem serwisowym (client credentials), który
+// pobiera od WŁASNEGO endpointu /connect/token (adres = issuer).
+builder.Services.AddHttpClient(ServiceTokenProvider.HttpClientName, client =>
+    client.BaseAddress = new Uri(identityIssuer.TrimEnd('/') + "/"));
+builder.Services.AddHttpClient(ApiUserDataClient.HttpClientName, (services, client) =>
+    client.BaseAddress = new Uri(services.GetRequiredService<IOptions<ApiOptions>>().Value.BaseUrl.TrimEnd('/') + "/"));
+builder.Services.AddSingleton<ServiceTokenProvider>();
+builder.Services.AddScoped<IUserDataClient, ApiUserDataClient>();
+builder.Services.AddScoped<IAccountStore, IdentityAccountStore>();
+builder.Services.AddScoped<UserDeletionService>();
+builder.Services.AddScoped<AdminRoleService>();
 
 builder.Services.AddOptions<SmtpOptions>()
     .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName))

@@ -1,0 +1,44 @@
+@model DeleteUserViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = L["Admin_DeleteUser_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["Admin_DeleteUser_Title"]</h1>
+</div>
+
+<form asp-action="DeleteUser" asp-route-id="@Model.Id" method="post" class="auth-form">
+    <div class="alert alert-danger" role="alert">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_DeleteUser_AlertTitle"]</span>
+            @if (Model.Data is null)
+            {
+                <span>@L["Admin_DeleteUser_AlertTextUnknown", Model.Email]</span>
+            }
+            else if (Model.Data.Total == 0)
+            {
+                <span>@L["Admin_DeleteUser_AlertTextNoData", Model.Email]</span>
+            }
+            else
+            {
+                <span>@L["Admin_DeleteUser_AlertText", Model.Email, L["Admin_Data_Detail", Model.Data.Budgets, Model.Data.Transactions, Model.Data.SavingsGoals, Model.Data.SavingsReservations, Model.Data.StandingOrders, Model.Data.EpisodicOrders].Value]</span>
+            }
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="ConfirmEmail">@L["Admin_DeleteUser_ConfirmLabel"]</label>
+        <input asp-for="ConfirmEmail" placeholder="@Model.Email" autocomplete="off" autofocus/>
+        <span asp-validation-for="ConfirmEmail"></span>
+    </div>
+
+    <p class="auth-hint">@L["Admin_DeleteUser_Note"]</p>
+
+    <div class="dialog-footer">
+        <a asp-action="Users" class="btn-secondary">@L["Common_Cancel"]</a>
+        <button type="submit" class="btn-danger">@L["Admin_DeleteUser_Submit"]</button>
+    </div>
+</form>

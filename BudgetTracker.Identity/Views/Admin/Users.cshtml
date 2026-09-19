@@ -1,0 +1,78 @@
+@model AdminUsersViewModel
+@{
+    ViewData["Title"] = L["Admin_Users_Title"];
+}
+
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_Users_Title", "Admin_Users_Subtitle", true, Model.Total, Model.OrphanOwnersCount, Model.Flash))"/>
+
+@if (!Model.DataAvailable)
+{
+    <div class="alert alert-danger" role="alert">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_DataUnavailable_Title"]</span>
+            <span>@L["Admin_DataUnavailable_Text"]</span>
+        </div>
+    </div>
+}
+
+<table class="admin-table">
+    <thead>
+    <tr>
+        <th>@L["Admin_Col_Account"]</th>
+        <th>@L["Admin_Col_Status"]</th>
+        <th>@L["Admin_Col_Data"]</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var user in Model.Users)
+    {
+        <tr>
+            <td>
+                <span>@user.Email</span>
+                @if (user.IsAdmin) { <span class="admin-badge admin">@L["Admin_Badge_Admin"]</span> }
+                @if (user.IsSelf) { <span class="admin-badge">@L["Admin_Badge_You"]</span> }
+            </td>
+            <td>
+                <div class="admin-chips">
+                    <span class="admin-chip @(user.EmailConfirmed ? "ok" : "")">@L[user.EmailConfirmed ? "Admin_Status_Confirmed" : "Admin_Status_Unconfirmed"]</span>
+                    @if (user.TwoFactorEnabled) { <span class="admin-chip ok">@L["Admin_Status_TwoFactor"]</span> }
+                    @if (user.IsLockedOut) { <span class="admin-chip bad">@L["Admin_Status_Locked"]</span> }
+                </div>
+            </td>
+            <td>
+                @if (user.Data is null)
+                {
+                    <span class="admin-muted">@L["Admin_Data_Unavailable"]</span>
+                }
+                else if (user.Data.Total == 0)
+                {
+                    <span class="admin-muted">@L["Admin_Data_None"]</span>
+                }
+                else
+                {
+                    <span>@L["Admin_Data_Summary", user.Data.Budgets, user.Data.Transactions]</span>
+                }
+            </td>
+            <td class="admin-actions">
+                @if (user.IsSelf)
+                {
+                    <span class="admin-muted">—</span>
+                }
+                else
+                {
+                    <a asp-action="DeleteUser" asp-route-id="@user.Id" class="btn-danger-outline">@L["Admin_Delete"]</a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div class="admin-pager">
+    <span class="admin-muted">@L["Admin_Paging_Shown", Model.Shown, Model.Total]</span>
+    <div class="admin-pager-buttons">
+        @if (Model.HasPrevious) { <a asp-action="Users" asp-route-page="@(Model.Page - 1)" class="btn-secondary">@L["Admin_Paging_Prev"]</a> }
+        @if (Model.HasNext) { <a asp-action="Users" asp-route-page="@(Model.Page + 1)" class="btn-secondary">@L["Admin_Paging_Next"]</a> }
+    </div>
+</div>

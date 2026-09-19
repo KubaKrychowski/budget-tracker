@@ -68,6 +68,18 @@ export class AccountSecurity {
   protected readonly regenerateRecoveryCodesUrl =
     `${IDENTITY_AUTHORITY}/Account/RegenerateRecoveryCodes?returnUrl=${this.returnUrl}`;
 
+  /** Rola `admin` jedzie w id_tokenie jako string albo tablica (jedna rola vs. kilka) — patrz AuthorizationController w Identity. */
+  protected readonly isAdmin = computed(() => {
+    const role = this.claims()?.['role'];
+    return Array.isArray(role) ? role.includes('admin') : role === 'admin';
+  });
+
+  // Ekrany administracyjne i usuwanie konta mieszkają w Identity (Razor) i chroni je ciasteczko z rolą albo hasło,
+  // nie token z Angulara — link to zwykłe przejście, jak przy 2FA.
+  protected readonly adminUsersUrl = `${IDENTITY_AUTHORITY}/Admin/Users`;
+  protected readonly deleteAccountUrl =
+    `${IDENTITY_AUTHORITY}/Account/DeleteAccount?returnUrl=${this.returnUrl}`;
+
   protected readonly changePasswordUrl = computed(() => {
     const email = this.email();
     return `${IDENTITY_AUTHORITY}/Account/ForgotPassword${email ? `?email=${encodeURIComponent(email)}` : ''}`;

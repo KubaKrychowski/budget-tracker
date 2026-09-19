@@ -141,6 +141,79 @@
   <data name="Mail_Code_Body" xml:space="preserve"><value>Użyj tego kodu, żeby dokończyć logowanie w Budżet tracker:</value></data>
   <data name="Mail_Code_Hint" xml:space="preserve"><value>Kod jest ważny krótko — wpisz go od razu w oknie logowania.</value></data>
   <data name="Mail_Code_Footer" xml:space="preserve"><value>Jeśli to nie Ty próbujesz się zalogować, zignoruj tę wiadomość i rozważ zmianę hasła.</value></data>
+  <data name="Admin_Brand" xml:space="preserve"><value>Budżet tracker · Administracja</value></data>
+  <data name="Admin_Users_Title" xml:space="preserve"><value>Użytkownicy</value></data>
+  <data name="Admin_Users_Subtitle" xml:space="preserve"><value>Konta w serwerze tożsamości i ilość ich danych w aplikacji. Usunięcie konta kasuje też jego dane.</value></data>
+  <data name="Admin_Tab_Users" xml:space="preserve"><value>Użytkownicy ({0})</value></data>
+  <data name="Admin_Tab_Orphans" xml:space="preserve"><value>Dane bez właściciela ({0})</value></data>
+  <data name="Admin_Tab_OrphansNoCount" xml:space="preserve"><value>Dane bez właściciela</value></data>
+  <data name="Admin_Col_Account" xml:space="preserve"><value>Konto</value></data>
+  <data name="Admin_Col_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Admin_Col_Data" xml:space="preserve"><value>Dane w aplikacji</value></data>
+  <data name="Admin_Badge_Admin" xml:space="preserve"><value>Admin</value></data>
+  <data name="Admin_Badge_You" xml:space="preserve"><value>To Ty</value></data>
+  <data name="Admin_Status_Confirmed" xml:space="preserve"><value>Potwierdzony</value></data>
+  <data name="Admin_Status_Unconfirmed" xml:space="preserve"><value>Niepotwierdzony</value></data>
+  <data name="Admin_Status_TwoFactor" xml:space="preserve"><value>2FA</value></data>
+  <data name="Admin_Status_Locked" xml:space="preserve"><value>Zablokowany</value></data>
+  <data name="Admin_Data_Summary" xml:space="preserve"><value>Budżety: {0} · Transakcje: {1}</value></data>
+  <data name="Admin_Data_None" xml:space="preserve"><value>brak danych</value></data>
+  <data name="Admin_Data_Unavailable" xml:space="preserve"><value>—</value></data>
+  <data name="Admin_Data_Detail" xml:space="preserve"><value>budżety: {0}, transakcje: {1}, cele oszczędzania: {2}, rezerwacje: {3}, zlecenia stałe: {4}, zlecenia epizodyczne: {5}</value></data>
+  <data name="Admin_Delete" xml:space="preserve"><value>Usuń…</value></data>
+  <data name="Admin_Paging_Shown" xml:space="preserve"><value>Pokazano {0} z {1} kont</value></data>
+  <data name="Admin_Paging_Prev" xml:space="preserve"><value>Poprzednia</value></data>
+  <data name="Admin_Paging_Next" xml:space="preserve"><value>Następna</value></data>
+  <data name="Admin_DataUnavailable_Title" xml:space="preserve"><value>Serwis danych aplikacji nie odpowiada</value></data>
+  <data name="Admin_DataUnavailable_Text" xml:space="preserve"><value>Ilość danych jest ukryta. Usuwanie kont nie powiedzie się, dopóki serwis nie odpowie; konto nie jest kasowane bez swoich danych.</value></data>
+  <data name="Admin_Flash_Deleted" xml:space="preserve"><value>Konto {0} i jego dane zostały usunięte.</value></data>
+  <data name="Admin_Flash_NotFound" xml:space="preserve"><value>Nie ma takiego konta (mogło zostać usunięte chwilę wcześniej).</value></data>
+  <data name="Admin_Flash_CannotDeleteSelf" xml:space="preserve"><value>Nie możesz tu usunąć własnego konta. Użyj „Usuń konto” w Ustawieniach.</value></data>
+  <data name="Admin_Flash_LastAdmin" xml:space="preserve"><value>To jedyny administrator, więc nie można go usunąć. Najpierw nadaj rolę admina komuś innemu.</value></data>
+  <data name="Admin_Flash_DataUnavailable" xml:space="preserve"><value>Serwis danych aplikacji nie odpowiedział i nic nie zostało usunięte. Jeśli to było usuwanie konta, konto jest zablokowane; spróbuj ponownie za chwilę.</value></data>
+  <data name="Admin_Flash_OrphanGone" xml:space="preserve"><value>Tych danych już nie ma albo ich właściciel ma teraz konto.</value></data>
+  <data name="Admin_Flash_Assigned" xml:space="preserve"><value>Dane zostały przypisane do wybranego konta.</value></data>
+  <data name="Admin_Flash_OrphansDeleted" xml:space="preserve"><value>Dane właściciela {0} zostały usunięte.</value></data>
+  <data name="Admin_DeleteUser_Title" xml:space="preserve"><value>Usunąć użytkownika?</value></data>
+  <data name="Admin_DeleteUser_AlertTitle" xml:space="preserve"><value>Tej operacji nie można cofnąć</value></data>
+  <data name="Admin_DeleteUser_AlertText" xml:space="preserve"><value>Trwale usuniemy konto {0} oraz jego dane w aplikacji: {1}.</value></data>
+  <data name="Admin_DeleteUser_AlertTextNoData" xml:space="preserve"><value>Trwale usuniemy konto {0}. Nie ma ono żadnych danych w aplikacji.</value></data>
+  <data name="Admin_DeleteUser_AlertTextUnknown" xml:space="preserve"><value>Trwale usuniemy konto {0} oraz jego dane w aplikacji. Ich ilość jest teraz niedostępna.</value></data>
+  <data name="Admin_DeleteUser_ConfirmLabel" xml:space="preserve"><value>Wpisz adres e-mail konta, aby potwierdzić</value></data>
+  <data name="Admin_DeleteUser_Note" xml:space="preserve"><value>Najpierw zablokujemy konto, potem skasujemy dane w aplikacji, na końcu konto i jego tokeny. Jeśli coś się nie powiedzie, możesz ponowić usunięcie — operację można bezpiecznie powtórzyć.</value></data>
+  <data name="Admin_DeleteUser_Submit" xml:space="preserve"><value>Usuń trwale</value></data>
+  <data name="Admin_ConfirmMismatch" xml:space="preserve"><value>Wpisana wartość się nie zgadza.</value></data>
+  <data name="Admin_ConfirmationRequired" xml:space="preserve"><value>Wpisz wartość, aby potwierdzić.</value></data>
+  <data name="Admin_TargetRequired" xml:space="preserve"><value>Wybierz istniejące konto.</value></data>
+  <data name="Admin_Orphans_Title" xml:space="preserve"><value>Dane bez właściciela</value></data>
+  <data name="Admin_Orphans_Subtitle" xml:space="preserve"><value>Dane w aplikacji, których właściciel nie ma konta w serwerze tożsamości.</value></data>
+  <data name="Admin_Orphans_AlertTitle" xml:space="preserve"><value>Sprawdź, zanim cokolwiek zrobisz</value></data>
+  <data name="Admin_Orphans_AlertText" xml:space="preserve"><value>To dane, których identyfikator właściciela nie pasuje do żadnego konta, np. sprzed wprowadzenia logowania (puste ID). Przypisanie do konta nie kasuje niczego, usunięcie jest trwałe.</value></data>
+  <data name="Admin_Orphans_Empty" xml:space="preserve"><value>Nie ma danych bez właściciela.</value></data>
+  <data name="Admin_Orphans_Col_Owner" xml:space="preserve"><value>Identyfikator właściciela</value></data>
+  <data name="Admin_Orphans_Col_Changed" xml:space="preserve"><value>Ostatnia zmiana</value></data>
+  <data name="Admin_Orphans_EmptyOwnerNote" xml:space="preserve"><value>puste — dane sprzed logowania</value></data>
+  <data name="Admin_Orphans_UnknownOwnerNote" xml:space="preserve"><value>konto usunięte poza aplikacją</value></data>
+  <data name="Admin_Orphans_Assign" xml:space="preserve"><value>Przypisz do konta…</value></data>
+  <data name="Admin_Assign_Title" xml:space="preserve"><value>Przypisać dane do konta?</value></data>
+  <data name="Admin_Assign_AlertTitle" xml:space="preserve"><value>Zmienimy tylko właściciela</value></data>
+  <data name="Admin_Assign_AlertText" xml:space="preserve"><value>Dane właściciela {0} ({1}) przejdą na wybrane konto. Dane samego konta nie zostaną zmienione, a nic nie jest kasowane.</value></data>
+  <data name="Admin_Assign_Label" xml:space="preserve"><value>Konto docelowe</value></data>
+  <data name="Admin_Assign_Placeholder" xml:space="preserve"><value>Wybierz konto…</value></data>
+  <data name="Admin_Assign_Submit" xml:space="preserve"><value>Przypisz dane</value></data>
+  <data name="Admin_DeleteOrphans_Title" xml:space="preserve"><value>Usunąć te dane?</value></data>
+  <data name="Admin_DeleteOrphans_AlertText" xml:space="preserve"><value>Trwale usuniemy dane właściciela {0}: {1}.</value></data>
+  <data name="Admin_DeleteOrphans_ConfirmLabel" xml:space="preserve"><value>Wpisz pierwsze {0} znaków identyfikatora właściciela, aby potwierdzić</value></data>
+  <data name="DeleteAccount_Title" xml:space="preserve"><value>Usunąć konto?</value></data>
+  <data name="DeleteAccount_AlertText" xml:space="preserve"><value>Trwale usuniemy konto {0} i wszystkie Twoje dane: budżety, transakcje, cele oszczędzania, zlecenia i reguły. Zostaniesz wylogowany/a ze wszystkich urządzeń.</value></data>
+  <data name="DeleteAccount_PasswordLabel" xml:space="preserve"><value>Potwierdź hasłem</value></data>
+  <data name="DeleteAccount_TwoFactorNote" xml:space="preserve"><value>Jeśli masz włączone 2FA, poprosimy jeszcze o kod weryfikacyjny.</value></data>
+  <data name="DeleteAccount_Submit" xml:space="preserve"><value>Usuń moje konto</value></data>
+  <data name="DeleteAccount_WrongPassword" xml:space="preserve"><value>Nieprawidłowe hasło.</value></data>
+  <data name="DeleteAccount_LastAdmin" xml:space="preserve"><value>Jesteś jedynym administratorem, więc konta nie można usunąć. Najpierw nadaj rolę admina komuś innemu.</value></data>
+  <data name="DeleteAccount_DataUnavailable" xml:space="preserve"><value>Serwis danych aplikacji nie odpowiedział. Nic nie zostało zmienione — spróbuj ponownie za chwilę.</value></data>
+  <data name="AccountDeleted_Title" xml:space="preserve"><value>Konto usunięte</value></data>
+  <data name="AccountDeleted_Text" xml:space="preserve"><value>Twoje konto i wszystkie dane zostały usunięte.</value></data>
   <data name="Identity_DefaultError" xml:space="preserve"><value>Wystąpił nieoczekiwany błąd.</value></data>
   <data name="Identity_ConcurrencyFailure" xml:space="preserve"><value>Dane zostały zmienione przez inną operację. Spróbuj ponownie.</value></data>
   <data name="Identity_PasswordMismatch" xml:space="preserve"><value>Nieprawidłowe hasło.</value></data>

@@ -16,6 +16,15 @@ public static class OAuthDefaults
 
     public const string CliClientId = "bt-cli";
 
+    /// <summary>Klient serwisowy (client credentials), którym serwer tożsamości wywołuje endpointy /api/admin API budżetu.</summary>
+    public const string AdminClientId = "budgettracker-admin";
+
+    /// <summary>Zakres tokenów serwisowych; API wymaga go na /api/admin (IdentityServerDefaults.AdminScope po stronie API).</summary>
+    public const string AdminApiScope = "budgettracker_admin";
+
+    /// <summary>Klucz konfiguracji z sekretem klienta serwisowego — user-secrets / zmienne środowiskowe, nigdy repo.</summary>
+    public const string AdminClientSecretConfigKey = "Clients:Admin:Secret";
+
     /// <summary>
     /// Niestandardowe roszczenie odczytywane przez ekran „Konto i bezpieczeństwo" w Angularze
     /// (z <c>userData</c> OIDC) — front nie ma dostępu do bazy Identity, więc status 2FA musi
