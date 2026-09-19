@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "BudgetTracker",
+    "title": "Wydatki.pl",
     "version": "v.2.0",
     "searchPlaceholder": "Wpisz nazwę akcji do wykonania",
     "dashboard": "Dashboard"

@@ -23,13 +23,24 @@ builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(options =>
         options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
 
+// Bez trwałych kluczy ochrony danych są efemeryczne — każdy restart procesu wylogowywałby wszystkich, bo
+// ciasteczko przestaje się dać odszyfrować. Kto zdobędzie te klucze, może podrobić ciasteczko logowania, więc
+// poza Development katalog jest WYMAGANY i leży poza repo (fail-fast, żeby nie zgadywać domyślnej lokalizacji).
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName(HostingDefaults.ApplicationName);
 if (builder.Environment.IsDevelopment())
 {
-    // Bez tego klucze ochrony danych są efemeryczne — każdy restart procesu (np. po zmianie
-    // kodu) wylogowywałby wszystkich, bo ciasteczko przestaje się dać odszyfrować.
-    builder.Services.AddDataProtection()
-        .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Path.GetTempPath(), "bt-identity-keys")));
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Path.GetTempPath(), "bt-identity-keys")));
 }
+else
+{
+    var keysPath = builder.Configuration[HostingDefaults.DataProtectionKeysPathKey]
+        ?? throw new InvalidOperationException($"Brak konfiguracji {HostingDefaults.DataProtectionKeysPathKey}.");
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+}
+
+// Ciasteczka tylko po https (dev też działa na https — patrz launchSettings): SameAsRequest przepuściłoby
+// ciasteczko logowania po zwykłym http, gdzie da się je podsłuchać.
+builder.Services.AddAntiforgery(options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -64,10 +75,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 var identityIssuer = builder.Configuration[OAuthDefaults.IssuerConfigKey]
     ?? throw new InvalidOperationException($"Brak konfiguracji {OAuthDefaults.IssuerConfigKey}.");
+
+var tokenLifetimes = builder.Configuration.GetSection(TokenLifetimeOptions.SectionName).Get<TokenLifetimeOptions>()
+    ?? new TokenLifetimeOptions();
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>
@@ -95,25 +110,33 @@ builder.Services.AddOpenIddict()
         // klucze publiczne z /.well-known/jwks (patrz JwtBearer w BudgetTracker.Api), bez wspólnej bazy.
         options.DisableAccessTokenEncryption();
 
+        options
+            .SetAccessTokenLifetime(tokenLifetimes.AccessToken)
+            .SetIdentityTokenLifetime(tokenLifetimes.IdentityToken)
+            .SetRefreshTokenLifetime(tokenLifetimes.RefreshToken);
+
         if (builder.Environment.IsDevelopment())
         {
             options.AddDevelopmentEncryptionCertificate()
                 .AddDevelopmentSigningCertificate();
         }
+        else
+        {
+            // ⚠️ Certyfikat podpisujący pozwala wystawić dowolny token dla dowolnego użytkownika — poza
+            // Development musi być prawdziwy, spoza repo, a serwer nie startuje bez niego.
+            var certificates = builder.Configuration.GetSection(ServerCertificatesOptions.SectionName)
+                .Get<ServerCertificatesOptions>();
+            options.AddSigningCertificate(ServerCertificateLoader.Load(certificates?.Signing, "podpisujący"));
+            options.AddEncryptionCertificate(ServerCertificateLoader.Load(certificates?.Encryption, "szyfrujący"));
+        }
 
-        var aspNetCoreBuilder = options.UseAspNetCore()
+        // Wymóg https zostaje włączony wszędzie, także w Development: lokalnie też działamy na https.
+        options.UseAspNetCore()
             .EnableAuthorizationEndpointPassthrough()
             .EnableTokenEndpointPassthrough()
             .EnableUserInfoEndpointPassthrough()
             .EnableEndSessionEndpointPassthrough()
             .EnableStatusCodePagesIntegration();
-
-        // Dev/demo działają po zwykłym http (patrz CLAUDE.md — Rider/ng serve na plain http) —
-        // w produkcji to zdejmiemy, bo tam wymóg https jest pożądany.
-        if (builder.Environment.IsDevelopment())
-        {
-            aspNetCoreBuilder.DisableTransportSecurityRequirement();
-        }
     })
     .AddValidation(options =>
     {
@@ -160,10 +183,11 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = supportedCultures,
 });
 
-// W Development NIE przekierowujemy na https: SPA na plain http (localhost:4200/4310) robi
-// fetch() na discovery/token, a przekierowanie 307 nie niesie nagłówków CORS — przeglądarka
-// blokuje to jako błąd CORS, zanim w ogóle dotrze do docelowego adresu (ten sam powód, dla
-// którego OpenIddict ma wyżej DisableTransportSecurityRequirement w Development).
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// W Development nie ma czego przekierowywać: serwer słucha wyłącznie na https (launchSettings). Przekierowanie
+// 307 z http nie niesie nagłówków CORS, więc gdyby ktoś wystawił też http, fetch() z SPA kończyłby się
+// błędem CORS zanim dotarłby do adresu docelowego.
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

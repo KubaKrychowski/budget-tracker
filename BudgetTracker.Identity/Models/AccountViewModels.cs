@@ -63,7 +63,7 @@ public sealed class ResendEmailConfirmationViewModel
 /// <summary>Ekrany, które kończą się przyciskiem powrotu do aplikacji (potwierdzony e-mail, brak dostępu).</summary>
 public sealed class SpaLinkViewModel
 {
-    /// <summary>Origin frontu (np. "http://localhost:4200") do przycisku powrotu, jeśli udało się go ustalić.</summary>
+    /// <summary>Origin frontu (np. "https://localhost:4200") do przycisku powrotu, jeśli udało się go ustalić.</summary>
     public string? SpaUrl { get; init; }
 }
 

@@ -15,6 +15,8 @@ tak, a nie inaczej, opisuje [DECISIONS.md](DECISIONS.md) — patrz „Decyzje”
 | `api/src/BudgetTracker.Api/Domain/` | encje (`Entity`), słowniki (`DictionaryEntity`), enumy w `Consts/` |
 | `api/src/BudgetTracker.Api/Infrastructure/` | `AppDbContext`, `Migrations/`, `DomainExceptionHandler`, seedy, Hangfire |
 | `api/tests/BudgetTracker.Api.Tests/` | xUnit na PRAWDZIWYM Postgresie (bazy `budgettracker_*_test`) |
+| `BudgetTracker.Identity/` | serwer tożsamości (ASP.NET Identity + OpenIddict): ekrany logowania (Razor), maile z `Emails/`, teksty w `Resources/` (en + pl) — patrz `DECISIONS.md` §12 |
+| `BudgetTracker.Identity.Tests/` | xUnit bez bazy: szablony maili, klucze zasobów, CSP, ładowanie certyfikatów (`dotnet test BudgetTracker.Identity.Tests`) |
 | `web/src/app/features/<ekran>/` | ekrany Angulara (komponent + `.html` + `.scss` + `.spec.ts`) |
 | `web/src/app/core/` | wspólne: `api/models`, `active-budget`, `budget-switcher`, `confirm-dialog`, `icons.ts`, `parse-amount` |
 | `web/public/i18n/pl.json`, `en.json` | wszystkie teksty UI |
@@ -79,8 +81,9 @@ Konfiguracje w `.claude/launch.json` **katalogu nadrzędnego** (`workspace/`), u
 
 | Nazwa | Port | Co |
 |---|---|---|
-| `budget-tracker-api-demo` | 5099 | API na bazie `budgettracker_uiverify` z `Demo:Seed=true` |
-| `budget-tracker-web-demo` | 4310 | front z `web/proxy.demo.json` → 5099 |
+| `budget-tracker-api-demo` | 5099 | API (`https://`) na bazie `budgettracker_uiverify` z `Demo:Seed=true` |
+| `budget-tracker-web-demo` | 4310 | front (`https://`) z `web/proxy.demo.json` → 5099 |
+| `budgettracker-identity` | 7226 | serwer tożsamości (`https://`); logowanie wymaga konta z Identity |
 
 - API **nie migruje bazy samo.** Po dodaniu migracji zaktualizuj bazę demo:
   `dotnet ef database update --project api/src/BudgetTracker.Api --connection "Host=localhost;Port=5432;Database=budgettracker_uiverify;Username=budget;Password=budget_dev_only"`

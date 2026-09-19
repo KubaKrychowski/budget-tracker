@@ -7,7 +7,7 @@
 
     Uzycie:
         .\install.ps1                                  # zapyta o adres API przy pierwszej instalacji
-        .\install.ps1 -ApiUrl http://localhost:5031     # ustawia/nadpisuje adres API bez pytania
+        .\install.ps1 -ApiUrl https://localhost:7133     # ustawia/nadpisuje adres API bez pytania
 #>
 [CmdletBinding()]
 param(
@@ -36,7 +36,7 @@ if (-not $ApiUrl) {
     if ($current) {
         Write-Host "BT_API_URL juz ustawiony na '$current' - zostawiam bez zmian (podaj -ApiUrl, zeby nadpisac)."
     } else {
-        $ApiUrl = Read-Host 'Adres API budget-tracker (np. http://localhost:5031)'
+        $ApiUrl = Read-Host 'Adres API budget-tracker (np. https://localhost:7133)'
     }
 }
 

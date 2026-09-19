@@ -6,7 +6,7 @@ function Get-BtTokenPath {
 
 function Get-BtIdentityUrl {
     if ($env:BT_IDENTITY_URL) { return $env:BT_IDENTITY_URL.TrimEnd('/') }
-    return 'http://localhost:5172'
+    return 'https://localhost:7226'
 }
 
 function Get-BtCliSecret {
@@ -26,6 +26,17 @@ function ConvertFrom-BtSecureString {
     }
 }
 
+# Token na dysku jest szyfrowany DPAPI (ConvertFrom-SecureString bez klucza): odszyfruje go tylko to samo konto
+# Windows na tym samym komputerze. Refresh token zapisany jawnie pozwalalby kazdemu, kto odczyta plik (malware,
+# kopia zapasowa, zrzut dysku), logowac sie bez hasla i bez 2FA az do wygasniecia tokenu.
+function Write-BtTokenRecord {
+    param([Parameter(Mandatory)]$Record)
+
+    $json = $Record | ConvertTo-Json
+    $protected = ConvertTo-SecureString -String $json -AsPlainText -Force | ConvertFrom-SecureString
+    Set-Content -Path (Get-BtTokenPath) -Value $protected -Encoding ASCII
+}
+
 function Save-BtToken {
     param([Parameter(Mandatory)]$TokenResponse)
 
@@ -36,15 +47,27 @@ function Save-BtToken {
         expires_at    = $expiresAt.ToString('o')
         identity_url  = Get-BtIdentityUrl
     }
-    $record | ConvertTo-Json | Set-Content -Path (Get-BtTokenPath) -Encoding UTF8
+    Write-BtTokenRecord $record
 }
 
 function Read-BtStoredToken {
     $path = Get-BtTokenPath
     if (-not (Test-Path $path)) { return $null }
     try {
-        Get-Content -Path $path -Raw | ConvertFrom-Json
+        $raw = (Get-Content -Path $path -Raw).Trim()
+
+        # Starszy format to jawny JSON. Wczytujemy go jeszcze raz i od razu zapisujemy zaszyfrowany,
+        # zeby po aktualizacji modulu nie zostal na dysku plik z refresh tokenem otwartym tekstem.
+        if ($raw.StartsWith('{')) {
+            $legacy = $raw | ConvertFrom-Json
+            Write-BtTokenRecord $legacy
+            return $legacy
+        }
+
+        $secure = ConvertTo-SecureString -String $raw -ErrorAction Stop
+        ConvertFrom-BtSecureString $secure | ConvertFrom-Json
     } catch {
+        # Uszkodzony plik albo plik z innego konta/komputera - traktujemy jak brak logowania (bt login).
         $null
     }
 }
@@ -177,7 +200,7 @@ function bt {
     if ($Tokens.Count -ge 1 -and $Tokens[0] -eq 'logout') { Disconnect-Bt; return }
 
     if (-not $env:BT_API_URL) {
-        Write-Error "BT_API_URL nie jest ustawiony. Uruchom install.ps1 albo: `$env:BT_API_URL = 'http://localhost:5031'"
+        Write-Error "BT_API_URL nie jest ustawiony. Uruchom install.ps1 albo: `$env:BT_API_URL = 'https://localhost:7133'"
         return
     }
 

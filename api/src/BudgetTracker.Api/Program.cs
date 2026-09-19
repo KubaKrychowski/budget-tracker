@@ -69,10 +69,12 @@ builder.Services.AddLimits();
 builder.Services.AddStandingOrders();
 builder.Services.AddEpisodicOrders();
 
+// Originy frontu z konfiguracji (appsettings.Development.json), nie z kodu: adres i port zależą od środowiska.
 const string devCors = "dev-frontend";
+var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
     options.AddPolicy(devCors, policy => policy
-        .WithOrigins("http://localhost:4200")
+        .WithOrigins(corsOrigins)
         .AllowAnyHeader()
         .AllowAnyMethod()));
 
@@ -123,11 +125,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 
-// W Development NIE przekierowujemy na https: gdy Rider odpala profil z parą portów
-// http/https, przekierowanie 307 z http (tam, gdzie celuje proxy Angulara) na https to
-// SKOK MIĘDZY ORIGINAMI — przeglądarka na takim skoku CELOWO zdejmuje nagłówek
-// Authorization (spec fetch), więc token z requestu ginie i finalne żądanie na https
-// wygląda jak niezalogowane (401), mimo że front poprawnie go wysłał.
+// W Development nie ma czego przekierowywać: API słucha wyłącznie na https (launchSettings). Nie dokładaj
+// tu drugiego, http-owego adresu: przekierowanie 307 z http na https to SKOK MIĘDZY ORIGINAMI, na którym
+// przeglądarka CELOWO zdejmuje nagłówek Authorization (spec fetch), więc token ginie i żądanie wygląda
+// jak niezalogowane (401), mimo że front poprawnie go wysłał.
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

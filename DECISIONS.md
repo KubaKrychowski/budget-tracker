@@ -909,3 +909,46 @@ zgadnięty domyślny adres byłby cichą pułapką (komenda z pozoru działa, al
 > ręcznym teście `bt budget disable <zły-guid>` na żywym API, nie przez czytanie dokumentacji —
 > `Bt.psm1` sprawdza najpierw `ErrorDetails.Message` (ścieżka PS7), a dopiero potem strumień
 > odpowiedzi (ścieżka PS 5.1), żeby moduł działał tak samo na obu.
+
+## 12. Logowanie (BudgetTracker.Identity): tokeny, HTTPS, klucze
+
+**Kształt.** Osobny serwer tożsamości (ASP.NET Identity + OpenIddict) trzyma konta i wystawia tokeny; front nie ma własnych
+ekranów logowania (kod + PKCE), API tylko waliduje podpis JWT przez JWKS i czyta `sub`. SPA odnawia sesję ukrytym iframe'em
+(silent renew) na ciasteczku Identity — **bez refresh tokena** na froncie.
+
+**Czasy życia tokenów** (sekcja `Tokens` w konfiguracji): access i id token 15 min, refresh token 14 dni i to wyłącznie dla
+`bt-cli` (SPA go nie używa). API sprawdza tylko podpis i nie pyta Identity o unieważnienie, więc **skradziony access token działa do `exp`**,
+nawet po zmianie hasła — dlatego jest krótki. Świadomie nie robimy introspekcji na każde żądanie (koszt i zależność API od dostępności Identity).
+
+**Gdzie leży token na froncie.** `angular-auth-oidc-client` domyślnie trzyma tokeny w `sessionStorage`, więc XSS ma do nich dostęp.
+Ograniczamy skutki, nie usuwamy przyczyny: krótki czas życia, brak refresh tokena i CSP (niżej). Zmiana na tokeny w pamięci
+albo wzorzec BFF byłaby osobną, większą decyzją.
+
+**HTTPS wszędzie, także lokalnie.** Identity `https://localhost:7226`, API `https://localhost:7133` (demo `:5099`), front `:4200`/`:4310`,
+jeden certyfikat deweloperski ASP.NET (CN=localhost). `launchSettings.json` ma tylko profile https, ciasteczka (logowania i antiforgery) mają
+`Secure` zawsze, a OpenIddict ma włączony wymóg transportu bez wyjątku dla Development. `ng serve` bierze certyfikat z `web/.certs`
+(poza gitem, eksport: `tools/dev-certs.ps1`). Klient SPA w OpenIddict jest uzgadniany z konfiguracją przy KAŻDYM starcie
+(`OpenIddictSeeder`), inaczej zmiana adresów nie dotarłaby do klienta zapisanego już w bazie.
+
+**Klucze produkcyjne (poza repo, fail-fast).** Poza Development serwer nie wstanie bez: certyfikatu podpisującego i szyfrującego
+(`Identity:Certificates:Signing|Encryption:Path` + `Password`) oraz katalogu kluczy Data Protection (`DataProtection:KeysPath`).
+Ścieżki i hasła z sekretów/zmiennych środowiskowych, nigdy z pliku w repo. Certyfikat podpisujący pozwala wystawić token dla dowolnego
+użytkownika, klucze Data Protection pozwalają podrobić ciasteczko logowania. Przykład wygenerowania pary (nie sprawdzany w tym repo):
+`New-SelfSignedCertificate -Subject "CN=BudgetTracker Identity Signing" -KeyUsage DigitalSignature -KeyAlgorithm RSA -KeyLength 2048`
+i `Export-PfxCertificate`; certyfikat szyfrujący analogicznie z `-KeyUsage KeyEncipherment`.
+
+**CSP.** Identity: middleware `SecurityHeadersMiddleware` (`script-src 'self'`, bez `unsafe-inline`, `frame-ancestors 'none'`,
+`form-action` z originami SPA — Chrome egzekwuje je także po przekierowaniu z formularza). Widoki nie mają `style=`, `<script>` bez `src`
+ani `onXxx=` — pilnuje tego test. Front: `security.autoCsp` w buildzie produkcyjnym (strict CSP na hashach, `<meta>` w `index.html`)
+plus `referrer` w `index.html`. ⚠️ `public/silent-renew.html` ma skrypt inline: host frontu, który dołoży CSP jako nagłówek HTTP,
+musi go dopuścić (hash), inaczej odnawianie sesji przestanie działać.
+
+**bt-cli.** Token (w tym refresh) leży w `%LOCALAPPDATA%\bt-cli\token.json` zaszyfrowany DPAPI — odczyta go tylko to samo konto Windows na tym
+komputerze. Starszy plik z jawnym JSON-em jest przy pierwszym odczycie migrowany.
+
+**Maile i teksty.** Maile to szablony HTML z CSS (`BudgetTracker.Identity/Emails`, makiety w Figmie, strona „Logowanie (Identity)"), wszystkie
+teksty Identity w `Resources/SharedResource*.resx` (en + pl; test pilnuje kompletu kluczy). Wysyłka: MailKit, MailHog lokalnie, SMTP z Azure na środowiskach
+(poświadczenia tylko z sekretów).
+
+**Czego to nie zamyka.** Brak testów end-to-end logowania w CI (sprawdzane ręcznie w przeglądarce), brak plain-text alternatywy w mailach,
+brak rotacji kluczy podpisujących i brak listy unieważnionych tokenów.
