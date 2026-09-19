@@ -10,6 +10,7 @@
   --ds-neutral-500: #78877C;
   --ds-neutral-900: #252B27;
   --ds-error-500: #E44E44;
+  --ds-warning-500: #F5A623;
   --ds-error-50: #FDF6F5;
   --ds-error-200: #F7D6D2;
 }
@@ -215,6 +216,7 @@ body.admin-page { align-items: flex-start; padding-top: 56px; }
 .admin-chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ds-neutral-400); }
 .admin-chip.ok::before { background: var(--ds-primary-500); }
 .admin-chip.bad::before { background: var(--ds-error-500); }
+.admin-chip.warn::before { background: var(--ds-warning-500); }
 
 .admin-badge {
   display: inline-block;

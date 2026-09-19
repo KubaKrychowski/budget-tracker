@@ -1,4 +1,6 @@
+using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Services.Api;
+using BudgetTracker.Identity.Services.Audit;
 
 namespace BudgetTracker.Identity.Services.Users;
 
@@ -21,46 +23,79 @@ namespace BudgetTracker.Identity.Services.Users;
 /// ⚠️ Nigdy odwrotnie: konto skasowane przed danymi zostawia dane, których nikt już nie może usunąć zwykłą drogą
 /// (stąd zakładka „Dane bez właściciela").
 /// </para>
+/// <para>
+/// Każda próba, także odmowa i awaria, trafia do dziennika audytu <see cref="IAdminAuditLog"/> z identyfikatorem
+/// wykonawcy. Zapis jest na samym końcu, PO operacji, i nie może jej cofnąć.
+/// </para>
 /// </remarks>
 public sealed class UserDeletionService(
-    IAccountStore accounts, IUserDataClient data, ILogger<UserDeletionService> logger)
+    IAccountStore accounts, IUserDataClient data, IAdminAuditLog audit, ILogger<UserDeletionService> logger)
 {
     public Task<UserDeletionOutcome> DeleteByAdminAsync(Guid userId, Guid adminId, CancellationToken ct) =>
-        userId == adminId
-            ? Task.FromResult(UserDeletionOutcome.CannotDeleteSelf)
-            : DeleteAsync(userId, lockFirst: true, ct);
+        DeleteAsync(userId, actorId: adminId, byAdmin: true, ct);
 
     public Task<UserDeletionOutcome> DeleteOwnAccountAsync(Guid userId, CancellationToken ct) =>
-        DeleteAsync(userId, lockFirst: false, ct);
+        DeleteAsync(userId, actorId: userId, byAdmin: false, ct);
 
-    private async Task<UserDeletionOutcome> DeleteAsync(Guid userId, bool lockFirst, CancellationToken ct)
+    private async Task<UserDeletionOutcome> DeleteAsync(Guid userId, Guid actorId, bool byAdmin, CancellationToken ct)
     {
+        var action = byAdmin ? AdminAuditAction.UserDeleted : AdminAuditAction.OwnAccountDeleted;
+
+        if (byAdmin && userId == actorId)
+        {
+            return await FinishAsync(UserDeletionOutcome.CannotDeleteSelf, action, actorId, userId, email: null, rows: null, ct);
+        }
+
         var account = await accounts.FindAsync(userId, ct);
-        if (account is null) return UserDeletionOutcome.NotFound;
+        if (account is null)
+        {
+            return await FinishAsync(UserDeletionOutcome.NotFound, action, actorId, userId, email: null, rows: null, ct);
+        }
 
         // Pilnuje też „Usuń moje konto": jedyny admin nie może zostawić serwera bez nikogo, kto zarządza kontami.
-        if (account.IsAdmin && await accounts.CountAdminsAsync(ct) <= 1) return UserDeletionOutcome.LastAdmin;
+        if (account.IsAdmin && await accounts.CountAdminsAsync(ct) <= 1)
+        {
+            return await FinishAsync(UserDeletionOutcome.LastAdmin, action, actorId, userId, account.Email, rows: null, ct);
+        }
 
-        if (lockFirst) await accounts.LockAsync(userId, ct);
+        if (byAdmin) await accounts.LockAsync(userId, ct);
 
+        int rows;
         try
         {
-            var deleted = await data.DeleteDataAsync(userId, ct);
-            logger.LogInformation("Usunięto dane konta {UserId}: {Rows} wierszy.", userId, deleted.Total);
+            rows = (await data.DeleteDataAsync(userId, ct)).Total;
+            logger.LogInformation("Usunięto dane konta {UserId} ({Rows} wierszy), wykonał {ActorId}.", userId, rows, actorId);
         }
         catch (UserDataServiceException ex)
         {
-            logger.LogWarning(ex, "Nie udało się usunąć danych konta {UserId} — konto zostaje.", userId);
-            return UserDeletionOutcome.DataServiceUnavailable;
+            logger.LogWarning(ex, "Nie udało się usunąć danych konta {UserId} (próbował {ActorId}) — konto zostaje.", userId, actorId);
+            return await FinishAsync(UserDeletionOutcome.DataServiceUnavailable, action, actorId, userId, account.Email, rows: null, ct);
         }
 
         // Ścieżka właściciela blokuje dopiero teraz (patrz uwagi wyżej); ścieżka admina zablokowała konto na początku.
-        if (!lockFirst) await accounts.LockAsync(userId, ct);
+        if (!byAdmin) await accounts.LockAsync(userId, ct);
 
         await accounts.RevokeSessionsAsync(userId, ct);
         await accounts.DeleteAsync(userId, ct);
 
-        logger.LogInformation("Usunięto konto {UserId}.", userId);
-        return UserDeletionOutcome.Deleted;
+        logger.LogInformation("Usunięto konto {UserId}, wykonał {ActorId}.", userId, actorId);
+        return await FinishAsync(UserDeletionOutcome.Deleted, action, actorId, userId, account.Email, rows, ct);
     }
+
+    private async Task<UserDeletionOutcome> FinishAsync(
+        UserDeletionOutcome outcome, AdminAuditAction action, Guid actorId, Guid subjectId, string? email, int? rows, CancellationToken ct)
+    {
+        await audit.RecordAsync(new AdminAuditRecord(actorId, action, ToAuditOutcome(outcome), subjectId, email, Rows: rows), ct);
+        return outcome;
+    }
+
+    private static AdminAuditOutcome ToAuditOutcome(UserDeletionOutcome outcome) => outcome switch
+    {
+        UserDeletionOutcome.Deleted => AdminAuditOutcome.Succeeded,
+        UserDeletionOutcome.NotFound => AdminAuditOutcome.NotFound,
+        UserDeletionOutcome.CannotDeleteSelf => AdminAuditOutcome.RefusedSelf,
+        UserDeletionOutcome.LastAdmin => AdminAuditOutcome.RefusedLastAdmin,
+        UserDeletionOutcome.DataServiceUnavailable => AdminAuditOutcome.DataServiceUnavailable,
+        _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
+    };
 }

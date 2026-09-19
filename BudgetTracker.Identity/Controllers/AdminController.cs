@@ -2,6 +2,7 @@ using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services.Api;
+using BudgetTracker.Identity.Services.Audit;
 using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,10 +26,15 @@ public sealed class AdminController(
     UserManager<ApplicationUser> userManager,
     IUserDataClient data,
     UserDeletionService deletion,
+    IAdminAuditLog audit,
+    IAdminAuditReader auditReader,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AdminController> logger) : Controller
 {
     private const int PageSize = 20;
+
+    /// <summary>Wpisy historii są krótkie i jest ich dużo, więc strona jest większa niż lista kont.</summary>
+    private const int HistoryPageSize = 50;
 
     /// <summary>Ile znaków identyfikatora właściciela trzeba wpisać, żeby potwierdzić usunięcie jego danych.</summary>
     private const int ConfirmationLength = 8;
@@ -68,8 +74,37 @@ public sealed class AdminController(
             PageSize = PageSize,
             Total = total,
             OrphanOwnersCount = orphans?.Count,
+            HistoryCount = await auditReader.CountAsync(ct),
             DataAvailable = summaries is not null,
             Flash = ReadFlash(),
+        });
+    }
+
+    /// <summary>
+    /// Dziennik audytu (tylko odczyt). Świadomie NIE woła API budżetu: to ekran, na który zagląda się właśnie wtedy, gdy
+    /// coś poszło nie tak (także z API), więc zakładka „Dane bez właściciela" jest tu bez liczby.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> History(int page = 1, CancellationToken ct = default)
+    {
+        var total = await auditReader.CountAsync(ct);
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(total / (double)HistoryPageSize)));
+
+        var entries = await auditReader.PageAsync(page, HistoryPageSize, ct);
+
+        // Adres wykonawcy pokazujemy, dopóki jego konto istnieje; po usunięciu zostaje sam identyfikator.
+        var actorIds = entries.Select(e => e.ActorId).Distinct().ToList();
+        var actorEmails = (await userManager.Users.Where(u => actorIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Email, u.UserName }).ToListAsync(ct))
+            .ToDictionary(u => u.Id, u => u.Email ?? u.UserName ?? "");
+
+        return View(new AdminHistoryViewModel
+        {
+            Rows = entries.Select(e => AdminHistoryRow.From(e, actorEmails)).ToList(),
+            Page = page,
+            PageSize = HistoryPageSize,
+            Total = total,
+            UsersCount = await userManager.Users.CountAsync(ct),
         });
     }
 
@@ -128,6 +163,7 @@ public sealed class AdminController(
         {
             Owners = owners ?? [],
             UserCount = userIds.Count,
+            HistoryCount = await auditReader.CountAsync(ct),
             DataAvailable = owners is not null,
             Flash = ReadFlash(),
         });
@@ -155,15 +191,24 @@ public sealed class AdminController(
             return View(await BuildAssignModelAsync(ownerId, owner.Counts, model.TargetUserId, ct));
         }
 
+        int rows;
         try
         {
-            await data.ReassignAsync(ownerId, target, ct);
+            rows = (await data.ReassignAsync(ownerId, target, ct)).Total;
         }
         catch (UserDataServiceException ex)
         {
-            logger.LogWarning(ex, "Nie udało się przepisać danych właściciela {OwnerId}.", ownerId);
+            logger.LogWarning(ex, "Nie udało się przepisać danych właściciela {OwnerId} (próbował {ActorId}).", ownerId, CurrentUserId());
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.OrphanDataAssigned, AdminAuditOutcome.DataServiceUnavailable,
+                ownerId, TargetId: target), ct);
             return FlashAndRedirect(nameof(Orphans), "Admin_Flash_DataUnavailable", isError: true);
         }
+
+        logger.LogInformation("Przepisano dane właściciela {OwnerId} na {TargetId} ({Rows} wierszy), wykonał {ActorId}.", ownerId, target, rows, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.OrphanDataAssigned, AdminAuditOutcome.Succeeded,
+            ownerId, TargetId: target, Rows: rows), ct);
 
         return FlashAndRedirect(nameof(Orphans), "Admin_Flash_Assigned", isError: false);
     }
@@ -195,15 +240,22 @@ public sealed class AdminController(
             return View(model);
         }
 
+        int rows;
         try
         {
-            await data.DeleteDataAsync(ownerId, ct);
+            rows = (await data.DeleteDataAsync(ownerId, ct)).Total;
         }
         catch (UserDataServiceException ex)
         {
-            logger.LogWarning(ex, "Nie udało się usunąć danych właściciela {OwnerId}.", ownerId);
+            logger.LogWarning(ex, "Nie udało się usunąć danych właściciela {OwnerId} (próbował {ActorId}).", ownerId, CurrentUserId());
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.OrphanDataDeleted, AdminAuditOutcome.DataServiceUnavailable, ownerId), ct);
             return FlashAndRedirect(nameof(Orphans), "Admin_Flash_DataUnavailable", isError: true);
         }
+
+        logger.LogInformation("Usunięto dane właściciela {OwnerId} ({Rows} wierszy), wykonał {ActorId}.", ownerId, rows, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.OrphanDataDeleted, AdminAuditOutcome.Succeeded, ownerId, Rows: rows), ct);
 
         return FlashAndRedirect(nameof(Orphans), "Admin_Flash_OrphansDeleted", isError: false, model.ExpectedConfirmation);
     }

@@ -1,0 +1,95 @@
+@model AdminHistoryViewModel
+@{
+    ViewData["Title"] = L["Admin_History_Title"];
+}
+
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_History_Title", "Admin_History_Subtitle", AdminTab.History, Model.UsersCount, null, Model.Total, null))"/>
+
+<div class="alert" role="note">
+    <div class="alert-body">
+        <span class="alert-title">@L["Admin_History_AlertTitle"]</span>
+        <span>@L["Admin_History_AlertText"]</span>
+    </div>
+</div>
+
+@if (Model.Rows.Count == 0)
+{
+    <p class="admin-muted">@L["Admin_History_Empty"]</p>
+}
+else
+{
+    <table class="admin-table">
+        <thead>
+        <tr>
+            <th>@L["Admin_History_Col_When"]</th>
+            <th>@L["Admin_History_Col_Actor"]</th>
+            <th>@L["Admin_History_Col_Action"]</th>
+            <th>@L["Admin_History_Col_Subject"]</th>
+            <th>@L["Admin_History_Col_Outcome"]</th>
+            <th>@L["Admin_History_Col_Rows"]</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Model.Rows)
+        {
+            <tr>
+                <td>
+                    <div>@row.OccurredAt.UtcDateTime.ToString("d")</div>
+                    <div class="admin-muted admin-small">@row.OccurredAt.UtcDateTime.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</div>
+                </td>
+                <td>
+                    @if (row.ActorEmail is { } actorEmail)
+                    {
+                        <div title="@row.ActorId">@actorEmail</div>
+                    }
+                    else
+                    {
+                        <div class="admin-mono" title="@row.ActorId">@row.ActorShort</div>
+                        <div class="admin-muted admin-small">@L["Admin_History_ActorDeleted"]</div>
+                    }
+                </td>
+                <td>@L[row.ActionKey]</td>
+                <td>
+                    <div class="admin-mono" title="@row.SubjectId">@row.SubjectShort</div>
+                    <div class="admin-muted admin-small">
+                        @switch (row.SubjectNote)
+                        {
+                            case AdminHistorySubjectNote.EmailHash:
+                                @L["Admin_History_Note_EmailHash", row.HashShort!]
+                                break;
+                            case AdminHistorySubjectNote.SubjectIsActor:
+                                @L["Admin_History_Note_SubjectIsActor"]
+                                break;
+                            case AdminHistorySubjectNote.AssignedTo:
+                                @L["Admin_History_Note_AssignedTo", row.TargetShort!]
+                                break;
+                            default:
+                                @L["Admin_History_Note_NoAccount"]
+                                break;
+                        }
+                    </div>
+                </td>
+                <td><span class="admin-chip @row.OutcomeCss">@L[row.OutcomeKey]</span></td>
+                <td>
+                    @if (row.Rows is { } rows)
+                    {
+                        <span>@rows.ToString("N0")</span>
+                    }
+                    else
+                    {
+                        <span class="admin-muted">—</span>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="admin-pager">
+        <span class="admin-muted">@L["Admin_History_Paging_Shown", Model.Rows.Count, Model.Total]</span>
+        <div class="admin-pager-buttons">
+            @if (Model.HasPrevious) { <a asp-action="History" asp-route-page="@(Model.Page - 1)" class="btn-secondary">@L["Admin_Paging_Prev"]</a> }
+            @if (Model.HasNext) { <a asp-action="History" asp-route-page="@(Model.Page + 1)" class="btn-secondary">@L["Admin_Paging_Next"]</a> }
+        </div>
+    </div>
+}

@@ -15,10 +15,11 @@
 </div>
 
 <nav class="admin-tabs">
-    <a asp-action="Users" class="admin-tab @(Model.UsersTabActive ? "active" : "")">@L["Admin_Tab_Users", Model.UsersCount]</a>
-    <a asp-action="Orphans" class="admin-tab @(Model.UsersTabActive ? "" : "active")">
+    <a asp-action="Users" class="admin-tab @(Model.Active == AdminTab.Users ? "active" : "")">@L["Admin_Tab_Users", Model.UsersCount]</a>
+    <a asp-action="Orphans" class="admin-tab @(Model.Active == AdminTab.Orphans ? "active" : "")">
         @(Model.OrphansCount is { } n ? L["Admin_Tab_Orphans", n] : L["Admin_Tab_OrphansNoCount"])
     </a>
+    <a asp-action="History" class="admin-tab @(Model.Active == AdminTab.History ? "active" : "")">@L["Admin_Tab_History", Model.HistoryCount]</a>
 </nav>
 
 @if (Model.Flash is { } flash)

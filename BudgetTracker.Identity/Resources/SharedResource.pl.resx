@@ -236,4 +236,31 @@
   <data name="Identity_PasswordRequiresLower" xml:space="preserve"><value>Hasło musi zawierać co najmniej jedną małą literę.</value></data>
   <data name="Identity_PasswordRequiresUpper" xml:space="preserve"><value>Hasło musi zawierać co najmniej jedną wielką literę.</value></data>
   <data name="Identity_RecoveryCodeRedemptionFailed" xml:space="preserve"><value>Nie udało się użyć kodu zapasowego.</value></data>
+  <data name="Admin_Tab_History" xml:space="preserve"><value>Historia ({0})</value></data>
+  <data name="Admin_History_Title" xml:space="preserve"><value>Historia operacji</value></data>
+  <data name="Admin_History_Subtitle" xml:space="preserve"><value>Kto i kiedy usuwał konta oraz dane w aplikacji. Wpisy są tylko do odczytu.</value></data>
+  <data name="Admin_History_AlertTitle" xml:space="preserve"><value>Adresów e-mail tu nie ma</value></data>
+  <data name="Admin_History_AlertText" xml:space="preserve"><value>Wpis przechowuje identyfikator konta i skrót jego adresu, żeby przeżył usunięcie konta. Wykonawcę pokazujemy z adresem, dopóki jego konto istnieje. Godziny są w UTC.</value></data>
+  <data name="Admin_History_Empty" xml:space="preserve"><value>Nic jeszcze nie zapisano.</value></data>
+  <data name="Admin_History_Col_When" xml:space="preserve"><value>Kiedy (UTC)</value></data>
+  <data name="Admin_History_Col_Actor" xml:space="preserve"><value>Wykonał</value></data>
+  <data name="Admin_History_Col_Action" xml:space="preserve"><value>Operacja</value></data>
+  <data name="Admin_History_Col_Subject" xml:space="preserve"><value>Konto</value></data>
+  <data name="Admin_History_Col_Outcome" xml:space="preserve"><value>Wynik</value></data>
+  <data name="Admin_History_Col_Rows" xml:space="preserve"><value>Dane</value></data>
+  <data name="Admin_History_ActorDeleted" xml:space="preserve"><value>konto usunięte</value></data>
+  <data name="Admin_History_Note_EmailHash" xml:space="preserve"><value>skrót adresu {0}</value></data>
+  <data name="Admin_History_Note_SubjectIsActor" xml:space="preserve"><value>to konto wykonawcy</value></data>
+  <data name="Admin_History_Note_AssignedTo" xml:space="preserve"><value>na konto {0}</value></data>
+  <data name="Admin_History_Note_NoAccount" xml:space="preserve"><value>brak konta</value></data>
+  <data name="Admin_History_Paging_Shown" xml:space="preserve"><value>Pokazano {0} z {1} wpisów</value></data>
+  <data name="Admin_History_Action_UserDeleted" xml:space="preserve"><value>Usunięcie konta</value></data>
+  <data name="Admin_History_Action_OwnAccountDeleted" xml:space="preserve"><value>Usunięcie własnego konta</value></data>
+  <data name="Admin_History_Action_OrphanDataAssigned" xml:space="preserve"><value>Przepisanie danych bez właściciela</value></data>
+  <data name="Admin_History_Action_OrphanDataDeleted" xml:space="preserve"><value>Usunięcie danych bez właściciela</value></data>
+  <data name="Admin_History_Outcome_Succeeded" xml:space="preserve"><value>Udane</value></data>
+  <data name="Admin_History_Outcome_NotFound" xml:space="preserve"><value>Brak konta</value></data>
+  <data name="Admin_History_Outcome_RefusedSelf" xml:space="preserve"><value>Odmowa: własne konto</value></data>
+  <data name="Admin_History_Outcome_RefusedLastAdmin" xml:space="preserve"><value>Odmowa: ostatni admin</value></data>
+  <data name="Admin_History_Outcome_DataServiceUnavailable" xml:space="preserve"><value>Serwis danych niedostępny</value></data>
 </root>
