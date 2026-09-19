@@ -150,6 +150,7 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
+builder.Services.AddSingleton<FixedAccountSeeder>();
 builder.Services.AddHostedService<OpenIddictSeeder>();
 builder.Services.AddHostedService<OpenIddictPruningService>();
 

@@ -22,6 +22,7 @@ namespace BudgetTracker.Identity.Services;
 public sealed class OpenIddictSeeder(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
+    FixedAccountSeeder fixedAccounts,
     IOptions<SpaClientOptions> spaClient,
     IWebHostEnvironment environment) : IHostedService
 {
@@ -42,44 +43,17 @@ public sealed class OpenIddictSeeder(
 
         if (environment.IsDevelopment())
         {
-            // Hasła NIE mają defaultu w kodzie ani w appsettings (trafiłyby do gita) — trzymaj je
-            // w user-secrets: `dotnet user-secrets set "Seed:DevPassword" "..."` (i analogicznie
-            // Seed:DemoPassword, Clients:Cli:Secret). Patrz README katalogu.
-            var devPassword = configuration["Seed:DevPassword"]
-                ?? throw new InvalidOperationException(
-                    "Brak Seed:DevPassword w konfiguracji. Ustaw: dotnet user-secrets set \"Seed:DevPassword\" \"...\"");
-            var demoPassword = configuration["Seed:DemoPassword"]
-                ?? throw new InvalidOperationException(
-                    "Brak Seed:DemoPassword w konfiguracji. Ustaw: dotnet user-secrets set \"Seed:DemoPassword\" \"...\"");
-
+            // Brak hasła albo hasło odrzucone przez politykę to ostrzeżenie w konsoli, nie błąd startu (patrz FixedAccountSeeder).
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            await SeedFixedUserAsync(
-                userManager, DeterministicGuid.For("dev:user:owner"), "dev@budgettracker.local", devPassword);
-            await SeedFixedUserAsync(
-                userManager, DeterministicGuid.For("demo:user:owner"), "demo@budgettracker.local", demoPassword);
+            await fixedAccounts.SeedAsync(
+                userManager, DeterministicGuid.For("dev:user:owner"), "dev@budgettracker.local", "Seed:DevPassword");
+            await fixedAccounts.SeedAsync(
+                userManager, DeterministicGuid.For("demo:user:owner"), "demo@budgettracker.local", "Seed:DemoPassword");
         }
 
         // Rola admin po utworzeniu kont dev/demo, żeby adres z Admin:Emails, który akurat jest kontem seedowanym,
         // dostał ją już przy pierwszym starcie.
         await scope.ServiceProvider.GetRequiredService<AdminRoleService>().GrantConfiguredAdminsAsync();
-    }
-
-    /// <summary>
-    /// Konto z GÓRY NARZUCONYM identyfikatorem — musi pasować do <c>Budget.UserId</c> zaseedowanego
-    /// w API, więc nie może dostać losowego <see cref="Guid"/> z domyślnego <c>CreateAsync</c>.
-    /// </summary>
-    private static async Task SeedFixedUserAsync(
-        UserManager<ApplicationUser> userManager, Guid id, string email, string password)
-    {
-        if (await userManager.FindByGuidAsync(id) is not null) return;
-
-        var user = new ApplicationUser { Id = id, UserName = email, Email = email, EmailConfirmed = true };
-        var result = await userManager.CreateAsync(user, password);
-        if (!result.Succeeded)
-        {
-            throw new InvalidOperationException(
-                $"Nie udało się założyć konta {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
