@@ -25,7 +25,7 @@ registerLocaleData(pl);
  * i bezpieczeństwo" (`features/settings/account-security`) do zbudowania linków na strony
  * zmiany hasła/2FA, które mieszkają wyłącznie po stronie Identity (Razor), nie w Angularze.
  */
-export const IDENTITY_AUTHORITY = 'http://localhost:5172';
+export const IDENTITY_AUTHORITY = 'https://localhost:7226';
 
 export const appConfig: ApplicationConfig = {
   providers: [

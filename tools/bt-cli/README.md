@@ -10,11 +10,11 @@ endpoint co panel terminala w aplikacji. Zero HTTP-owych szczegółów na co dzi
 .\tools\bt-cli\install.ps1
 ```
 
-Zapyta raz o adres API (np. `http://localhost:5031` dla API z Ridera, `http://localhost:5099` dla
+Zapyta raz o adres API (np. `https://localhost:7133` dla API z Ridera, `https://localhost:5099` dla
 środowiska demo) i zapamięta go trwale (`BT_API_URL`, per-użytkownik). Otwórz nowe okno PowerShell —
 `bt` jest już dostępne, bez importowania modułu i bez wpisów w `$PROFILE`.
 
-Zmiana adresu później: `.\tools\bt-cli\install.ps1 -ApiUrl http://localhost:5099` albo ręcznie
+Zmiana adresu później: `.\tools\bt-cli\install.ps1 -ApiUrl https://localhost:5099` albo ręcznie
 `[Environment]::SetEnvironmentVariable('BT_API_URL', '...', 'User')`.
 
 ## Logowanie
@@ -33,8 +33,9 @@ Potem, przed pierwszym użyciem:
 bt login    # pyta o e-mail i hasło, zapamiętuje token w %LOCALAPPDATA%\bt-cli\token.json
 ```
 
-Token odświeża się sam w tle (refresh token); `bt logout` czyści zapisany token. Serwer tożsamości
-domyślnie to `http://localhost:5172` — inny adres ustaw przez `$env:BT_IDENTITY_URL` (trwale jak
+Token odświeża się sam w tle (refresh token); `bt logout` czyści zapisany token. Zapisany token jest zaszyfrowany DPAPI
+(odczyta go tylko to samo konto Windows na tym komputerze), starszy plik z jawnym tekstem jest przy pierwszym użyciu migrowany. Serwer tożsamości
+domyślnie to `https://localhost:7226` — inny adres ustaw przez `$env:BT_IDENTITY_URL` (trwale jak
 `BT_API_URL`, przez `[Environment]::SetEnvironmentVariable`).
 
 ## Użycie

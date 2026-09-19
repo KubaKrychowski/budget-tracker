@@ -41,8 +41,13 @@ public sealed class AuthorizationController(
             ?? throw new InvalidOperationException("Żądanie OpenIddict nie zostało poprawnie zainicjalizowane.");
 
         var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-        if (result is not { Succeeded: true })
+        var user = result is { Succeeded: true } ? await userManager.GetUserAsync(result.Principal) : null;
+        if (user is null)
         {
+            // Ciasteczko może wskazywać konto, którego już nie ma (usunięte w trakcie sesji) — to samo co brak
+            // logowania, nie awaria. Kasujemy je, żeby nie wracało przy każdym kolejnym żądaniu.
+            if (result is { Succeeded: true }) await signInManager.SignOutAsync();
+
             // Silent renew (ukryty iframe, patrz SPA) prosi z prompt=none: pokazanie ekranu logowania
             // w ukrytej ramce zawiesiłoby żądanie na dobre, więc zamiast Challenge() od razu wraca
             // błąd — front sam wie, że trzeba przelogować interaktywnie.
@@ -59,9 +64,6 @@ public sealed class AuthorizationController(
                         Request.HasFormContentType ? Request.Form.ToList()! : Request.Query.ToList()!),
                 });
         }
-
-        var user = await userManager.GetUserAsync(result.Principal)
-            ?? throw new InvalidOperationException("Zalogowany użytkownik nie istnieje już w bazie.");
 
         var application = await applicationManager.FindByClientIdAsync(request.ClientId!)
             ?? throw new InvalidOperationException("Nieznana aplikacja kliencka.");

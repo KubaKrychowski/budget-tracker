@@ -96,6 +96,10 @@ body.auth-page {
   font-weight: 600;
   cursor: pointer;
 }
+/* Odnośniki stylowane jak przyciski — bez style="" w widokach, bo CSP nie pozwala na style inline. */
+.btn-primary, .btn-secondary { text-decoration: none; }
+.btn-centered { align-self: center; }
+
 .btn-primary:hover { background: var(--ds-primary-600); border-color: var(--ds-primary-600); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -142,6 +146,7 @@ body.auth-page {
 .auth-scopes-box ul { margin: 0; padding-left: 18px; font-size: 14px; }
 .auth-scopes-box li { margin-bottom: 8px; }
 .auth-scopes-box li:last-child { margin-bottom: 0; }
+.auth-scopes-box ul.auth-codes { list-style: none; padding-left: 0; font-family: monospace; font-size: 15px; }
 
 .auth-consent-actions { display: flex; justify-content: flex-end; gap: 12px; }
 

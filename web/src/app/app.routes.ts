@@ -25,49 +25,49 @@ export const routes: Routes = [
         path: 'import',
         loadComponent: () =>
           import('./features/import/import').then((m) => m.Import),
-        title: 'Import wyciągu — Budżet tracker',
+        title: 'Import wyciągu — Wydatki.pl',
       },
       {
         path: 'transactions',
         loadComponent: () =>
           import('./features/transactions/transactions').then((m) => m.Transactions),
-        title: 'Lista transakcji — Budżet tracker',
+        title: 'Lista transakcji — Wydatki.pl',
       },
       {
         path: 'savings',
         loadComponent: () =>
           import('./features/savings/savings').then((m) => m.Savings),
-        title: 'Cele oszczędzania — Budżet tracker',
+        title: 'Cele oszczędzania — Wydatki.pl',
       },
       {
         path: 'savings/reservations',
         loadComponent: () =>
           import('./features/reservations/reservations').then((m) => m.Reservations),
-        title: 'Wszystkie rezerwacje — Budżet tracker',
+        title: 'Wszystkie rezerwacje — Wydatki.pl',
       },
       {
         path: 'limits',
         loadComponent: () =>
           import('./features/limits/limits').then((m) => m.Limits),
-        title: 'Limity wydatków — Budżet tracker',
+        title: 'Limity wydatków — Wydatki.pl',
       },
       {
         path: 'standing-orders',
         loadComponent: () =>
           import('./features/standing-orders/standing-orders').then((m) => m.StandingOrders),
-        title: 'Zlecenia stałe — Budżet tracker',
+        title: 'Zlecenia stałe — Wydatki.pl',
       },
       {
         path: 'episodic-orders',
         loadComponent: () =>
           import('./features/episodic-orders/episodic-orders').then((m) => m.EpisodicOrders),
-        title: 'Zlecenia epizodyczne — Budżet tracker',
+        title: 'Zlecenia epizodyczne — Wydatki.pl',
       },
       {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings').then((m) => m.Settings),
-        title: 'Ustawienia — Budżet tracker',
+        title: 'Ustawienia — Wydatki.pl',
       },
       {
         path: 'create-budget',
@@ -79,7 +79,7 @@ export const routes: Routes = [
         path: 'handbook',
         loadComponent: () =>
           import('./features/handbook/handbook').then((m) => m.Handbook),
-        title: 'Podręcznik — Budżet tracker',
+        title: 'Podręcznik — Wydatki.pl',
       },
     ],
   },

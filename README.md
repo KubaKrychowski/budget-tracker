@@ -36,11 +36,25 @@ Backend (`https://localhost:7xxx`, port z `api/src/BudgetTracker.Api/Properties/
 cd api && dotnet run --project src/BudgetTracker.Api
 ```
 
-Frontend (`http://localhost:4200`):
+Frontend (`https://localhost:4200`, wymaga lokalnego certyfikatu — sekcja „Lokalny HTTPS" niżej):
 
 ```bash
 cd web && npm start
 ```
+
+### Lokalny HTTPS
+
+Identity (`https://localhost:7226`), API (`https://localhost:7133`) i front (`https://localhost:4200`) działają lokalnie
+wyłącznie na https, na jednym certyfikacie deweloperskim ASP.NET (CN=localhost). Jednorazowo:
+
+```powershell
+dotnet dev-certs https --trust        # zaufanie certyfikatowi w systemie (Windows poprosi o potwierdzenie)
+.	oolsdev-certs.ps1                # eksport do web/.certs (plik PEM dla `ng serve`; poza gitem)
+```
+
+Kestrel (Identity i API) bierze certyfikat sam z magazynu systemowego, a `ng serve` z `web/.certs`
+(`angular.json` → `serve.options`). Po zmianie adresów zrestartuj Identity — przy starcie sam uzgadnia zarejestrowanego
+klienta SPA z konfiguracją. W Riderze wybierz profil `https` (jedyny w `launchSettings.json`).
 
 ### Landing page
 
@@ -88,7 +102,7 @@ wyprowadza się z jej treści. Zepsuty JSON nie zatrzyma aplikacji — trafi do 
 Trening (wymaga pliku z danymi):
 
 ```bash
-curl -X POST http://localhost:5031/api/categorization/train
+curl -X POST https://localhost:7133/api/categorization/train
 ```
 
 
