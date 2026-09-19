@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Admin.Exceptions;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Budgets.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
@@ -110,6 +111,7 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         EntityNotFoundException => (StatusCodes.Status404NotFound, null),
 
         UserNotAuthenticatedException => (StatusCodes.Status401Unauthorized, "Auth_NotAuthenticated"),
+        OwnerReassignInvalidException => (StatusCodes.Status400BadRequest, "Admin_ReassignInvalid"),
 
         // ⚠️ To NIE jest wyjątek domenowy i nie ma go tu przez przypadek.
         // ASP.NET rzuca go przy zepsutym ciele żądania i sam niesie właściwy kod (400).

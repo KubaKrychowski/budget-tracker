@@ -10,4 +10,7 @@ public static class IdentityServerDefaults
 
     /// <summary>Odbiorca (<c>aud</c>) tokenów przeznaczonych dla tego API — ten sam, co zakres zakładany w Identity.</summary>
     public const string ApiAudience = "budgettracker_api";
+
+    /// <summary>Zakres tokenów serwisowych serwera tożsamości (client credentials) do endpointów <c>/api/admin</c>.</summary>
+    public const string AdminScope = "budgettracker_admin";
 }

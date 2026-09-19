@@ -15,6 +15,7 @@
   <data name="Import_BudgetDisabled" xml:space="preserve"><value>Ten budżet jest wyłączony i nie przyjmuje nowych danych.</value></data>
   <data name="Budget_NameRequired" xml:space="preserve"><value>Podaj nazwę budżetu.</value></data>
   <data name="Auth_NotAuthenticated" xml:space="preserve"><value>Zaloguj się, aby kontynuować.</value></data>
+  <data name="Admin_ReassignInvalid" xml:space="preserve"><value>Wskaż inne, istniejące konto jako nowego właściciela danych.</value></data>
   <data name="Budget_UnsupportedCurrency" xml:space="preserve"><value>Ta waluta nie jest obsługiwana.</value></data>
   <data name="SavingsTransfer_LinkTargetInvalid" xml:space="preserve"><value>Wybrany budżet oszczędnościowy nie istnieje albo to ten sam budżet.</value></data>
   <data name="SavingsTransfer_RulesInvalid" xml:space="preserve"><value>Powiązany budżet oszczędnościowy potrzebuje od 1 do 20 reguł dopasowania.</value></data>
