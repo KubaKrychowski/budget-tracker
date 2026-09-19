@@ -990,5 +990,21 @@ logicznie i są idempotentne. Zakładka „Dane bez właściciela" pozwala PRZEP
 - `Admin:Emails:0` (user-secrets / zmienna `Admin__Emails__0`): adres administratora;
 - `Api:BaseUrl`: dev ma `https://localhost:7133` w `appsettings.Development.json`, inne środowiska muszą podać własny (tylko https).
 
-**Czego to nie zamyka.** Brak dziennika audytu (kto kogo usunął, poza logiem serwera), brak cofania usunięcia, liczba danych w tabeli
-używa formy bez odmiany („Budżety: 3"), bo polska odmiana liczebników nie ma tu prostej reguły w zasobach.
+**Dziennik audytu.** Tabela `AdminAuditLog` w bazie Identity (`IAdminAuditLog`), tylko do dopisywania: kto (`ActorId`), co
+(`Action`: usunięcie konta przez admina, usunięcie własnego konta, przepisanie albo usunięcie danych bez właściciela), z jakim
+skutkiem (`Outcome`: udane, brak konta, odmowa „to ty” / „ostatni admin”, serwis danych niedostępny), kogo dotyczy
+(`SubjectId`), ile wierszy danych zniknęło (`Rows`) i kiedy. Zapisuje się KAŻDA próba, także odmowy i awarie, bo pytanie „kto próbował”
+jest równie ważne jak „kto usunął”. Wykonawca trafia też do logu serwera.
+- ⚠️ **Adresu e-mail nie ma w tabeli**, tylko jego skrót SHA-256 (małe litery, bez spacji): audyt ma przeżyć konto, a adres to dana
+  osobowa, którą po usunięciu konta usuwamy, nie zachowujemy. To pseudonimizacja, nie anonimizacja: skrót zgadnie się słownikiem
+  adresów, więc służy do sprawdzenia „czy to konto tu było” (`AuditEmailHash.Compute`), nie do odczytu adresu. Przy własnej
+  polityce retencji tabelę można okrajać po `OccurredAt`.
+- **Zapis jest „fail-open”**: dziennik jest zapisywany PO operacji, której nie da się cofnąć, więc awaria zapisu (log błędu z całym
+  wpisem) nie zamienia udanego usunięcia w błąd 500. Cena: przy awarii bazy Identity wpis może zginąć, zostaje w logu serwera.
+- Nie są audytowane: próba usunięcia konta, którego już nie ma w chwili otwarcia ekranu (kontroler odpowiada sam, nic się nie
+  zmienia), oraz odczyt listy użytkowników. Wyścig „konto zniknęło między sprawdzeniem a usunięciem” jest audytowany jako `NotFound`.
+- Wskazówka dla dalszych prac: to jest dziennik operacji administracyjnych, nie historia przebiegów zadań (Hangfire, §4), i nie zastępuje
+  logów serwera. Ekran „Historia” w Identity dochodzi osobnym PR-em, po zaakceptowanej makiecie.
+
+**Czego to nie zamyka.** Brak cofania usunięcia, brak przeglądania dziennika audytu w UI (na razie tylko tabela i log), liczba danych
+w tabeli używa formy bez odmiany („Budżety: 3"), bo polska odmiana liczebników nie ma tu prostej reguły w zasobach.

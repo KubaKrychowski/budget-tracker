@@ -5,6 +5,7 @@ using BudgetTracker.Identity.Options;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services;
 using BudgetTracker.Identity.Services.Api;
+using BudgetTracker.Identity.Services.Audit;
 using BudgetTracker.Identity.Services.Emails;
 using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -168,6 +169,7 @@ builder.Services.AddHttpClient(ApiUserDataClient.HttpClientName, (services, clie
 builder.Services.AddSingleton<ServiceTokenProvider>();
 builder.Services.AddScoped<IUserDataClient, ApiUserDataClient>();
 builder.Services.AddScoped<IAccountStore, IdentityAccountStore>();
+builder.Services.AddScoped<IAdminAuditLog, DbAdminAuditLog>();
 builder.Services.AddScoped<UserDeletionService>();
 builder.Services.AddScoped<AdminRoleService>();
 

@@ -2,6 +2,7 @@ using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services.Api;
+using BudgetTracker.Identity.Services.Audit;
 using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +26,7 @@ public sealed class AdminController(
     UserManager<ApplicationUser> userManager,
     IUserDataClient data,
     UserDeletionService deletion,
+    IAdminAuditLog audit,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AdminController> logger) : Controller
 {
@@ -155,15 +157,24 @@ public sealed class AdminController(
             return View(await BuildAssignModelAsync(ownerId, owner.Counts, model.TargetUserId, ct));
         }
 
+        int rows;
         try
         {
-            await data.ReassignAsync(ownerId, target, ct);
+            rows = (await data.ReassignAsync(ownerId, target, ct)).Total;
         }
         catch (UserDataServiceException ex)
         {
-            logger.LogWarning(ex, "Nie udało się przepisać danych właściciela {OwnerId}.", ownerId);
+            logger.LogWarning(ex, "Nie udało się przepisać danych właściciela {OwnerId} (próbował {ActorId}).", ownerId, CurrentUserId());
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.OrphanDataAssigned, AdminAuditOutcome.DataServiceUnavailable,
+                ownerId, TargetId: target), ct);
             return FlashAndRedirect(nameof(Orphans), "Admin_Flash_DataUnavailable", isError: true);
         }
+
+        logger.LogInformation("Przepisano dane właściciela {OwnerId} na {TargetId} ({Rows} wierszy), wykonał {ActorId}.", ownerId, target, rows, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.OrphanDataAssigned, AdminAuditOutcome.Succeeded,
+            ownerId, TargetId: target, Rows: rows), ct);
 
         return FlashAndRedirect(nameof(Orphans), "Admin_Flash_Assigned", isError: false);
     }
@@ -195,15 +206,22 @@ public sealed class AdminController(
             return View(model);
         }
 
+        int rows;
         try
         {
-            await data.DeleteDataAsync(ownerId, ct);
+            rows = (await data.DeleteDataAsync(ownerId, ct)).Total;
         }
         catch (UserDataServiceException ex)
         {
-            logger.LogWarning(ex, "Nie udało się usunąć danych właściciela {OwnerId}.", ownerId);
+            logger.LogWarning(ex, "Nie udało się usunąć danych właściciela {OwnerId} (próbował {ActorId}).", ownerId, CurrentUserId());
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.OrphanDataDeleted, AdminAuditOutcome.DataServiceUnavailable, ownerId), ct);
             return FlashAndRedirect(nameof(Orphans), "Admin_Flash_DataUnavailable", isError: true);
         }
+
+        logger.LogInformation("Usunięto dane właściciela {OwnerId} ({Rows} wierszy), wykonał {ActorId}.", ownerId, rows, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.OrphanDataDeleted, AdminAuditOutcome.Succeeded, ownerId, Rows: rows), ct);
 
         return FlashAndRedirect(nameof(Orphans), "Admin_Flash_OrphansDeleted", isError: false, model.ExpectedConfirmation);
     }
