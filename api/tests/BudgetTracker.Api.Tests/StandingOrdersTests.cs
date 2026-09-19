@@ -69,7 +69,8 @@ public sealed class StandingOrdersTests : IAsyncLifetime
 
     private StandingOrderMatcher Matcher() => new(_db);
 
-    private CreateStandingOrderCommandHandler Create() => new(_db, Scope(), Matcher());
+    private CreateStandingOrderCommandHandler Create() =>
+        new(_db, Scope(), Matcher(), new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     private UpdateStandingOrderCommandHandler Update() => new(_db, Matcher());
 

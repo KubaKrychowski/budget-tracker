@@ -34,6 +34,13 @@ public sealed class BudgetPurger(AppDbContext db)
     /// </remarks>
     public async Task<int> PurgeAsync(DateTimeOffset? deletedBefore, CancellationToken ct)
     {
+        // Zadanie systemowe (Hangfire), bez kontekstu żadnego użytkownika — sprząta WSZYSTKICH,
+        // więc pod RLS w Postgresie potrzebuje roli, która go omija. `SET LOCAL` żyje tylko w tej
+        // transakcji: appka wraca do zwykłej, ograniczonej roli, gdy tylko ta metoda się skończy —
+        // patrz DECISIONS.md (RLS) i rola `budget_jobs`.
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await db.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs", ct);
+
         var doomed = await db.Budgets
             .IgnoreQueryFilters()
             .Where(b => b.DeletedAt != null)
@@ -41,12 +48,14 @@ public sealed class BudgetPurger(AppDbContext db)
             .Select(b => new { b.Id, b.BusinessId })
             .ToListAsync(ct);
 
-        if (doomed.Count == 0) return 0;
+        if (doomed.Count == 0)
+        {
+            await transaction.CommitAsync(ct);
+            return 0;
+        }
 
         var ids = doomed.Select(b => b.Id).ToList();
         var businessIds = doomed.Select(b => b.BusinessId).ToList();
-
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
         await db.Transactions.IgnoreQueryFilters()
             .Where(t => t.BudgetBusinessId != null && businessIds.Contains(t.BudgetBusinessId.Value))

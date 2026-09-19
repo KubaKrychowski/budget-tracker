@@ -7,7 +7,7 @@ namespace BudgetTracker.Api.Features.Savings.Commands;
 
 /// <summary>Zakłada rezerwację na wskazanym (albo domyślnym) budżecie.</summary>
 public sealed class CreateSavingsReservationCommandHandler(
-    AppDbContext db, SavingsBudgetScope scope, TimeProvider clock)
+    AppDbContext db, SavingsBudgetScope scope, TimeProvider clock, ICurrentUserAccessor currentUser)
 {
     public async Task<SavingsReservationResponseDto> HandleAsync(SaveReservationRequestDto request, CancellationToken ct)
     {
@@ -21,7 +21,8 @@ public sealed class CreateSavingsReservationCommandHandler(
             amount,
             SavingsMonths.FirstDayOf(request.DueMonth),
             request.Priority,
-            clock.GetUtcNow());
+            clock.GetUtcNow(),
+            currentUser.UserId);
 
         db.SavingsReservations.Add(reservation);
         await db.SaveChangesAsync(ct);

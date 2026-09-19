@@ -74,11 +74,13 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
 
     private EpisodicOrderTransactions Transactions() => new(_db);
 
-    private CreateEpisodicOrderCommandHandler Create() => new(_db, Scope(), new EpisodicOrderRequestValidator(_db), Transactions());
+    private CreateEpisodicOrderCommandHandler Create() =>
+        new(_db, Scope(), new EpisodicOrderRequestValidator(_db), Transactions(), new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     private UpdateEpisodicOrderCommandHandler Update() => new(_db, Lookup(), new EpisodicOrderRequestValidator(_db));
 
-    private CreateEpisodicOrderReservationCommandHandler Reserve() => new(_db, Lookup(), Scope());
+    private CreateEpisodicOrderReservationCommandHandler Reserve() =>
+        new(_db, Lookup(), Scope(), new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     private PurchaseEpisodicOrderCommandHandler Purchase() => new(_db, Lookup(), Transactions(), Scope());
 

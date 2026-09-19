@@ -165,6 +165,46 @@ trzymamy w handlerach feature'ów, żeby później dołożyć multi-user przez E
 (dodanie kolumny + jeden globalny filtr). Opcjonalnie: `Domain` jako osobny projekt (nie tylko folder),
 by chronić encje przed logiką i łagodzić główną pułapkę slice'ów (duplikacja/rozłażenie domeny).
 
+> **REWIZJA — 2026-09-17/18: multi-user włączony (`UserId` + filtr Owner), potem RLS w Postgresie
+> jako druga warstwa.** Ten wpis nigdy nie doczekał się osobnej rewizji, gdy `UserId`/logowanie
+> faktycznie ruszyło (BudgetTracker.Identity, OpenIddict) — poniżej to nadrabia razem z krokiem, który
+> po nim nastąpił.
+> - **Krok 1 (17.09, migracja `AddBudgetOwner`):** `Budget.UserId` (z `sub` tokenu OpenIddict) + nazwany
+>   filtr EF Core `"Owner"` w `AppDbContext` (`x.UserId == CurrentUserId`, wyłączony poza żądaniem HTTP —
+>   testy/seedy/Hangfire). Dokładnie hak zapowiedziany wyżej: jedna kolumna, jeden globalny filtr.
+> - **Krok 2 (18.09, migracja `AddChildUserIdAndRls`):** filtr EF Core chroni WYŁĄCZNIE `Budget` — jego
+>   dzieci (`Transaction`, `BudgetItem`, `StandingOrder`, `EpisodicOrder`, `SavingsGoal`,
+>   `SavingsReservation`, `ImportBatch`) świadomie nie mają relacji EF do budżetu (CLAUDE.md §5 —
+>   handlery filtrują je indeksem po `BudgetBusinessId`, nie joinem), więc nic na poziomie EF nie broni
+>   zapytania, które ominie najpierw pobranie własnego budżetu. Naprawiono to DWIEMA warstwami: (a)
+>   `UserId` doszedł też do tych siedmiu tabel (powielony z `Budget.UserId`) + ten sam filtr `"Owner"`;
+>   (b) **row-level security w samym Postgresie** na `Budgets` i wszystkich siedmiu dzieciach —
+>   niezależna od EF Core, więc chroni też przed przyszłym bugiem w handlerze, nie tylko przed dzisiejszym.
+> - **RLS wymagał trzeciej roli Postgresa, nie dwóch.** Appka łączy się jedną wspólną rolą dla
+>   wszystkich użytkowników, więc polityki porównują `UserId` ze zmienną sesyjną `app.current_user_id`
+>   (`RlsSessionInterceptor`, ustawiana przy każdym otwarciu połączenia). Pierwotny plan: appka jako
+>   `budget` traci `SUPERUSER`, dostaje RLS naprawdę. Postgres na to nie pozwolił — `budget` jest
+>   *bootstrap superuserem* klastra (rola z `POSTGRES_USER` przy `initdb`) i **nie da się** jej zdjąć
+>   superusera (`permission denied to alter role`), a superuser zawsze omija RLS, niezależnie od
+>   `FORCE ROW LEVEL SECURITY`. Stąd appka dostała NOWĄ, zwykłą rolę `budget_app` (RLS jej naprawdę
+>   dotyczy), a `budget` (superuser) został wyłącznie Twoim kontem administracyjnym do psql/DBeaver —
+>   dokładnie tym, czym efektywnie już był, tylko appka mu teraz nie ufa.
+> - **`budget_jobs` (NOLOGIN, `BYPASSRLS`)** — zadania bez kontekstu użytkownika, które CELOWO widzą
+>   wszystkich: `BudgetPurger` (Hangfire, czyszczenie budżetów WSZYSTKICH użytkowników po oknie
+>   retencji) i seed (`DevSeed`/`DemoSeed` przy starcie appki, poza żądaniem HTTP — bez tego strażnik
+>   „czy dane już są" w seedzie widziałby zawsze pustkę pod RLS i próbowałby dosypać dane po raz drugi,
+>   co wywala się duplikatem klucza). Appka wchodzi w `budget_jobs` jawnie przez `SET LOCAL ROLE` na
+>   czas jednej transakcji — widoczne w kodzie w dokładnie tych dwóch miejscach, nie ukryte za flagą.
+> - **Role i uprawnienia tabel są POZA migracjami EF** (`api/db/setup-rls-roles.sql` — raz na klaster;
+>   `api/db/grant-app-privileges.sql` — raz na bazę, po migracjach) — role są własnością całego klastra
+>   Postgresa, nie jednej bazy, więc migracja odpalona drugi raz na innej bazie tego samego klastra
+>   wywaliłaby się błędem „rola już istnieje".
+> - Zweryfikowane ręcznie na `budgettracker_uiverify`: `budget_app` bez `app.current_user_id` widzi
+>   zero wierszy, z poprawnym `UserId` widzi swoje, z cudzym `UserId` znowu zero; `budget_jobs` widzi
+>   wszystko niezależnie od zmiennej; pełny przepływ HTTP (dashboard, zmiana limitu) działa poprawnie
+>   przez `budget_app`. **`budgettracker` (prawdziwe dane) świadomie NIE dostało migracji ani ról** —
+>   wymaga osobnej, wyraźnej zgody i backupu (patrz root CLAUDE.md), zanim ktokolwiek to odpali.
+
 > **REWIZJA — 2026-09-03: tożsamość, kasowanie, kaskady.** Trzy reguły przekrojowe, ustalone przy
 > okazji projektowania ekranu ustawień budżetów. Obowiązują **wszystkie encje**, nie tylko budżet.
 > Plan wdrożenia: `plans/business-id-soft-delete.md`.

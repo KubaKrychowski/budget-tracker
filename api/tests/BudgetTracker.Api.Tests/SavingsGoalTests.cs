@@ -74,7 +74,8 @@ public sealed class SavingsGoalTests : IAsyncLifetime
 
     private GetSavingsQueryHandler GetHandler() => new(_db, Scope(), new SavingsCategory(_db));
 
-    private SetSavingsGoalCommandHandler SetGoalHandler() => new(_db, Scope(), _clock);
+    private SetSavingsGoalCommandHandler SetGoalHandler() =>
+        new(_db, Scope(), _clock, new FakeCurrentUserAccessor(Guid.NewGuid()));
 
     private EndSavingsGoalCommandHandler EndGoalHandler() => new(_db, Scope());
 

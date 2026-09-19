@@ -6,9 +6,14 @@ namespace BudgetTracker.Api.Domain;
 /// Istnieje po to, żeby dało się odpowiedzieć „skąd wzięła się ta transakcja” i żeby
 /// podsumowanie z kroku 4 steppera miało pokrycie w danych, a nie tylko w odpowiedzi HTTP.
 /// </summary>
-public class ImportBatch(int budgetId, string bank, string fileName, int rowCount, DateTimeOffset importedAt)
+public class ImportBatch(
+    int budgetId, string bank, string fileName, int rowCount, DateTimeOffset importedAt, Guid userId = default)
     : Entity
 {
+    /// <summary>Właściciel — powielony z <see cref="Budget.UserId"/>, wyłącznie pod RLS w Postgresie.</summary>
+    /// <remarks>Domyślne <c>default</c> z tego samego powodu co <see cref="Budget.UserId"/>.</remarks>
+    public Guid UserId { get; protected set; } = userId;
+
     /// <summary>Moment importu — timestamptz, w odróżnieniu od <c>Transaction.Date</c>, które jest datą księgowania.</summary>
     public DateTimeOffset ImportedAt { get; protected set; } = importedAt;
 

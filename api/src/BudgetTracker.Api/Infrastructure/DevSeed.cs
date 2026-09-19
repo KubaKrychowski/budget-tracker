@@ -54,6 +54,11 @@ public static class DevSeed
         var start = today.AddMonths(-2);
         var transactions = new List<Transaction>();
 
+        // Ten sam identyfikator musi mieć konto w BudgetTracker.Identity (patrz IdentitySeeder) —
+        // inaczej zalogowany deweloper nie zobaczy własnych, zaseedowanych danych. Zadeklarowany
+        // wcześnie, bo transakcje niżej też dostają go jako UserId (RLS w Postgresie, nie tylko budżet).
+        var ownerId = DeterministicGuid.For("dev:user:owner");
+
         for (var month = 0; month <= 2; month++)
         {
             var monthStart = start.AddMonths(month);
@@ -88,7 +93,8 @@ public static class DevSeed
                     status,
                     categoryId: status == TransactionStatus.PendingReview ? null : categories[categoryName].Id,
                     confidence: confidence,
-                    accountId: accounts[rng.Next(accounts.Length)].Id));
+                    accountId: accounts[rng.Next(accounts.Length)].Id,
+                    userId: ownerId));
             }
 
             // Jeden duży wydatek na miesiąc — zasila kartę „największy wydatek w okresie".
@@ -99,7 +105,8 @@ public static class DevSeed
                 nowOffset,
                 TransactionStatus.Confirmed,
                 categoryId: categories["Samochód"].Id,
-                accountId: accounts[0].Id));
+                accountId: accounts[0].Id,
+                userId: ownerId));
 
             // Wypłata — bez niej karta „suma przychodów" byłaby pusta.
             transactions.Add(new Transaction(
@@ -108,15 +115,13 @@ public static class DevSeed
                 "WYNAGRODZENIE",
                 nowOffset,
                 TransactionStatus.Confirmed,
-                accountId: accounts[0].Id));
+                accountId: accounts[0].Id,
+                userId: ownerId));
         }
 
         db.Transactions.AddRange(transactions);
 
         var budgetBusinessId = DeterministicGuid.For("budget:podstawowy");
-        // Ten sam identyfikator musi mieć konto w BudgetTracker.Identity (patrz IdentitySeeder) —
-        // inaczej zalogowany deweloper nie zobaczy własnych, zaseedowanych danych.
-        var ownerId = DeterministicGuid.For("dev:user:owner");
         db.Budgets.Add(new Budget(
                 "Podstawowy",
                 new DateOnly(today.Year, today.Month, 1),
@@ -129,7 +134,7 @@ public static class DevSeed
             .Where(c => merchants.ContainsKey(c.Name))
             .Select(c => new BudgetItem(
                     budgetBusinessId, c.Id, c.Name == "Catering" ? 1500m : 800m,
-                    new DateOnly(today.Year, today.Month, 1), LimitWarning.DefaultThreshold)
+                    new DateOnly(today.Year, today.Month, 1), LimitWarning.DefaultThreshold, ownerId)
                 .WithSeedBusinessId<BudgetItem>(DeterministicGuid.For($"budgetitem:podstawowy:{c.Name}"))));
 
         await db.SaveChangesAsync(ct);

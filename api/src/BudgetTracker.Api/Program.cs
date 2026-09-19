@@ -27,6 +27,7 @@ builder.Services.AddLocalization();
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddScoped<SoftDeleteInterceptor>();
+builder.Services.AddScoped<RlsSessionInterceptor>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
@@ -34,7 +35,9 @@ builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
     options
         .UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
-        .AddInterceptors(sp.GetRequiredService<SoftDeleteInterceptor>()));
+        .AddInterceptors(
+            sp.GetRequiredService<SoftDeleteInterceptor>(),
+            sp.GetRequiredService<RlsSessionInterceptor>()));
 
 // Resource server: waliduje JWT wystawione przez BudgetTracker.Identity przez jego JWKS
 // (SetIssuer + UseSystemNetHttp), bez wspólnej bazy z serwerem tożsamości.
@@ -105,8 +108,19 @@ if (app.Environment.IsDevelopment())
     var seedDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var seedClock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
 
-    if (app.Configuration.GetValue<bool>("Demo:Seed")) await DemoSeed.SeedAsync(seedDb, seedClock);
-    else await DevSeed.SeedAsync(seedDb, seedClock);
+    // Seed startuje bez kontekstu żądania HTTP (jak BudgetPurger) — pod RLS w Postgresie strażnik
+    // "czy transakcje już są" w Dev/DemoSeed widziałby zawsze puste (nikt nie ustawił
+    // app.current_user_id), więc seed próbowałby dosypać dane po raz drugi. `budget_jobs` na czas
+    // TEJ jednej transakcji, tak samo jak w BudgetPurger.PurgeAsync.
+    await using (var seedTransaction = await seedDb.Database.BeginTransactionAsync())
+    {
+        await seedDb.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs");
+
+        if (app.Configuration.GetValue<bool>("Demo:Seed")) await DemoSeed.SeedAsync(seedDb, seedClock);
+        else await DevSeed.SeedAsync(seedDb, seedClock);
+
+        await seedTransaction.CommitAsync();
+    }
 }
 
 app.UseExceptionHandler();
