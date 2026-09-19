@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = L["ConfirmEmailFailed_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["ConfirmEmailFailed_Title"]</h1>
+    <p>@L["ConfirmEmailFailed_Text"]</p>
+</div>
+
+<div class="auth-actions">
+    <a asp-action="ResendEmailConfirmation" class="auth-link">@L["ConfirmEmailFailed_Resend"]</a>
+    <a asp-action="Login" class="auth-link">@L["Common_BackToLogin"]</a>
+</div>

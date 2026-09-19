@@ -35,6 +35,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeader } from '../../core/page-header/page-header';
 import { Rules } from './rules/rules';
 import { Training } from './training/training';
+import { AccountSecurity } from './account-security/account-security';
 import { valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 
@@ -46,17 +47,21 @@ const TrainingTab = 'training';
 const TrainingTabIndex = 1;
 const RulesTab = 'rules';
 const RulesTabIndex = 2;
+const AccountTab = 'account';
+const AccountTabIndex = 3;
 
 /** Zakładka wskazana w adresie, albo 0 (budżety), gdy parametru nie ma lub jest nieznany. */
 const TabIndexByParam: Record<string, number> = {
   [TrainingTab]: TrainingTabIndex,
   [RulesTab]: RulesTabIndex,
+  [AccountTab]: AccountTabIndex,
 };
 
 /** Parametr adresu dla indeksu zakładki, albo `null` dla domyślnej. */
 const TabParamByIndex: Record<number, string> = {
   [TrainingTabIndex]: TrainingTab,
   [RulesTabIndex]: RulesTab,
+  [AccountTabIndex]: AccountTab,
 };
 
 /**
@@ -148,7 +153,7 @@ function startOfDay(date: Date): number {
     NzAlertModule, NzBadgeModule, NzButtonModule, NzDatePickerModule, NzDropdownModule,
     NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSelectModule,
     NzSpinModule, NzTableModule, NzTabsModule, TranslatePipe, NzBreadCrumbComponent, NzBreadCrumbItemComponent,
-    RangeFilter, PageHeader, Rules, Training,
+    RangeFilter, PageHeader, Rules, Training, AccountSecurity,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',

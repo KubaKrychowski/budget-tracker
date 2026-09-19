@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = L["Logout_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["Logout_Heading"]</h1>
+    <p>@L["Logout_Text"]</p>
+</div>
+
+<form asp-controller="Authorization" asp-action="Logout" method="post" class="auth-actions">
+    @Html.AntiForgeryToken()
+    @* OpenIddict czyta parametry POST-a WYŁĄCZNIE z ciała formularza — przepisujemy post_logout_redirect_uri
+       i id_token_hint z oryginalnego GET-a, inaczej wylogowanie wróci na domyślne "/" tego serwera,
+       nie na aplikację, z której przyszło żądanie. *@
+    @foreach (var (key, values) in Context.Request.Query)
+    {
+        foreach (var value in values)
+        {
+            <input type="hidden" name="@key" value="@value"/>
+        }
+    }
+    <button type="submit" class="btn-primary">@L["Logout_Submit"]</button>
+</form>

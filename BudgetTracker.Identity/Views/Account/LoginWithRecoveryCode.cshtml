@@ -1,0 +1,21 @@
+@model LoginWithRecoveryCodeViewModel
+@{
+    ViewData["Title"] = L["RecoveryCode_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["TwoFactor_UseRecoveryCode"]</h1>
+    <p>@L["RecoveryCode_Subtitle"]</p>
+</div>
+
+<form asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="RecoveryCode">@L["Field_RecoveryCode"]</label>
+        <input asp-for="RecoveryCode" placeholder="@L["Placeholder_RecoveryCode"]" autocomplete="off" autofocus/>
+        <span asp-validation-for="RecoveryCode"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">@L["TwoFactor_Verify"]</button>
+</form>

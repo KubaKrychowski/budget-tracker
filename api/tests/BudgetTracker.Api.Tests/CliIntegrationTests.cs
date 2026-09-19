@@ -59,6 +59,7 @@ public sealed class CliIntegrationTests : IAsyncLifetime
         var services = new ServiceCollection();
         services.AddSingleton(_db);
         services.AddSingleton<TimeProvider>(_clock);
+        services.AddSingleton<ICurrentUserAccessor>(new FakeCurrentUserAccessor(Guid.NewGuid()));
         services.AddLogging();
         services.AddLocalization();
         services.AddDashboard();

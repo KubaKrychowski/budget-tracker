@@ -278,6 +278,14 @@
         }
       </section>
     </nz-tab>
+
+    <nz-tab [nzTitle]="'settings.tabs.account' | translate">
+      <section class="set__section">
+        @if (activeTab() === 3) {
+          <app-account-security />
+        }
+      </section>
+    </nz-tab>
   </nz-tabs>
 </div>
 

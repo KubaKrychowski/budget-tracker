@@ -1,0 +1,46 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = L["Register_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["Register_Heading"]</h1>
+    <p>@L["Register_Subtitle"]</p>
+</div>
+
+<form asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly"></div>
+
+    <div class="auth-field">
+        <label asp-for="Email">@L["Field_Email"]</label>
+        <input asp-for="Email" placeholder="@L["Placeholder_Email"]" autocomplete="username" autofocus/>
+        <span asp-validation-for="Email"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="Password">@L["Field_Password"]</label>
+        <input asp-for="Password" placeholder="@L["Placeholder_PasswordMin", PasswordPolicy.MinLength]" autocomplete="new-password"/>
+        <p class="auth-hint">@L["Password_Hint", PasswordPolicy.MinLength]</p>
+        <span asp-validation-for="Password"></span>
+    </div>
+
+    <div class="auth-field">
+        <label asp-for="ConfirmPassword">@L["Field_ConfirmPassword"]</label>
+        <input asp-for="ConfirmPassword" placeholder="@L["Placeholder_RepeatPassword"]" autocomplete="new-password"/>
+        <span asp-validation-for="ConfirmPassword"></span>
+    </div>
+
+    <div class="auth-checkbox">
+        <input asp-for="AcceptTerms" type="checkbox"/>
+        <label asp-for="AcceptTerms">@L["Register_AcceptTerms"]</label>
+    </div>
+    <span asp-validation-for="AcceptTerms"></span>
+
+    <div class="auth-actions">
+        <button type="submit" class="btn-primary">@L["Register_Submit"]</button>
+        <div class="auth-footer-row">
+            <span>@L["Register_HaveAccount"]</span>
+            <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">@L["Login_Submit"]</a>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,31 @@
+@model EnableAuthenticatorViewModel
+@{
+    ViewData["Title"] = L["EnableAuthenticator_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["EnableAuthenticator_Title"]</h1>
+    <p>@L["EnableAuthenticator_Subtitle"]</p>
+</div>
+
+<div class="auth-qr-box">
+    <img src="@Url.Action("AuthenticatorQrCode")" alt="@L["EnableAuthenticator_QrAlt"]"/>
+</div>
+
+<div class="auth-manual-code">
+    <span>@L["EnableAuthenticator_ManualCode"]</span>
+    <span class="code-value">@Model.SharedKey</span>
+</div>
+
+<form asp-action="EnableAuthenticator" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly"></div>
+    <input asp-for="ReturnUrl" type="hidden"/>
+
+    <div class="auth-field">
+        <label asp-for="Code">@L["Field_AuthenticatorCode"]</label>
+        <input asp-for="Code" placeholder="123 456" autocomplete="one-time-code" inputmode="numeric" autofocus/>
+        <span asp-validation-for="Code"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">@L["EnableAuthenticator_Title"]</button>
+</form>

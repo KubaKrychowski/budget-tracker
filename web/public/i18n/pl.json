@@ -5,6 +5,9 @@
     "searchPlaceholder": "Wpisz nazwę akcji do wykonania",
     "dashboard": "Dashboard"
   },
+  "auth": {
+    "logout": "Wyloguj się"
+  },
   "actions": {
     "addTransaction": "Dodaj transakcje",
     "createBudget": "Utwórz budżet",
@@ -308,7 +311,8 @@
     "tabs": {
       "budgets": "Budżety",
       "training": "Dane treningowe",
-      "rules": "Reguły predykatu"
+      "rules": "Reguły predykatu",
+      "account": "Konto i bezpieczeństwo"
     },
     "training": {
       "caption": "Dane treningowe",
@@ -521,6 +525,26 @@
       "tiedTitle": "Reguły o tym samym priorytecie: {{priorities}}",
       "tiedDescription": "Przy remisie o wyniku decyduje kolejność dodania reguły, której nie widać na tej liście. Nadaj im różne priorytety, jeśli mogą dopasować tę samą transakcję.",
       "tiedAcknowledge": "Rozumiem"
+    },
+    "account": {
+      "caption": "Konto i bezpieczeństwo",
+      "description": "Dane logowania i zabezpieczenia konta zarządzane są w usłudze uwierzytelniania — kliknięcie w przycisk przeniesie Cię tam.",
+      "email": "Adres e-mail",
+      "twoFactor": {
+        "caption": "Weryfikacja dwuetapowa (2FA)",
+        "description": "Dodatkowe zabezpieczenie logowania kodem z aplikacji uwierzytelniającej. Po włączeniu możesz też wybrać wysyłkę kodu e-mailem.",
+        "enabled": "Włączona",
+        "disabled": "Wyłączona",
+        "enable": "Skonfiguruj 2FA",
+        "disable": "Wyłącz 2FA",
+        "showRecoveryCodes": "Wygeneruj nowe kody zapasowe"
+      },
+      "password": {
+        "caption": "Hasło",
+        "description": "Min. 8 znaków, w tym wielka litera, cyfra i znak specjalny. Konto blokuje się po 3 nieudanych próbach logowania — reset hasła mailem od razu zdejmuje blokadę.",
+        "reset": "Wyślij link do zmiany hasła"
+      },
+      "logout": "Wyloguj się"
     }
   },
   "confirmDialog": {

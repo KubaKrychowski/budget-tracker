@@ -73,6 +73,17 @@
     >
       <nz-icon nzType="setting" />
     </a>
+    <!-- Logowanie/rejestracja/hasła obsługuje BudgetTracker.Identity (Razor) — front tylko
+         wywołuje wylogowanie po stronie klienta, bez własnego ekranu. -->
+    <button
+      type="button"
+      class="app-header__icon-link"
+      (click)="logout()"
+      [attr.aria-label]="'auth.logout' | translate"
+      [title]="'auth.logout' | translate"
+    >
+      <nz-icon nzType="logout" />
+    </button>
   </div>
 </header>
 

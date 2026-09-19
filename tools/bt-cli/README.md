@@ -17,6 +17,26 @@ Zapyta raz o adres API (np. `http://localhost:5031` dla API z Ridera, `http://lo
 Zmiana adresu później: `.\tools\bt-cli\install.ps1 -ApiUrl http://localhost:5099` albo ręcznie
 `[Environment]::SetEnvironmentVariable('BT_API_URL', '...', 'User')`.
 
+## Logowanie
+
+API wymaga zalogowanego użytkownika (BudgetTracker.Identity). Klient `bt-cli` jest zarejestrowany
+z sekretem, który **celowo nie jest w repo** (trzyma go serwer tożsamości w `dotnet user-secrets`,
+`Clients:Cli:Secret`) — ustaw go raz, lokalnie:
+
+```powershell
+[Environment]::SetEnvironmentVariable('BT_CLI_CLIENT_SECRET', '<sekret z BudgetTracker.Identity>', 'User')
+```
+
+Potem, przed pierwszym użyciem:
+
+```powershell
+bt login    # pyta o e-mail i hasło, zapamiętuje token w %LOCALAPPDATA%\bt-cli\token.json
+```
+
+Token odświeża się sam w tle (refresh token); `bt logout` czyści zapisany token. Serwer tożsamości
+domyślnie to `http://localhost:5172` — inny adres ustaw przez `$env:BT_IDENTITY_URL` (trwale jak
+`BT_API_URL`, przez `[Environment]::SetEnvironmentVariable`).
+
 ## Użycie
 
 ```powershell

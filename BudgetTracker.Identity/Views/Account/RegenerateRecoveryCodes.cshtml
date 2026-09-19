@@ -1,0 +1,19 @@
+@model ReturnUrlViewModel
+@{
+    ViewData["Title"] = L["RegenerateRecoveryCodes_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["RegenerateRecoveryCodes_Heading"]</h1>
+    <p>@L["RegenerateRecoveryCodes_Text"]</p>
+</div>
+
+<form asp-action="RegenerateRecoveryCodes" method="post" class="auth-actions">
+    @Html.AntiForgeryToken()
+    <input asp-for="ReturnUrl" type="hidden"/>
+    <button type="submit" class="btn-primary">@L["RegenerateRecoveryCodes_Submit"]</button>
+    @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+    {
+        <a href="@Model.ReturnUrl" class="auth-link">@L["Common_Cancel"]</a>
+    }
+</form>

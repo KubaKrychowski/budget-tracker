@@ -1,0 +1,20 @@
+@model SpaLinkViewModel
+@{
+    ViewData["Title"] = L["ConfirmEmailSuccess_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["ConfirmEmailSuccess_Title"]</h1>
+    <p>@L["ConfirmEmailSuccess_Text"]</p>
+</div>
+
+<div class="auth-actions">
+    @if (Model.SpaUrl is { Length: > 0 } spaUrl)
+    {
+        <a href="@spaUrl" class="btn-primary">@L["Common_BackToApp"]</a>
+    }
+    else
+    {
+        <a asp-action="Login" class="btn-primary">@L["Common_GoToLogin"]</a>
+    }
+</div>

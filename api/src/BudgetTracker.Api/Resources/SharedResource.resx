@@ -14,6 +14,7 @@
   <data name="Import_UnknownBudget" xml:space="preserve"><value>The selected budget no longer exists.</value></data>
   <data name="Import_BudgetDisabled" xml:space="preserve"><value>This budget is switched off and does not accept new data.</value></data>
   <data name="Budget_NameRequired" xml:space="preserve"><value>Give the budget a name.</value></data>
+  <data name="Auth_NotAuthenticated" xml:space="preserve"><value>Sign in to continue.</value></data>
   <data name="Budget_UnsupportedCurrency" xml:space="preserve"><value>That currency is not supported.</value></data>
   <data name="SavingsTransfer_LinkTargetInvalid" xml:space="preserve"><value>The savings budget you picked doesn't exist, or it's this same budget.</value></data>
   <data name="SavingsTransfer_RulesInvalid" xml:space="preserve"><value>A linked savings budget needs between 1 and 20 matching rules.</value></data>

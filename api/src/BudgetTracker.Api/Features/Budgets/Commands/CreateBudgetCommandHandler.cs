@@ -21,10 +21,12 @@ namespace BudgetTracker.Api.Features.Budgets.Commands;
 /// Ujemny bilans początkowy jest dozwolony: debet to legalny stan konta.
 /// </para>
 /// </remarks>
-public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clock)
+public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clock, ICurrentUserAccessor currentUser)
 {
     public async Task<CreateBudgetResponseDto> HandleAsync(CreateBudgetRequestDto request, CancellationToken ct)
     {
+        var userId = currentUser.UserId;
+
         var name = request.Name?.Trim() ?? string.Empty;
         if (name.Length == 0)
         {
@@ -41,7 +43,7 @@ public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clo
         var month = new DateOnly(today.Year, today.Month, 1);
         var now = clock.GetUtcNow();
 
-        var budget = new Budget(name, month, request.InitialBalance, now, currency);
+        var budget = new Budget(name, month, request.InitialBalance, now, currency, userId);
         db.Budgets.Add(budget);
 
         // BusinessId istnieje od razu po `new` (inicjalizator właściwości, nie SaveChanges), więc
@@ -49,7 +51,7 @@ public sealed class CreateBudgetCommandHandler(AppDbContext db, TimeProvider clo
         var linkedSavingsName = request.LinkedSavingsBudgetName?.Trim();
         if (!string.IsNullOrEmpty(linkedSavingsName))
         {
-            var savingsBudget = new Budget(linkedSavingsName, month, 0m, now, currency);
+            var savingsBudget = new Budget(linkedSavingsName, month, 0m, now, currency, userId);
             db.Budgets.Add(savingsBudget);
             budget.LinkSavingsBudget(savingsBudget.BusinessId);
         }

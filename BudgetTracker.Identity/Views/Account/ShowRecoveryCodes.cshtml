@@ -1,0 +1,23 @@
+@model RecoveryCodesViewModel
+@{
+    ViewData["Title"] = L["RecoveryCodes_Title"];
+}
+
+<div class="auth-header">
+    <h1>@L["RecoveryCodes_Heading"]</h1>
+    <p>@L["RecoveryCodes_Text"]</p>
+</div>
+
+<div class="auth-scopes-box">
+    <ul style="list-style:none; padding-left:0; font-family: monospace; font-size: 15px;">
+        @foreach (var code in Model.Codes)
+        {
+            <li>@code</li>
+        }
+    </ul>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SpaUrl))
+{
+    <a href="@Model.SpaUrl" class="btn-primary" style="text-decoration:none; align-self:center;">@L["RecoveryCodes_BackToApp"]</a>
+}

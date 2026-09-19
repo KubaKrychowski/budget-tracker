@@ -5,6 +5,9 @@
     "searchPlaceholder": "Type the name of an action to run",
     "dashboard": "Dashboard"
   },
+  "auth": {
+    "logout": "Log out"
+  },
   "actions": {
     "addTransaction": "Add transaction",
     "createBudget": "Create budget",
@@ -306,7 +309,8 @@
     "openSettings": "Settings",
     "tabs": {
       "budgets": "Budgets",
-      "training": "Training data"
+      "training": "Training data",
+      "account": "Account & security"
     },
     "training": {
       "caption": "Training data",
@@ -458,6 +462,26 @@
         "header": "Are you sure you want to switch off the budget \"{{name}}\"?",
         "description": "A switched-off budget stops accepting new data (imports and transactions), but stays fully visible — you can still edit, reset, and delete it."
       }
+    },
+    "account": {
+      "caption": "Account & security",
+      "description": "Login details and account security are managed in the identity service — the button below will take you there.",
+      "email": "Email address",
+      "twoFactor": {
+        "caption": "Two-factor verification (2FA)",
+        "description": "An extra layer of security using a code from an authenticator app. Once enabled, you can also choose to receive the code by email instead.",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "enable": "Set up 2FA",
+        "disable": "Disable 2FA",
+        "showRecoveryCodes": "Generate new recovery codes"
+      },
+      "password": {
+        "caption": "Password",
+        "description": "At least 8 characters, including an uppercase letter, a digit and a special character. The account locks after 3 failed login attempts — resetting your password by email lifts the lock immediately.",
+        "reset": "Send password reset link"
+      },
+      "logout": "Log out"
     }
   },
   "confirmDialog": {

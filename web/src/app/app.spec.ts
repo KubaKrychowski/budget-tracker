@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
+import { of } from 'rxjs';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { APP_ICONS } from './core/icons';
 import { App } from './app';
 
@@ -16,6 +18,9 @@ describe('App', () => {
         // Bez loadera — test nie sięga po pliki i18n, a TranslatePipe zwraca klucze.
         // Sprawdzamy strukturę shella, nie treść tłumaczeń.
         provideTranslateService(),
+        // Zaślepka zamiast pełnego provideAuth() — test sprawdza strukturę shella,
+        // nie prawdziwe logowanie, więc nie ma po co ciągnąć całej konfiguracji OIDC.
+        { provide: OidcSecurityService, useValue: { logoff: () => of(undefined) } },
       ],
     }).compileComponents();
   });
@@ -38,10 +43,13 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    const links = compiled.querySelectorAll('.app-header__icon-link');
-    expect(links.length).toBe(2);
-    // Kolejność z makiety: podręcznik przed zębatką.
-    expect(links[0].getAttribute('href')).toContain('/handbook');
-    expect(links[1].getAttribute('href')).toBe('/settings');
+    // Terminal (#25) i wylogowanie doszły do tej samej grupy ikon PO tym teście (#19) —
+    // liczymy pozycje względem siebie, nie sztywną liczbę, żeby kolejny dopisany przycisk
+    // nie wymagał poprawki tutaj za każdym razem.
+    const links = Array.from(compiled.querySelectorAll('.app-header__icon-link'));
+    const handbookIndex = links.findIndex((el) => el.getAttribute('href')?.includes('/handbook'));
+    const settingsIndex = links.findIndex((el) => el.getAttribute('href') === '/settings');
+    expect(handbookIndex).toBeGreaterThanOrEqual(0);
+    expect(settingsIndex).toBeGreaterThan(handbookIndex);
   });
 });
