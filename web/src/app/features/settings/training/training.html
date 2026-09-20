@@ -113,10 +113,12 @@
       <!-- ── Kolejka do przeglądu ────────────────────────────────────────────────────
            Paliwo, którego jeszcze nie zebrano — i naturalne przejście na listę transakcji. -->
       <div class="trn__review">
-        <span>
-          {{ 'settings.training.pendingReview' | translate: { count: d.pendingReview } }}
-        </span>
+
         @if (d.pendingReview > 0) {
+          <span>
+          {{ 'settings.training.pendingReview' | translate: {count: d.pendingReview} }}
+        </span>
+
           <!-- ⚠️ `origin`, NIE `from`: lista transakcji ma już parametr `from` i jest nim
                POCZĄTEK ZAKRESU DAT. `?from=training` szło więc do API jako data, nie wiązało
                się do `DateOnly` i cała lista kończyła się odpowiedzią 400. Ten parametr nie
@@ -139,6 +141,7 @@
       @if (emptyCategories().length > 0) {
         <!-- Kategorie z zerem to inny stan jakościowy niż „mało": model nigdy ich nie wskaże. -->
         <nz-alert
+          class="categories-without-example-alert"
           nzType="warning"
           nzShowIcon
           [nzMessage]="'settings.training.distribution.emptyWarning'
