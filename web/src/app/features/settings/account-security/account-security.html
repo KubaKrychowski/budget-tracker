@@ -7,12 +7,15 @@
     <span>{{ email() ?? '—' }}</span>
   </div>
 
-  <h3 class="acs__subcaption">{{ 'settings.account.twoFactor.caption' | translate }}</h3>
+  <div class="acs__caption-container">
+    <h3 class="acs__subcaption">{{ 'settings.account.twoFactor.caption' | translate }}</h3>
+    <nz-tag nzColor="success">{{ 'settings.account.twoFactor.enabled' | translate }}</nz-tag>
+
+  </div>
+
   <p class="acs__description">{{ 'settings.account.twoFactor.description' | translate }}</p>
 
   @if (twoFactorEnabled()) {
-    <nz-tag nzColor="success">{{ 'settings.account.twoFactor.enabled' | translate }}</nz-tag>
-
     <div class="acs__actions">
       <a nz-button nzDanger [href]="disableTwoFactorUrl">
         {{ 'settings.account.twoFactor.disable' | translate }}

@@ -13,11 +13,18 @@
     color: #252b27;
   }
 
-  &__subcaption {
+  &__caption-container {
     margin: 12px 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  &__subcaption {
     font-size: 16px;
     font-weight: 600;
     color: #252b27;
+    margin-bottom: 0;
   }
 
   &__description {

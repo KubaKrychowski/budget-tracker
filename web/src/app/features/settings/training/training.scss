@@ -19,6 +19,7 @@
     font-size: 16px;
     font-weight: 600;
     color: #252b27;
+    margin-bottom: 8px;
   }
 
   &__description,
@@ -54,12 +55,15 @@
   /* Alert zajmuje wolne miejsce, przycisk zostaje przy prawej krawędzi. */
   &__grow {
     flex: 1 1 320px;
+    margin-top: 12px;
+    margin-bottom: 12px;
   }
 
   &__review {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-top: 12px;
     color: #252b27;
   }
 
@@ -95,4 +99,9 @@
     min-width: 2px;
     transition: width 0.2s ease;
   }
+}
+
+.categories-without-example-alert {
+  margin-top: 8px;
+  margin-bottom: 12px;
 }
