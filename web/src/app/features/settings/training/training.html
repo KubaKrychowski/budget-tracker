@@ -72,7 +72,8 @@
           nzType="info"
           nzShowIcon
           [nzMessage]="'settings.training.recategorizeReport.title' | translate"
-          [nzDescription]="recategorizeBody">
+          [nzDescription]="recategorizeBody"
+          class="categories-recalculated">
           <ng-template #recategorizeBody>
             {{ 'settings.training.recategorizeReport.body' | translate: {
                  examined: run.examined,
@@ -103,11 +104,17 @@
       <!-- ⚠️ Ostrzeżenie o metrykach NIE jest drobnym drukiem. TrainTestSplit ma ustalone
            ziarno, ale dzieli inny zbiór przy każdym treningu, bo zbiór rośnie — więc 0,91
            po 0,89 nie znaczy „lepszy model". -->
-      @if (d.metricsAreIndicative) {
+      @if (d.metricsAreIndicative && !caveatHidden()) {
         <nz-alert
           nzType="warning"
           nzShowIcon
-          [nzMessage]="'settings.training.metricsCaveat' | translate" />
+          [nzMessage]="'settings.training.metricsCaveat' | translate"
+          [nzAction]="caveatAction" />
+        <ng-template #caveatAction>
+          <button nz-button nzType="text" nzSize="small" (click)="acknowledgeCaveat()">
+            {{ 'settings.training.metricsCaveatAck' | translate }}
+          </button>
+        </ng-template>
       }
 
       <!-- ── Kolejka do przeglądu ────────────────────────────────────────────────────

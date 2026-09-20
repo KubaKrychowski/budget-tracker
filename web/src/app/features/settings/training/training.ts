@@ -21,6 +21,26 @@ import {
   TrainingSetOverview,
 } from '../../../core/api/models/training-set-overview';
 
+/** Klucz pamięci przeglądarki: czy użytkownik zamknął ostrzeżenie o trafnościach. */
+const CAVEAT_ACK_KEY = "budget-tracker:training-metrics-caveat";
+
+/** Odczyt zgodny z konwencją `active-budget.ts`: brak wpisu, śmieci i wyłączony storage znaczą to samo. */
+function caveatAcknowledged(): boolean {
+  try {
+    return localStorage.getItem(CAVEAT_ACK_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function rememberCaveatAcknowledged(): void {
+  try {
+    localStorage.setItem(CAVEAT_ACK_KEY, "1");
+  } catch {
+    // Prywatne okno albo wyłączony storage — ostrzeżenie wróci przy następnym wejściu i tyle.
+  }
+}
+
 /**
  * Zakładka „Dane treningowe" — z czego uczy się model i jak go douczyć.
  *
@@ -57,6 +77,21 @@ export class Training {
 
   /** Trwa trening albo przywracanie — obie operacje dotykają tego samego pliku modelu. */
   protected readonly busy = signal(false);
+
+  /**
+   * Czy ostrzeżenie o trafnościach jest schowane.
+   *
+   * ⚠️ Zamknięcie jest PAMIĘTANE (localStorage), nie tylko na czas wizyty: ostrzeżenie mówi o stałej
+   * właściwości metryk, a nie o zdarzeniu, więc pokazane po raz dziesiąty temu samemu człowiekowi
+   * uczy pomijania alertów w ogóle. Pamięć jest per przeglądarka, tak jak wybrany budżet.
+   */
+  protected readonly caveatHidden = signal(caveatAcknowledged());
+
+  /** „Rozumiem" — chowa ostrzeżenie i zapamiętuje tę decyzję. */
+  protected acknowledgeCaveat(): void {
+    this.caveatHidden.set(true);
+    rememberCaveatAcknowledged();
+  }
 
   /**
    * Raport z treningu uruchomionego W TEJ SESJI. Świadomie osobno od historii: po kliknięciu

@@ -343,6 +343,7 @@
         "body": "{{rows}} przykładów, {{categories}} kategorii. Trafność ogólna {{micro}}, trafność uśredniona po kategoriach {{macro}}."
       },
       "metricsCaveat": "Trafności są orientacyjne, nie są bramką jakości. Każdy trening dzieli inny zbiór na uczący i testowy, bo zbiór rośnie — wynik wyższy niż poprzednio nie znaczy sam z siebie „lepszy model”.",
+      "metricsCaveatAck": "Rozumiem",
       "pendingReview": "W kolejce do przeglądu czeka {{count}} transakcji.",
       "goToReview": "Przejrzyj je",
       "distribution": {
