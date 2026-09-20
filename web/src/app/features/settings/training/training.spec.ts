@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
@@ -72,6 +73,11 @@ describe('Training', () => {
   const text = (): string =>
     (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
 
+  /** Przycisk „Rozumiem" przy zastrzeżeniu o metrykach. */
+  const ack = () =>
+    fixture.debugElement.queryAll(By.css('button'))
+      .find((b) => (b.nativeElement.textContent as string).includes('Rozumiem'))!;
+
   const settle = async (body?: TrainingSetOverview): Promise<void> => {
     fixture.detectChanges();
     flush(body);
@@ -80,6 +86,8 @@ describe('Training', () => {
   };
 
   beforeEach(async () => {
+    // Zamknięcie zastrzeżenia jest PAMIĘTANE między wizytami — bez czyszczenia jeden test chowałby je reszcie.
+    localStorage.clear();
     confirmDialog = new FakeConfirmDialogService();
 
     await TestBed.configureTestingModule({
@@ -117,6 +125,7 @@ describe('Training', () => {
             body: '{{rows}} przykładów, {{categories}} kategorii. {{micro}} / {{macro}}.',
           },
           metricsCaveat: 'Trafności są orientacyjne, nie są bramką jakości.',
+          metricsCaveatAck: 'Rozumiem',
           pendingReview: 'W kolejce do przeglądu czeka {{count}} transakcji.',
           goToReview: 'Przejrzyj je',
           distribution: {
@@ -165,6 +174,7 @@ describe('Training', () => {
   });
 
   afterEach(() => {
+    localStorage.clear();
     http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush({}); });
     http.verify({ ignoreCancelled: true });
   });
@@ -188,9 +198,21 @@ describe('Training', () => {
     expect(text()).toContain('Zwroty');
   });
 
-  it('zawsze pokazuje zastrzeżenie o metrykach', () => {
+  it('pokazuje zastrzeżenie o metrykach, dopóki użytkownik go nie zamknie', () => {
     // Metryki nie są bramką jakości — każdy trening dzieli inny zbiór, bo zbiór rośnie.
     expect(text()).toContain('orientacyjne');
+  });
+
+  it('„Rozumiem" chowa zastrzeżenie i pamięta to po powrocie na ekran', async () => {
+    ack().nativeElement.click();
+    fixture.detectChanges();
+    expect(text()).not.toContain('orientacyjne');
+
+    // Sedno: gdyby zamknięcie żyło tylko w komponencie, to samo ostrzeżenie wracałoby
+    // przy każdym wejściu w zakładkę — a mówi ono o stałej właściwości metryk, nie o zdarzeniu.
+    fixture = TestBed.createComponent(Training);
+    await settle();
+    expect(text()).not.toContain('orientacyjne');
   });
 
   it('zachęca liczbą nowych poprawek, zamiast odpalać trening sam', () => {

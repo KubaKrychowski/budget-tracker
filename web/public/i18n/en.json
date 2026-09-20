@@ -341,6 +341,7 @@
         "body": "{{rows}} examples, {{categories}} categories. Overall accuracy {{micro}}, per-category average {{macro}}."
       },
       "metricsCaveat": "Accuracies are indicative, not a quality gate. Every training splits a different set into train and test because the set grows — a higher number than last time does not by itself mean a better model.",
+      "metricsCaveatAck": "Got it",
       "pendingReview": "{{count}} transactions are waiting for review.",
       "goToReview": "Review them",
       "distribution": {
