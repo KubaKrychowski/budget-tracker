@@ -44,7 +44,7 @@ public sealed class DictionaryStorageTests : IAsyncLifetime
         _db.AddRange(category, account);
         await _db.SaveChangesAsync();
 
-        _db.Add(new CategoryRule(category.Id, RuleDirection.Expense, 0, pattern: "lidl"));
+        _db.Add(new CategoryRule(category.Id, RuleDirection.Expense, 0, Guid.Empty, pattern: "lidl"));
 
         var transaction = new Transaction(
                               new DateOnly(2026, 9, 1),

@@ -14,7 +14,7 @@ public sealed class DeleteCategoryRuleCommandHandler(AppDbContext db, CategoryRu
 {
     public async Task HandleAsync(Guid id, CancellationToken ct)
     {
-        db.Set<CategoryRule>().Remove(await lookup.FindAsync(id, ct));
+        db.Set<CategoryRule>().Remove(await lookup.FindOwnAsync(id, ct));
         await db.SaveChangesAsync(ct);
     }
 }

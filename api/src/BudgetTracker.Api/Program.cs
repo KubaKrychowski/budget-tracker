@@ -97,12 +97,20 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 using (var baseline = app.Services.CreateScope())
 {
     var baselineDb = baseline.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Reguły bazowe są WSPÓLNE (UserId = pusty Guid), a RLS pozwala roli budget_app zapisywać tylko własne wiersze —
+    // seed bez kontekstu użytkownika działa więc na budget_jobs (BYPASSRLS), w jednej transakcji, jak BudgetPurger.
+    await using var baselineTransaction = await baselineDb.Database.BeginTransactionAsync();
+    await baselineDb.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs");
+
     await BaselineSeed.SeedAsync(baselineDb);
 
     await LocalRulesSeed.SeedAsync(
         baselineDb,
         baseline.ServiceProvider.GetRequiredService<IOptions<CategorizationOptions>>().Value.LocalRulesPath,
         baseline.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(LocalRulesSeed)));
+
+    await baselineTransaction.CommitAsync();
 }
 
 if (app.Environment.IsDevelopment())

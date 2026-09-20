@@ -204,6 +204,24 @@ by chronić encje przed logiką i łagodzić główną pułapkę slice'ów (dupl
 >   wszystko niezależnie od zmiennej; pełny przepływ HTTP (dashboard, zmiana limitu) działa poprawnie
 >   przez `budget_app`. **`budgettracker` (prawdziwe dane) świadomie NIE dostało migracji ani ról** —
 >   wymaga osobnej, wyraźnej zgody i backupu (patrz root CLAUDE.md), zanim ktokolwiek to odpali.
+>
+> **REWIZJA — 2026-09-20: reguły kategoryzacji należą do konta (RLS na `CategoryRules`).** Do tej pory reguły
+> były jedną listą dla całej instalacji; przy wielu kontach użytkownik nie może widzieć ani zmieniać cudzych.
+> - **`CategoryRule.UserId`** (nazwa jak w pozostałych tabelach, nie `UserBusinessId`). Pusty Guid
+>   (`CategoryRule.SharedUserId`) = reguła **wspólna**: bazowa z `BaselineSeed` albo z pliku lokalnego. Widzą ją wszyscy,
+>   nikt jej nie zmieni ani nie skasuje (API odpowiada 409 `CategoryRule_SharedReadOnly`). Bez wspólnych nowe konto
+>   nie miałoby zimnego startu.
+> - **Cztery polityki zamiast jednej** (migracja `EnableRulesRls`): odczyt własnych ORAZ wspólnych, zapis tylko własnych.
+>   Jedna polityka „własne" ukryłaby reguły bazowe przed wszystkimi, a „własne lub wspólne" pozwoliłaby je edytować.
+> - **Seed reguł bazowych i lokalnych działa jako `budget_jobs`** (`Program.cs`), bo `budget_app` nie może wstawić
+>   wiersza z cudzym (pustym) `UserId`.
+> - **`OwnerDataService`** kasuje i przepisuje reguły konta, ale NIGDY wspólnych, a reguły nie wchodzą do podsumowania ani
+>   do „danych bez właściciela" (puste `UserId` wyglądałoby jak sierota, a jego usunięcie zabrałoby reguły bazowe wszystkim).
+> - ⚠️ **Konsekwencja:** reguły z `data/category-rules.json` są seedowane jako wspólne, więc nie da się ich edytować ani
+>   usuwać przez API. To decyzja do potwierdzenia: alternatywą jest konfigurowalny właściciel tych reguł.
+>   Reguły dodane ręcznie przed tą migracją też stały się wspólne (backfill nie zna właściciela).
+> - **Testy RLS** (`CategoryRulesRlsTests`) łączą się jako `budget_app` na bazie z prawdziwych migracji; testy handlerów
+>   idą jako superuser `budget` i RLS omijają. Instrukcja dodawania RLS do tabeli: wiki „Jak dodać RLS do tabeli".
 
 > **REWIZJA — 2026-09-03: tożsamość, kasowanie, kaskady.** Trzy reguły przekrojowe, ustalone przy
 > okazji projektowania ekranu ustawień budżetów. Obowiązują **wszystkie encje**, nie tylko budżet.

@@ -85,7 +85,7 @@ public sealed class CategoryRulePreviewTests : IAsyncLifetime
     {
         var id = await _db.Categories.Where(c => c.BusinessId == category).Select(c => c.Id).SingleAsync();
         _db.Set<CategoryRule>().Add(new CategoryRule(
-            id, RuleDirection.Expense, priority, pattern, type));
+            id, RuleDirection.Expense, priority, Guid.Empty, pattern, type));
         await _db.SaveChangesAsync();
     }
 

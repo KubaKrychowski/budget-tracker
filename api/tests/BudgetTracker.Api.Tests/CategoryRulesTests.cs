@@ -30,6 +30,7 @@ public sealed class CategoryRulesTests : IAsyncLifetime
         "Host=localhost;Port=5432;Database=budgettracker_ruleshandler_test;Username=budget;Password=budget_dev_only";
 
     private AppDbContext _db = null!;
+    private readonly Guid _userId = Guid.CreateVersion7();
     private Guid _health;
     private Guid _hobby;
 
@@ -49,7 +50,8 @@ public sealed class CategoryRulesTests : IAsyncLifetime
         _hobby = await _db.Categories.Where(c => c.Name == "Hobby").Select(c => c.BusinessId).SingleAsync();
     }
 
-    private CreateCategoryRuleCommandHandler CreateHandler() => new(_db, new CategoryRuleLookup(_db));
+    private CreateCategoryRuleCommandHandler CreateHandler() =>
+        new(_db, new CategoryRuleLookup(_db), new FakeCurrentUserAccessor(_userId));
 
     private UpdateCategoryRuleCommandHandler UpdateHandler() => new(_db, new CategoryRuleLookup(_db));
 
@@ -86,6 +88,29 @@ public sealed class CategoryRulesTests : IAsyncLifetime
         var healthId = await _db.Categories.Where(c => c.BusinessId == _health).Select(c => c.Id).SingleAsync();
         Assert.Equal(healthId,
             (await nextRequest.CategorizeAsync("gabinet pod lipa wizyta", "", -150m, default)).CategoryId);
+    }
+
+    [Fact]
+    public async Task A_rule_created_through_the_api_belongs_to_the_current_user()
+    {
+        // Bez właściciela reguła użytkownika trafiałaby do wspólnych (pusty UserId): widzieliby ją wszyscy i nikt by jej nie zmienił.
+        var created = await CreateHandler().HandleAsync(Request(pattern: "moj gabinet"), default);
+
+        var rule = await _db.Set<CategoryRule>().SingleAsync(r => r.BusinessId == created.Id);
+        Assert.Equal(_userId, rule.UserId);
+        Assert.False(rule.IsShared);
+    }
+
+    [Fact]
+    public async Task A_shared_rule_can_be_neither_updated_nor_deleted_by_a_user()
+    {
+        // Reguły bazowe są wspólne: RLS odrzuciłby zapis w bazie zmianą 0 wierszy, czyli błędem 500. Handler odpowiada 409 wcześniej.
+        var shared = await _db.Set<CategoryRule>().FirstAsync(r => r.UserId == CategoryRule.SharedUserId);
+
+        await Assert.ThrowsAsync<CategoryRuleSharedReadOnlyException>(() =>
+            UpdateHandler().HandleAsync(shared.BusinessId, Request(), default));
+        await Assert.ThrowsAsync<CategoryRuleSharedReadOnlyException>(() =>
+            DeleteHandler().HandleAsync(shared.BusinessId, default));
     }
 
     [Fact]

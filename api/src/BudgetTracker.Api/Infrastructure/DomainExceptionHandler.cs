@@ -46,6 +46,8 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
     {
         // Żądanie jest poprawne, to stan zasobu na nie nie pozwala — stąd 409, nie 400.
         BudgetDisabledException => (StatusCodes.Status409Conflict, "Import_BudgetDisabled"),
+        // Reguła wspólna (bazowa) jest tylko do odczytu — żądanie poprawne, stan zasobu nie pozwala.
+        CategoryRuleSharedReadOnlyException => (StatusCodes.Status409Conflict, "CategoryRule_SharedReadOnly"),
         // Ta sama zasada: trening jest poprawnym żądaniem, tylko nie w trakcie importu.
         TrainingBusyException => (StatusCodes.Status409Conflict, "Training_Busy"),
         TrainingDataMissingException => (StatusCodes.Status400BadRequest, "Training_NoData"),

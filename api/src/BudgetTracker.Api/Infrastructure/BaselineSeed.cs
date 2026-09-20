@@ -65,6 +65,7 @@ public static class BaselineSeed
             {
                 rules.Add(new CategoryRule(
                         Id(category), direction, priority,
+                        Guid.Empty,
                         pattern: p, minAmount: min, maxAmount: max, note: note)
                     .WithSeedBusinessId<CategoryRule>(DeterministicGuid.For($"rule:{category}:{p}")));
             }
@@ -77,6 +78,7 @@ public static class BaselineSeed
         {
             rules.Add(new CategoryRule(
                     Id(category), direction, priority,
+                    Guid.Empty,
                     transactionTypePattern: typePattern, note: note)
                 .WithSeedBusinessId<CategoryRule>(DeterministicGuid.For($"rule:{category}:type:{typePattern}")));
         }
@@ -123,11 +125,15 @@ public static class BaselineSeed
         Add(120, "Paliwo", ["orlen", "shell", @"\bamic\b", "circle k", "stacja paliw", @"\bbp[ -]"],
             min: FuelMinAmount);
 
-        Add(130, "Gastronomia", ["restaurac", "pizz", "kebab", "mcdonald", @"\bkfc\b", "starbucks",
-            @"pyszne\.pl", "glovo", "uber eats", "kawiarni", "ramen", "bistro"]);
-        Add(140, "Jedzenie", [@"jmp s\.?a", "biedronka", "auchan", "lidl", "kaufland", "żabka", "zabka",
-            "carrefour", @"\bdino\b", @"\bnetto\b", "stokrotka", "lewiatan", "dealz", "delikatesy",
-            "społem", "spolem", "groszek", "piekarni", "mięs"],
+        Add(130, "Gastronomia", [
+            "restaurac", "pizz", "kebab", "mcdonald", @"\bkfc\b", "starbucks",
+            @"pyszne\.pl", "glovo", "uber eats", "kawiarni", "ramen", "bistro"
+        ]);
+        Add(140, "Jedzenie", [
+                @"jmp s\.?a", "biedronka", "auchan", "lidl", "kaufland", "żabka", "zabka",
+                "carrefour", @"\bdino\b", @"\bnetto\b", "stokrotka", "lewiatan", "dealz", "delikatesy",
+                "społem", "spolem", "groszek", "piekarni", "mięs"
+            ],
             "Jedzenie = wyłącznie sklepy. Restauracje i dowóz idą do Gastronomii.");
 
         Add(150, "Samochód", ["opon", "inter cars", "serwis", "holowani", "myjnia", "parking"]);
@@ -135,10 +141,13 @@ public static class BaselineSeed
 
         // ⚠️ Wyłącznie wzorce ogólne i dwaj najwięksi świadczeniodawcy w kraju. Nazwa konkretnej
         // przychodni, gabinetu czy poradni NIE należy tutaj — patrz doc klasy.
-        Add(170, "Zdrowie", ["terapi", "psycholog", "psychiatr", "apteka", @"\bdent", "physio",
-            "luxmed", "medicover", "przychodni", "rehabilit", "okular", @"\bleki\b", "lekarz"]);
+        Add(170, "Zdrowie", [
+            "terapi", "psycholog", "psychiatr", "apteka", @"\bdent", "physio",
+            "luxmed", "medicover", "przychodni", "rehabilit", "okular", @"\bleki\b", "lekarz"
+        ]);
         Add(180, "Hobby", ["kino", "helios", "cinema", "steam", "playstation", "lego", @"\bbieg", "maraton"]);
-        Add(190, "Odzież", ["new balance", "zalando", "reserved", "h&m", @"\bccc\b", "decathlon", "nike", "adidas", "menswear"]);
+        Add(190, "Odzież",
+            ["new balance", "zalando", "reserved", "h&m", @"\bccc\b", "decathlon", "nike", "adidas", "menswear"]);
         Add(200, "Uroda", ["fryzjer", "barber", "kosmetycz"]);
         Add(210, "Zakupy różne", ["hebe", "rossmann", @"\bpepco\b", "action"],
             "Drogerie. MUSZĄ wyprzedzać Zdrowie, inaczej wzorzec „apteka” złapie je pierwszy.");
