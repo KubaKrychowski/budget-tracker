@@ -117,15 +117,17 @@ public sealed class LocalRulesSeedTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Does_not_resurrect_a_rule_deleted_through_the_api()
+    public async Task Does_not_resurrect_a_rule_that_was_deleted()
     {
-        // ⚠️ Bez tego usunięcie reguły przez API byłoby pozorne: plik nadal ją zawiera, więc
-        // przy następnym starcie wróciłaby jako nowy wiersz. Seed patrzy więc także na skasowane.
+        // ⚠️ Bez tego usunięcie reguły byłoby pozorne: plik nadal ją zawiera, więc przy następnym starcie wróciłaby
+        // jako nowy wiersz. Seed patrzy więc także na skasowane. Reguły z pliku są WSPÓLNE (tylko do odczytu dla użytkowników,
+        // API zwraca 409), więc skasowanie robimy wprost — obojętne, kto je wykonuje, liczy się to, że wiersz zostaje.
         await File.WriteAllTextAsync(_path, """[ { "category": "Hobby", "pattern": "kolejka modeli", "priority": 180 } ]""");
         await SeedAsync();
 
         var rule = await _db.Set<CategoryRule>().SingleAsync(r => r.Pattern == "kolejka modeli");
-        await new DeleteCategoryRuleCommandHandler(_db, new CategoryRuleLookup(_db)).HandleAsync(rule.BusinessId, default);
+        _db.Set<CategoryRule>().Remove(rule);
+        await _db.SaveChangesAsync();
 
         await SeedAsync(); // restart po usunięciu
 

@@ -59,7 +59,7 @@ public sealed class LimitsTests : IAsyncLifetime
         await _db.SaveChangesAsync();
 
         // Wynagrodzenie jest przychodowe, bo WSZYSTKIE jego reguły dotyczą wyłącznie wpływów.
-        _db.CategoryRules.Add(new CategoryRule(_salary.Id, RuleDirection.Income, 1, pattern: "^wyplata"));
+        _db.CategoryRules.Add(new CategoryRule(_salary.Id, RuleDirection.Income, 1, Guid.Empty, pattern: "^wyplata"));
         await _db.SaveChangesAsync();
 
         _budgetId = budget.BusinessId;

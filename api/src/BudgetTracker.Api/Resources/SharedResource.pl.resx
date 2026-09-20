@@ -51,4 +51,5 @@
   <data name="Rule_PatternRequired" xml:space="preserve"><value>Reguła musi patrzeć na opis albo na typ operacji. Bez żadnego z nich pasowałaby do każdej transakcji.</value></data>
   <data name="Rule_PatternInvalid" xml:space="preserve"><value>Wzorzec nie jest poprawnym wyrażeniem regularnym.</value></data>
   <data name="Rule_AmountRangeInvalid" xml:space="preserve"><value>Kwota od musi być mniejsza niż kwota do — przy równych widełkach reguła nie dopasuje niczego.</value></data>
+  <data name="CategoryRule_SharedReadOnly" xml:space="preserve"><value>To reguła wbudowana, wspólna dla wszystkich kont, więc nie można jej zmienić ani usunąć. Dodaj własną regułę z niższym numerem priorytetu.</value></data>
 </root>

@@ -12,6 +12,7 @@ public class CategoryRule(
     int categoryId,
     RuleDirection direction,
     int priority,
+    Guid userId,
     string? pattern = null,
     string? transactionTypePattern = null,
     decimal? minAmount = null,
@@ -65,6 +66,22 @@ public class CategoryRule(
 
     /// <summary>Opis dla człowieka — po co ta reguła istnieje. Widoczny przy edycji reguł.</summary>
     public string? Note { get; protected set; } = note;
+
+    /// <summary>
+    /// Właściciel reguły: identyfikator konta (<c>sub</c> z tokenu), tak samo jak <c>UserId</c> budżetu i jego dzieci.
+    /// <see cref="SharedUserId"/> oznacza regułę WSPÓLNĄ (bazową): widzą ją wszyscy, ale nikt jej nie zmieni ani nie skasuje.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Odczyt i zapis chroni RLS w Postgresie (migracja <c>AddRuleOwnerAndRls</c>), tak samo jak filtr Owner w EF.
+    /// Reguły bazowe zakłada seed uruchamiany jako <c>budget_jobs</c> — zwykły użytkownik ma prawo tylko do własnych.
+    /// </remarks>
+    public Guid UserId { get; protected set; } = userId;
+
+    /// <summary>Wartość <see cref="UserId"/> reguły wspólnej (bazowej) — pusty identyfikator, żaden użytkownik go nie ma.</summary>
+    public static readonly Guid SharedUserId = Guid.Empty;
+
+    /// <summary>Reguła wspólna: tylko do odczytu dla użytkowników.</summary>
+    public bool IsShared => UserId == SharedUserId;
 
     /// <summary>Edycja reguły w CAŁOŚCI — tak samo jak ją tworzono.</summary>
     /// <remarks>

@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Admin.Contracts;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,12 @@ namespace BudgetTracker.Api.Features.Admin.Services;
 /// więc pod RLS w Postgresie widziałoby zero wierszy. <c>budget_jobs</c> (<c>BYPASSRLS</c>) obowiązuje tylko w
 /// jednej transakcji — tak samo jak w <c>BudgetPurger</c>. Filtry EF (soft delete, właściciel) są wyłączane jawnie:
 /// usunięcie konta ma zabrać także wiersze skasowane logicznie.
+/// </para>
+/// <para>
+/// ⚠️ <b>Reguły kategoryzacji</b> (<c>CategoryRules</c>) należą do konta, ale NIE wchodzą do podsumowania ani do listy
+/// „danych bez właściciela": reguły wspólne (bazowe) mają pusty <c>UserId</c>, więc właściciel „pusty" wyglądałby jak
+/// sierota, a jego usunięcie skasowałoby reguły wszystkich. Usunięcie i przepisanie ruszają wyłącznie reguły konkretnego
+/// konta i NIGDY wspólnych (<see cref="Domain.CategoryRule.SharedUserId"/>).
 /// </para>
 /// <para>
 /// ⚠️ Kolejność kasowania to kolejność z <c>BudgetPurger</c>: dzieci przed rodzicem, transakcje przed importami
@@ -83,6 +90,7 @@ public sealed class OwnerDataService(AppDbContext db)
         var standing = await db.StandingOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var episodic = await db.EpisodicOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var budgets = await db.Budgets.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        await DeleteOwnRulesAsync(ownerId, ct);
 
         return new OwnerDataCountsResponseDto(
             budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic);
@@ -107,9 +115,27 @@ public sealed class OwnerDataService(AppDbContext db)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
         var episodic = await db.EpisodicOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
+        await ReassignOwnRulesAsync(ownerId, targetUserId, ct);
 
         return new OwnerDataCountsResponseDto(
             budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic);
+    }
+
+    /// <summary>Kasuje trwale reguły konta (także skasowane logicznie); reguł wspólnych nie rusza nigdy.</summary>
+    private async Task DeleteOwnRulesAsync(Guid ownerId, CancellationToken ct)
+    {
+        if (ownerId == CategoryRule.SharedUserId) return;
+
+        await db.CategoryRules.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+    }
+
+    /// <summary>Przepisuje reguły konta na inne konto; reguł wspólnych nie rusza nigdy.</summary>
+    private async Task ReassignOwnRulesAsync(Guid ownerId, Guid targetUserId, CancellationToken ct)
+    {
+        if (ownerId == CategoryRule.SharedUserId) return;
+
+        await db.CategoryRules.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
     }
 
     private static async Task<Dictionary<Guid, int>> CountAsync<T>(

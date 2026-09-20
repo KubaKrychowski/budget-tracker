@@ -6,7 +6,7 @@ using BudgetTracker.Api.Infrastructure;
 namespace BudgetTracker.Api.Features.Categorization.Commands;
 
 /// <summary>Dodaje regułę kategoryzacji — działa od następnego żądania, bez restartu (patrz <see cref="RuleCategorizer"/>).</summary>
-public sealed class CreateCategoryRuleCommandHandler(AppDbContext db, CategoryRuleLookup lookup)
+public sealed class CreateCategoryRuleCommandHandler(AppDbContext db, CategoryRuleLookup lookup, ICurrentUserAccessor currentUserAccessor)
 {
     public async Task<CategoryRuleResponseDto> HandleAsync(CategoryRuleRequestDto request, CancellationToken ct)
     {
@@ -17,6 +17,7 @@ public sealed class CreateCategoryRuleCommandHandler(AppDbContext db, CategoryRu
             category.Id,
             request.Direction,
             request.Priority,
+            currentUserAccessor.UserId,
             CategoryRuleValidator.Trim(request.Pattern),
             CategoryRuleValidator.Trim(request.TransactionTypePattern),
             request.MinAmount,

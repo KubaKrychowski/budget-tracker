@@ -127,6 +127,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.Property(x => x.TransactionTypePattern).HasMaxLength(200);
             e.Property(x => x.Note).HasMaxLength(300);
             e.Property(x => x.Direction).HasConversion<string>().HasMaxLength(DictionaryCodeLength);
+            e.Property(x => x.UserId).IsRequired();
+            e.HasIndex(x => x.UserId);
+            // Własne reguły ORAZ wspólne (bazowe, UserId = pusty Guid): bez wspólnych nowe konto nie miałoby zimnego startu.
+            e.HasQueryFilter(QueryFilterNames.Owner,
+                x => CurrentUserId == null || x.UserId == CategoryRule.SharedUserId || x.UserId == CurrentUserId);
             e.HasOne<RuleDirectionDictionary>().WithMany()
                 .HasForeignKey(x => x.Direction).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.Priority);

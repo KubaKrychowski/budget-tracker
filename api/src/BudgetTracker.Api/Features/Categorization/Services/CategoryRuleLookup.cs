@@ -13,6 +13,17 @@ public sealed class CategoryRuleLookup(AppDbContext db)
         await db.Set<CategoryRule>().FirstOrDefaultAsync(r => r.BusinessId == id, ct)
         ?? throw new CategoryRuleNotFoundException(id);
 
+    /// <summary>Reguła o <paramref name="id"/>, którą wolno zmienić; nieznana kończy się 404, wspólna (bazowa) 409.</summary>
+    /// <remarks>
+    /// ⚠️ Reguły wspólne widzą wszyscy, ale RLS pozwala zmieniać tylko własne. Bez tej kontroli edycja wspólnej reguły
+    /// przeszłaby przez EF i skończyła się w bazie zmianą 0 wierszy, czyli błędem 500 zamiast czytelnej odpowiedzi.
+    /// </remarks>
+    public async Task<CategoryRule> FindOwnAsync(Guid id, CancellationToken ct)
+    {
+        var rule = await FindAsync(id, ct);
+        return rule.IsShared ? throw new CategoryRuleSharedReadOnlyException(id) : rule;
+    }
+
     /// <summary>Kategoria, na którą wskazuje reguła; nieznana kończy się 404.</summary>
     public async Task<Category> CategoryAsync(Guid id, CancellationToken ct) =>
         await db.Categories.FirstOrDefaultAsync(c => c.BusinessId == id, ct)

@@ -9,7 +9,7 @@ public sealed class UpdateCategoryRuleCommandHandler(AppDbContext db, CategoryRu
 {
     public async Task<CategoryRuleResponseDto> HandleAsync(Guid id, CategoryRuleRequestDto request, CancellationToken ct)
     {
-        var rule = await lookup.FindAsync(id, ct);
+        var rule = await lookup.FindOwnAsync(id, ct);
         var category = await lookup.CategoryAsync(request.CategoryId, ct);
         CategoryRuleValidator.Validate(request);
 

@@ -127,6 +127,7 @@ public static class LocalRulesSeed
                     category.Id,
                     DirectionOf(entry),
                     entry.Priority,
+                    Guid.Empty,
                     entry.Pattern,
                     entry.TransactionType,
                     entry.MinAmount,

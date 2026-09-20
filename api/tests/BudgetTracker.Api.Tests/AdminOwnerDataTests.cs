@@ -163,6 +163,64 @@ public sealed class AdminOwnerDataTests : IAsyncLifetime
         Assert.Equal(4, counts[_bob].Transactions);
     }
 
+    private async Task AddRuleAsync(string pattern, Guid owner)
+    {
+        _db.CategoryRules.Add(new CategoryRule(_categoryId, RuleDirection.Any, 10, owner, pattern: pattern));
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task<List<string?>> RulesOfAsync(Guid owner) =>
+        await _db.CategoryRules.IgnoreQueryFilters().Where(r => r.UserId == owner).OrderBy(r => r.Pattern)
+            .Select(r => r.Pattern).ToListAsync();
+
+    [Fact]
+    public async Task Delete_takes_the_owners_rules_too_but_never_the_shared_ones()
+    {
+        // Reguły należą do konta: po usunięciu konta nie mogą zostać jako niewidzialne wiersze bez właściciela.
+        await AddRuleAsync("wspolna", CategoryRule.SharedUserId);
+        await AddRuleAsync("alicja", _alice);
+        await AddRuleAsync("bartek", _bob);
+
+        await new DeleteOwnerDataCommandHandler(_service).HandleAsync(_alice, default);
+
+        Assert.Empty(await RulesOfAsync(_alice));
+        Assert.Equal(["bartek"], await RulesOfAsync(_bob));
+        Assert.Equal(["wspolna"], await RulesOfAsync(CategoryRule.SharedUserId));
+    }
+
+    [Fact]
+    public async Task Deleting_the_empty_owner_leaves_the_shared_rules_alone()
+    {
+        // ⚠️ „Dane bez właściciela" z pustym identyfikatorem da się skasować z ekranu administratora. Reguły wspólne mają
+        // ten sam pusty UserId — ich skasowanie zabrałoby reguły bazowe WSZYSTKIM kontom.
+        await AddRuleAsync("wspolna", CategoryRule.SharedUserId);
+
+        await new DeleteOwnerDataCommandHandler(_service).HandleAsync(Guid.Empty, default);
+
+        Assert.Equal(["wspolna"], await RulesOfAsync(CategoryRule.SharedUserId));
+    }
+
+    [Fact]
+    public async Task Reassign_moves_the_owners_rules_and_leaves_the_shared_ones()
+    {
+        await AddRuleAsync("wspolna", CategoryRule.SharedUserId);
+        await AddRuleAsync("alicja", _alice);
+
+        await new ReassignOwnerDataCommandHandler(_service).HandleAsync(_alice, new ReassignOwnerRequestDto(_bob), default);
+
+        Assert.Empty(await RulesOfAsync(_alice));
+        Assert.Equal(["alicja"], await RulesOfAsync(_bob));
+        Assert.Equal(["wspolna"], await RulesOfAsync(CategoryRule.SharedUserId));
+    }
+
+    [Fact]
+    public async Task Shared_rules_do_not_make_the_empty_owner_show_up_as_an_orphan()
+    {
+        await AddRuleAsync("wspolna", CategoryRule.SharedUserId);
+
+        Assert.DoesNotContain(Guid.Empty, (await CountsAsync()).Keys);
+    }
+
     [Fact]
     public async Task Reassign_to_the_same_or_an_empty_owner_is_rejected()
     {

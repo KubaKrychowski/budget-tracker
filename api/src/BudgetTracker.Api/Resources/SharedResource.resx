@@ -51,4 +51,5 @@
   <data name="Rule_PatternRequired" xml:space="preserve"><value>A rule must look at the description or the operation type. With neither, it would match every transaction.</value></data>
   <data name="Rule_PatternInvalid" xml:space="preserve"><value>The pattern is not a valid regular expression.</value></data>
   <data name="Rule_AmountRangeInvalid" xml:space="preserve"><value>The lower bound must be smaller than the upper one — with equal bounds the rule matches nothing.</value></data>
+  <data name="CategoryRule_SharedReadOnly" xml:space="preserve"><value>This is a built-in rule shared by all accounts, so it cannot be edited or deleted. Add your own rule with a lower priority number instead.</value></data>
 </root>
