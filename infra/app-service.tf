@@ -119,7 +119,11 @@ resource "azurerm_linux_web_app" "identity" {
       Identity__Certificates__Encryption__Pem    = base64encode(tls_self_signed_cert.encryption.cert_pem)
       Identity__Certificates__Encryption__PemKey = base64encode(tls_private_key.encryption.private_key_pem_pkcs8)
 
-      Clients__Admin__Secret = var.admin_client_secret
+      Clients__Admin__Secret = random_password.admin_client.result
+
+      # ⚠️ Wymagane, choć CLI nie jest tu wdrazane: OpenIddictSeeder zaklada tego klienta bezwarunkowo
+      # i bez sekretu rzuca wyjatkiem, wiec serwer tozsamosci nie wstanie na swiezej bazie.
+      Clients__Cli__Secret = random_password.cli_client.result
 
       Registration__ClosedBeta = tostring(var.registration_closed_beta)
 

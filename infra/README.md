@@ -139,9 +139,12 @@ Cztery wartości są tak pomyślane i **nie ma ich w `terraform.tfvars.example`*
 |---|---|
 | `postgres_connection_string_api` | `TF_VAR_postgres_connection_string_api` |
 | `postgres_connection_string_identity` | `TF_VAR_postgres_connection_string_identity` |
-| `admin_client_secret` | `TF_VAR_admin_client_secret` |
-| `smtp_password` | `TF_VAR_smtp_password` |
 | `smtp_username` | `TF_VAR_smtp_username` |
+| `smtp_password` | `TF_VAR_smtp_password` |
+
+Sekretów klientów OAuth (`budgettracker-admin`, `bt-cli`) **nie podajesz** — generuje je Terraform
+(`secrets.tf`). Są wewnętrzne: serwer tożsamości sam je zapisuje w swojej bazie i sam ich używa, więc
+nie ma drugiej strony, która musiałaby je poznać.
 
 Na stałe, dla swojego konta w Windows (nowa sesja terminala je zobaczy):
 
@@ -215,9 +218,24 @@ cd infra && terraform output -raw front_deployment_token
 
 - **App Service** — `az webapp deploy` albo akcja `azure/webapps-deploy` z paczką z `dotnet publish`.
 
-### Migracje bazy
+### Migracje bazy — tylko API, bo Identity robi to sam
 
-`dotnet ef database update` osobno, na obu bazach. API **nie migruje się samo** przy starcie.
+Dwie bazy, dwa różne zachowania i łatwo je pomylić:
+
+- **serwer tożsamości migruje się SAM przy starcie** (`OpenIddictSeeder.StartAsync` woła `MigrateAsync`),
+  więc nie ma tu nic do zrobienia. ⚠️ Jego connection string musi mieć prawo do DDL — to nie może być
+  rola ograniczona do odczytu i zapisu wierszy;
+- **API nie migruje się samo** i ma się nie migrować: łączy się jako `budget_app`, rola bez prawa do DDL,
+  i na tym polega podział ról pod RLS.
+
+Migracja API jako krok wdrożenia, connection stringiem **właściciela** (nie tym, którym chodzi aplikacja):
+
+```bash
+cd api && dotnet ef migrations script --idempotent --project src/BudgetTracker.Api --output migracja.sql
+```
+
+Skrypt idempotentny daje się przejrzeć przed puszczeniem na prawdziwych danych — `database update` tego
+nie daje. ⚠️ Role Postgresa zakłada osobno `api/db/setup-rls-roles.sql`, raz na klaster, **przed** migracją.
 
 ## Rzeczy, które łatwo przeoczyć
 

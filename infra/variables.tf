@@ -85,12 +85,6 @@ variable "registration_closed_beta" {
   default     = true
 }
 
-variable "admin_client_secret" {
-  description = "Sekret klienta `budgettracker-admin` (client credentials Identity → API). Losowy, długi."
-  type        = string
-  sensitive   = true
-}
-
 variable "token_certificate_validity_hours" {
   description = <<-EOT
     Ważność certyfikatów podpisującego i szyfrującego tokeny (patrz certificates.tf).
@@ -149,7 +143,7 @@ variable "smtp" {
 # Sekrety wydzielone z obiektów. Każdy jest osobną zmienną skalarną, żeby dało się go podać przez
 # zmienną środowiskową `TF_VAR_<nazwa>` i nie zapisywać w żadnym pliku:
 #
-#   TF_VAR_smtp_password, TF_VAR_postgres_connection_string_api, TF_VAR_admin_client_secret, …
+#   TF_VAR_smtp_password, TF_VAR_postgres_connection_string_api, TF_VAR_smtp_username, …
 #
 # ⚠️ To trzyma sekret poza repozytorium i poza `terraform.tfvars`, ale NIE poza stanem Terraforma
 # i NIE poza ustawieniami App Service — tam musi trafić, żeby aplikacja działała. Zmienna środowiskowa
