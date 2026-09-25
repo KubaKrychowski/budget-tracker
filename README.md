@@ -1,7 +1,9 @@
-# Budżet tracker
+# Wydatki.pl
 
 Osobisty tracker wydatków: import CSV z banków → kategoryzacja (reguły + ML) → dashboard
-„gdzie ucieka kasa". Single-user MVP.
+„gdzie ucieka kasa", limity, cele oszczędzania i zlecenia. Jedna osoba, jedna instalacja —
+ale dane są odseparowane per właściciel (RLS w Postgresie), a logowanie idzie przez własny
+serwer tożsamości.
 
 Decyzje projektowe, model domenowy i zakres etapów żyją w **[DECISIONS.md](DECISIONS.md)** — to źródło
 prawdy, nie ten plik. Instrukcje pracy dla agentów: [CLAUDE.md](CLAUDE.md), [api/CLAUDE.md](api/CLAUDE.md),
@@ -11,11 +13,15 @@ prawdy, nie ten plik. Instrukcje pracy dla agentów: [CLAUDE.md](CLAUDE.md), [ap
 
 | Warstwa | Wybór |
 |---|---|
-| Backend | .NET 10 · Minimal APIs · vertical slice |
-| Baza | PostgreSQL 18 (Docker) · EF Core + Npgsql |
+| Backend | .NET 10 · Minimal APIs · vertical slice (12 slice'ów w `Features/`) |
+| Baza | PostgreSQL 18 (Docker) · EF Core + Npgsql · RLS per właściciel |
+| Tożsamość | `BudgetTracker.Identity` — ASP.NET Identity + OpenIddict (logowanie, 2FA, panel admina) |
+| Zadania w tle | Hangfire (trening modelu jedzie kolejką, nie w żądaniu) |
+| Pliki | Azure Blob Storage · lokalnie Azurite z `docker-compose` |
 | ML | ML.NET in-process (`Microsoft.ML`) |
 | Parsowanie CSV | CsvHelper |
 | Frontend | Angular 22 · NG-ZORRO (Ant Design) · Vitest |
+| CLI | `tools/bt-cli` — moduł PowerShell `bt` do `POST /api/cli/execute` |
 
 ## Wymagania
 
@@ -27,7 +33,18 @@ prawdy, nie ten plik. Instrukcje pracy dla agentów: [CLAUDE.md](CLAUDE.md), [ap
 
 ```bash
 cp .env.example .env
-docker compose up -d db
+docker compose up -d
+```
+
+`docker compose` stawia trzy usługi: **db** (Postgres), **mailhog** (podgląd maili z Identity —
+potwierdzenie adresu, reset hasła) i **azurite** (emulator Azure Blob Storage na modele
+kategoryzacji). Samo `up -d db` wystarczy tylko wtedy, gdy nie dotykasz logowania ani treningu.
+
+Do zalogowania się potrzebny jest **serwer tożsamości** — bez niego front zatrzyma się na ekranie
+logowania:
+
+```bash
+dotnet run --project BudgetTracker.Identity
 ```
 
 Backend (`https://localhost:7xxx`, port z `api/src/BudgetTracker.Api/Properties/launchSettings.json`):
@@ -82,11 +99,14 @@ Katalog `data/` to **konfiguracja środowiska**, tak samo jak connection string.
 
 | plik | co to |
 |---|---|
-| `training-set.csv` | pary `opis → kategoria` z realnych wyciągów |
-| `category-model.zip` | wytrenowany model — artefakt, nie źródło |
 | `category-rules.json` | reguły kategoryzacji specyficzne dla tej instalacji |
 
-Wszystkie trzy są w `.gitignore`, bo zawierają nazwy sprzedawców z prawdziwych transakcji.
+Jest w `.gitignore`, bo zawiera nazwy sprzedawców z prawdziwych transakcji.
+
+⚠️ **Model i zbiór uczący nie leżą już na dysku.** Zbiór uczący powstaje z bazy (transakcje
+z kategoriami plus ręczne korekty), a wytrenowany model idzie do bloba — katalog wersji, wraz
+ze wskazaniem aktywnej, trzyma tabela `ModelVersions`. Jedyną ścieżką plikową, jaka została
+w `CategorizationOptions`, jest `LocalRulesPath`.
 
 **Reguły dzielą się na dwie grupy i to rozróżnienie jest istotne.** Wzorce, które pomogą
 dowolnemu polskiemu użytkownikowi przy pierwszym imporcie (Biedronka, Orlen, „czynsz",
@@ -99,11 +119,20 @@ Plik jest wczytywany przy każdym starcie; duplikatów nie będzie, bo identyfik
 wyprowadza się z jej treści. Zepsuty JSON nie zatrzyma aplikacji — trafi do logu.
 Ścieżki ustawia sekcja `Categorization` w `appsettings`.
 
-Trening (wymaga pliku z danymi):
+Trening (wymaga pliku z danymi). Endpoint **kolejkuje** zadanie w Hangfire i zwraca `jobId` —
+nie czeka na wynik, bo trening trwa dłużej niż rozsądny limit żądania HTTP:
 
 ```bash
 curl -X POST https://localhost:7133/api/categorization/train
 ```
+
+Status i raport odbierasz osobno, tym samym `jobId`:
+
+```bash
+curl https://localhost:7133/api/categorization/train/<jobId>
+```
+
+Wytrenowany model ląduje w blobie (lokalnie: Azurite), a katalog wersji w bazie — nie na dysku.
 
 
 **Bez modelu aplikacja działa** — kategoryzują wtedy same reguły. To stan poprawny,
@@ -123,11 +152,17 @@ W Claude Code to samo robi `/verify`.
 
 ## Czego tu celowo nie ma
 
-- **Migracji EF Core** — pierwsza powstanie razem z pierwszymi encjami (slice importu), nie na zapas.
-- **Kodu w `Features/`** — foldery są puste. Vertical slice znaczy, że feature powstaje w całości,
-  gdy go ciągniemy; puste rusztowanie „na przyszłość" to dokładnie to, czego ten projekt unika.
-- **Wyboru fontu** — kandydaci (IBM Plex Sans / Inter) czekają na decyzję, patrz DECISIONS.md §7.
-  Klasa `.tnum` na cyfry tabelaryczne w kolumnach kwot już jest w `web/src/styles.scss`.
+- **Integracji z bankiem** — odrzucona, nie odłożona. Wejściem jest CSV eksportowany ręcznie.
+- **Hostingu i współdzielenia** — konta i izolacja danych są (Identity + RLS), ale nie ma
+  zapraszania, wspólnych budżetów ani wdrożenia w chmurze. To instalacja dla jednej osoby.
+- **Odczytu salda z banku** — saldo otwarcia podajesz sam przy zakładaniu budżetu, resztę
+  aplikacja liczy z zaimportowanych transakcji. Konto, którego nie wgrasz, nie istnieje w rachunku.
+- **Pozycji paragonu** — transakcja jest najmniejszą jednostką.
+
+⚠️ **Font**: `web/src/styles/design-tokens.less` deklaruje `IBM Plex Sans` (z design systemu
+w Figmie) i makiety są na nim zrobione, ale komentarz w `web/src/styles.scss` wciąż twierdzi,
+że wybór nie zapadł. Jedno z dwóch jest nieaktualne — do rozstrzygnięcia przy okazji, patrz
+DECISIONS.md §7.
 
 ## Dane
 

@@ -41,7 +41,14 @@ export class RecentScreens {
     const action = RecentScreens.match(url);
     if (!action || action.key === HomeKey) return;
 
-    const next = [action.key, ...this.state().filter((k) => k !== action.key)].slice(0, MAX_ENTRIES);
+    const current = this.state();
+
+    // ⚠️ Nic nie zapisujemy, gdy kolejność się nie zmienia. `set` z NOWĄ tablicą powiadamia
+    // zależnych nawet przy identycznej zawartości, a ten sygnał czyta szablon dashboardu
+    // W TRAKCIE nawigacji — zapis bez zmiany to proszenie się o dodatkowy cykl detekcji.
+    if (current[0] === action.key) return;
+
+    const next = [action.key, ...current.filter((k) => k !== action.key)].slice(0, MAX_ENTRIES);
     this.state.set(next);
     this.write(next);
   }

@@ -1,6 +1,14 @@
 /* Wymiary z makiety „Wyszukiwarka i ostatnie akcje", ramka 6. Hexy jak w sąsiednich ekranach —
    tokeny żyją w .less, a komponenty w .scss, więc nie da się ich tu zaimportować. */
 .fun {
+  /* Ten sam odstęp co na limitach i celach — ekran nie ma prawa siedzieć inaczej niż sąsiedzi. */
+  padding: 16px 24px 48px;
+
+  /* Ikona okruszka siedzi na linii tekstu, jak na pozostałych ekranach. */
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
   &__filter-row {
     display: flex;
     align-items: center;

@@ -364,12 +364,27 @@ p {
 
 /* ── CTA i stopka ─────────────────────────────────────────────────────────── */
 
+/* Przyciski hero: obok siebie, zawijane na waskim ekranie. */
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .cta {
   text-align: center;
 
   .section-lead {
     margin-left: auto;
     margin-right: auto;
+  }
+
+  /* Dwa przyciski obok siebie, zawijane na waskim ekranie. */
+  &__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
   }
 }
 

@@ -4,7 +4,7 @@
   <div class="wrap bar__inner">
     <span class="bar__brand">
       <img class="bar__logo" src="logo.svg" width="32" height="32" alt="" />
-      <span class="bar__name">Budżet tracker</span>
+      <span class="bar__name">Wydatki.pl</span>
     </span>
     <a class="bar__link" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
       <nz-icon nzType="github" />
@@ -33,7 +33,12 @@
           i mówi wprost, czego w nim nie ma.
         </p>
         <div class="hero__cta">
-          <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+          <!-- Przejście do lokalnej instancji — patrz REWIZJA przy `App.appUrl`. -->
+          <a nz-button nzType="primary" nzSize="large" [href]="appUrl">
+            <nz-icon nzType="arrow-right" />
+            Przejdź do aplikacji
+          </a>
+          <a nz-button nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
             <nz-icon nzType="github" />
             Zobacz kod na GitHubie
           </a>
@@ -204,12 +209,15 @@
         <figcaption>Ekran „Cele oszczędzania” na danych demonstracyjnych.</figcaption>
       </figure>
 
-      <!-- ⚠️ Bez tego akapitu strona obiecywałaby saldo konta, którego kod nie zna. -->
+      <!-- ⚠️ Bez tego akapitu strona obiecywałaby, że aplikacja wie o pieniądzach, o których
+           nie ma skąd wiedzieć. Rozróżnienie jest subtelne i dlatego stoi tu wprost:
+           SALDO konta oszczędnościowego jest znane, ale tylko z importu; miesięczne WPŁATY
+           dalej liczy się z kategorii. -->
       <nz-alert
         nzType="warning"
         nzShowIcon
-        nzMessage="Stan oszczędności liczy się z kategorii, nie z salda konta"
-        nzDescription="Import nie przypisuje transakcji do konta, więc „odłożone” to suma wpłat minus wypłaty w kategorii „Oszczędności”. Nie obejmuje pieniędzy, które leżały na koncie wcześniej, ani odsetek. Aplikacja mówi to na własnym ekranie i ta strona tego nie zamiata."
+        nzMessage="Odłożone liczy się z kategorii, a saldo tylko z tego, co zaimportujesz"
+        nzDescription="Miesięczne „odłożone” to suma wpłat w kategorii „Oszczędności”, nie odczyt z konta. Stan samego konta oszczędnościowego aplikacja pokazuje dopiero wtedy, gdy podepniesz je jako drugi budżet i wgrasz jego wyciąg — do tego czasu widzi wyłącznie przelewy wychodzące z konta bieżącego. Aplikacja mówi to na własnym ekranie i ta strona tego nie zamiata."
       />
     </div>
   </section>
@@ -238,20 +246,22 @@
       <li>
         <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
         <div>
-          <h3>Nie jest wielouserowe</h3>
+          <h3>Nie zaprosisz do niej nikogo</h3>
           <p>
-            Nie ma rejestracji ani logowania. Jedna osoba, jedna baza — multi-user jest
-            świadomie odroczony, a nie zapomniany.
+            Konta i logowanie są, a dane dwóch kont się nie mieszają — ale nie ma
+            <strong>zapraszania, wspólnego budżetu ani hostingu</strong>. Żeby korzystał
+            ktoś jeszcze, musi postawić to u siebie.
           </p>
         </div>
       </li>
       <li>
         <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
         <div>
-          <h3>Nie zna salda Twojego konta</h3>
+          <h3>Nie pyta banku o saldo</h3>
           <p>
-            Liczy przepływy z transakcji, które sam wgrasz. Nie wie o saldzie otwarcia
-            ani o odsetkach.
+            Saldo otwarcia podajesz sam przy zakładaniu budżetu, resztę aplikacja liczy
+            z zaimportowanych transakcji. Konto, którego nie wgrasz, <strong>po prostu nie
+            istnieje w rachunku</strong> — i nic nie przyjdzie tego sprostować z zewnątrz.
           </p>
         </div>
       </li>
@@ -277,7 +287,7 @@
       <h2>Roadmapa</h2>
       <p class="section-lead">
         Kolejność wynika z zależności, nie z ochoty: każdy etap potrzebuje danych z poprzedniego.
-        Zrobiony jest pierwszy punkt — pozostałe jeszcze nie istnieją.
+        Cztery pierwsze punkty działają; dwa ostatnie jeszcze nie istnieją.
       </p>
 
       <ol class="road">
@@ -293,9 +303,9 @@
           </div>
         </li>
 
-        <li class="road__item road__item--next">
+        <li class="road__item road__item--done">
           <div class="road__body">
-            <p class="road__status">Następne</p>
+            <p class="road__status">Gotowe</p>
             <h3>Limity na kategorie</h3>
             <p>
               Limit ma sens dopiero wtedy, gdy jest z czego go ustalić. Postawiony na pustej
@@ -305,21 +315,33 @@
           </div>
         </li>
 
-        <li class="road__item">
+        <li class="road__item road__item--done">
           <div class="road__body">
-            <p class="road__status">Później</p>
+            <p class="road__status">Gotowe</p>
             <h3>Wydatki stałe kontra epizodyczne</h3>
             <p>
-              Czynsz i wakacje to dwie różne rzeczy, a dziś jedno i drugie jest po prostu
-              wydatkiem. Bez tego rozdzielenia każda średnia miesza rachunki, które przyjdą
-              na pewno, z zakupami, które się nie powtórzą.
+              Czynsz i wakacje to dwie różne rzeczy. Zlecenia stałe mają własny rytm i pilnują,
+              czy rata przyszła w oczekiwanej kwocie; zlecenia epizodyczne obsługują wydatki
+              jednorazowe — przeszłe i zaplanowane, z rezerwacją pieniędzy na te drugie.
             </p>
           </div>
         </li>
 
-        <li class="road__item">
+        <li class="road__item road__item--done">
           <div class="road__body">
-            <p class="road__status">Później</p>
+            <p class="road__status">Gotowe</p>
+            <h3>Wyszukiwarka i katalog funkcji</h3>
+            <p>
+              Jedno pole szuka po transakcjach, kategoriach, budżetach i zleceniach naraz,
+              z historią i ostatnio odwiedzanymi ekranami. Obok katalog wszystkich funkcji
+              pogrupowany po tym, po co się do nich wchodzi.
+            </p>
+          </div>
+        </li>
+
+        <li class="road__item road__item--next">
+          <div class="road__body">
+            <p class="road__status">Następne</p>
             <h3>Prognozy</h3>
             <p>
               Stoją na poprzednim punkcie i bez niego nie mają sensu — prognoza, która nie
@@ -344,18 +366,24 @@
   </section>
 
   <!-- ── CTA ───────────────────────────────────────────────────────────────────────────
-       Jedno i prawdziwe. „Wypróbuj” nie ma dokąd prowadzić: nie ma hostingu, nie ma
-       rejestracji, jest jedna baza z prywatnymi danymi. -->
+       Nadal bez „Wypróbuj”: nie ma hostingu, nie ma rejestracji, jest jedna baza z prywatnymi
+       danymi. Przycisk do aplikacji prowadzi do instancji LOKALNEJ i mówi to wprost. -->
   <section class="wrap section cta">
     <h2>Kod jest otwarty</h2>
     <p class="section-lead">
-      Nie ma wersji demo ani rejestracji — aplikacja działa lokalnie, dla jednej osoby.
+      Nie ma wersji demo ani hostingu — aplikacja stoi lokalnie, u jednej osoby.
       Jest za to repozytorium razem z decyzjami projektowymi i ich uzasadnieniami.
     </p>
-    <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
-      <nz-icon nzType="github" />
-      Zobacz kod na GitHubie
-    </a>
+    <div class="cta__buttons">
+      <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+        <nz-icon nzType="github" />
+        Zobacz kod na GitHubie
+      </a>
+      <a nz-button nzSize="large" [href]="appUrl">
+        <nz-icon nzType="arrow-right" />
+        Przejdź do aplikacji
+      </a>
+    </div>
   </section>
 </main>
 
@@ -364,7 +392,7 @@
     <div class="foot__inner">
       <img class="foot__logo" src="logo.svg" width="40" height="40" alt="" />
       <p>
-        Budżet tracker — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
+        Wydatki.pl — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
         Zrzuty ekranu pochodzą z danych demonstracyjnych.
       </p>
     </div>
