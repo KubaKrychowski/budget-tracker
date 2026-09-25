@@ -121,11 +121,14 @@ describe('Landing', () => {
     // przepuściła adres repozytorium PRYWATNEGO: wszystkie linki były w domenie github.com
     // i dawały 404 każdemu, kto nie jest autorem — czyli jedyne CTA nie prowadziło nigdzie.
     //
-    // ⚠️ REWIZJA (2026-09-25): doszedł drugi dozwolony adres — lokalna instancja aplikacji.
-    // Jest dopuszczalny WYŁĄCZNIE dopóki landing chodzi lokalnie. Gdy trafi na publiczny
-    // hosting, `localhost` stanie się tym samym błędem co dawne prywatne repo, a ten test
-    // ma wtedy paść i o tym przypomnieć.
-    const allowed = ['https://github.com/KubaKrychowski/budget-tracker', 'https://localhost:4200'];
+    // ⚠️ REWIZJA (2026-09-25, wieczór): drugim dozwolonym adresem była lokalna instancja aplikacji,
+    // z zapowiedzią, że po wyjściu na publiczny hosting ten test ma paść i o tym przypomnieć.
+    // Padł i przypomniał — aplikacja stoi na Static Web Apps, więc `localhost` został stąd usunięty.
+    // Lista zostaje zamknięta: adres spoza niej to znów CTA prowadzące donikąd.
+    const allowed = [
+      'https://github.com/KubaKrychowski/budget-tracker',
+      'https://salmon-cliff-0ee2c9f03.3.azurestaticapps.net',
+    ];
     const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
 
     expect(links.length).toBeGreaterThan(0);
@@ -134,7 +137,7 @@ describe('Landing', () => {
 
   it('ma przycisk prowadzący do aplikacji', () => {
     const toApp = [...fixture.nativeElement.querySelectorAll('a[href]')]
-      .filter((a) => (a as HTMLAnchorElement).getAttribute('href') === 'https://localhost:4200');
+      .filter((a) => (a as HTMLAnchorElement).getAttribute('href') === 'https://salmon-cliff-0ee2c9f03.3.azurestaticapps.net');
 
     expect(toApp.length).toBeGreaterThan(0);
     expect(text()).toContain('Przejdź do aplikacji');
