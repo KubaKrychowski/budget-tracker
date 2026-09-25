@@ -6,7 +6,13 @@ subscription_id = "00000000-0000-0000-0000-000000000000"
 project     = "wydatki"
 environment = "beta"
 
-location                 = "westeurope"
+# ISTNIEJACA grupa zasobow - Terraform jej nie tworzy i nie usunie. Region zasobow bierze sie z niej.
+# UWAGA: limit 60 min CPU/dobe w F1 jest per region per subskrypcja. Jesli masz juz plan F1 w jakims
+# regionie, wybranie tego samego znaczy, ze oba projekty jedza z jednego budzetu.
+resource_group_name = "rg-wydatki-prod"
+
+# Static Web Apps istnieje tylko w: westeurope, eastus2, centralus, westus2, eastasia -
+# dlatego to osobna zmienna, niezalezna od regionu grupy zasobow.
 static_web_apps_location = "westeurope"
 
 # Baza: Neon, poza Terraformem. ⚠️ Rola budget_app, NIE właściciel bazy — RLS nie dotyczy właściciela

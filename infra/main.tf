@@ -29,8 +29,10 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "main" {
-  name     = "${local.prefix}-rg"
-  location = var.location
-  tags     = local.tags
+# ⚠️ Grupa zasobów jest ISTNIEJĄCA, nie tworzona tutaj. Stoją w niej rzeczy, których Terraform nie zna
+# i znać nie powinien (Azure Communication Services z domeną poczty), więc `terraform destroy` nie ma
+# prawa jej ruszyć. Region zasobów bierze się z tej grupy — jedno źródło prawdy zamiast drugiej zmiennej,
+# którą dałoby się ustawić niezgodnie.
+data "azurerm_resource_group" "main" {
+  name = var.resource_group_name
 }

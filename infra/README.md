@@ -21,6 +21,11 @@ infra/
 | Storage Account `…models…` | modele kategoryzacji i zbiór uczący (lokalnie robi to Azurite) | grosze |
 | Storage Account `…tfstate…` | stan Terraforma (moduł `bootstrap`) | grosze |
 
+**Grupa zasobów musi już istnieć** — podajesz ją w `resource_group_name`, a Terraform jej nie tworzy
+i nie usunie. Stoi w niej także to, czego Terraform nie zna (ACS z domeną poczty), więc `destroy` nie ma
+prawa jej ruszyć. Region wszystkich zasobów bierze się z tej grupy; Static Web Apps ma własną zmienną,
+bo istnieje tylko w pięciu regionach.
+
 Baza **nie** powstaje: jest na Neonie, poza Terraformem, który dostaje gotowe connection stringi.
 
 ## Zanim uruchomisz — cztery rzeczy, które trzeba wiedzieć

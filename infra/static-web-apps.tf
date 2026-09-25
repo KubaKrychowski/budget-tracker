@@ -10,7 +10,7 @@
 
 resource "azurerm_static_web_app" "front" {
   name                = "${local.prefix}-front"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   location            = var.static_web_apps_location
 
   sku_tier = "Free"
@@ -21,7 +21,7 @@ resource "azurerm_static_web_app" "front" {
 
 resource "azurerm_static_web_app" "landing" {
   name                = "${local.prefix}-landing"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   location            = var.static_web_apps_location
 
   sku_tier = "Free"

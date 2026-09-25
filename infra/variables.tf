@@ -15,15 +15,17 @@ variable "environment" {
   default     = "beta"
 }
 
-variable "location" {
+variable "resource_group_name" {
   description = <<-EOT
-    Region dla App Service i konta magazynu.
+    ISTNIEJĄCA grupa zasobów, w której staną App Service, Static Web Apps i konto magazynu na modele.
+    Terraform jej NIE tworzy i nie usunie — ma stać obok rzeczy, których nie zarządza (ACS z pocztą).
+
+    Region wszystkich zasobów bierze się z tej grupy, więc jej wybór to też wybór regionu.
     ⚠️ Limit 60 minut CPU na dobę w planie F1 jest liczony PER REGION PER SUBSKRYPCJA i dzielony między
-    wszystkie darmowe aplikacje w tym regionie. Jeśli masz już gdzieś darmowe App Service, postawienie
-    tego w tym samym regionie zabiera im budżet.
+    wszystkie darmowe aplikacje w tym regionie. Jeśli masz już gdzieś plan F1, wybranie tego samego
+    regionu znaczy, że oba projekty jedzą z jednego budżetu.
   EOT
   type        = string
-  default     = "westeurope"
 }
 
 variable "static_web_apps_location" {

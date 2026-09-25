@@ -12,8 +12,8 @@
 
 resource "azurerm_service_plan" "main" {
   name                = "${local.prefix}-plan"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = data.azurerm_resource_group.main.location
 
   os_type  = "Linux"
   sku_name = "F1"
@@ -28,7 +28,7 @@ resource "azurerm_service_plan" "main" {
 
 resource "azurerm_linux_web_app" "api" {
   name                = "${local.prefix}-api"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   location            = azurerm_service_plan.main.location
   service_plan_id     = azurerm_service_plan.main.id
 
@@ -76,7 +76,7 @@ resource "azurerm_linux_web_app" "api" {
 
 resource "azurerm_linux_web_app" "identity" {
   name                = "${local.prefix}-identity"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   location            = azurerm_service_plan.main.location
   service_plan_id     = azurerm_service_plan.main.id
 
