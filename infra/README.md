@@ -130,6 +130,39 @@ key                  = "beta.tfstate"
 use_azuread_auth     = true
 ```
 
+### Sekrety przez zmienne środowiskowe
+
+Terraform czyta każdą zmienną z `TF_VAR_<nazwa>`, więc sekrety nie muszą przejść przez żaden plik.
+Cztery wartości są tak pomyślane i **nie ma ich w `terraform.tfvars.example`**:
+
+| zmienna Terraforma | zmienna środowiskowa |
+|---|---|
+| `postgres_connection_string_api` | `TF_VAR_postgres_connection_string_api` |
+| `postgres_connection_string_identity` | `TF_VAR_postgres_connection_string_identity` |
+| `admin_client_secret` | `TF_VAR_admin_client_secret` |
+| `smtp_password` | `TF_VAR_smtp_password` |
+| `smtp_username` | `TF_VAR_smtp_username` |
+
+Na stałe, dla swojego konta w Windows (nowa sesja terminala je zobaczy):
+
+```powershell
+[Environment]::SetEnvironmentVariable('TF_VAR_smtp_password', '<wartosc>', 'User')
+```
+
+Tylko na czas jednej sesji:
+
+```powershell
+$env:TF_VAR_smtp_password = '<wartosc>'
+```
+
+⚠️ **Co to daje, a czego nie daje.** Sekret nie trafia do repozytorium ani do `terraform.tfvars` — to jest
+realna korzyść. Ale **trafia do stanu Terraforma i do ustawień App Service**, bo inaczej aplikacja nie
+działa. Zmienna środowiskowa zmienia to, kto widzi wartość *po drodze*, a nie to, gdzie ona ostatecznie
+leży. Stąd konto magazynu na stan z wyłączonymi kluczami dostępu.
+
+Wszystkie te zmienne są oznaczone `sensitive`, więc `terraform plan` pokazuje `(sensitive value)`
+zamiast treści.
+
 ### Krok 3 — właściwa infrastruktura
 
 ```bash

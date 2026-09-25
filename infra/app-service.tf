@@ -128,8 +128,8 @@ resource "azurerm_linux_web_app" "identity" {
       Smtp__UseStartTls = tostring(var.smtp.use_start_tls)
       Smtp__FromAddress = var.smtp.from_address
       Smtp__FromName    = var.smtp.from_name
-      Smtp__Username    = var.smtp.username
-      Smtp__Password    = var.smtp.password
+      Smtp__Username    = var.smtp_username
+      Smtp__Password    = var.smtp_password
 
       Clients__Spa__RedirectUris__0           = "${local.front_url}/auth-callback"
       Clients__Spa__RedirectUris__1           = "${local.front_url}/silent-renew.html"

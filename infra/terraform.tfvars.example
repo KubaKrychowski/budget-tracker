@@ -1,5 +1,9 @@
-# Skopiuj na terraform.tfvars i uzupełnij. ⚠️ terraform.tfvars jest w .gitignore i ma tam zostać —
-# zawiera connection stringi, hasło SMTP i hasła do certyfikatów w postaci jawnej.
+# Skopiuj na terraform.tfvars i uzupełnij. Plik jest w .gitignore i ma tam zostać.
+#
+# ⚠️ SEKRETÓW TU NIE MA i lepiej, żeby nie było. Cztery wartości (dwa connection stringi, sekret klienta
+# admina, hasło SMTP) są zmiennymi `sensitive` i podaje się je przez zmienne środowiskowe `TF_VAR_<nazwa>`
+# — patrz sekcja „Sekrety przez zmienne środowiskowe" w README. Terraform bierze je stamtąd sam, bez
+# dodatkowych przełączników.
 
 subscription_id = "00000000-0000-0000-0000-000000000000"
 
@@ -15,33 +19,23 @@ resource_group_name = "rg-wydatki-prod"
 # dlatego to osobna zmienna, niezalezna od regionu grupy zasobow.
 static_web_apps_location = "westeurope"
 
-# Baza: Neon, poza Terraformem. ⚠️ Rola budget_app, NIE właściciel bazy — RLS nie dotyczy właściciela
-# tabel, więc połączenie właścicielem po cichu wyłącza izolację danych między kontami.
-postgres_connection_string_api      = "Host=...neon.tech;Database=budgettracker;Username=budget_app;Password=...;SSL Mode=Require"
-postgres_connection_string_identity = "Host=...neon.tech;Database=budgettracker_identity;Username=...;Password=...;SSL Mode=Require"
-
-# Adres, który dostanie rolę administratora po potwierdzeniu e-maila. Przy zamkniętej becie to jedyny
-# adres, który może założyć konto, zanim ktokolwiek zostanie zaproszony.
+# Adres, ktory dostanie role administratora po potwierdzeniu e-maila. Przy zamknietej becie to jedyny
+# adres, ktory moze zalozyc konto, zanim ktokolwiek zostanie zaproszony.
+# Mozesz podac go tez przez TF_VAR_admin_emails='["ty@example.com"]', jesli wolisz go tu nie trzymac.
 admin_emails = ["ty@example.com"]
 
 registration_closed_beta = true
 
-# openssl rand -base64 48
-admin_client_secret = ""
-
-# Certyfikaty podpisujący i szyfrujący tokeny generuje Terraform (certificates.tf) — nie ma tu nic do
-# wpisania. ⚠️ Skrócenie tej wartości i `apply` = wymiana kluczy = wylogowanie wszystkich.
+# Certyfikaty podpisujacy i szyfrujacy tokeny generuje Terraform (certificates.tf) - nie ma tu nic do
+# wpisania. UWAGA: skrocenie tej wartosci i `apply` = wymiana kluczy = wylogowanie wszystkich.
 # token_certificate_validity_hours = 43800
 
+# Czesc JAWNA konfiguracji poczty. Login i haslo ida przez TF_VAR_smtp_username i TF_VAR_smtp_password.
 smtp = {
   host          = "smtp.azurecomm.net"
   port          = 587
   use_start_tls = true
   # Domena zarzadzana przez Azure; odczytasz ja w zasobie Email Service jako mailFromSenderDomain.
-  from_address  = "DoNotReply@<guid>.azurecomm.net"
-  from_name     = "Wydatki.pl"
-  # Nazwa zasobu "SMTP Username" z ACS (portal -> zasob ACS -> SMTP Usernames).
-  username      = ""
-  # Sekret klienta rejestracji aplikacji w Entra ID powiazanej z tym SMTP Username.
-  password      = ""
+  from_address = "DoNotReply@<guid>.azurecomm.net"
+  from_name    = "Wydatki.pl"
 }

@@ -116,12 +116,13 @@ variable "token_certificate_validity_hours" {
 
 variable "smtp" {
   description = <<-EOT
-    Serwer poczty wychodzącej dla potwierdzeń adresu, resetu hasła i kodów 2FA.
+    Serwer poczty wychodzącej dla potwierdzeń adresu, resetu hasła i kodów 2FA — część JAWNA.
 
-    Domyślnie przekaźnik SMTP Azure Communication Services: `smtp.azurecomm.net`, port 587, STARTTLS.
-    ⚠️ `username` to nazwa zasobu „SMTP Username" z ACS, a `password` to sekret klienta powiązanej z nim
-    rejestracji aplikacji w Entra ID — nie odwrotnie i nie identyfikator aplikacji. Patrz README.
-    ⚠️ Port 25 odpada: App Service go blokuje.
+    Domyślnie przekaźnik SMTP Azure Communication Services. ⚠️ Port 25 odpada: App Service go blokuje.
+    `from_address` przy domenie zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net`
+    i odczytasz go w zasobie Email Service jako `mailFromSenderDomain`.
+
+    Dane logowania są osobno (`smtp_username`, `smtp_password`) — patrz komentarz przy nich.
   EOT
   type = object({
     host          = string
@@ -129,8 +130,43 @@ variable "smtp" {
     use_start_tls = bool
     from_address  = string
     from_name     = string
-    username      = string
-    password      = string
   })
-  sensitive = true
+  default = {
+    host          = "smtp.azurecomm.net"
+    port          = 587
+    use_start_tls = true
+    from_address  = ""
+    from_name     = "Wydatki.pl"
+  }
+
+  validation {
+    condition     = length(var.smtp.from_address) > 0
+    error_message = "Podaj from_address — bez adresu nadawcy serwer tożsamości nie wyśle potwierdzenia rejestracji."
+  }
+}
+
+# ---------------------------------------------------------------------------------------------------
+# Sekrety wydzielone z obiektów. Każdy jest osobną zmienną skalarną, żeby dało się go podać przez
+# zmienną środowiskową `TF_VAR_<nazwa>` i nie zapisywać w żadnym pliku:
+#
+#   TF_VAR_smtp_password, TF_VAR_postgres_connection_string_api, TF_VAR_admin_client_secret, …
+#
+# ⚠️ To trzyma sekret poza repozytorium i poza `terraform.tfvars`, ale NIE poza stanem Terraforma
+# i NIE poza ustawieniami App Service — tam musi trafić, żeby aplikacja działała. Zmienna środowiskowa
+# zmienia to, kto widzi wartość PO DRODZE, a nie to, gdzie ona ostatecznie leży.
+# ---------------------------------------------------------------------------------------------------
+
+variable "smtp_username" {
+  description = <<-EOT
+    Nazwa zasobu „SMTP Username" z ACS (portal → zasób ACS → *SMTP Usernames*).
+    ⚠️ To NIE jest identyfikator rejestracji aplikacji ani adres e-mail konta.
+  EOT
+  type        = string
+  sensitive   = true
+}
+
+variable "smtp_password" {
+  description = "Sekret klienta rejestracji aplikacji w Entra ID powiązanej z tym SMTP Username."
+  type        = string
+  sensitive   = true
 }
