@@ -139,11 +139,31 @@ cd infra && terraform init -backend-config=backend.hcl && terraform plan
 
 ## Czego Terraform NIE robi
 
-### Poczta
+### Poczta — SMTP Username w Azure Communication Services
 
 `SmtpOptions` ma `ValidateOnStart`, więc bez poprawnej konfiguracji serwer tożsamości **nie wstanie** —
-a rejestracja i tak wymaga maila z potwierdzeniem adresu. Azure nie ma darmowego SMTP, a App Service
-blokuje port 25; potrzebny dostawca z zewnątrz na porcie 587.
+a rejestracja i tak wymaga maila z potwierdzeniem adresu.
+
+Pocztę daje **Azure Communication Services**, przez przekaźnik SMTP: `smtp.azurecomm.net`, port 587,
+STARTTLS. Kod nie wymaga żadnej zmiany — MailKit rozmawia z tym jak z każdym innym serwerem.
+
+⚠️ Terraform **nie zarządza** tymi zasobami: ACS, Email Service i domena stoją we własnej grupie zasobów,
+osobno od tego, co stawia `infra/`. Tutaj podaje się wyłącznie gotowe dane logowania.
+
+Uwierzytelnianie nie jest zwykłą parą login–hasło. Trzeba trzech rzeczy:
+
+1. **Rejestracja aplikacji w Entra ID** z sekretem klienta — sekret będzie **hasłem** SMTP.
+2. **Rola na zasobie ACS** dla tej aplikacji: wbudowana `Communication and Email Service Owner` albo rola
+   własna z `Microsoft.Communication/CommunicationServices/read` i `/write` oraz
+   `Microsoft.Communication/EmailServices/write`.
+3. **Zasób „SMTP Username"** w ACS, powiązany z tą aplikacją (portal → zasób ACS → *SMTP Usernames*).
+   Nazwa jest dowolna; jeśli użyjesz formatu adresu e-mail, domena musi być jedną z podpiętych.
+   To ona idzie do `smtp.username`, a nie identyfikator aplikacji.
+
+Adres nadawcy przy domenie zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net` — odczytasz
+go w zasobie Email Service jako `mailFromSenderDomain`.
+
+⚠️ Port 25 odpada: App Service go blokuje, a i tak zalecany jest 587.
 
 ### Wdrożenie kodu
 

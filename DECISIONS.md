@@ -1152,4 +1152,11 @@ Po wygaśnięciu serwer nie wstanie, zamiast po cichu podpisywać byle czym.
 **Czego ten Terraform nie robi.** Nie wgrywa kodu (Static Web Apps przez akcję GitHuba z tokenem wdrożeniowym,
 App Service przez `az webapp deploy`), nie zakłada bazy ani ról, nie uruchamia migracji i nie konfiguruje
 dostawcy poczty. ⚠️ Bez SMTP serwer tożsamości **nie wstanie** (`ValidateOnStart`),
-a rejestracja i tak wymaga maila z potwierdzeniem adresu — Azure darmowego SMTP nie ma.
+a rejestracja i tak wymaga maila z potwierdzeniem adresu.
+
+**Poczta: przekaźnik SMTP Azure Communication Services** (`smtp.azurecomm.net`, port 587, STARTTLS) — zgodnie
+z założeniem z §12 („SMTP z Azure na środowiskach"). Kod nie wymaga zmiany, MailKit traktuje to jak każdy inny
+serwer. ⚠️ ACS, Email Service i domena stoją we WŁASNEJ grupie zasobów i Terraform ich nie zarządza: w `infra/`
+podaje się wyłącznie gotowe dane logowania. ⚠️ Uwierzytelnianie nie jest zwykłą parą login–hasło — hasłem jest
+sekret klienta rejestracji aplikacji w Entra ID, a loginem osobny zasób „SMTP Username" w ACS, powiązany z tą
+aplikacją i wymagający roli `Communication and Email Service Owner` na zasobie ACS.

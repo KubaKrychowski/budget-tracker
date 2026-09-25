@@ -115,8 +115,11 @@ variable "token_certificate_validity_hours" {
 variable "smtp" {
   description = <<-EOT
     Serwer poczty wychodzącej dla potwierdzeń adresu, resetu hasła i kodów 2FA.
-    ⚠️ Azure nie ma darmowego SMTP, a App Service blokuje port 25. Potrzebny dostawca z zewnątrz
-    (np. Brevo, Resend, Mailgun) na porcie 587.
+
+    Domyślnie przekaźnik SMTP Azure Communication Services: `smtp.azurecomm.net`, port 587, STARTTLS.
+    ⚠️ `username` to nazwa zasobu „SMTP Username" z ACS, a `password` to sekret klienta powiązanej z nim
+    rejestracji aplikacji w Entra ID — nie odwrotnie i nie identyfikator aplikacji. Patrz README.
+    ⚠️ Port 25 odpada: App Service go blokuje.
   EOT
   type = object({
     host          = string

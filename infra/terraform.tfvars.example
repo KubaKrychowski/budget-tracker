@@ -28,11 +28,14 @@ admin_client_secret = ""
 # token_certificate_validity_hours = 43800
 
 smtp = {
-  host          = "smtp-relay.brevo.com"
+  host          = "smtp.azurecomm.net"
   port          = 587
   use_start_tls = true
-  from_address  = "no-reply@twoja-domena.pl"
+  # Domena zarzadzana przez Azure; odczytasz ja w zasobie Email Service jako mailFromSenderDomain.
+  from_address  = "DoNotReply@<guid>.azurecomm.net"
   from_name     = "Wydatki.pl"
+  # Nazwa zasobu "SMTP Username" z ACS (portal -> zasob ACS -> SMTP Usernames).
   username      = ""
+  # Sekret klienta rejestracji aplikacji w Entra ID powiazanej z tym SMTP Username.
   password      = ""
 }
