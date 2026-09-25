@@ -7,6 +7,9 @@ const MAX_ENTRIES = 5;
 
 const STORAGE_KEY = 'bt.recent.screens';
 
+/** Ekran domowy — patrz `track`, dlaczego nie trafia do historii. */
+const HomeKey = 'dashboard';
+
 /**
  * Ostatnio odwiedzone ekrany — zasilają kafle „Ostatnie akcje" na dashboardzie i sekcję
  * „Ostatnie ekrany" w menu wyszukiwarki.
@@ -28,12 +31,15 @@ export class RecentScreens {
     .filter((a): a is SystemAction => a !== undefined));
 
   /**
-   * Odnotowuje wejście na ekran. Adres bez trasy w rejestrze jest ignorowany — dashboard
-   * i ekrany pomocnicze nie są miejscami, do których się „wraca".
+   * Odnotowuje wejście na ekran. Adres bez odpowiednika w rejestrze akcji jest ignorowany.
+   *
+   * ⚠️ Dashboard jest wyjątkiem MIMO tego, że ma swoją akcję (katalog i wyszukiwarka muszą go
+   * znać). Kafle „Ostatnie akcje" wiszą właśnie na dashboardzie, więc zapisywanie go znaczyłoby,
+   * że pierwszym kaflem zawsze jest powrót tam, gdzie już jesteś.
    */
   track(url: string): void {
     const action = RecentScreens.match(url);
-    if (!action) return;
+    if (!action || action.key === HomeKey) return;
 
     const next = [action.key, ...this.state().filter((k) => k !== action.key)].slice(0, MAX_ENTRIES);
     this.state.set(next);

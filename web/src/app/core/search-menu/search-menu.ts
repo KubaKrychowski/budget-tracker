@@ -13,7 +13,6 @@ import { errorOf, valueOf } from '../api/resource-value';
 import { SystemAction } from '../models/system-action';
 import { QUICK_ACTIONS, SYSTEM_ACTIONS } from '../system-actions';
 import { RecentScreens } from '../search/recent-screens';
-import { SearchFocus } from '../search/search-focus';
 import { SearchHistory } from '../search/search-history';
 
 /** Krótsza fraza pasuje do wszystkiego — ta sama granica co po stronie serwera. */
@@ -45,7 +44,6 @@ export class SearchMenu {
   private readonly router = inject(Router);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly activeBudget = inject(ActiveBudget);
-  private readonly searchFocus = inject(SearchFocus);
   private readonly translate = inject(TranslateService);
   protected readonly history = inject(SearchHistory);
   protected readonly recent = inject(RecentScreens);
@@ -127,17 +125,6 @@ export class SearchMenu {
     this.open.set(true);
   }
 
-  /**
-   * Otwarcie na prośbę z zewnątrz („Wszystkie akcje" na dashboardzie).
-   *
-   * Pierwsze wywołanie pomijamy — `effect` leci raz na starcie, a menu rozwijające się samo
-   * przy wejściu na stronę zasłaniałoby treść, o którą nikt nie prosił.
-   */
-  private readonly openOnRequest = effect(() => {
-    if (this.searchFocus.requests() === 0) return;
-    this.open.set(true);
-    this.host.nativeElement.querySelector('input')?.focus();
-  });
 
   /**
    * Klik poza komponentem zamyka menu.
@@ -168,10 +155,11 @@ export class SearchMenu {
     this.query.set(entry);
   }
 
+  /** Parametry adresu jadą razem z trasą — bez nich „Reguły kategoryzacji" lądują na domyślnej zakładce. */
   protected pickScreen(action: SystemAction): void {
     if (!action.route) return;
     this.close();
-    void this.router.navigate([action.route]);
+    void this.router.navigate([action.route], { queryParams: action.queryParams });
   }
 
   /** Enter bez wyboru konkretnego wiersza = „pokaż mi wszystko, co pasuje". */

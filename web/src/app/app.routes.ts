@@ -76,6 +76,12 @@ export const routes: Routes = [
         title: 'Tworzenie budzetu',
       },
       {
+        path: 'functions',
+        loadComponent: () =>
+          import('./features/functions/functions').then((m) => m.Functions),
+        title: 'Wszystkie funkcje — Wydatki.pl',
+      },
+      {
         path: 'handbook',
         loadComponent: () =>
           import('./features/handbook/handbook').then((m) => m.Handbook),

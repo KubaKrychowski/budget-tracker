@@ -18,7 +18,13 @@
     "savings": "Cele oszczędzania",
     "limits": "Limity wydatków",
     "standingOrders": "Zlecenia stałe",
-    "episodicOrders": "Zlecenia epizodyczne"
+    "episodicOrders": "Zlecenia epizodyczne",
+    "dashboard": "Dashboard",
+    "reservations": "Rezerwacje",
+    "categoryRules": "Reguły kategoryzacji",
+    "modelTraining": "Trening modelu",
+    "handbook": "Podręcznik",
+    "allFunctions": "Wszystkie funkcje"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -1096,6 +1102,38 @@
     "error": {
       "title": "Nie udało się wyszukać",
       "body": "Spróbuj jeszcze raz. Jeśli to się powtarza, sprawdź, czy API odpowiada."
+    }
+  },
+  "functions": {
+    "title": "Wszystkie funkcje",
+    "filter": "Filtruj funkcje",
+    "filterHint": "Filtr zawęża katalog na miejscu — nie otwiera menu wyszukiwarki.",
+    "empty": "Żadna funkcja nie pasuje do „{{query}}”.",
+    "groups": {
+      "daily": "Pieniądze na co dzień",
+      "planning": "Planowanie",
+      "budgets": "Budżety",
+      "settings": "Ustawienia i narzędzia"
+    },
+    "terminal": {
+      "name": "Terminal CLI",
+      "description": "Te same komendy co moduł „bt” spoza przeglądarki"
+    },
+    "descriptions": {
+      "transaction-list": "Filtry, korekta kategorii, akcje masowe",
+      "import-statement": "Wczytanie pliku z banku, krok po kroku",
+      "add-transaction": "Ręczny wpis poza wyciągiem",
+      "review-queue": "Kolejka pozycji do przejrzenia",
+      "limits": "Limit na kategorię i historia zmian",
+      "savings": "Cel miesięczny i dowody odporności",
+      "reservations": "Pieniądze zajęte na konkretny wydatek",
+      "standing-orders": "Powtarzalne zobowiązania i ich rytm",
+      "episodic-orders": "Wydatki jednorazowe, planowane i przeszłe",
+      "dashboard": "Podsumowanie okresu i wykresy",
+      "create-budget": "Nowy budżet, opcjonalnie z oszczędnościowym",
+      "category-rules": "Wzorce nadające kategorie przy imporcie",
+      "model-training": "Zbiór uczący, wersje i aktywacja",
+      "handbook": "Jak działa aplikacja, temat po temacie"
     }
   }
 }

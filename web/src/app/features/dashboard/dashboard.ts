@@ -17,14 +17,13 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DashboardResponse } from '../../core/api/models/dashboard-response';
 import { fromIsoDate, toIsoDate } from '../../core/api/date-param';
 import { QUICK_ACTIONS, actionByKey } from '../../core/system-actions';
 import { SystemAction } from '../../core/models/system-action';
 import { RecentScreens } from '../../core/search/recent-screens';
-import { SearchFocus } from '../../core/search/search-focus';
 import { CATEGORY_SERIES_COLORS, CHART_COLORS } from '../../core/chart-palette';
 import { loadRememberedRange, rememberRange } from './budget-range-memory';
 import { snapToAvailableRange } from './chart-range-selection';
@@ -36,7 +35,7 @@ import { valueOf } from '../../core/api/resource-value';
     CommonModule, FormsModule, NgApexchartsModule,
     NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzEmptyModule,
     NzIconModule, NzSelectModule, NzSpinModule, NzStatisticModule,
-    NzAlertModule, NzSkeletonModule, NzTagModule, TranslatePipe,
+    NzAlertModule, NzSkeletonModule, NzTagModule, TranslatePipe, RouterLink,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -50,7 +49,6 @@ export class Dashboard {
   private readonly langLoaded = toSignal(this.translate.onLangChange, { initialValue: null });
 
   private readonly recentScreens = inject(RecentScreens);
-  private readonly searchFocus = inject(SearchFocus);
 
   /**
    * Kafle „Ostatnie akcje": ekrany, na których użytkownik był ostatnio.
@@ -67,10 +65,6 @@ export class Dashboard {
   /** Czy kafle pokazują historię, czy podpowiedzi na start — decyduje o podtytule karty. */
   protected readonly hasVisitedScreens = computed(() => this.recentScreens.screens().length > 0);
 
-  /** „Wszystkie akcje" otwiera wyszukiwarkę w nagłówku — tam jest pełna lista tego, co system potrafi. */
-  protected openSearch(): void {
-    this.searchFocus.open();
-  }
 
   /** Akcja po kluczu, nie po indeksie — patrz komentarz przy actionByKey(). */
   protected readonly importAction = actionByKey('import-statement');

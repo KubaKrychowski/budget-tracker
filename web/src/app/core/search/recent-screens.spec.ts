@@ -35,10 +35,18 @@ describe('RecentScreens', () => {
   });
 
   it('adres bez odpowiednika w rejestrze akcji jest pomijany', () => {
-    // Dashboard nie jest miejscem, do którego się „wraca" — i nie ma swojej akcji.
-    service.track('/dashboard');
+    service.track('/auth-callback');
+    service.track('/cos-czego-nie-ma');
 
     expect(keys()).toEqual([]);
+  });
+
+  it('dashboard NIE trafia do historii, choć ma swoją akcję', () => {
+    // Kafle wiszą na dashboardzie, więc pierwszym kaflem byłby powrót tam, gdzie już jesteś.
+    service.track('/limits');
+    service.track('/dashboard');
+
+    expect(keys()).toEqual(['limits']);
   });
 
   it('pamięta najwyżej pięć ekranów — tyle, ile mieści rząd kafli', () => {

@@ -1,0 +1,57 @@
+<section class="fun">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ 'functions.title' | translate }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  <!-- Filtr zawęża katalog NA MIEJSCU. Celowo nie otwiera menu wyszukiwarki: dwa pola
+       robiące to samo na jednym ekranie to pewne nieporozumienie (notatki do makiety). -->
+  <div class="fun__filter-row">
+    <nz-input-wrapper class="fun__filter">
+      <nz-icon nzInputPrefix nzType="search" class="fun__filter-icon" />
+      <input
+        nz-input
+        [placeholder]="'functions.filter' | translate"
+        [ngModel]="filter()"
+        (ngModelChange)="filter.set($event)"
+      />
+    </nz-input-wrapper>
+    <span class="fun__filter-hint">{{ 'functions.filterHint' | translate }}</span>
+  </div>
+
+  @if (nothingMatches()) {
+    <p class="fun__empty">{{ 'functions.empty' | translate: { query: filter() } }}</p>
+  } @else {
+    <div class="fun__cols">
+      @for (group of groups(); track group.id) {
+        <div class="fun__group">
+          <h2 class="fun__group-title">{{ groupLabelKey(group.id) | translate }}</h2>
+
+          @for (action of group.actions; track action.key) {
+            <button type="button" class="fun__row" [disabled]="!action.route" (click)="open(action)">
+              <!-- alt="" celowo: nazwa stoi obok, więc ikona jest dekoracją. -->
+              <img class="fun__row-icon" [src]="action.svg" alt="" />
+              <span class="fun__row-body">
+                <span class="fun__row-name">{{ action.labelKey | translate }}</span>
+                <span class="fun__row-desc">{{ descriptionKey(action) | translate }}</span>
+              </span>
+            </button>
+          }
+
+          <!-- Terminal doklejony tylko do narzędzi — to panel, nie trasa, więc nie ma go w rejestrze akcji. -->
+          @if (group.id === 'settings' && !filter()) {
+            <button type="button" class="fun__row" (click)="openTerminal()">
+              <nz-icon nzType="code" class="fun__row-icon-nz" />
+              <span class="fun__row-body">
+                <span class="fun__row-name">{{ 'functions.terminal.name' | translate }}</span>
+                <span class="fun__row-desc">{{ 'functions.terminal.description' | translate }}</span>
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,109 @@
+/* Wymiary z makiety „Wyszukiwarka i ostatnie akcje", ramka 6. Hexy jak w sąsiednich ekranach —
+   tokeny żyją w .less, a komponenty w .scss, więc nie da się ich tu zaimportować. */
+.fun {
+  &__filter-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 16px 0 24px;
+    flex-wrap: wrap;
+  }
+
+  &__filter {
+    width: 360px;
+    max-width: 100%;
+  }
+
+  &__filter-icon {
+    color: #78877c;
+  }
+
+  &__filter-hint {
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  &__empty {
+    margin: 0;
+    font-size: 14px;
+    color: #78877c;
+  }
+
+  /* Kolumny, nie siatka o stałej liczbie: grupy mają różną długość, a przy filtrowaniu
+     część z nich znika — sztywne cztery kolumny zostawiałyby wtedy dziury. */
+  &__cols {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  &__group {
+    flex: 1 1 320px;
+    min-width: 280px;
+    padding: 8px 7px;
+    border: 1px solid #c0d7c6;
+    border-radius: 8px;
+  }
+
+  &__group-title {
+    margin: 0 0 6px;
+    padding: 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
+  }
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 6px;
+    background: none;
+    border: 0;
+    border-radius: 4px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: #252b27;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: #eef7f1;
+    }
+
+    &:disabled {
+      color: #a1b4a6;
+      cursor: default;
+    }
+  }
+
+  &__row-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+  }
+
+  &__row-icon-nz {
+    width: 22px;
+    font-size: 20px;
+    color: #51c273;
+  }
+
+  &__row-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__row-name {
+    font-size: 14px;
+  }
+
+  &__row-desc {
+    font-size: 11px;
+    color: #78877c;
+  }
+}

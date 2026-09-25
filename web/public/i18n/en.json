@@ -18,7 +18,13 @@
     "savings": "Savings goals",
     "limits": "Spending limits",
     "standingOrders": "Standing orders",
-    "episodicOrders": "One-off orders"
+    "episodicOrders": "One-off orders",
+    "dashboard": "Dashboard",
+    "reservations": "Reservations",
+    "categoryRules": "Categorisation rules",
+    "modelTraining": "Model training",
+    "handbook": "Handbook",
+    "allFunctions": "All functions"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -1030,6 +1036,38 @@
     "error": {
       "title": "Search failed",
       "body": "Try again. If it keeps happening, check whether the API is responding."
+    }
+  },
+  "functions": {
+    "title": "All functions",
+    "filter": "Filter functions",
+    "filterHint": "The filter narrows the catalogue in place — it does not open the search menu.",
+    "empty": "No function matches \"{{query}}\".",
+    "groups": {
+      "daily": "Everyday money",
+      "planning": "Planning",
+      "budgets": "Budgets",
+      "settings": "Settings and tools"
+    },
+    "terminal": {
+      "name": "CLI terminal",
+      "description": "The same commands as the \"bt\" module outside the browser"
+    },
+    "descriptions": {
+      "transaction-list": "Filters, category fixes, bulk actions",
+      "import-statement": "Load a bank file, step by step",
+      "add-transaction": "Manual entry outside the statement",
+      "review-queue": "Queue of entries to review",
+      "limits": "Per-category limit and its history",
+      "savings": "Monthly goal and proof months",
+      "reservations": "Money set aside for a specific expense",
+      "standing-orders": "Recurring commitments and their rhythm",
+      "episodic-orders": "One-off expenses, planned and past",
+      "dashboard": "Period summary and charts",
+      "create-budget": "A new budget, optionally with a savings one",
+      "category-rules": "Patterns that assign categories on import",
+      "model-training": "Training set, versions and activation",
+      "handbook": "How the app works, topic by topic"
     }
   }
 }

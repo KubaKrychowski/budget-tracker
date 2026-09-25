@@ -29,9 +29,9 @@
             {{ (hasVisitedScreens() ? 'dashboard.recentActionsHint' : 'dashboard.firstStepsHint') | translate }}
           </p>
         </div>
-        <button type="button" class="dash__recent-all" (click)="openSearch()">
+        <a class="dash__recent-all" routerLink="/functions">
           {{ 'dashboard.allActions' | translate }}
-        </button>
+        </a>
       </div>
       <div class="dash__tiles">
         @for (action of recentTiles(); track action.key) {
