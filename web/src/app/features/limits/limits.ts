@@ -125,6 +125,23 @@ export class Limits {
     this.navigate({ budgetId: id });
   }
 
+  /** Oglądany miesiąc jako data dla kalendarza w „Konfiguracji”; `null` do pierwszej odpowiedzi serwera. */
+  protected readonly viewedMonth = computed(() => {
+    const month = this.lastData()?.month;
+    return month ? this.dateOf(month) : null;
+  });
+
+  /**
+   * Wybór miesiąca z kalendarza — ta sama droga co strzałki: przez adres.
+   *
+   * Wyczyszczenia nie obsługujemy (`nzAllowClear` jest wyłączone), a pusta wartość i tak nie miałaby
+   * na co się przełożyć: ekran zawsze pokazuje JAKIŚ miesiąc.
+   */
+  protected onMonthChange(date: Date | null): void {
+    if (!date) return;
+    this.navigate({ month: this.isoMonth(date) });
+  }
+
   protected shiftMonth(delta: number): void {
     const month = this.lastData()?.month;
     if (!month) return;

@@ -54,4 +54,11 @@ export interface LimitsResponse {
   readonly uncategorizedAmount: number;
   readonly selectedBudgetIds: string[];
   readonly budgets: BudgetOption[];
+  /**
+   * Budżet ma limit w JAKIMKOLWIEK miesiącu — nie tylko w oglądanym.
+   *
+   * Rozstrzyga, co powiedzieć przy pustej tabeli: „nie masz jeszcze żadnych limitów" czy
+   * „w tym miesiącu ich nie ma, ale w innych są".
+   */
+  readonly hasAnyLimit: boolean;
 }

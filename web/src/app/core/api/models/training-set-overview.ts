@@ -29,8 +29,10 @@ export interface CategoryExampleCount {
 }
 
 export interface ModelVersion {
-  /** Znacznik czasu `yyyyMMddHHmmss` — jednocześnie identyfikator do przywrócenia. */
-  version: string;
+  /** Publiczny identyfikator wersji — to nim przywracamy model, nie nazwą pliku. */
+  id: string;
+  /** Nazwa pliku w magazynie; do podglądu, nie do adresowania. */
+  name: string;
   createdAt: string;
   isActive: boolean;
   /** `null` dla modelu sprzed wprowadzenia historii. */
@@ -61,4 +63,19 @@ export interface RecategorizeReport {
   /** Ile straciło kategorię i wróciło do kolejki. Jedyna zmiana, która dokłada pracy. */
   movedToReview: number;
   unchanged: number;
+}
+
+/** Odpowiednik TrainingQueuedResponseDto — trening tylko TRAFIŁ do kolejki, metryk jeszcze nie ma. */
+export interface TrainingQueued {
+  readonly jobId: string;
+}
+
+/** Odpowiednik TrainingStatusResponseDto — wynik zgłoszenia albo informacja, że go jeszcze nie ma. */
+export interface TrainingStatus {
+  /**
+   * ⚠️ false znaczy „nie ma wyniku” i obejmuje TRZY sytuacje: zadanie czeka w kolejce, trwa albo się
+   * nie powiodło. Ekran nie ma jak ich rozróżnić, więc po limicie czasu mówi „trwa dłużej niż zwykle”.
+   */
+  readonly ready: boolean;
+  readonly report: TrainingReport | null;
 }

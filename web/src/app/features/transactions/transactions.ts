@@ -639,6 +639,42 @@ export class Transactions {
     if (row) this.startEdit([row.id]);
   }
 
+  /**
+   * Czy wiersz z menu czeka na decyzję człowieka i MA co zatwierdzić.
+   *
+   * ⚠️ Dwa warunki, nie jeden. Wiersz „do przeglądu" bez kategorii nie ma czego przyjąć —
+   * tam trzeba wejść w edycję i kategorię wskazać. Pokazanie „Zatwierdź" przy pustej kategorii
+   * obiecywałoby akcję, która nic by nie zmieniła.
+   */
+  protected readonly canAcceptMenuRow = computed(() => {
+    const row = this.menuRow();
+    return row !== null && row.status === 'PendingReview' && row.categoryId !== null;
+  });
+
+  /**
+   * „Kategoria jest dobra" — jednym kliknięciem, bez wchodzenia w edycję.
+   *
+   * Zapisuje TĘ SAMĄ kategorię, którą wiersz już ma, więc jedyne, co się zmienia, to STATUS:
+   * `PendingReview` → `ManuallyCategorized`. To decyzja człowieka, więc pewność modelu zeruje się
+   * po stronie API (`ManualCategoryCorrection`) i wiersz wychodzi z kolejki przeglądu, zamiast
+   * wracać do niej przy każdym przeliczeniu.
+   */
+  protected async acceptMenuRow(): Promise<void> {
+    const row = this.menuRow();
+    if (row === null || row.categoryId === null) return;
+
+    try {
+      await firstValueFrom(this.http.post('/api/transactions/bulk-set-category', {
+        selection: this.singleRowSelection(row.id),
+        categoryId: row.categoryId,
+      }));
+      this.message.success(this.translate.instant('transactions.rowMenu.accepted'));
+      this.list.reload();
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    }
+  }
+
   protected deleteMenuRow(): void {
     const row = this.menuRow();
     if (row) void this.bulkDelete(this.singleRowSelection(row.id), 1);

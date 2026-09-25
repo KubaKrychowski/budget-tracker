@@ -245,5 +245,8 @@ public sealed class UserDeletionServiceTests
 
         public Task<OwnerDataCounts> ReassignAsync(Guid ownerId, Guid targetUserId, CancellationToken ct) =>
             throw new NotSupportedException();
+
+        public Task CreateUserContainerAsync(Guid userId, CancellationToken ct) =>
+            throw new NotSupportedException();
     }
 }

@@ -30,7 +30,29 @@ public sealed class ApiUserDataClient(IHttpClientFactory httpClientFactory, Serv
         (await SendAsync<ChangeResponse>(
             HttpMethod.Post, $"api/admin/owners/{ownerId}/reassign", new { targetUserId }, ct)).Counts;
 
+    /// <summary>
+    /// Zakłada magazyn plików użytkownika po stronie API. Powtórzenie jest bezpieczne.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ API odpowiada BEZ TREŚCI, więc nie da się tego przepuścić przez <see cref="SendAsync{T}"/> —
+    /// tamta metoda wymaga ciała odpowiedzi i pusta zakończyłaby się wyjątkiem o „pustej odpowiedzi”.
+    /// </remarks>
+    public Task CreateUserContainerAsync(Guid userId, CancellationToken ct) =>
+        SendAsync(HttpMethod.Post, $"api/admin/users/{userId}/container", null, ct);
+
     private async Task<T> SendAsync<T>(HttpMethod method, string url, object? body, CancellationToken ct)
+    {
+        using var response = await SendCoreAsync(method, url, body, ct);
+
+        return await ReadAsync<T>(response, method, url, ct);
+    }
+
+    /// <summary>Wariant dla poleceń bez treści odpowiedzi (2xx bez ciała).</summary>
+    private async Task SendAsync(HttpMethod method, string url, object? body, CancellationToken ct) =>
+        (await SendCoreAsync(method, url, body, ct)).Dispose();
+
+    private async Task<HttpResponseMessage> SendCoreAsync(
+        HttpMethod method, string url, object? body, CancellationToken ct)
     {
         var accessToken = await tokens.GetTokenAsync(ct);
 
@@ -41,14 +63,15 @@ public sealed class ApiUserDataClient(IHttpClientFactory httpClientFactory, Serv
 
         try
         {
-            using var response = await client.SendAsync(request, ct);
+            var response = await client.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
-                throw new UserDataServiceException($"API odrzuciło polecenie {method} {url} (HTTP {(int)response.StatusCode}).");
+                var status = (int)response.StatusCode;
+                response.Dispose();
+                throw new UserDataServiceException($"API odrzuciło polecenie {method} {url} (HTTP {status}).");
             }
 
-            return await response.Content.ReadFromJsonAsync<T>(Json, ct)
-                ?? throw new UserDataServiceException($"Pusta odpowiedź API na {method} {url}.");
+            return response;
         }
         catch (HttpRequestException ex)
         {
@@ -59,6 +82,11 @@ public sealed class ApiUserDataClient(IHttpClientFactory httpClientFactory, Serv
             throw new UserDataServiceException($"API nie odpowiedziało na czas ({method} {url}).", ex);
         }
     }
+
+    private static async Task<T> ReadAsync<T>(
+        HttpResponseMessage response, HttpMethod method, string url, CancellationToken ct) =>
+        await response.Content.ReadFromJsonAsync<T>(Json, ct)
+        ?? throw new UserDataServiceException($"Pusta odpowiedź API na {method} {url}.");
 
     private sealed record SummariesResponse(List<SummaryItem> Users);
 

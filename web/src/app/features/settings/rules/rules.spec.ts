@@ -30,6 +30,7 @@ class FakeConfirmDialogService {
 
 /** Dostęp do składowych `protected` — test sprawdza zachowanie, nie układ szablonu. */
 interface RulesInternals {
+  search: { set(value: string): void };
   openCreate(): void;
   patch(key: string, value: unknown): void;
   runPreview(): Promise<void>;
@@ -121,6 +122,9 @@ describe('Rules', () => {
           listTitle: 'Lista reguł',
           create: 'Nowa reguła',
           empty: 'Nie ma jeszcze żadnej reguły.',
+          noMatches: 'Żadna reguła nie pasuje do wyszukiwania.',
+          searchPlaceholder: 'Szukaj we wzorcach, kategoriach i notatkach',
+          searchLabel: 'Szukaj w regułach',
           tiedTitle: 'Reguły o tym samym priorytecie: {{priorities}}',
           tiedDescription: 'Przy remisie o wyniku decyduje kolejność dodania reguły.',
           tiedAcknowledge: 'Rozumiem',
@@ -171,6 +175,49 @@ describe('Rules', () => {
       .map((row) => (row as HTMLElement).querySelector('td')!.textContent!.trim());
 
     expect(priorities).toEqual(['5', '40', '90']);
+  });
+
+  it('wyszukiwarka zawęża listę do pasujących reguł', async () => {
+    // Bez ogonków i wielkości liter: „zabka" ma znaleźć „Żabka".
+    await settle([
+      rule({ pattern: 'ŻABKA', categoryName: 'Jedzenie' }),
+      rule({ pattern: 'ORLEN', categoryName: 'Paliwo' }),
+    ]);
+
+    internals.search.set('zabka');
+    fixture.detectChanges();
+
+    expect(text()).toContain('ŻABKA');
+    expect(text()).not.toContain('ORLEN');
+  });
+
+  it('szuka także po kategorii i notatce, nie tylko po wzorcu', async () => {
+    await settle([
+      rule({ pattern: 'ŻABKA', categoryName: 'Jedzenie', note: 'sklep osiedlowy' }),
+      rule({ pattern: 'ORLEN', categoryName: 'Paliwo', note: null }),
+    ]);
+
+    internals.search.set('paliwo');
+    fixture.detectChanges();
+    expect(text()).toContain('ORLEN');
+    expect(text()).not.toContain('ŻABKA');
+
+    internals.search.set('osiedlowy');
+    fixture.detectChanges();
+    expect(text()).toContain('ŻABKA');
+    expect(text()).not.toContain('ORLEN');
+  });
+
+  it('gdy nic nie pasuje, mówi o wyszukiwaniu, a nie o braku reguł', async () => {
+    // ⚠️ Dwa różne stany: „nie ma jeszcze reguł" to zaproszenie do dodania pierwszej, a „nic nie
+    // pasuje" znaczy tylko tyle, że trzeba zmienić frazę. Wspólny komunikat kłamałby przy 148 regułach.
+    await settle([rule({ pattern: 'ŻABKA' })]);
+
+    internals.search.set('czegoś takiego nie ma');
+    fixture.detectChanges();
+
+    expect(text()).toContain('Żadna reguła nie pasuje');
+    expect(text()).not.toContain('Nie ma jeszcze żadnej reguły');
   });
 
   it('ostrzega o remisie priorytetów i pokazuje, których dotyczy', async () => {

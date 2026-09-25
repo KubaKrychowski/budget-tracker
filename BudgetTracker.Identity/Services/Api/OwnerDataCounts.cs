@@ -9,10 +9,11 @@ public sealed record OwnerDataCounts(
     int SavingsGoals,
     int SavingsReservations,
     int StandingOrders,
-    int EpisodicOrders)
+    int EpisodicOrders,
+    int ModelVersions)
 {
-    public static OwnerDataCounts Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0);
+    public static OwnerDataCounts Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     public int Total => Budgets + BudgetItems + Transactions + ImportBatches
-        + SavingsGoals + SavingsReservations + StandingOrders + EpisodicOrders;
+        + SavingsGoals + SavingsReservations + StandingOrders + EpisodicOrders + ModelVersions;
 }

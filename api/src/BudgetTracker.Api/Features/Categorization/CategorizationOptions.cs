@@ -4,13 +4,6 @@ namespace BudgetTracker.Api.Features.Categorization;
 public sealed class CategorizationOptions
 {
     public const string SectionName = "Categorization";
-
-    /// <summary>Ścieżka do wytrenowanego modelu. Plik jest artefaktem, nie źródłem — nie trafia do repo.</summary>
-    public string ModelPath { get; set; } = Path.Combine("data", "category-model.zip");
-
-    /// <summary>Dane treningowe: opis, typ, kwota, kategoria. Zawierają nazwy sprzedawców, więc też poza repo.</summary>
-    public string TrainingDataPath { get; set; } = Path.Combine("data", "training-set.csv");
-
     /// <summary>
     /// Reguły specyficzne dla tej instalacji — wzorce, które działają wyłącznie dzięki historii
     /// konkretnej osoby (nazwa jej przychodni, jej cateringu). To dane osobowe, więc plik leży

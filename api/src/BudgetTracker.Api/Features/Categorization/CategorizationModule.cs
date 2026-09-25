@@ -1,5 +1,7 @@
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Categorization.Commands;
+using BudgetTracker.Api.Features.Categorization.Jobs;
+using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Features.Categorization.Contracts;
 using BudgetTracker.Api.Features.Categorization.Queries;
 using BudgetTracker.Api.Features.Categorization.Services;
@@ -35,14 +37,22 @@ public static class CategorizationModule
     {
         services.Configure<CategorizationOptions>(config.GetSection(CategorizationOptions.SectionName));
 
+        // Bajty modelu i policzona bramka zyja NA WERSJE MODELU, wiec potrzebuja pamieci poza zakresem zadania.
+        services.AddMemoryCache();
+
+        services.AddScoped<CategoryModelSource>();
+        services.AddScoped<VocabularyGate>();
         services.AddScoped<RuleCategorizer>();
         services.AddScoped<MlCategorizer>();
         services.AddScoped<ICategorizer, HybridCategorizer>();
-        services.AddSingleton<ModelStore>();
+        services.AddScoped<ModelStore>();
         services.AddScoped<TrainingSetBuilder>();
         services.AddScoped<CategoryRuleLookup>();
 
+        services.AddScoped<GetTrainingStatusQueryHandler>();
+        services.AddScoped<GetTrainingStatusQueryHandler>();
         services.AddScoped<TrainCategoryModelCommandHandler>();
+        services.AddScoped<TrainCategoryModelJob>();
         services.AddScoped<RecategorizeTransactionsCommandHandler>();
         services.AddScoped<ActivateCategoryModelCommandHandler>();
         services.AddScoped<CreateCategoryRuleCommandHandler>();
@@ -55,6 +65,22 @@ public static class CategorizationModule
 
         return services;
     }
+    
+    /// <summary>
+    /// Zadania feature'a budżetów: sprzątanie usuniętych po oknie retencji (harmonogram z
+    /// <see cref="BudgetOptions.PurgeCron"/>) i jego wymuszona wersja, bez harmonogramu.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <c>purge-deleted-budgets-now</c> stoi na <c>Cron.Never()</c> ŚWIADOMIE. Rejestrujemy je jako
+    /// zadanie cykliczne nie po to, żeby kiedykolwiek samo ruszyło, tylko żeby było widoczne w panelu
+    /// <c>/hangfire</c> i dało się je odpalić przyciskiem „Trigger now" — Hangfire nie ma innego sposobu
+    /// pokazania zadania uruchamianego ręcznie. Powód, dla którego nie wolno dać mu crona, opisuje
+    /// <see cref="ForcePurgeDeletedBudgetsCommandHandler"/>.
+    ///
+    /// Konsekwencja: panel jest dostępny tylko w Development (CLAUDE.md §4), więc na produkcji nie ma
+    /// czym tego wyzwolić. Dla narzędzia, które kasuje dane z pominięciem obietnicy retencji, to jest
+    /// właściwość, nie brak — pojawi się razem z ekranem, który poprosi człowieka o potwierdzenie.
+    /// </remarks>
 
     public static IEndpointRouteBuilder MapCategorization(this IEndpointRouteBuilder app)
     {
@@ -64,13 +90,22 @@ public static class CategorizationModule
             .WithName("GetTrainingSet")
             .Produces<TrainingSetOverviewResponseDto>();
 
-        app.MapPost("/api/categorization/train", async (
-            TrainCategoryModelCommandHandler handler, CancellationToken ct) =>
-            Results.Ok(await handler.HandleAsync(ct)))
+        app.MapPost("/api/categorization/train", (
+            TrainCategoryModelCommandHandler handler) =>
+            Results.Ok(handler.Handle()))
             .WithName("TrainCategoryModel")
-            .Produces<TrainingReportResponseDto>()
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces<TrainingQueuedResponseDto>()
+            .Produces(StatusCodes.Status401Unauthorized);
+
+        // Wynik zgłoszenia z POST wyżej — ekran odpytuje, dopóki nie ma wersji.
+        // ⚠️ Zawsze 200: „jeszcze nie ma wyniku" to normalna odpowiedź, a nie brak zasobu. Cudze i zmyślone
+        // zgłoszenie dają to samo, bo wersje zawęża filtr własnościowy.
+        app.MapGet("/api/categorization/train/{jobId}", async (
+            string jobId, GetTrainingStatusQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(jobId, ct)))
+            .WithName("GetTrainingStatus")
+            .Produces<TrainingStatusResponseDto>()
+            .Produces(StatusCodes.Status401Unauthorized);
 
         app.MapPost("/api/categorization/recategorize", async (
             RecategorizeTransactionsCommandHandler handler, CancellationToken ct) =>
@@ -79,10 +114,10 @@ public static class CategorizationModule
             .Produces<RecategorizeReportResponseDto>()
             .Produces(StatusCodes.Status409Conflict);
 
-        app.MapPost("/api/categorization/activate", (
-            ActivateModelRequestDto request, ActivateCategoryModelCommandHandler handler) =>
+        app.MapPost("/api/categorization/activate", async (
+            ActivateModelRequestDto request, ActivateCategoryModelCommandHandler handler, CancellationToken ct) =>
         {
-            handler.Handle(request.Version);
+            await handler.HandleAsync(request.VersionId, ct);
             return Results.NoContent();
         })
             .WithName("ActivateCategoryModel")
@@ -142,9 +177,12 @@ public static class CategorizationModule
             "model training-set", [],
             async (sp, _, ct) => await sp.GetRequiredService<GetTrainingSetQueryHandler>().HandleAsync(ct));
 
+        // CLI trenuje WPROST, z pominięciem kolejki: polecenie ma zwrócić metryki temu, kto je uruchomił,
+        // a nie numer zadania do podglądania w panelu. Użytkownika bierze z własnego kontekstu.
         registry.Register("model", "train", "Trenuje nowy model na dotychczasowych poprawkach.",
             "model train", [],
-            async (sp, _, ct) => await sp.GetRequiredService<TrainCategoryModelCommandHandler>().HandleAsync(ct));
+            async (sp, _, ct) => await sp.GetRequiredService<TrainCategoryModelJob>()
+                .RunAsync(sp.GetRequiredService<ICurrentUserAccessor>().UserId, context: null, ct));
 
         registry.Register("model", "recategorize", "Przelicza kategorie istniejących transakcji aktywnym modelem.",
             "model recategorize", [],
@@ -154,9 +192,10 @@ public static class CategorizationModule
         registry.Register("model", "activate", "Przywraca wskazaną wersję modelu jako aktywną.",
             "model activate --version <wersja>",
             [CliFlag.Required("version", "Wersja z listy „model training-set”.")],
-            (sp, args, _) =>
+            async (sp, args, ct) =>
             {
-                sp.GetRequiredService<ActivateCategoryModelCommandHandler>().Handle(args.GetRequiredFlag("version"));
+                await sp.GetRequiredService<ActivateCategoryModelCommandHandler>()
+                    .HandleAsync(args.GetRequiredGuidFlag("version"), ct);
                 return Task.FromResult<object?>(new { activated = true });
             });
 

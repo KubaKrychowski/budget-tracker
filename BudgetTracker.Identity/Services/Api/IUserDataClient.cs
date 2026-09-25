@@ -1,6 +1,6 @@
 namespace BudgetTracker.Identity.Services.Api;
 
-/// <summary>Klient endpointów <c>/api/admin</c> API budżetu — dane użytkowników trzyma API, konta serwer tożsamości.</summary>
+/// <summary>Klient endpointów <c>o/api/admin</c> API budżetu — dane użytkowników trzyma API, knta serwer tożsamości.</summary>
 /// <exception cref="UserDataServiceException">Każda metoda, gdy API jest niedostępne albo odrzuci żądanie.</exception>
 public interface IUserDataClient
 {
@@ -15,4 +15,9 @@ public interface IUserDataClient
 
     /// <summary>Przepisuje dane właściciela na inne konto, niczego nie kasując.</summary>
     Task<OwnerDataCounts> ReassignAsync(Guid ownerId, Guid targetUserId, CancellationToken ct);
+
+    /// <summary>
+    /// Zakłada magazyn plików nowego konta (kontener modeli i artefaktów). Powtórzenie jest bezpieczne.
+    /// </summary>
+    Task CreateUserContainerAsync(Guid userId, CancellationToken ct);
 }

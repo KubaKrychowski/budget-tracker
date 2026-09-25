@@ -283,6 +283,34 @@ public sealed class AdminController(
     };
 
     /// <summary>Wywołanie API, które przy awarii daje <c>null</c> zamiast wyjątku — ekran pokazuje wtedy ostrzeżenie.</summary>
+    /// <summary>
+    /// Zakłada magazyn plików konta, gdy zabrakło go przy rejestracji.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Rejestracja NIE przerywa się, gdy API akurat nie odpowiada — konto powstaje mimo to, więc musi
+    /// istnieć droga, którą da się to dokończyć później. To jest ta droga. Powtórzenie jest bezpieczne:
+    /// API zakłada kontener tylko wtedy, gdy go nie ma.
+    /// </remarks>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateStorage(Guid id, CancellationToken ct)
+    {
+        var user = await userManager.FindByGuidAsync(id, ct);
+        if (user is null) return FlashAndRedirect(nameof(Users), "Admin_Flash_NotFound", isError: true);
+
+        try
+        {
+            await data.CreateUserContainerAsync(id, ct);
+        }
+        catch (UserDataServiceException ex)
+        {
+            logger.LogWarning(ex, "Nie udało się założyć magazynu plików dla konta {UserId}.", id);
+            return FlashAndRedirect(nameof(Users), "Admin_Flash_DataUnavailable", isError: true);
+        }
+
+        return FlashAndRedirect(nameof(Users), "Admin_Flash_StorageCreated", isError: false, user.Email ?? user.UserName ?? "");
+    }
+
     private async Task<T?> TryAsync<T>(Func<Task<T>> call) where T : class
     {
         try

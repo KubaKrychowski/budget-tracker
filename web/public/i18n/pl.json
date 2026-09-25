@@ -55,7 +55,11 @@
       "expensesSeries": "Wydatki",
       "balanceSeries": "Stan budżetu"
     },
-    "budgetDisabledTag": "Wyłączony"
+    "budgetDisabledTag": "Wyłączony",
+    "recentActions": "Ostatnie akcje",
+    "recentActionsHint": "Ekrany, na których byłeś ostatnio — najświeższy pierwszy",
+    "firstStepsHint": "Historia jest jeszcze pusta — tu wrócą ekrany, na których byłeś",
+    "allActions": "Wszystkie akcje"
   },
   "enums": {
     "transactionStatus": {
@@ -212,6 +216,8 @@
       "largestExpense": "Największy wyfiltrowany wydatek"
     },
     "rowMenu": {
+      "accept": "Zatwierdź kategorię",
+      "accepted": "Kategoria zatwierdzona — wiersz wyszedł z kolejki przeglądu.",
       "edit": "Edytuj",
       "delete": "Usuń",
       "markEpisodic": "Oznacz jako zlecenie epizodyczne…",
@@ -328,6 +334,9 @@
       "upToDate": "Model uczył się na wszystkich dotychczasowych poprawkach.",
       "train": "Doucz model",
       "trainSuccess": "Model douczony na {{rows}} przykładach.",
+      "queued": "Trening liczy się w tle. Wynik pojawi się, gdy skończy.",
+      "checkStatus": "Sprawdź status",
+      "stillRunning": "Trening jeszcze trwa.",
       "recategorize": "Przelicz kategorie",
       "recategorizeSuccess": "Przeliczono {{examined}} transakcji, kategorię zmieniło {{recategorized}}.",
       "recategorizeConfirm": {
@@ -468,6 +477,9 @@
     "rules": {
       "intro": "Reguły przypisują kategorię, gdy opis transakcji albo typ operacji pasuje do wzorca. Stosują się w kolejności priorytetu — wygrywa pierwsza dopasowana, dlatego lista jest posortowana priorytetem, a nie nazwą.",
       "listTitle": "Lista reguł",
+      "searchPlaceholder": "Szukaj we wzorcach, kategoriach i notatkach",
+      "searchLabel": "Szukaj w regułach",
+      "noMatches": "Żadna reguła nie pasuje do wyszukiwania.",
       "create": "Nowa reguła",
       "empty": "Nie ma jeszcze żadnej reguły.",
       "columns": {
@@ -760,6 +772,8 @@
       "noLimits": "Ten budżet nie ma jeszcze limitów.",
       "noLimitsClosed": "{{month}} — w tym miesiącu budżet nie miał żadnych limitów.",
       "noLimitsBody": "Limit ustawiasz dla kategorii wydatkowej. Obok widzisz, na co w tym miesiącu idą pieniądze — to dobry punkt wyjścia, ale kwotę wybierasz sam.",
+      "noLimitsThisMonth": "W tym miesiącu ten budżet nie ma żadnego limitu.",
+      "noLimitsThisMonthBody": "Limity są ustawione w innych miesiącach — przestaw okres w „Konfiguracji\" powyżej. Limit dodany tutaj zacznie obowiązywać od oglądanego miesiąca.",
       "overOne": "Ponad limitem: {{name}} — {{spent}} zł z {{limit}} zł.",
       "overMany": "Kategorie ponad limitem: {{count}}.",
       "closedFine": "{{month}} — miesiąc zamknięty. Wszystkie kategorie zmieściły się w limicie.",
@@ -1049,5 +1063,35 @@
     "close": "Zamknij terminal",
     "hint": "Wpisz „help”, żeby zobaczyć wszystkie dostępne komendy.",
     "placeholder": "rzeczownik czasownik --flagi"
+  },
+  "search": {
+    "placeholder": "Szukaj transakcji, budżetów, ekranów i akcji",
+    "loading": "Szukam…",
+    "showAll": "Pokaż wszystkie wyniki ({{count}})",
+    "recentScreens": "Ostatnie ekrany",
+    "firstSteps": "Od czego zacząć",
+    "history": {
+      "title": "Historia wyszukiwań",
+      "clear": "Wyczyść",
+      "empty": "Pusto — historia zbiera się sama, gdy zaczniesz szukać. Zostaje w tej przeglądarce i nigdzie jej nie wysyłamy."
+    },
+    "groups": {
+      "actions": "Akcje",
+      "categories": "Kategorie",
+      "budgets": "Budżety",
+      "standingOrders": "Zlecenia stałe",
+      "episodicOrders": "Zlecenia epizodyczne",
+      "transactions": "Transakcje"
+    },
+    "empty": {
+      "title": "Nic nie znaleziono dla „{{query}}”",
+      "body": "Sprawdź pisownię albo poszerz zakres — szukam tylko w budżecie {{budget}}.",
+      "bodyAll": "Sprawdź pisownię — szukałem już we wszystkich budżetach."
+    },
+    "scope": {
+      "hint": "Szukam w budżecie wybranym na dashboardzie",
+      "searchAll": "Szukaj we wszystkich budżetach",
+      "backToBudget": "Wróć do jednego budżetu"
+    }
   }
 }

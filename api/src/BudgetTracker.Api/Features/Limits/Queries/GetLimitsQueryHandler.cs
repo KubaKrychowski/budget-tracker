@@ -37,7 +37,7 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             return new LimitsResponseDto(
                 viewed, currentMonth, viewed < currentMonth, [], [],
                 [.. allowed.Select(c => new LimitCategoryOptionResponseDto(c.BusinessId, c.Name, false))],
-                0m, 0m, 0m, 0, 0, 0m, [], budgets);
+                0m, 0m, 0m, 0, 0, 0m, [], budgets, HasAnyLimit: false);
         }
 
         var history = await db.BudgetItems
@@ -81,7 +81,9 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             UncategorizedCount: uncategorized?.Count ?? 0,
             UncategorizedAmount: uncategorized?.Spent ?? 0m,
             SelectedBudgetIds: [budget],
-            Budgets: budgets);
+            Budgets: budgets,
+            // Cała historia limitów budżetu jest już wczytana wyżej — nie ma po co pytać bazy drugi raz.
+            HasAnyLimit: history.Count > 0);
     }
 
     /// <summary>Klucz słownika wydatków dla transakcji bez kategorii — kategorie w bazie mają klucze dodatnie.</summary>

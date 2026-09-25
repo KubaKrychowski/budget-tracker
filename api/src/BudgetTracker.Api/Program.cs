@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using Azure.Identity;
 using BudgetTracker.Api.Features.Admin;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Categorization;
@@ -10,13 +11,14 @@ using BudgetTracker.Api.Features.Import;
 using BudgetTracker.Api.Features.Limits;
 using BudgetTracker.Api.Features.EpisodicOrders;
 using BudgetTracker.Api.Features.Savings;
+using BudgetTracker.Api.Features.Search;
 using BudgetTracker.Api.Features.StandingOrders;
 using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Extensions.Azure;
 using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -74,6 +76,17 @@ builder.Services.AddSavings();
 builder.Services.AddLimits();
 builder.Services.AddStandingOrders();
 builder.Services.AddEpisodicOrders();
+builder.Services.AddSearch();
+
+builder.Services.AddAzureClients(clients =>
+{
+    clients.AddBlobServiceClient(new Uri(builder.Configuration["Storage:BlobServiceUri"]!));
+    clients.UseCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions
+    {
+        ExcludeManagedIdentityCredential = builder.Environment.IsDevelopment(),
+        ExcludeWorkloadIdentityCredential = true,
+    }));
+});
 
 // Originy frontu z konfiguracji (appsettings.Development.json), nie z kodu: adres i port zależą od środowiska.
 const string devCors = "dev-frontend";
@@ -168,6 +181,7 @@ app.MapSavings();
 app.MapLimits();
 app.MapStandingOrders();
 app.MapEpisodicOrders();
+app.MapSearch();
 app.MapImport();
 app.MapBudgets();
 app.MapTransactions();
@@ -183,7 +197,8 @@ var cli = new CliCommandRegistry()
     .MapEpisodicOrdersCli()
     .MapSavingsCli()
     .MapBudgetsCli()
-    .MapTransactionsCli();
+    .MapTransactionsCli()
+    .MapSearchCli();
 app.MapCli(cli);
 
 app.Run();

@@ -23,6 +23,8 @@ import { DashboardResponse } from '../../core/api/models/dashboard-response';
 import { fromIsoDate, toIsoDate } from '../../core/api/date-param';
 import { QUICK_ACTIONS, actionByKey } from '../../core/system-actions';
 import { SystemAction } from '../../core/models/system-action';
+import { RecentScreens } from '../../core/search/recent-screens';
+import { SearchFocus } from '../../core/search/search-focus';
 import { CATEGORY_SERIES_COLORS, CHART_COLORS } from '../../core/chart-palette';
 import { loadRememberedRange, rememberRange } from './budget-range-memory';
 import { snapToAvailableRange } from './chart-range-selection';
@@ -47,7 +49,28 @@ export class Dashboard {
   /** Patrz App.langLoaded — bez tego serie wykresow zostalyby na kluczach. */
   private readonly langLoaded = toSignal(this.translate.onLangChange, { initialValue: null });
 
-  protected readonly quickActions = QUICK_ACTIONS;
+  private readonly recentScreens = inject(RecentScreens);
+  private readonly searchFocus = inject(SearchFocus);
+
+  /**
+   * Kafle „Ostatnie akcje": ekrany, na których użytkownik był ostatnio.
+   *
+   * ⚠️ Gdy historia jest pusta (nowa przeglądarka, wyczyszczone dane), wracamy do kafli
+   * pierwszych kroków. Pusta karta na dashboardzie byłaby najgorszym z możliwych powitań —
+   * ekran otwierany najczęściej nie ma prawa wyglądać na zepsuty.
+   */
+  protected readonly recentTiles = computed(() => {
+    const visited = this.recentScreens.screens();
+    return visited.length > 0 ? visited : QUICK_ACTIONS;
+  });
+
+  /** Czy kafle pokazują historię, czy podpowiedzi na start — decyduje o podtytule karty. */
+  protected readonly hasVisitedScreens = computed(() => this.recentScreens.screens().length > 0);
+
+  /** „Wszystkie akcje" otwiera wyszukiwarkę w nagłówku — tam jest pełna lista tego, co system potrafi. */
+  protected openSearch(): void {
+    this.searchFocus.open();
+  }
 
   /** Akcja po kluczu, nie po indeksie — patrz komentarz przy actionByKey(). */
   protected readonly importAction = actionByKey('import-statement');

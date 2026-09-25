@@ -6,6 +6,7 @@ using BudgetTracker.Api.Features.Categorization.Models;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.ML;
 using Xunit;
@@ -48,8 +49,18 @@ public sealed class MlCategorizerBoilerplateTests : IAsyncLifetime
 
     private AppDbContext _db = null!;
     private string _dir = null!;
-    private string _modelPath = null!;
     private string _trainingPath = null!;
+    /// <summary>Wlasciciel modelu — kontener w Azurite nazywa sie jego identyfikatorem.</summary>
+    private readonly FakeCurrentUserAccessor _user = new(Guid.CreateVersion7());
+
+    private string _container = null!;
+
+    /// <summary>Nazwa wersji w bazie i sciezka blobu — ta sama konwencja co w ModelStore.</summary>
+    private const string ModelFileName = "model.zip";
+    private const string ModelBlobName = "modelVersions/" + ModelFileName;
+
+    /// <summary>Nazwa blobu ze zbiorem bazowym — ten sam plik, co kiedys na dysku.</summary>
+    private const string TrainingSetBlobName = "training-set.csv";
 
     public async Task InitializeAsync()
     {
@@ -65,18 +76,30 @@ public sealed class MlCategorizerBoilerplateTests : IAsyncLifetime
         await _db.SaveChangesAsync();
 
         _dir = Directory.CreateTempSubdirectory("ml-boilerplate-test").FullName;
-        _modelPath = Path.Combine(_dir, "model.zip");
         _trainingPath = Path.Combine(_dir, "training-set.csv");
 
         var rows = TrainingRows();
-        CategoryModelTrainer.Train(rows, _modelPath);
+        var trained = CategoryModelTrainer.Train(rows);
+
+        _container = _user.UserId.ToString();
+        await TestBlobs.CreateNamedContainerAsync(_container);
+
+        var eTag = await TestBlobs.UploadStreamAsync(_container, ModelBlobName, trained.buffer);
+        await trained.buffer.DisposeAsync();
+
+        _db.Add(new ModelVersion(_user.UserId, true, ModelFileName, trained.Item1.Rows,
+            trained.Item1.Categories, 1m, 1m, eTag));
+        await _db.SaveChangesAsync();
+
         WriteTrainingFile(rows, _trainingPath);
+        await TestBlobs.UploadTextAsync(_container, TrainingSetBlobName, File.ReadAllText(_trainingPath));
     }
 
     public async Task DisposeAsync()
     {
         await _db.Database.EnsureDeletedAsync();
         await _db.DisposeAsync();
+        await TestBlobs.DropContainerAsync(_container);
         if (Directory.Exists(_dir)) Directory.Delete(_dir, recursive: true);
     }
 
@@ -116,12 +139,21 @@ public sealed class MlCategorizerBoilerplateTests : IAsyncLifetime
 
     private MlCategorizer Categorizer(string trainingPath)
     {
-        var options = Options.Create(new CategorizationOptions
-        {
-            ModelPath = _modelPath,
-            TrainingDataPath = trainingPath,
-        });
-        return new MlCategorizer(_db, options, new TrainingSetBuilder(_db, options));
+        var options = Options.Create(new CategorizationOptions());
+
+        // Zbior bazowy lezy w blobie; sciezka rozstrzyga juz tylko to, CZY test go widzi.
+        var configuration = TestBlobs.Configuration(
+            _container, trainingPath == _trainingPath ? TrainingSetBlobName : "nie-ma.csv");
+
+        // Pamiec per wywolanie: bramka jest liczona na wersje modelu, wiec wspolny cache
+        // przeniosłby wynik jednego przypadku do nastepnego.
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        return new MlCategorizer(
+            _db,
+            new CategoryModelSource(_db, TestBlobs.Client(), _user, cache),
+            new VocabularyGate(
+                new TrainingSetBuilder(_db, options, TestBlobs.Client(), configuration), options, _user, cache));
     }
 
     /// <summary>
@@ -129,10 +161,10 @@ public sealed class MlCategorizerBoilerplateTests : IAsyncLifetime
     /// Bez tego testy niżej przechodziłyby z niewłaściwego powodu (np. bo model przestał być pewny).
     /// </summary>
     [Fact]
-    public void Sam_model_jest_PEWNY_losowego_opisu_z_rozlanym_slowem()
+    public async Task Sam_model_jest_PEWNY_losowego_opisu_z_rozlanym_slowem()
     {
         var ml = new MLContext();
-        using var stream = File.OpenRead(_modelPath);
+        await using var stream = await TestBlobs.OpenReadAsync(_container, ModelBlobName);
         using var engine = ml.Model.CreatePredictionEngine<TransactionFeatures, CategoryPrediction>(
             ml.Model.Load(stream, out _));
 

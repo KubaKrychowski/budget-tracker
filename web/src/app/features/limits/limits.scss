@@ -20,6 +20,38 @@
     font-weight: 600;
   }
 
+  /* Układ pól jak na dashboardzie (`dash__config`): jedno pod drugim, etykieta przy kontrolce. */
+  &__config-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__config-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Strzałki to jedna para, nie dwa osobne przyciski — stąd ciaśniejszy odstęp niż między polami. */
+  &__config-steps {
+    display: flex;
+    gap: 4px;
+  }
+
+  /* Stała szerokość etykiet, żeby kontrolki obu pól stały w jednej linii. `::ng-deep`, bo etykieta
+     przełącznika budżetu należy do JEGO szablonu — zasięg ograniczony do tej karty. */
+  &__config-label,
+  &__config ::ng-deep .bsw__label {
+    min-width: 56px;
+  }
+
+  &__config-control,
+  &__config ::ng-deep .bsw__control {
+    min-width: 240px;
+  }
+
   &__banner {
     margin: 16px 0;
   }
@@ -92,9 +124,10 @@
     margin: 16px 0;
   }
 
+  /* Nagłówek miesiąca nad tabelą. Od kiedy sterowanie miesiącem przeniosło się do „Konfiguracji",
+     nie stoi już między strzałkami — więc do lewej, a nie wyśrodkowany w stałej szerokości. */
   &__month {
-    min-width: 140px;
-    text-align: center;
+    text-align: left;
     font-weight: 600;
   }
 

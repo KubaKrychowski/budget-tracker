@@ -18,6 +18,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogService } from '../../../core/confirm-dialog/confirm-dialog.service';
 import { ErrorMessages } from '../../../core/errors/error-messages';
 import { valueOf } from '../../../core/api/resource-value';
+import { normalizeText } from '../../../core/normalize-text';
 import { parseAmount } from '../../../core/parse-amount';
 import { CategoryOption } from '../../../core/api/models/category-option';
 import { CategoryRule, CategoryRuleRequest, RuleDirection } from '../../../core/api/models/category-rule';
@@ -82,6 +83,39 @@ export class Rules {
   protected readonly rules = computed(() =>
     [...(this.rulesValue() ?? [])].sort((a, b) => a.priority - b.priority || a.categoryName.localeCompare(b.categoryName, 'pl')),
   );
+
+  /**
+   * Fraza z wyszukiwarki nad listą.
+   *
+   * Filtrujemy W PRZEGLĄDARCE, bo API oddaje całą listę reguł jednym żądaniem — dokładanie
+   * parametru po stronie serwera niczego by nie przyspieszyło, a dołożyło drugą ścieżkę filtrowania.
+   */
+  protected readonly search = signal('');
+
+  /**
+   * Reguły po odsianiu frazą — to ONE trafiają do tabeli.
+   *
+   * ⚠️ Szukamy wyłącznie po polach TEKSTOWYCH (wzorce, kategoria, notatka). Priorytet i zakres kwot
+   * są liczbami: wpisane „100" trafiałoby jednocześnie w priorytet, w kwotę i w numer w notatce,
+   * więc wynik wyglądałby na przypadkowy. Gdyby miały być filtrowalne, potrzebują własnych pól.
+   *
+   * Porównanie idzie po `normalizeText`, więc „zabka" znajduje „Żabka", a wielkość liter nie ma znaczenia.
+   */
+  protected readonly visibleRules = computed(() => {
+    const phrase = normalizeText(this.search().trim());
+    if (phrase === '') return this.rules();
+
+    return this.rules().filter((rule) => [
+      rule.pattern,
+      rule.transactionTypePattern,
+      rule.categoryName,
+      rule.note,
+    ].some((field) => field !== null && normalizeText(field).includes(phrase)));
+  });
+
+  /** Czy lista jest pusta DLATEGO, że nic nie pasuje — a nie dlatego, że reguł nie ma wcale. */
+  protected readonly nothingMatches = computed(() =>
+    this.rules().length > 0 && this.visibleRules().length === 0);
 
   /**
    * Priorytety występujące więcej niż raz, rosnąco.

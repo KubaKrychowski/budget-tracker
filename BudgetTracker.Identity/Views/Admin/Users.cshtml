@@ -61,6 +61,9 @@
                 }
                 else
                 {
+                    <form asp-action="CreateStorage" asp-route-id="@user.Id" method="post" class="admin-inline-form">
+                        <button type="submit" class="btn-secondary">@L["Admin_CreateStorage"]</button>
+                    </form>
                     <a asp-action="DeleteUser" asp-route-id="@user.Id" class="btn-danger-outline">@L["Admin_Delete"]</a>
                 }
             </td>

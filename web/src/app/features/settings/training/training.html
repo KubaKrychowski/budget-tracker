@@ -84,6 +84,27 @@
         </nz-alert>
       }
 
+      <!-- Trening liczy się w tle. Ekran NIE odpytuje serwera sam: wynik sprawdza człowiek wtedy,
+           gdy go potrzebuje. Po zamknięciu karty gotowy trening i tak widać na liście wersji. -->
+      @if (queuedJobId() !== null) {
+        <nz-alert
+          nzType="info"
+          nzShowIcon
+          [nzMessage]="'settings.training.queued' | translate"
+          [nzAction]="queuedAction" />
+        <ng-template #queuedAction>
+          <button
+            nz-button
+            nzType="text"
+            nzSize="small"
+            [nzLoading]="checkingStatus()"
+            (click)="checkTrainingStatus()"
+          >
+            {{ 'settings.training.checkStatus' | translate }}
+          </button>
+        </ng-template>
+      }
+
       @if (lastRun(); as run) {
         <nz-alert
           nzType="success"
@@ -219,7 +240,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (m of modelTable.data; track m.version) {
+            @for (m of modelTable.data; track m.id) {
               <tr>
                 <td>{{ moment(m.createdAt) }}</td>
                 <td class="trn__right amount">{{ m.report?.rows ?? '—' }}</td>

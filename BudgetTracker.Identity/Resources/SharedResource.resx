@@ -161,6 +161,8 @@
   <data name="Admin_Data_Unavailable" xml:space="preserve"><value>—</value></data>
   <data name="Admin_Data_Detail" xml:space="preserve"><value>budgets: {0}, transactions: {1}, savings goals: {2}, reservations: {3}, standing orders: {4}, episodic orders: {5}</value></data>
   <data name="Admin_Delete" xml:space="preserve"><value>Delete…</value></data>
+  <data name="Admin_CreateStorage" xml:space="preserve"><value>Create storage</value></data>
+  <data name="Admin_Flash_StorageCreated" xml:space="preserve"><value>File storage for account {0} is ready.</value></data>
   <data name="Admin_Paging_Shown" xml:space="preserve"><value>Showing {0} of {1} accounts</value></data>
   <data name="Admin_Paging_Prev" xml:space="preserve"><value>Previous</value></data>
   <data name="Admin_Paging_Next" xml:space="preserve"><value>Next</value></data>

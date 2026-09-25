@@ -55,7 +55,11 @@
       "expensesSeries": "Expenses",
       "balanceSeries": "Budget balance"
     },
-    "budgetDisabledTag": "Switched off"
+    "budgetDisabledTag": "Switched off",
+    "recentActions": "Recent actions",
+    "recentActionsHint": "Screens you visited recently — newest first",
+    "firstStepsHint": "Nothing here yet — screens you visit will show up",
+    "allActions": "All actions"
   },
   "enums": {
     "transactionStatus": {
@@ -212,6 +216,8 @@
       "largestExpense": "Largest filtered expense"
     },
     "rowMenu": {
+      "accept": "Accept category",
+      "accepted": "Category accepted — the row left the review queue.",
       "edit": "Edit",
       "delete": "Delete",
       "markEpisodic": "Mark as a one-off order…",
@@ -326,6 +332,9 @@
       "upToDate": "The model has learned from every correction so far.",
       "train": "Retrain model",
       "trainSuccess": "Model retrained on {{rows}} examples.",
+      "queued": "Training is running in the background. The result will show up when it finishes.",
+      "checkStatus": "Check status",
+      "stillRunning": "Training is still running.",
       "recategorize": "Recategorise transactions",
       "recategorizeSuccess": "Checked {{examined}} transactions, {{recategorized}} changed category.",
       "recategorizeConfirm": {
@@ -697,6 +706,8 @@
       "noLimits": "This budget has no limits yet.",
       "noLimitsClosed": "{{month}} — the budget had no limits in this month.",
       "noLimitsBody": "You set a limit for a spending category. Next to it you can see where the money goes this month — a good starting point, but you pick the amount.",
+      "noLimitsThisMonth": "This budget has no limit in this month.",
+      "noLimitsThisMonthBody": "Limits are set in other months — change the period in \"Configuration\" above. A limit added here applies from the month you are viewing.",
       "overOne": "{{name}} is over its limit: {{spent}} of {{limit}}.",
       "overMany": "{{count}} categories are over their limit.",
       "closedFine": "{{month}} — closed month. Every category stayed within its limit.",
@@ -986,5 +997,35 @@
     "close": "Close terminal",
     "hint": "Type “help” to see all available commands.",
     "placeholder": "noun verb --flags"
+  },
+  "search": {
+    "placeholder": "Search transactions, budgets, screens and actions",
+    "loading": "Searching…",
+    "showAll": "Show all results ({{count}})",
+    "recentScreens": "Recent screens",
+    "firstSteps": "Where to start",
+    "history": {
+      "title": "Search history",
+      "clear": "Clear",
+      "empty": "Empty — history builds itself as you search. It stays in this browser and is never sent anywhere."
+    },
+    "groups": {
+      "actions": "Actions",
+      "categories": "Categories",
+      "budgets": "Budgets",
+      "standingOrders": "Standing orders",
+      "episodicOrders": "Episodic orders",
+      "transactions": "Transactions"
+    },
+    "empty": {
+      "title": "Nothing found for \"{{query}}\"",
+      "body": "Check the spelling or widen the scope — searching only in {{budget}}.",
+      "bodyAll": "Check the spelling — all budgets were already searched."
+    },
+    "scope": {
+      "hint": "Searching the budget picked on the dashboard",
+      "searchAll": "Search all budgets",
+      "backToBudget": "Back to a single budget"
+    }
   }
 }
