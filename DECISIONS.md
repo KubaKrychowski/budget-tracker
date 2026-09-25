@@ -1075,3 +1075,101 @@ konta**, które na nim powstało, i ekran nie może sugerować inaczej. Dopisani
 
 **Czego to nie zamyka.** Zaproszenie nie wysyła maila (dostajesz adres kanałem, którym i tak się umawiasz), nie ma
 wygasania ani limitu użyć, nie ma importu listy hurtem, a rejestracja nie jest ograniczona co do liczby kont na adres IP.
+
+## 13. Wdrożenie na Azure (Terraform)
+
+Kod infrastruktury: `infra/`. Instrukcja uruchomienia i kroki ręczne: `infra/README.md`. Tu są same decyzje.
+
+**App Service F1 na obie aplikacje .NET, jeden plan.** Limit to 10 aplikacji na plan, więc API i serwer
+tożsamości mieszczą się bez sztuczek. Dzielą za to 60 minut CPU na dobę (⚠️ liczone **per region per
+subskrypcja**, nie per aplikacja — po przekroczeniu App Service odpowiada 403 do końca doby), 1 GB pamięci
+na cały plan i 165 MB transferu dziennie. Dla zamkniętej bety na kilka osób to wystarcza; dla pokazu na
+żywo przed publicznością nie.
+
+⚠️ **W F1 nie ma Always On, więc Hangfire faktycznie nie działa.** Proces jest usypiany po ok. 20 minutach
+bez ruchu, a zakolejkowane zadanie nie ruszy, dopóki ktoś nie obudzi aplikacji żądaniem. Dotyczy to treningu
+modelu i `BudgetPurger`. To jest znany koszt wybranego planu, nie usterka do naprawienia w kodzie — jeśli
+zadania w tle mają działać naprawdę, trzeba B1 (ok. 13 USD/mies.) albo przeniesienie ich poza App Service.
+
+**Front i landing na dwóch osobnych Static Web Apps.** Dwa osobne buildy w jednym workspace i dwaj różni
+adresaci. Plan Free: 100 GB transferu miesięcznie, 500 MB na aplikację, własne domeny z certyfikatem w cenie.
+⚠️ Static Web Apps istnieje tylko w pięciu regionach (`westeurope`, `eastus2`, `centralus`, `westus2`,
+`eastasia`), dlatego region SWA jest w Terraformie **osobną zmienną** niż region App Service — wpisanie tam
+`polandcentral` kończy się błędem przy `apply`, nie ostrzeżeniem.
+
+⚠️ **Plan Free Static Web Apps nie ma „linked backend"**, więc odwrotne proxy do App Service nie wchodzi w grę:
+front woła API między originami, czyli przez CORS. **REWIZJA (2026-09-25):** `app.UseCors` w API stało dotąd
+wyłącznie w gałęzi `IsDevelopment()`. Było to poprawne, dopóki front i API chodziły na jednym localhoście —
+na Azure oznaczałoby, że aplikacja nie może wykonać ani jednego żądania, mimo poprawnego tokenu. Polityka
+obowiązuje teraz w każdym środowisku, a lista originów dalej pochodzi wyłącznie z konfiguracji (pusta lista
+nie otwiera niczego, bo `WithOrigins()` bez wartości nie dopasuje żadnego żądania).
+
+**Baza poza Terraformem, na Neonie.** Azure nie ma darmowego Postgresa na stałe (Flexible Server B1ms jest
+darmowy 12 miesięcy na nowej subskrypcji, potem płatny). Terraform przyjmuje gotowe connection stringi
+i tylko je wstrzykuje. ⚠️ Connection string API musi używać roli `budget_app`, **nie właściciela bazy**:
+RLS nie dotyczy właściciela tabel, więc połączenie właścicielem po cichu wyłącza izolację danych.
+
+**Neon unosi wymagany schemat ról — sprawdzone 2026-09-25.** Wątpliwość była realna: schemat wymaga roli
+`budget_jobs` z atrybutem `BYPASSRLS`, a ten atrybut może nadać wyłącznie rola, która sama go ma (atrybutów
+ról nie dziedziczy się przez członkostwo, więc samo członkostwo w `neon_superuser` by nie wystarczyło).
+Pomiar rozstrzygnął: `neondb_owner` ma `rolbypassrls` i `rolcreaterole` jako **własne** atrybuty, a
+`CREATE ROLE … BYPASSRLS` przechodzi. `api/db/setup-rls-roles.sql` idzie bez zmian.
+
+⚠️ Ta sama właściwość jest najgroźniejszą pułapką wdrożenia: skoro `neondb_owner` omija RLS, to connection
+string wskazujący tę rolę wyłącza izolację danych **po cichu** — nic się nie psuje, a każdy zalogowany widzi
+cudze budżety. Test po migracji: jako `budget_app` zapytanie `SELECT count(*) FROM "Budgets"` bez ustawionego
+`app.current_user_id` musi zwrócić **0**.
+
+**Stan Terraforma w Azure Storage, nie lokalnie.** W stanie leżą sekrety jawnym tekstem (connection stringi,
+hasło SMTP, hasła do certyfikatów, sekret klienta admina), więc konto magazynu na stan ma **wyłączone klucze
+dostępu** i wymusza tożsamość Entra ID — nie powstaje druga, cicha droga dostępu, której nikt nie odbierze.
+Problem kury i jajka rozwiązuje osobny moduł `infra/bootstrap`, który trzyma swój stan lokalnie; jego stan
+jest odtwarzalny, stan modułu głównego nie.
+
+**Tożsamość zarządzana zamiast kluczy do magazynu.** API czyta i zapisuje modele przez `DefaultAzureCredential`,
+które poza `Development` nie wyklucza `ManagedIdentityCredential`. Konto magazynu na modele ma więc też
+wyłączone klucze, a dostęp daje przypisanie roli `Storage Blob Data Contributor` tożsamości aplikacji.
+
+**Certyfikaty OpenIddict generuje Terraform. REWIZJA (2026-09-25):** pierwsza wersja zostawiała je jako krok
+ręczny, bo `ServerCertificateLoader` czytał wyłącznie PFX ze ścieżki. Krok ręczny raz na kilka lat to jednak
+dokładnie ten rodzaj kroku, o którym się zapomina i który wywraca wdrożenie w najgorszym momencie, a na App
+Service plik musiałby jechać w paczce wdrożeniowej — czyli materiał kryptograficzny leżałby obok kodu
+i kasował się przy każdym wydaniu. Loader dostał więc drugą drogę: para PEM-ów (base64) wprost z konfiguracji,
+a `certificates.tf` je wytwarza. Ścieżka do PFX zostaje i ma pierwszeństwo niższe niż PEM.
+
+⚠️ To NIE są certyfikaty TLS — te dla `*.azurewebsites.net` Azure daje sam. Samopodpisany jest tu poprawny,
+nie jest kompromisem: nikt nie weryfikuje łańcucha zaufania, bo API bierze klucz publiczny z JWKS serwera
+tożsamości. Certyfikat jest opakowaniem na parę kluczy.
+
+⚠️ Klucz podpisujący leży przez to w stanie Terraforma — kto go ma, wystawi token dowolnego użytkownika.
+Świadomie zaakceptowane, dopóki `terraform apply` puszcza się lokalnie, a stan siedzi na koncie z wyłączonymi
+kluczami dostępu. Przy przeniesieniu wdrożenia do CI to jest pierwsza rzecz do przemyślenia na nowo.
+
+⚠️ Wymiana tych certyfikatów unieważnia wszystkie wydane tokeny i wylogowuje wszystkich, dlatego ważność jest
+długa (5 lat), a `early_renewal_hours = 0` — Terraform nie wymieni ich sam przy okazji niepowiązanego `apply`.
+Po wygaśnięciu serwer nie wstanie, zamiast po cichu podpisywać byle czym.
+
+**Czego ten Terraform nie robi.** Nie wgrywa kodu (Static Web Apps przez akcję GitHuba z tokenem wdrożeniowym,
+App Service przez `az webapp deploy`), nie zakłada bazy ani ról, nie uruchamia migracji i nie konfiguruje
+dostawcy poczty. ⚠️ Bez SMTP serwer tożsamości **nie wstanie** (`ValidateOnStart`),
+a rejestracja i tak wymaga maila z potwierdzeniem adresu.
+
+**Poczta: Azure Communication Services przez SDK, nie przez przekaźnik SMTP. REWIZJA (2026-09-25):**
+najpierw zapisano tu przekaźnik SMTP, bo nie wymagał zmiany w kodzie. Okazał się jednak drogą, której
+właściciel nie może przejść tym, co ma: klucz dostępu ACS z portalu obsługuje WYŁĄCZNIE SDK, a SMTP
+wymaga rejestracji aplikacji w Entra ID, roli na zasobie ACS i osobnego zasobu „SMTP Username" — trzech
+bytów do założenia ręcznie. Doszła więc druga implementacja `IEmailSender` (`AcsEmailSender`), a wybiera
+je konfiguracja, nie kod: wypełniona sekcja `Acs:Email` wygrywa, pusta zostawia SMTP dla Development
+i MailHoga. Zysk jest większy niż uniknięcie klikania: connection string czyta Terraform wprost z zasobu
+ACS, więc nie przechodzi ani przez plik, ani przez zmienną środowiskową, ani przez niczyje ręce.
+
+⚠️ `WaitUntil.Started`, nie `Completed`: wysyłka jest w ACS operacją długotrwałą, a czekanie na
+doręczenie zatrzymałoby żądanie HTTP rejestracji. Zachowanie jest przez to takie samo jak przy SMTP —
+odrzucenie widać od razu, niepowodzenie doręczenia później jest dla aplikacji niewidoczne.
+
+⚠️ **SPROSTOWANIE:** wcześniejsze wersje tej sekcji i `infra/README.md` twierdziły, że bez konfiguracji
+poczty serwer tożsamości nie wstanie, bo `SmtpOptions` ma `ValidateOnStart`. Nieprawda:
+`ValidateOnStart()` bez żadnej reguły walidacji niczego nie sprawdza, a wiązanie konfiguracji nie
+wymusza `required` (obiekt powstaje przez refleksję). Serwer wstawał z `Host = null`, a wywalała się
+dopiero pierwsza rejestracja — czyli błąd konfiguracji wychodził u użytkownika zamiast przy starcie.
+Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe dopiero teraz.

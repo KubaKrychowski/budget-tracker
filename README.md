@@ -138,6 +138,16 @@ Wytrenowany model ląduje w blobie (lokalnie: Azurite), a katalog wersji w bazie
 **Bez modelu aplikacja działa** — kategoryzują wtedy same reguły. To stan poprawny,
 nie awaria: na danych, z których reguły powstały, pokrywały 97% transakcji.
 
+## Wdrożenie (Azure)
+
+Infrastruktura jest opisana Terraformem w **[infra/](infra/)** — App Service F1 na API i serwer tożsamości,
+dwie Static Web Apps na aplikację i landing, konto magazynu na modele. Bazy tam nie ma: jest na Neonie,
+poza Terraformem.
+
+⚠️ Plan F1 ma **60 minut CPU na dobę** (per region per subskrypcja) i **nie ma Always On**, więc zadania
+Hangfire nie wykonają się, dopóki ktoś nie obudzi aplikacji żądaniem. To znany koszt darmowego planu,
+opisany razem z resztą w [infra/README.md](infra/README.md) i DECISIONS.md §13.
+
 ## Bramka jakości
 
 ```bash

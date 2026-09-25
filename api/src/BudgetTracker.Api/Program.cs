@@ -88,11 +88,20 @@ builder.Services.AddAzureClients(clients =>
     }));
 });
 
-// Originy frontu z konfiguracji (appsettings.Development.json), nie z kodu: adres i port zależą od środowiska.
-const string devCors = "dev-frontend";
+// Originy frontu z konfiguracji, nie z kodu: adres i port zależą od środowiska.
+//
+// ⚠️ Ta polityka obowiązuje w KAŻDYM środowisku, nie tylko w Development. Do 2026-09-25 `UseCors` stało
+// wyłącznie w gałęzi deweloperskiej, co było poprawne dopóki front i API chodziły na jednym localhoście
+// za wspólnym proxy. Na Azure front stoi na Static Web Apps (`*.azurestaticapps.net`), a API na App
+// Service (`*.azurewebsites.net`) — to dwa różne originy, więc bez tej polityki przeglądarka odrzuca
+// każde żądanie aplikacji, mimo że token jest poprawny. Plan Free Static Web Apps nie ma „linked
+// backend", więc odwrotne proxy po stronie SWA nie jest tu wyjściem.
+//
+// Pusta lista originów nie otwiera niczego: `WithOrigins()` bez wartości nie dopasuje żadnego żądania.
+const string frontendCors = "frontend";
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
-    options.AddPolicy(devCors, policy => policy
+    options.AddPolicy(frontendCors, policy => policy
         .WithOrigins(corsOrigins)
         .AllowAnyHeader()
         .AllowAnyMethod()));
@@ -129,7 +138,6 @@ using (var baseline = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
-    app.UseCors(devCors);
 
     using var scope = app.Services.CreateScope();
     var seedDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -160,6 +168,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+// Przed uwierzytelnianiem: odpowiedź na zapytanie wstępne (preflight) jest z definicji bez tokenu, więc
+// za `UseAuthorization` dostałaby 401 i przeglądarka nie puściłaby właściwego żądania.
+app.UseCors(frontendCors);
 
 app.UseAuthentication();
 app.UseAuthorization();

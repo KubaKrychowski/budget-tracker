@@ -1,0 +1,39 @@
+# Skopiuj na terraform.tfvars i uzupełnij. Plik jest w .gitignore i ma tam zostać.
+#
+# ⚠️ SEKRETÓW TU NIE MA i lepiej, żeby nie było. Dwa connection stringi do bazy podaje się przez zmienne
+# środowiskowe TF_VAR_postgres_connection_string_api i TF_VAR_postgres_connection_string_identity —
+# patrz sekcja „Sekrety przez zmienne środowiskowe" w README. Connection string do poczty czyta się sam.
+
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+project     = "wydatki"
+environment = "beta"
+
+# ISTNIEJACA grupa zasobow - Terraform jej nie tworzy i nie usunie. Region zasobow bierze sie z niej.
+# UWAGA: limit 60 min CPU/dobe w F1 jest per region per subskrypcja. Jesli masz juz plan F1 w jakims
+# regionie, wybranie tego samego znaczy, ze oba projekty jedza z jednego budzetu.
+resource_group_name = "rg-wydatki-prod"
+
+# Static Web Apps istnieje tylko w: westeurope, eastus2, centralus, westus2, eastasia -
+# dlatego to osobna zmienna, niezalezna od regionu grupy zasobow.
+static_web_apps_location = "westeurope"
+
+# Adres, ktory dostanie role administratora po potwierdzeniu e-maila. Przy zamknietej becie to jedyny
+# adres, ktory moze zalozyc konto, zanim ktokolwiek zostanie zaproszony.
+# Mozesz podac go tez przez TF_VAR_admin_emails='["ty@example.com"]', jesli wolisz go tu nie trzymac.
+admin_emails = ["ty@example.com"]
+
+registration_closed_beta = true
+
+# Certyfikaty podpisujacy i szyfrujacy tokeny generuje Terraform (certificates.tf) - nie ma tu nic do
+# wpisania. UWAGA: skrocenie tej wartosci i `apply` = wymiana kluczy = wylogowanie wszystkich.
+# token_certificate_validity_hours = 43800
+
+# Poczta: ISTNIEJACY zasob Azure Communication Services. Terraform go nie tworzy - czyta z niego
+# connection string, wiec nie ma tu zadnego sekretu do wpisania.
+communication_service_name = "acs-wydatki-prod"
+# Puste = ta sama grupa co resource_group_name.
+# communication_service_resource_group_name = null
+
+# Musi nalezec do domeny podpietej do tego ACS. Guid odczytasz w Email Service jako mailFromSenderDomain.
+email_sender_address = "DoNotReply@<guid>.azurecomm.net"

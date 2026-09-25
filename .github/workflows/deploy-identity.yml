@@ -1,0 +1,37 @@
+name: Identity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'BudgetTracker.Identity/**'
+      - 'BudgetTracker.Identity.Tests/**'
+      - '.github/workflows/deploy-identity.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-identity
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Bez bazy - te testy sprawdzaja szablony maili, komplet kluczy tlumaczen, CSP i ladowanie certyfikatow.
+      - run: dotnet test BudgetTracker.Identity.Tests --configuration Release
+
+      - run: dotnet publish BudgetTracker.Identity --configuration Release --output publish
+
+      # ⚠️ Brak kroku z migracja jest CELOWY. Serwer tozsamosci migruje swoja baze SAM przy starcie
+      # (MigrateAsync w OpenIddictSeeder), dlatego jego connection string ma prawo do DDL.
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: wydatki-beta-identity
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_IDENTITY }}
+          package: publish

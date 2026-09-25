@@ -22,10 +22,25 @@
 -- (appsettings/user-secrets/zmienne środowiskowe), tak jak każdy inny sekret w tym projekcie.
 -- Podmień poniżej PRZED uruchomieniem, jeśli nie chcesz zostać przy `budget_app_dev_only`.
 
+-- ⚠️ Hasło podaje się przy uruchomieniu, nie ma go w tym pliku:
+--
+--     psql "<connection-string>" -v app_password='<haslo>' -f api/db/setup-rls-roles.sql
+--
+-- Do 2026-09-25 stało tu wpisane na sztywno `budget_app_dev_only`. Na kontenerze słuchającym wyłącznie
+-- na localhoście było to nieszkodliwe, ale ta sama komenda uruchomiona na bazie dostępnej z internetu
+-- (Neon, Azure) zakładała konto z hasłem leżącym w publicznym repozytorium.
+\if :{?app_password}
+\else
+    \echo 'BRAK HASLA. Uruchom z: psql ... -v app_password=''<haslo>'' -f api/db/setup-rls-roles.sql'
+    \quit
+\endif
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'budget_app') THEN
-        CREATE ROLE budget_app WITH LOGIN PASSWORD 'budget_app_dev_only';
+        EXECUTE format('CREATE ROLE budget_app WITH LOGIN PASSWORD %L', :'app_password');
+    ELSE
+        RAISE NOTICE 'budget_app juz istnieje - haslo NIE jest zmieniane. Zmiana: ALTER ROLE budget_app WITH PASSWORD ...';
     END IF;
 END
 $$;

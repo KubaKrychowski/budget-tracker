@@ -177,10 +177,33 @@ builder.Services.AddScoped<UserDeletionService>();
 builder.Services.AddScoped<AdminRoleService>();
 builder.Services.AddScoped<BetaInviteService>();
 
-builder.Services.AddOptions<SmtpOptions>()
-    .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName))
-    .ValidateOnStart();
-builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+// Dwie drogi wysyłki, wybór należy do KONFIGURACJI, nie do kodu: wypełniona sekcja Acs:Email wygrywa,
+// pusta zostawia SMTP (Development i MailHog). Na Azure idzie ACS, bo klucz dostępu z portalu działa
+// wyłącznie przez SDK — przekaźnik SMTP wymagałby osobnego zasobu „SMTP Username" i rejestracji aplikacji
+// w Entra ID, czyli trzech bytów do założenia ręcznie.
+builder.Services.AddOptions<AcsEmailOptions>().Bind(builder.Configuration.GetSection(AcsEmailOptions.SectionName));
+builder.Services.AddOptions<SmtpOptions>().Bind(builder.Configuration.GetSection(SmtpOptions.SectionName));
+
+var acsEmail = builder.Configuration.GetSection(AcsEmailOptions.SectionName).Get<AcsEmailOptions>();
+
+if (acsEmail?.IsConfigured == true)
+{
+    builder.Services.AddSingleton<IEmailSender, AcsEmailSender>();
+}
+else
+{
+    // ⚠️ Reguła walidacji, a nie samo ValidateOnStart(). Do 2026-09-25 stało tu gołe ValidateOnStart(),
+    // które bez żadnej reguły NICZEGO nie sprawdza — wiązanie konfiguracji nie wymusza `required`, więc
+    // brak sekcji dawał Host = null, serwer wstawał normalnie, a wywalała się dopiero pierwsza rejestracja.
+    // Błąd konfiguracji ma wyjść przy starcie, a nie u pierwszego użytkownika, który zakłada konto.
+    builder.Services.AddOptions<SmtpOptions>()
+        .Validate(
+            options => options.IsUsable,
+            $"Brak konfiguracji poczty: wypełnij {AcsEmailOptions.SectionName} (ConnectionString + SenderAddress) albo {SmtpOptions.SectionName} (Host + FromAddress).")
+        .ValidateOnStart();
+
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+}
 builder.Services.AddSingleton<EmailTemplateRenderer>();
 builder.Services.AddScoped<IAccountEmailService, AccountEmailService>();
 

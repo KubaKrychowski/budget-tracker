@@ -1,0 +1,10 @@
+# Stan modułu głównego leży w Azure, ale bootstrap trzyma swój lokalnie — i tak nie ma go w repo.
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ⚠️ Oba pliki zawierają sekrety w postaci jawnej: connection stringi, hasło SMTP, hasła do certyfikatów.
+*.tfvars
+!*.tfvars.example
+backend.hcl
