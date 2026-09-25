@@ -16,6 +16,8 @@ import { APP_ICONS } from './core/icons';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { GlobalErrorHandler } from './core/errors/global-error-handler';
 import { languageInterceptor } from './core/api/language.interceptor';
+import { apiBaseUrlInterceptor } from './core/api/api-base-url.interceptor';
+import { runtimeConfig } from './core/runtime-config';
 import { provideMarkdown } from 'ngx-markdown';
 
 registerLocaleData(pl);
@@ -25,7 +27,7 @@ registerLocaleData(pl);
  * i bezpieczeństwo" (`features/settings/account-security`) do zbudowania linków na strony
  * zmiany hasła/2FA, które mieszkają wyłącznie po stronie Identity (Razor), nie w Angularze.
  */
-export const IDENTITY_AUTHORITY = 'https://localhost:7226';
+export const IDENTITY_AUTHORITY = runtimeConfig().identityAuthority;
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -34,7 +36,7 @@ export const appConfig: ApplicationConfig = {
     // Interceptor jezyka: front startuje na sztywno z `pl`, a backend bez nagłówka slucha
     // przegladarki — bez tego polski ekran potrafil pokazac angielski komunikat z API.
     // authInterceptor dokleja token do zapytań pod `secureRoutes` (patrz provideAuth niżej).
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor(), languageInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor(), languageInterceptor, apiBaseUrlInterceptor])),
 
     // Logowanie przez BudgetTracker.Identity (OpenIddict) — kod autoryzacyjny + PKCE,
     // bez własnego ekranu logowania: front tylko przekierowuje i odbiera token.

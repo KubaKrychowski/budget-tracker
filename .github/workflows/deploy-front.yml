@@ -38,6 +38,21 @@ jobs:
       - run: npx ng build web --configuration production
         working-directory: web
 
+      # Adresy backendow wchodza do paczki PO buildzie, przez config.json - patrz core/runtime-config.ts.
+      # Inaczej trzeba by budowac osobno na kazde srodowisko, a host Static Web Apps ma losowy czlon,
+      # wiec w chwili buildu nie da sie go znac.
+      # Wartosci to zwykle zmienne repozytorium (Settings -> Variables), nie sekrety - to publiczne adresy.
+      - name: Adresy backendow do config.json
+        env:
+          IDENTITY_URL: ${{ vars.IDENTITY_URL }}
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          test -n "$IDENTITY_URL" || { echo "Brak zmiennej repozytorium IDENTITY_URL"; exit 1; }
+          test -n "$API_URL" || { echo "Brak zmiennej repozytorium API_URL"; exit 1; }
+          printf '{\n  "identityAuthority": "%s",\n  "apiBaseUrl": "%s"\n}\n' "$IDENTITY_URL" "$API_URL" \
+            > web/dist/web/browser/config.json
+          cat web/dist/web/browser/config.json
+
       - uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN_FRONT }}
