@@ -8,11 +8,14 @@ odnoszą się do zakładki „Issues" tego repozytorium. Plan i uzasadnienia: `p
 To jest **prezentacja projektu**, nie landing produktu — aplikacja jest single-user, bez
 rejestracji i bez hostingu, więc „Wypróbuj za darmo" nie miałoby dokąd prowadzić.
 
-**REWIZJA 2026-09-25:** obok CTA do repozytorium jest teraz przycisk „Przejdź do aplikacji"
-prowadzący na `https://localhost:4200`. Jest dopuszczalny WYŁĄCZNIE dlatego, że ta strona chodzi
-dziś tylko lokalnie, obok aplikacji. **Zanim landing trafi na publiczny hosting, ten przycisk
-musi zniknąć albo dostać prawdziwy adres** — `localhost` u obcego czytelnika to ten sam błąd,
-co dawny link do prywatnego repo. Pilnuje tego test w `app.spec.ts`.
+**REWIZJA 2026-09-25 (wieczór):** obok CTA do repozytorium jest przycisk „Przejdź do aplikacji".
+Wskazywał `https://localhost:4200` — dopuszczalne, dopóki strona chodziła tylko lokalnie. Aplikacja
+stoi już na Static Web Apps, więc przycisk dostał prawdziwy adres, a test w `app.spec.ts` ma go
+na zamkniętej liście dozwolonych.
+
+⚠️ Adres jest wpisany na sztywno (landing nie ma konfiguracji wczytywanej w czasie działania).
+Host Static Web Apps dostaje losowy człon przy tworzeniu zasobu, więc po odtworzeniu środowiska
+od zera trzeba go podmienić w `app.ts` i w `app.spec.ts`.
 
 ```bash
 cd web && npx ng serve landing --port 4300

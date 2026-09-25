@@ -56,11 +56,15 @@ export class App {
    * strona jest serwowana WYŁĄCZNIE lokalnie (`ng serve landing`), obok aplikacji na 4200 —
    * w tym jedynym użyciu link prowadzi dokładnie tam, gdzie zapowiada.
    *
-   * ⚠️ Gdy landing trafi na publiczny hosting, ten przycisk MUSI zniknąć albo dostać prawdziwy
-   * adres. `localhost` u obcego czytelnika to dokładnie ten sam błąd, co dawny link do repo
-   * prywatnego: jedyne CTA na stronie, które nie prowadzi nigdzie. Pilnuje tego `app.spec.ts`.
+   * ⚠️ REWIZJA (2026-09-25, wieczór): aplikacja stoi już na Static Web Apps, więc adres przestał być
+   * lokalny. To był dokładnie ten moment, przed którym ostrzegała poprzednia wersja tego komentarza:
+   * `localhost` u obcego czytelnika to jedyne CTA prowadzące donikąd.
+   *
+   * ⚠️ Adres jest wpisany na sztywno, bo landing nie ma konfiguracji wczytywanej w czasie działania
+   * (aplikacja ma — patrz `core/runtime-config.ts`). Host Static Web Apps ma losowy człon nadany przy
+   * tworzeniu zasobu, więc po odtworzeniu środowiska od zera ten adres trzeba tu podmienić.
    */
-  protected readonly appUrl = 'https://localhost:4200';
+  protected readonly appUrl = 'https://salmon-cliff-0ee2c9f03.3.azurestaticapps.net';
 
   /**
    * DOMYŚLNY próg pewności, poniżej którego transakcja idzie do przeglądu zamiast dostać kategorię.
