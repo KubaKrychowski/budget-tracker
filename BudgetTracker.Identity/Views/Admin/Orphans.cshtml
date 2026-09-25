@@ -3,7 +3,7 @@
     ViewData["Title"] = L["Admin_Orphans_Title"];
 }
 
-<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_Orphans_Title", "Admin_Orphans_Subtitle", AdminTab.Orphans, Model.UserCount, Model.DataAvailable ? Model.Owners.Count : null, Model.HistoryCount, Model.Flash))"/>
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_Orphans_Title", "Admin_Orphans_Subtitle", AdminTab.Orphans, Model.UserCount, Model.InvitesCount, Model.DataAvailable ? Model.Owners.Count : null, Model.HistoryCount, Model.Flash))"/>
 
 @if (!Model.DataAvailable)
 {

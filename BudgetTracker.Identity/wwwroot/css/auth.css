@@ -300,3 +300,7 @@ body.admin-page { align-items: flex-start; padding-top: 56px; }
   color: var(--ds-neutral-900);
 }
 .auth-select:focus { outline: none; border-color: var(--ds-primary-500); box-shadow: 0 0 0 3px rgba(91, 216, 128, 0.25); }
+
+/* Formularz „dopisz adres" na liście zaproszeń: pole i przycisk w jednej linii, pole rośnie do szerokości karty. */
+.admin-add { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.admin-add .auth-field { flex: 1 1 280px; }

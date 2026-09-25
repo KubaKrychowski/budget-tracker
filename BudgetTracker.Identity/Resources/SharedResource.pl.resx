@@ -145,6 +145,28 @@
   <data name="Admin_Users_Title" xml:space="preserve"><value>Użytkownicy</value></data>
   <data name="Admin_Users_Subtitle" xml:space="preserve"><value>Konta w serwerze tożsamości i ilość ich danych w aplikacji. Usunięcie konta kasuje też jego dane.</value></data>
   <data name="Admin_Tab_Users" xml:space="preserve"><value>Użytkownicy ({0})</value></data>
+  <data name="Admin_Invites_Title" xml:space="preserve"><value>Zaproszenia</value></data>
+  <data name="Admin_Invites_Subtitle" xml:space="preserve"><value>Adresy, którym wolno założyć konto w zamkniętej becie. Usunięcie adresu z listy nie kasuje konta, które już na nim powstało.</value></data>
+  <data name="Admin_Tab_Invites" xml:space="preserve"><value>Zaproszenia ({0})</value></data>
+  <data name="Admin_Invites_Open_Title" xml:space="preserve"><value>Rejestracja jest teraz otwarta</value></data>
+  <data name="Admin_Invites_Open_Text" xml:space="preserve"><value>Konto może założyć każdy, kto zna adres serwera — ta lista niczego nie ogranicza. Zamkniętą betę włącza się w konfiguracji serwera (Registration:ClosedBeta), nie stąd.</value></data>
+  <data name="Admin_Invites_AddLabel" xml:space="preserve"><value>Dopisz adres</value></data>
+  <data name="Admin_Invites_AddSubmit" xml:space="preserve"><value>Dopisz</value></data>
+  <data name="Admin_Invites_Empty" xml:space="preserve"><value>Nikt nie jest jeszcze zaproszony.</value></data>
+  <data name="Admin_Col_Invited" xml:space="preserve"><value>Zaproszony adres</value></data>
+  <data name="Admin_Col_InvitedAt" xml:space="preserve"><value>Dopisano</value></data>
+  <data name="Admin_Invite_Registered" xml:space="preserve"><value>Konto założone</value></data>
+  <data name="Admin_Invite_Pending" xml:space="preserve"><value>Czeka na rejestrację</value></data>
+  <data name="Admin_Invite_Remove" xml:space="preserve"><value>Usuń z listy</value></data>
+  <data name="Admin_Flash_InviteAdded" xml:space="preserve"><value>Dopisano {0} do listy zaproszeń.</value></data>
+  <data name="Admin_Flash_InviteExists" xml:space="preserve"><value>Adres {0} jest już na liście zaproszeń.</value></data>
+  <data name="Admin_Flash_InviteRemoved" xml:space="preserve"><value>Usunięto {0} z listy zaproszeń. Konto, jeśli już powstało, zostaje.</value></data>
+  <data name="Admin_Flash_InviteNotFound" xml:space="preserve"><value>Tego zaproszenia już nie ma.</value></data>
+  <data name="Admin_History_Action_BetaInviteAdded" xml:space="preserve"><value>Dopisanie zaproszenia</value></data>
+  <data name="Admin_History_Action_BetaInviteRemoved" xml:space="preserve"><value>Usunięcie zaproszenia</value></data>
+  <data name="Register_ClosedBeta_Title" xml:space="preserve"><value>Zamknięta beta</value></data>
+  <data name="Register_ClosedBeta_Text" xml:space="preserve"><value>Konto założysz tylko z adresu, który dostał zaproszenie.</value></data>
+  <data name="Register_NotInvited" xml:space="preserve"><value>Ten adres nie jest zaproszony do zamkniętej bety.</value></data>
   <data name="Admin_Tab_Orphans" xml:space="preserve"><value>Dane bez właściciela ({0})</value></data>
   <data name="Admin_Tab_OrphansNoCount" xml:space="preserve"><value>Dane bez właściciela</value></data>
   <data name="Admin_Col_Account" xml:space="preserve"><value>Konto</value></data>

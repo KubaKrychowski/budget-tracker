@@ -1031,3 +1031,47 @@ jest równie ważne jak „kto usunął”. Wykonawca trafia też do logu serwer
 
 **Czego to nie zamyka.** Brak cofania usunięcia, brak filtrów i wyszukiwania w historii (tylko stronicowanie), liczba danych
 w tabeli używa formy bez odmiany („Budżety: 3"), bo polska odmiana liczebników nie ma tu prostej reguły w zasobach.
+
+### 12b. Zamknięta beta: kto może założyć konto
+
+**Problem.** Rejestracja była otwarta dla każdego, kto zna adres serwera. Przy wdrożeniu poza `localhost` (Azure, §13)
+to znaczy: dowolna osoba z internetu zakłada konto w bazie właściciela. Beta ma być zamknięta — konto zakłada tylko
+ten, kogo zaproszono.
+
+**Gdzie żyje lista.** W BAZIE Identity (tabela `BetaInvites`, encja `BetaInvite`), a nie w konfiguracji jak
+`Admin:Emails`. Powód jest praktyczny: zaprasza się w trakcie działania serwera, więc dopisanie adresu nie może
+wymagać restartu ani dostępu do sekretów hostingu. Adres leży tam **jawnie** (inaczej niż w dzienniku audytu, gdzie
+jest sam skrót) — ekran ma pokazać, kogo zaproszono, a skrótu nie da się odczytać. ⚠️ To zbiór adresów e-mail osób
+bez konta, czyli dane osobowe: po becie tabela ma zostać skasowana, nie „zostawiona na wszelki wypadek”.
+
+**Przełącznik jest w konfiguracji, nie w panelu.** `Registration:ClosedBeta`, **domyślnie `true`**. Dwie decyzje:
+- domyślne „zamknięte”, bo pominięcie sekcji w konfiguracji wdrożenia ma najwyżej zablokować zapisy (widać od razu),
+  a nie po cichu wpuścić każdego. Zła strona pomyłki ma być bezpieczniejsza — pilnuje tego test;
+- **nie w panelu administratora**, bo otwarcie rejestracji dla całego internetu to decyzja o wdrożeniu, a nie operacja
+  na koncie: ma wymagać dostępu do konfiguracji serwera, nie samego ciasteczka z rolą. Panel pokazuje za to stan
+  przełącznika — lista, która niczego nie ogranicza, wygląda tak samo jak lista, która ogranicza.
+
+**Adresy z `Admin:Emails` przechodzą zawsze**, także przy pustej liście. Bez tego świeża instalacja z domyślnie włączoną
+betą jest zamknięta również dla osoby, która ma ją skonfigurować: zaproszenia dopisuje się z panelu, do którego trzeba
+wejść kontem, którego nie dałoby się założyć. To nie jest furtka — adres i tak musi stać w konfiguracji serwera, a rolę
+`admin` konto dostaje dopiero po potwierdzeniu adresu (§12a).
+
+**Sprawdzenie idzie PRZED `CreateAsync`**, żeby konto niezaproszonego nie powstało nawet na chwilę. Odmowa mówi wprost,
+że adresu nie ma na liście. ⚠️ To ujawnia, KOGO zaproszono, ale nie ujawnia, kto ma konto — tej granicy pilnują jak
+dotąd `ForgotPassword` i `ResendEmailConfirmation`, które odpowiadają zawsze tak samo. Świadomy wybór: bez tej
+informacji zaproszony z literówką w adresie i osoba niezaproszona widzą dokładnie ten sam komunikat, czyli zamknięta
+beta jest nie do odróżnienia od zepsutego formularza. Ekran rejestracji mówi o becie od razu, nad formularzem, żeby
+nie kazać nikomu wypełniać hasła i regulaminu po to, by usłyszeć „nie ma cię na liście”.
+
+**Normalizacja i unikalność.** Adres trafia do bazy przycięty i małymi literami (`BetaInvite.Normalize`), a unikalny
+indeks jest częścią reguły, nie optymalizacją: dwa równoległe dopisania tego samego adresu przeszłyby oba przez
+sprawdzenie w serwisie, a duplikat robi wpis, który trzeba usunąć dwa razy, żeby naprawdę przestał wpuszczać.
+
+**Zakładka „Zaproszenia”** (druga, obok „Użytkownicy”): lista od najnowszych po 20, formularz dopisania jednego adresu,
+usunięcie wpisu. Wiersz pokazuje, czy zaproszony zdążył się zarejestrować — bo ⚠️ **usunięcie zaproszenia NIE kasuje
+konta**, które na nim powstało, i ekran nie może sugerować inaczej. Dopisanie i usunięcie idą do dziennika audytu
+(`BetaInviteAdded`, `BetaInviteRemoved`; podmiotem jest identyfikator wpisu, adres jako skrót), razem z wyścigiem
+„wpisu już nie ma” jako `NotFound`.
+
+**Czego to nie zamyka.** Zaproszenie nie wysyła maila (dostajesz adres kanałem, którym i tak się umawiasz), nie ma
+wygasania ani limitu użyć, nie ma importu listy hurtem, a rejestracja nie jest ograniczona co do liczby kont na adres IP.

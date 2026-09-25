@@ -44,6 +44,13 @@ public sealed class RegisterViewModel
     public bool AcceptTerms { get; set; }
 
     public string? ReturnUrl { get; set; }
+
+    /// <summary>
+    /// Czy serwer wpuszcza tylko zaproszonych. Ekran mówi o tym OD RAZU, a nie dopiero po odesłaniu formularza:
+    /// wypełnianie hasła i regulaminu po to, żeby usłyszeć „nie ma cię na liście", jest kosztem, który da się
+    /// zdjąć jednym zdaniem na górze.
+    /// </summary>
+    public bool ClosedBeta { get; set; }
 }
 
 public sealed class ForgotPasswordViewModel

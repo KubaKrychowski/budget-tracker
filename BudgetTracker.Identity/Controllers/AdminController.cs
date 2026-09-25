@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Resources;
@@ -26,6 +27,7 @@ public sealed class AdminController(
     UserManager<ApplicationUser> userManager,
     IUserDataClient data,
     UserDeletionService deletion,
+    BetaInviteService invites,
     IAdminAuditLog audit,
     IAdminAuditReader auditReader,
     IStringLocalizer<SharedResource> localizer,
@@ -73,11 +75,102 @@ public sealed class AdminController(
             Page = page,
             PageSize = PageSize,
             Total = total,
+            InvitesCount = await invites.CountAsync(ct),
             OrphanOwnersCount = orphans?.Count,
             HistoryCount = await auditReader.CountAsync(ct),
             DataAvailable = summaries is not null,
             Flash = ReadFlash(),
         });
+    }
+
+    /// <summary>
+    /// Lista adresów, którym wolno założyć konto w zamkniętej becie, razem z formularzem dopisania kolejnego.
+    /// </summary>
+    /// <remarks>
+    /// Ekran świadomie NIE woła API budżetu: zaproszenie nie ma jeszcze żadnych danych, a przy niedostępnym API
+    /// zapraszanie ma działać dalej. Dlatego zakładka „Dane bez właściciela" jest tu bez liczby.
+    /// </remarks>
+    [HttpGet]
+    public async Task<IActionResult> Invites(int page = 1, CancellationToken ct = default)
+    {
+        var total = await invites.CountAsync(ct);
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(total / (double)PageSize)));
+
+        var rows = await invites.PageAsync(page, PageSize, ct);
+
+        // Które z zaproszonych adresów mają już konto — po to, żeby ekran nie sugerował, że usunięcie wpisu
+        // odbiera komuś dostęp. Pytamy tylko o adresy z tej strony listy, nie o całą tabelę kont.
+        var emails = rows.Select(i => i.Email).ToList();
+        var registered = (await userManager.Users
+                .Where(u => u.Email != null && emails.Contains(u.Email.ToLower()))
+                .Select(u => u.Email!)
+                .ToListAsync(ct))
+            .Select(e => e.ToLowerInvariant())
+            .ToHashSet();
+
+        return View(new AdminInvitesViewModel
+        {
+            Invites = rows.Select(i => new AdminInviteRow(i.Id, i.Email, i.AddedAt, registered.Contains(i.Email))).ToList(),
+            Page = page,
+            PageSize = PageSize,
+            Total = total,
+            UsersCount = await userManager.Users.CountAsync(ct),
+            HistoryCount = await auditReader.CountAsync(ct),
+            ClosedBeta = invites.ClosedBeta,
+            Flash = ReadFlash(),
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddInvite(string? email, CancellationToken ct)
+    {
+        // Walidacja jest tu ręczna, a nie atrybutami na modelu: formularz ma jedno pole i wraca przekierowaniem
+        // z komunikatem (jak reszta operacji na tym ekranie), więc osobny model tylko po to, żeby go odesłać
+        // z powrotem do widoku, byłby rusztowaniem bez zastosowania.
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return FlashAndRedirect(nameof(Invites), "Validation_EmailRequired", isError: true);
+        }
+
+        if (!new EmailAddressAttribute().IsValid(email.Trim()))
+        {
+            return FlashAndRedirect(nameof(Invites), "Validation_EmailInvalid", isError: true);
+        }
+
+        var (outcome, invite) = await invites.AddAsync(email, CurrentUserId(), ct);
+        if (outcome == InviteOutcome.AlreadyInvited)
+        {
+            return FlashAndRedirect(nameof(Invites), "Admin_Flash_InviteExists", isError: true, invite!.Email);
+        }
+
+        logger.LogInformation("Dopisano adres do listy zaproszeń (wpis {InviteId}), wykonał {ActorId}.", invite!.Id, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.BetaInviteAdded, AdminAuditOutcome.Succeeded,
+            invite.Id, SubjectEmail: invite.Email), ct);
+
+        return FlashAndRedirect(nameof(Invites), "Admin_Flash_InviteAdded", isError: false, invite.Email);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveInvite(Guid id, CancellationToken ct)
+    {
+        var (outcome, invite) = await invites.RemoveAsync(id, ct);
+        if (outcome == InviteOutcome.NotFound)
+        {
+            // Ślad po próbie też jest śladem: wpis mógł zniknąć, bo usunął go ktoś inny w tej samej chwili.
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.BetaInviteRemoved, AdminAuditOutcome.NotFound, id), ct);
+            return FlashAndRedirect(nameof(Invites), "Admin_Flash_InviteNotFound", isError: true);
+        }
+
+        logger.LogInformation("Usunięto zaproszenie {InviteId}, wykonał {ActorId}.", id, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.BetaInviteRemoved, AdminAuditOutcome.Succeeded,
+            id, SubjectEmail: invite!.Email), ct);
+
+        return FlashAndRedirect(nameof(Invites), "Admin_Flash_InviteRemoved", isError: false, invite.Email);
     }
 
     /// <summary>
@@ -105,6 +198,7 @@ public sealed class AdminController(
             PageSize = HistoryPageSize,
             Total = total,
             UsersCount = await userManager.Users.CountAsync(ct),
+            InvitesCount = await invites.CountAsync(ct),
         });
     }
 
@@ -163,6 +257,7 @@ public sealed class AdminController(
         {
             Owners = owners ?? [],
             UserCount = userIds.Count,
+            InvitesCount = await invites.CountAsync(ct),
             HistoryCount = await auditReader.CountAsync(ct),
             DataAvailable = owners is not null,
             Flash = ReadFlash(),

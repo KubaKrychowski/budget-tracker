@@ -156,6 +156,7 @@ builder.Services.AddHostedService<OpenIddictPruningService>();
 
 builder.Services.AddOptions<TokenLifetimeOptions>().Bind(builder.Configuration.GetSection(TokenLifetimeOptions.SectionName));
 builder.Services.AddOptions<AdminOptions>().Bind(builder.Configuration.GetSection(AdminOptions.SectionName));
+builder.Services.AddOptions<RegistrationOptions>().Bind(builder.Configuration.GetSection(RegistrationOptions.SectionName));
 builder.Services.AddOptions<ApiOptions>()
     .Bind(builder.Configuration.GetSection(ApiOptions.SectionName))
     .Validate(options => options.HasValidBaseUrl, $"Brak albo zły adres https w konfiguracji {ApiOptions.SectionName}:BaseUrl.")
@@ -174,6 +175,7 @@ builder.Services.AddScoped<IAdminAuditLog, DbAdminAuditLog>();
 builder.Services.AddScoped<IAdminAuditReader, DbAdminAuditReader>();
 builder.Services.AddScoped<UserDeletionService>();
 builder.Services.AddScoped<AdminRoleService>();
+builder.Services.AddScoped<BetaInviteService>();
 
 builder.Services.AddOptions<SmtpOptions>()
     .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName))

@@ -27,6 +27,8 @@ public sealed class AdminUsersViewModel
 
     public int Total { get; init; }
 
+    public int InvitesCount { get; init; }
+
     /// <summary><c>null</c>, gdy API nie odpowiedziało — zakładka pokazuje wtedy tytuł bez liczby.</summary>
     public int? OrphanOwnersCount { get; init; }
 
@@ -63,6 +65,8 @@ public sealed class AdminOrphansViewModel
 
     public int UserCount { get; init; }
 
+    public int InvitesCount { get; init; }
+
     public int HistoryCount { get; init; }
 
     public bool DataAvailable { get; init; }
@@ -98,10 +102,47 @@ public sealed class DeleteOrphansViewModel
     public string Confirmation { get; set; } = "";
 }
 
+/// <summary>Jeden adres na liście zaproszeń do zamkniętej bety.</summary>
+/// <param name="HasAccount">
+/// Czy zaproszony zdążył się zarejestrować. Bez tego ekran nie odróżniałby zaproszenia, które na coś czeka,
+/// od zaproszenia, które zrobiło już swoje — a usunięcie tego drugiego NIE kasuje konta.
+/// </param>
+public sealed record AdminInviteRow(Guid Id, string Email, DateTimeOffset AddedAt, bool HasAccount);
+
+public sealed class AdminInvitesViewModel
+{
+    public required IReadOnlyList<AdminInviteRow> Invites { get; init; }
+
+    public int Page { get; init; }
+
+    public int PageSize { get; init; }
+
+    public int Total { get; init; }
+
+    public int UsersCount { get; init; }
+
+    public int HistoryCount { get; init; }
+
+    /// <summary>
+    /// <c>false</c>, gdy serwer ma otwartą rejestrację. Ekran musi to powiedzieć wprost: lista zaproszeń, która
+    /// niczego nie ogranicza, wygląda dokładnie tak samo jak lista, która ogranicza, a różnica jest zasadnicza.
+    /// </summary>
+    public bool ClosedBeta { get; init; }
+
+    public AdminFlash? Flash { get; init; }
+
+    public bool HasPrevious => Page > 1;
+
+    public bool HasNext => Page * PageSize < Total;
+
+    public int Shown => Invites.Count;
+}
+
 /// <summary>Zakładki ekranów administratora.</summary>
 public enum AdminTab
 {
     Users,
+    Invites,
     Orphans,
     History,
 }
@@ -109,7 +150,7 @@ public enum AdminTab
 /// <summary>Nagłówek wspólny dla list administratora: tytuł, zakładki z liczbami i komunikat po operacji.</summary>
 /// <param name="OrphansCount"><c>null</c>, gdy nie znamy liczby (API nie odpowiada albo ekran jej nie potrzebuje) — zakładka jest wtedy bez liczby.</param>
 public sealed record AdminHeaderModel(
-    string TitleKey, string SubtitleKey, AdminTab Active, int UsersCount, int? OrphansCount, int HistoryCount, AdminFlash? Flash);
+    string TitleKey, string SubtitleKey, AdminTab Active, int UsersCount, int InvitesCount, int? OrphansCount, int HistoryCount, AdminFlash? Flash);
 
 /// <summary>Co pokazać pod identyfikatorem konta w historii, skoro adresu e-mail w dzienniku nie ma.</summary>
 public enum AdminHistorySubjectNote
@@ -189,6 +230,8 @@ public sealed class AdminHistoryViewModel
     public int Total { get; init; }
 
     public int UsersCount { get; init; }
+
+    public int InvitesCount { get; init; }
 
     public bool HasPrevious => Page > 1;
 

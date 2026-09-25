@@ -14,4 +14,13 @@ public enum AdminAuditAction
 
     /// <summary>Administrator usunął dane bez właściciela.</summary>
     OrphanDataDeleted = 4,
+
+    /// <summary>Administrator dopisał adres do listy zaproszeń do zamkniętej bety.</summary>
+    BetaInviteAdded = 5,
+
+    /// <summary>
+    /// Administrator usunął adres z listy zaproszeń. ⚠️ To NIE jest usunięcie konta: jeśli zaproszony zdążył się
+    /// zarejestrować, konto zostaje i dalej się loguje. Skasowanie konta ma własny wpis (<see cref="UserDeleted"/>).
+    /// </summary>
+    BetaInviteRemoved = 6,
 }
