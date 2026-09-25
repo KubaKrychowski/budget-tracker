@@ -40,7 +40,10 @@ describe('Landing', () => {
     // ⚠️ REWIZJA: punkt nazywał się „Nie jest wielouserowe" i twierdził, że nie ma rejestracji
     // ani logowania. Po dołożeniu serwera tożsamości (rejestracja, 2FA, izolacja danych w bazie)
     // było to po prostu nieprawdą — granicą jest brak współdzielenia i hostingu, nie brak kont.
-    expect(text()).toContain('Nie jest usługą dla wielu osób');
+    //
+    // Nagłówek nazywa BRAK, nie zaletę: to sekcja o granicach, więc punkt zaczynający się od
+    // wyliczenia, co aplikacja potrafi, przemyca pochwałę tam, gdzie ma stać ograniczenie.
+    expect(text()).toContain('Nie zaprosisz do niej nikogo');
   });
 
   it('NIE obiecuje, że aplikacja sama zna stan konta', () => {
