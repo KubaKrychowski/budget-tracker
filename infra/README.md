@@ -43,22 +43,35 @@ i `BudgetPurger` (czyszczenie budżetów po okresie retencji). To nie jest „wo
 
 Pierwsze żądanie po uśpieniu to kilkanaście sekund oczekiwania.
 
-### 3. Baza na Neonie: jedno pytanie wymaga sprawdzenia PRZED wdrożeniem
+### 3. Baza na Neonie: rola właściciela omija RLS
 
-Schemat API wymaga roli `budget_jobs` z atrybutem `BYPASSRLS` (`api/db/setup-rls-roles.sql`). W Postgresie
-atrybut `BYPASSRLS` może nadać **wyłącznie rola, która sama go ma**, a atrybutów ról nie dziedziczy się
-przez członkostwo. Rola właściciela u Neona jest członkiem `neon_superuser` (który `BYPASSRLS` ma), ale to
-nie to samo, co posiadanie atrybutu.
+Schemat API wymaga roli `budget_jobs` z atrybutem `BYPASSRLS` (`api/db/setup-rls-roles.sql`), a ten atrybut
+może nadać wyłącznie rola, która sama go ma. **Sprawdzone 2026-09-25 na prawdziwym projekcie: Neon to
+unosi.** `neondb_owner` ma `rolbypassrls` i `rolcreaterole` jako własne atrybuty, więc `setup-rls-roles.sql`
+idzie bez zmian.
 
-**Nie zgaduj — sprawdź jedną komendą na świeżym projekcie Neona:**
+⚠️ **Ta sama właściwość jest najgroźniejszą pułapką tego wdrożenia.** Skoro `neondb_owner` omija RLS,
+connection string wskazujący tę rolę **wyłącza izolację danych między kontami po cichu** — nic się nie psuje,
+nic nie krzyczy, a każdy zalogowany widzi cudze budżety. Dlatego `postgres_connection_string_api` musi
+wskazywać `budget_app`, nigdy właściciela bazy.
+
+Sprawdzenie po migracji, połączony jako `budget_app`:
 
 ```bash
-psql "<connection-string-neon>" -c "CREATE ROLE budget_jobs WITH NOLOGIN BYPASSRLS;"
+psql "<connection-string-budget-app>" -c "SELECT count(*) FROM \"Budgets\";"
 ```
 
-Jeśli odpowie `permission denied`, Neon nie uniesie tego schematu bez zmiany podejścia do RLS i trzeba
-wrócić do wyboru bazy. Cała reszta Terraforma jest od tego niezależna — dotyczy tylko wartości dwóch
-zmiennych z connection stringami.
+Musi zwrócić **0** — nikt nie ustawił `app.current_user_id`, więc polityka nie przepuszcza żadnego wiersza.
+Prawdziwa liczba w odpowiedzi znaczy, że łączysz się złą rolą i izolacja nie działa.
+
+Stan docelowy ról w klastrze (`SELECT rolname, rolbypassrls, rolcanlogin FROM pg_roles`):
+
+| rola | `rolbypassrls` | `rolcanlogin` | po co |
+|---|---|---|---|
+| `budget_app` | `f` | `t` | appka na co dzień — RLS JEJ DOTYCZY |
+| `budget_jobs` | `t` | `f` | zadania bez kontekstu użytkownika, wchodzi się w nią `SET LOCAL ROLE` |
+
+Do tego `GRANT budget_jobs TO budget_app`, inaczej `SET LOCAL ROLE` kończy się błędem.
 
 ## Kolejność uruchomienia
 

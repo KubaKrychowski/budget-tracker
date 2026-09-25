@@ -1109,10 +1109,16 @@ darmowy 12 miesięcy na nowej subskrypcji, potem płatny). Terraform przyjmuje g
 i tylko je wstrzykuje. ⚠️ Connection string API musi używać roli `budget_app`, **nie właściciela bazy**:
 RLS nie dotyczy właściciela tabel, więc połączenie właścicielem po cichu wyłącza izolację danych.
 
-⚠️ **Ryzyko niesprawdzone:** schemat wymaga roli `budget_jobs` z atrybutem `BYPASSRLS`, a ten atrybut może
-nadać wyłącznie rola, która sama go ma (atrybutów ról nie dziedziczy się przez członkostwo). Rola właściciela
-u Neona jest członkiem `neon_superuser`, co nie jest tym samym. Do sprawdzenia jedną komendą na świeżym
-projekcie, zanim cokolwiek zostanie wdrożone — patrz `infra/README.md`.
+**Neon unosi wymagany schemat ról — sprawdzone 2026-09-25.** Wątpliwość była realna: schemat wymaga roli
+`budget_jobs` z atrybutem `BYPASSRLS`, a ten atrybut może nadać wyłącznie rola, która sama go ma (atrybutów
+ról nie dziedziczy się przez członkostwo, więc samo członkostwo w `neon_superuser` by nie wystarczyło).
+Pomiar rozstrzygnął: `neondb_owner` ma `rolbypassrls` i `rolcreaterole` jako **własne** atrybuty, a
+`CREATE ROLE … BYPASSRLS` przechodzi. `api/db/setup-rls-roles.sql` idzie bez zmian.
+
+⚠️ Ta sama właściwość jest najgroźniejszą pułapką wdrożenia: skoro `neondb_owner` omija RLS, to connection
+string wskazujący tę rolę wyłącza izolację danych **po cichu** — nic się nie psuje, a każdy zalogowany widzi
+cudze budżety. Test po migracji: jako `budget_app` zapytanie `SELECT count(*) FROM "Budgets"` bez ustawionego
+`app.current_user_id` musi zwrócić **0**.
 
 **Stan Terraforma w Azure Storage, nie lokalnie.** W stanie leżą sekrety jawnym tekstem (connection stringi,
 hasło SMTP, hasła do certyfikatów, sekret klienta admina), więc konto magazynu na stan ma **wyłączone klucze
