@@ -15,7 +15,27 @@ GRANT USAGE ON SCHEMA public TO budget_app, budget_jobs;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO budget_app, budget_jobs;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO budget_app, budget_jobs;
 
-ALTER DEFAULT PRIVILEGES FOR ROLE budget IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO budget_app, budget_jobs;
-ALTER DEFAULT PRIVILEGES FOR ROLE budget IN SCHEMA public
-    GRANT USAGE, SELECT ON SEQUENCES TO budget_app, budget_jobs;
+-- ⚠️ Właściciel tabel NIE jest wpisany na sztywno. Do 2026-09-25 stało tu `FOR ROLE budget` — nazwa
+-- z lokalnego kontenera. Na hostowanym Postgresie właściciel nazywa się inaczej (u Neona `neondb_owner`),
+-- a `ALTER DEFAULT PRIVILEGES FOR ROLE budget` na takiej bazie kończy się błędem „role does not exist".
+-- Gorszy wariant tej pomyłki: skrypt przechodzi na roli, która NIE tworzy tabel, wtedy GRANT-y wyżej
+-- działają, domyślne uprawnienia po cichu nie, i pierwsza KOLEJNA migracja zostawia appce tabelę,
+-- do której nie ma dostępu.
+--
+-- `current_user` jest tu poprawnym źródłem, bo ten skrypt uruchamia się TĄ SAMĄ rolą, którą jadą
+-- migracje EF — czyli właścicielem tworzonych tabel.
+DO $$
+BEGIN
+    EXECUTE format(
+        'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public '
+        'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO budget_app, budget_jobs',
+        current_user);
+
+    EXECUTE format(
+        'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public '
+        'GRANT USAGE, SELECT ON SEQUENCES TO budget_app, budget_jobs',
+        current_user);
+
+    RAISE NOTICE 'Domyslne uprawnienia ustawione dla wlasciciela: %', current_user;
+END
+$$;
