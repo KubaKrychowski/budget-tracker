@@ -29,7 +29,7 @@ jobs:
 
       # Te testy pilnuja UCZCIWOSCI strony (roadmapa, sekcja o granicach, jedno CTA) - patrz app.spec.ts.
       # Dlatego blokuja wdrozenie zamiast byc informacyjne.
-      - run: npx ng test landing --watch=false --browsers=ChromeHeadless
+      - run: npx ng test landing --watch=false
         working-directory: web
 
       - run: npx ng build landing --configuration production
