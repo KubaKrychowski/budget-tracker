@@ -1092,6 +1092,10 @@
       "hint": "Szukam w budżecie wybranym na dashboardzie",
       "searchAll": "Szukaj we wszystkich budżetach",
       "backToBudget": "Wróć do jednego budżetu"
+    },
+    "error": {
+      "title": "Nie udało się wyszukać",
+      "body": "Spróbuj jeszcze raz. Jeśli to się powtarza, sprawdź, czy API odpowiada."
     }
   }
 }

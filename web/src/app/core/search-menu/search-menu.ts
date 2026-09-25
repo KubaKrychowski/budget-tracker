@@ -1,10 +1,12 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { httpResource } from '@angular/common/http';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { normalizeText } from '../normalize-text';
 import { ActiveBudget } from '../active-budget';
 import { SearchGroup, SearchHit, SearchKind, SearchResponse } from '../api/models/search';
 import { errorOf, valueOf } from '../api/resource-value';
@@ -44,8 +46,12 @@ export class SearchMenu {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly activeBudget = inject(ActiveBudget);
   private readonly searchFocus = inject(SearchFocus);
+  private readonly translate = inject(TranslateService);
   protected readonly history = inject(SearchHistory);
   protected readonly recent = inject(RecentScreens);
+
+  /** Tłumaczenia dojeżdżają HTTP-em — bez tej zależności dopasowanie po etykietach liczyłoby się raz, na kluczach. */
+  private readonly langLoaded = toSignal(this.translate.onLangChange, { initialValue: null });
 
   protected readonly query = signal('');
   protected readonly open = signal(false);
@@ -98,11 +104,21 @@ export class SearchMenu {
   /** Podpowiedzi dla kogoś, kto jeszcze nigdzie nie był — pierwsze kroki zamiast pustej karty. */
   protected readonly firstSteps = QUICK_ACTIONS;
 
-  /** Akcje pasujące do frazy — szukamy po ETYKIETACH, więc wynik zależy od języka interfejsu. */
+  /**
+   * Akcje pasujące do frazy.
+   *
+   * ⚠️ Dopasowanie po WIDOCZNEJ etykiecie, nie po kluczu tłumaczenia. Użytkownik wpisuje „cele
+   * oszczędzania", a nie „savings" ani „actions.savings" — porównywanie z kluczem nie trafia nigdy
+   * i wyszukiwarka wygląda na zepsutą. `normalizeText` zdejmuje ogonki, więc „oszczedzania" też działa.
+   *
+   * Zależność od `langLoaded` jest konieczna: tłumaczenia dojeżdżają HTTP-em, a bez niej `computed`
+   * policzyłby się raz, na surowych kluczach, i nigdy nie przeliczył.
+   */
   protected readonly actionHits = computed<SystemAction[]>(() => {
-    const q = this.query().trim().toLowerCase();
+    this.langLoaded();
+    const q = normalizeText(this.query().trim());
     if (q.length < MIN_QUERY_LENGTH) return [];
-    return SYSTEM_ACTIONS.filter((a) => a.key.includes(q) || a.labelKey.toLowerCase().includes(q));
+    return SYSTEM_ACTIONS.filter((a) => normalizeText(this.translate.instant(a.labelKey)).includes(q));
   });
 
   // ── Otwieranie i zamykanie ───────────────────────────────────────────────────────────

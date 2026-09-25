@@ -1026,6 +1026,10 @@
       "hint": "Searching the budget picked on the dashboard",
       "searchAll": "Search all budgets",
       "backToBudget": "Back to a single budget"
+    },
+    "error": {
+      "title": "Search failed",
+      "body": "Try again. If it keeps happening, check whether the API is responding."
     }
   }
 }

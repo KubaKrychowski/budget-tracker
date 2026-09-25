@@ -57,6 +57,15 @@
           }
         }
 
+        <!-- ⚠️ Błąd MUSI być widoczny. Bez tego padające żądanie (np. starsze API bez /api/search)
+             daje pusty panel, nieodróżnialny od „nic nie znaleziono" — a to zupełnie inna wiadomość. -->
+        @if (failure()) {
+          <div class="smn__empty">
+            <p class="smn__empty-title">{{ 'search.error.title' | translate }}</p>
+            <p class="smn__empty-body">{{ 'search.error.body' | translate }}</p>
+          </div>
+        }
+
         @if (nothingFound()) {
           <div class="smn__empty">
             <p class="smn__empty-title">{{ 'search.empty.title' | translate: { query: query() } }}</p>
@@ -73,7 +82,8 @@
             <button type="button" class="smn__link" (click)="showAll()">
               {{ 'search.showAll' | translate: { count: data()!.total } }}
             </button>
-          } @else {
+          } @else if (loading()) {
+            <!-- „Szukam…" tylko gdy faktycznie szukamy. Przy błędzie wisiałoby w nieskończoność. -->
             <span class="smn__foot-note">{{ 'search.loading' | translate }}</span>
           }
           <span class="smn__spacer"></span>

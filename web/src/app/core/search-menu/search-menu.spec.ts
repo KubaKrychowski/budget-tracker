@@ -93,7 +93,12 @@ describe('SearchMenu', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('pl', {
       dashboard: { currency: 'PLN' },
-      actions: { limits: 'Limity wydatków', importStatement: 'Import wyciągu', addTransaction: 'Dodaj transakcje' },
+      actions: {
+        limits: 'Limity wydatków',
+        importStatement: 'Import wyciągu',
+        addTransaction: 'Dodaj transakcje',
+        savings: 'Cele oszczędzania',
+      },
       search: {
         placeholder: 'Szukaj',
         loading: 'Szukam…',
@@ -107,6 +112,7 @@ describe('SearchMenu', () => {
           body: 'Sprawdź pisownię albo poszerz zakres — szukam tylko w budżecie {{budget}}.',
           bodyAll: 'Sprawdź pisownię — szukałem już we wszystkich budżetach.',
         },
+        error: { title: 'Nie udało się wyszukać', body: 'Spróbuj jeszcze raz.' },
         scope: { hint: 'Szukam w budżecie wybranym na dashboardzie', searchAll: 'Szukaj we wszystkich budżetach', backToBudget: 'Wróć do jednego budżetu' },
       },
     });
@@ -174,6 +180,31 @@ describe('SearchMenu', () => {
     expect(request.request.params.get('q')).toBe('catering');
     expect(request.request.params.get('budgetId')).toBe('b1');
     request.flush(response());
+  });
+
+  it('akcje znajdują się po WIDOCZNEJ etykiecie, nie po kluczu tłumaczenia', async () => {
+    // Regresja: dopasowanie szło po `key` („savings") i `labelKey` („actions.savings"), więc wpisanie
+    // tego, co użytkownik widzi na ekranie, nie trafiało NIGDY i menu wyglądało na zepsute.
+    openMenu();
+    await type('cele oszczedzania');
+
+    // Ogonki nie mają znaczenia — normalizeText zdejmuje je po obu stronach.
+    expect(text()).toContain('Cele oszczędzania');
+    http.match((r) => r.url === '/api/search').forEach((r) => r.flush(response({ query: 'cele oszczedzania', groups: [], total: 0 })));
+  });
+
+  it('błąd wyszukiwania jest WIDOCZNY, a nie pustym panelem', async () => {
+    // Puste menu przy padającym żądaniu (np. starsze API bez /api/search) jest nieodróżnialne
+    // od „nic nie znaleziono", a to zupełnie inna wiadomość.
+    openMenu();
+    await type('catering');
+    http.match((r) => r.url === '/api/search')
+      .forEach((r) => r.flush('', { status: 404, statusText: 'Not Found' }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(text()).toContain('Nie udało się wyszukać');
+    expect(text()).not.toContain('Szukam…');
   });
 
   it('nagłówek grupy podaje CAŁKOWITĄ liczbę trafień, nie liczbę widocznych wierszy', async () => {
