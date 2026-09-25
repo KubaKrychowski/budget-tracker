@@ -37,15 +37,23 @@ describe('Landing', () => {
     // pokazuje, że granice są znane i wybrane, a nie przemilczane.
     expect(text()).toContain('Czego to nie robi');
     expect(text()).toContain('Nie łączy się z bankiem');
-    expect(text()).toContain('Nie jest wielouserowe');
+    // ⚠️ REWIZJA: punkt nazywał się „Nie jest wielouserowe" i twierdził, że nie ma rejestracji
+    // ani logowania. Po dołożeniu serwera tożsamości (rejestracja, 2FA, izolacja danych w bazie)
+    // było to po prostu nieprawdą — granicą jest brak współdzielenia i hostingu, nie brak kont.
+    expect(text()).toContain('Nie jest usługą dla wielu osób');
   });
 
-  it('NIE obiecuje salda konta przy oszczędnościach', () => {
-    // ⚠️ Kryterium akceptacji #12. Przed #10 `Transaction.AccountId` nie jest wypełniany
-    // przy imporcie, więc „odłożone” liczy się z kategorii. Zdanie „pokazuje stan Twoich
-    // oszczędności” byłoby obietnicą mocniejszą niż to, co robi kod.
-    expect(text()).toContain('liczy się z kategorii, nie z salda konta');
-    expect(text()).toContain('Nie zna salda Twojego konta');
+  it('NIE obiecuje, że aplikacja sama zna stan konta', () => {
+    // ⚠️ Kryterium akceptacji #12. Miesięczne „odłożone” dalej liczy się z KATEGORII, a nie
+    // z odczytu konta — zdanie „pokazuje stan Twoich oszczędności” byłoby obietnicą mocniejszą
+    // niż to, co robi kod.
+    //
+    // ⚠️ REWIZJA: po #10 saldo konta oszczędnościowego JEST znane, ale wyłącznie z importu
+    // podpiętego budżetu. Strona musi trzymać oba zdania naraz, bo pominięcie drugiego było
+    // realnym kosztem: konto niezaimportowane po cichu nie istnieje w rachunku wolnych środków.
+    expect(text()).toContain('Odłożone liczy się z kategorii');
+    expect(text()).toContain('Nie pyta banku o saldo');
+    expect(text()).toContain('nie istnieje w rachunku');
   });
 
   it('każdy punkt roadmapy niesie status, a niezrobione NIE są opisane jako gotowe', () => {
