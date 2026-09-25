@@ -89,16 +89,23 @@ variable "admin_client_secret" {
   sensitive   = true
 }
 
-variable "identity_signing_certificate_password" {
-  description = "Hasło do PFX podpisującego tokeny. ⚠️ Kto ma ten certyfikat, wystawi token dowolnego użytkownika."
-  type        = string
-  sensitive   = true
-}
+variable "token_certificate_validity_hours" {
+  description = <<-EOT
+    Ważność certyfikatów podpisującego i szyfrującego tokeny (patrz certificates.tf).
+    Domyślnie 5 lat.
 
-variable "identity_encryption_certificate_password" {
-  description = "Hasło do PFX szyfrującego kody autoryzacyjne i refresh tokeny."
-  type        = string
-  sensitive   = true
+    ⚠️ Wymiana tych certyfikatów UNIEWAŻNIA wszystkie wydane tokeny i wylogowuje wszystkich. Dlatego
+    ważność jest długa, a `early_renewal_hours = 0` — Terraform nie wymieni ich sam przy okazji
+    niepowiązanego `apply`. Po wygaśnięciu serwer tożsamości NIE WSTANIE (loader odrzuca przeterminowany
+    certyfikat), więc wymiana jest planowanym zadaniem, a nie awarią do odkrycia.
+  EOT
+  type        = number
+  default     = 43800
+
+  validation {
+    condition     = var.token_certificate_validity_hours >= 720
+    error_message = "Ważność poniżej 30 dni znaczy wylogowywanie wszystkich co miesiąc — to prawie na pewno pomyłka."
+  }
 }
 
 # ---------------------------------------------------------------------------------------------------

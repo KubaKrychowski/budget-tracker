@@ -1130,11 +1130,26 @@ jest odtwarzalny, stan modułu głównego nie.
 które poza `Development` nie wyklucza `ManagedIdentityCredential`. Konto magazynu na modele ma więc też
 wyłączone klucze, a dostęp daje przypisanie roli `Storage Blob Data Contributor` tożsamości aplikacji.
 
-**Certyfikaty OpenIddict zostają krokiem ręcznym.** `ServerCertificateLoader` czyta PFX ze ścieżki, więc pliki
-muszą wjechać w paczce wdrożeniowej; Terraform zna tylko ścieżki i hasła. Wygodniejsze byłoby czytanie
-certyfikatu ze zmiennej środowiskowej (base64) — to zmiana w kodzie, świadomie odłożona.
+**Certyfikaty OpenIddict generuje Terraform. REWIZJA (2026-09-25):** pierwsza wersja zostawiała je jako krok
+ręczny, bo `ServerCertificateLoader` czytał wyłącznie PFX ze ścieżki. Krok ręczny raz na kilka lat to jednak
+dokładnie ten rodzaj kroku, o którym się zapomina i który wywraca wdrożenie w najgorszym momencie, a na App
+Service plik musiałby jechać w paczce wdrożeniowej — czyli materiał kryptograficzny leżałby obok kodu
+i kasował się przy każdym wydaniu. Loader dostał więc drugą drogę: para PEM-ów (base64) wprost z konfiguracji,
+a `certificates.tf` je wytwarza. Ścieżka do PFX zostaje i ma pierwszeństwo niższe niż PEM.
+
+⚠️ To NIE są certyfikaty TLS — te dla `*.azurewebsites.net` Azure daje sam. Samopodpisany jest tu poprawny,
+nie jest kompromisem: nikt nie weryfikuje łańcucha zaufania, bo API bierze klucz publiczny z JWKS serwera
+tożsamości. Certyfikat jest opakowaniem na parę kluczy.
+
+⚠️ Klucz podpisujący leży przez to w stanie Terraforma — kto go ma, wystawi token dowolnego użytkownika.
+Świadomie zaakceptowane, dopóki `terraform apply` puszcza się lokalnie, a stan siedzi na koncie z wyłączonymi
+kluczami dostępu. Przy przeniesieniu wdrożenia do CI to jest pierwsza rzecz do przemyślenia na nowo.
+
+⚠️ Wymiana tych certyfikatów unieważnia wszystkie wydane tokeny i wylogowuje wszystkich, dlatego ważność jest
+długa (5 lat), a `early_renewal_hours = 0` — Terraform nie wymieni ich sam przy okazji niepowiązanego `apply`.
+Po wygaśnięciu serwer nie wstanie, zamiast po cichu podpisywać byle czym.
 
 **Czego ten Terraform nie robi.** Nie wgrywa kodu (Static Web Apps przez akcję GitHuba z tokenem wdrożeniowym,
-App Service przez `az webapp deploy`), nie zakłada bazy ani ról, nie generuje certyfikatów, nie uruchamia
-migracji i nie konfiguruje dostawcy poczty. ⚠️ Bez SMTP serwer tożsamości **nie wstanie** (`ValidateOnStart`),
+App Service przez `az webapp deploy`), nie zakłada bazy ani ról, nie uruchamia migracji i nie konfiguruje
+dostawcy poczty. ⚠️ Bez SMTP serwer tożsamości **nie wstanie** (`ValidateOnStart`),
 a rejestracja i tak wymaga maila z potwierdzeniem adresu — Azure darmowego SMTP nie ma.

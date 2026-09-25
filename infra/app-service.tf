@@ -112,11 +112,12 @@ resource "azurerm_linux_web_app" "identity" {
       # WSTANIE bez tej wartości — to celowy fail-fast, żeby nie zgadywać katalogu (patrz Program.cs).
       DataProtection__KeysPath = local.data_protection_keys_path
 
-      # ⚠️ Pliki PFX nie powstają z Terraforma — wjeżdżają w paczce wdrożeniowej. Patrz README.
-      Identity__Certificates__Signing__Path        = "${local.certs_dir}/signing.pfx"
-      Identity__Certificates__Signing__Password    = var.identity_signing_certificate_password
-      Identity__Certificates__Encryption__Path     = "${local.certs_dir}/encryption.pfx"
-      Identity__Certificates__Encryption__Password = var.identity_encryption_certificate_password
+      # Certyfikaty tokenów jako para PEM-ów w base64 — powstają w certificates.tf. Plik PFX w paczce
+      # wdrożeniowej byłby materiałem kryptograficznym leżącym obok kodu i kasowanym przy każdym wydaniu.
+      Identity__Certificates__Signing__Pem       = base64encode(tls_self_signed_cert.signing.cert_pem)
+      Identity__Certificates__Signing__PemKey    = base64encode(tls_private_key.signing.private_key_pem_pkcs8)
+      Identity__Certificates__Encryption__Pem    = base64encode(tls_self_signed_cert.encryption.cert_pem)
+      Identity__Certificates__Encryption__PemKey = base64encode(tls_private_key.encryption.private_key_pem_pkcs8)
 
       Clients__Admin__Secret = var.admin_client_secret
 

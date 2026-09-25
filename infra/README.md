@@ -1,7 +1,7 @@
 # Infrastruktura — Azure
 
-Terraform stawia **miejsca**, w których ma zamieszkać aplikacja. Nie wgrywa kodu, nie zakłada bazy
-i nie tworzy certyfikatów — te trzy rzeczy są opisane niżej jako kroki ręczne.
+Terraform stawia **miejsca**, w których ma zamieszkać aplikacja, i generuje certyfikaty tokenów.
+Nie wgrywa kodu, nie zakłada bazy i nie konfiguruje poczty — te trzy rzeczy są opisane niżej jako kroki ręczne.
 
 ```
 infra/
@@ -23,7 +23,7 @@ infra/
 
 Baza **nie** powstaje: jest na Neonie, poza Terraformem, który dostaje gotowe connection stringi.
 
-## Zanim uruchomisz — trzy rzeczy, które trzeba wiedzieć
+## Zanim uruchomisz — cztery rzeczy, które trzeba wiedzieć
 
 ### 1. F1 to plan z twardym sufitem, nie „mniejszy plan"
 
@@ -73,6 +73,28 @@ Stan docelowy ról w klastrze (`SELECT rolname, rolbypassrls, rolcanlogin FROM p
 
 Do tego `GRANT budget_jobs TO budget_app`, inaczej `SET LOCAL ROLE` kończy się błędem.
 
+### 4. Certyfikaty tokenów generuje Terraform i wymiana ich wylogowuje wszystkich
+
+⚠️ Nie mylić z HTTPS. Certyfikat TLS dla `*.azurewebsites.net` **Azure daje sam** i nic się o niego nie robi.
+Te dwa to materiał kryptograficzny aplikacji: podpisujący kładzie podpis pod każdym wydanym JWT (API
+sprawdza go przez JWKS), szyfrujący chroni kody autoryzacyjne i refresh tokeny. Azure nie wie, że OpenIddict
+istnieje, więc nie ma czego wygenerować — robi to `certificates.tf`, a klucze jadą do aplikacji jako para
+PEM-ów w base64.
+
+Samopodpisany jest tu **poprawny, nie jest kompromisem**: nikt nie weryfikuje łańcucha zaufania tego
+certyfikatu, bo API bierze klucz publiczny z JWKS serwera tożsamości, a nie z urzędu certyfikacji.
+Certyfikat jest tylko opakowaniem na parę kluczy.
+
+Dwie konsekwencje, o których trzeba wiedzieć **zanim**, a nie po fakcie:
+
+- **klucz podpisujący leży w stanie Terraforma.** Kto go ma, wystawi token dowolnego użytkownika — to
+  groźniejszy sekret niż hasło do bazy, które leży tam obok. Dlatego konto magazynu na stan ma wyłączone
+  klucze dostępu i wymusza tożsamość Entra ID;
+- **wymiana certyfikatu unieważnia wszystkie wydane tokeny i wylogowuje wszystkich.** Ważność jest długa
+  (domyślnie 5 lat), a `early_renewal_hours = 0`, więc Terraform nie wymieni ich sam przy okazji
+  niepowiązanego `apply`. Po wygaśnięciu serwer tożsamości **nie wstanie** — loader odrzuca przeterminowany
+  certyfikat, zamiast wystawiać tokeny podpisane byle czym. Wymiana jest więc zadaniem do zaplanowania.
+
 ## Kolejność uruchomienia
 
 ### Krok 1 — bootstrap (raz na życie projektu)
@@ -116,29 +138,6 @@ cd infra && terraform init -backend-config=backend.hcl && terraform plan
 ```
 
 ## Czego Terraform NIE robi
-
-### Certyfikaty OpenIddict
-
-Poza `Development` serwer tożsamości **nie wstanie** bez dwóch plików PFX: podpisującego tokeny
-i szyfrującego kody autoryzacyjne. Terraform zna tylko ich ścieżki i hasła — same pliki muszą wjechać
-w paczce wdrożeniowej do `/home/site/wwwroot/certs/`.
-
-⚠️ Kto ma certyfikat podpisujący, może wystawić token dowolnego użytkownika. Nie trzymaj go w repozytorium,
-nawet prywatnym, i nie używaj tego samego, co lokalnie.
-
-```bash
-openssl req -x509 -newkey rsa:2048 -keyout signing.key -out signing.crt -days 730 -nodes -subj "/CN=wydatki-identity-signing"
-```
-
-```bash
-openssl pkcs12 -export -out signing.pfx -inkey signing.key -in signing.crt
-```
-
-To samo dla `encryption.pfx`. Hasła trafiają do `terraform.tfvars`.
-
-**Wygodniejsza alternatywa na później:** zmienić kod tak, żeby czytał certyfikat z zmiennej środowiskowej
-(base64) zamiast z pliku. Wtedy Terraform ogarnia całość i nie ma kroku ręcznego. Dziś `ServerCertificateLoader`
-czyta ścieżkę, więc zostaje paczka.
 
 ### Poczta
 

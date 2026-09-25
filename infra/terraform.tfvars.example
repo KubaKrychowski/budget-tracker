@@ -21,9 +21,11 @@ admin_emails = ["ty@example.com"]
 registration_closed_beta = true
 
 # openssl rand -base64 48
-admin_client_secret                      = ""
-identity_signing_certificate_password    = ""
-identity_encryption_certificate_password = ""
+admin_client_secret = ""
+
+# Certyfikaty podpisujący i szyfrujący tokeny generuje Terraform (certificates.tf) — nie ma tu nic do
+# wpisania. ⚠️ Skrócenie tej wartości i `apply` = wymiana kluczy = wylogowanie wszystkich.
+# token_certificate_validity_hours = 43800
 
 smtp = {
   host          = "smtp-relay.brevo.com"
