@@ -48,7 +48,7 @@ public sealed class AdminOwnerDataTests : IAsyncLifetime
         await _db.SaveChangesAsync();
         _categoryId = category.Id;
 
-        _service = new OwnerDataService(_db);
+        _service = new OwnerDataService(_db, TestBlobs.Client());
     }
 
     public async Task DisposeAsync()
@@ -85,7 +85,7 @@ public sealed class AdminOwnerDataTests : IAsyncLifetime
 
     private static readonly OwnerDataCountsResponseDto OneFullSet = new(
         Budgets: 1, BudgetItems: 1, Transactions: 2, ImportBatches: 1,
-        SavingsGoals: 1, SavingsReservations: 1, StandingOrders: 1, EpisodicOrders: 1);
+        SavingsGoals: 1, SavingsReservations: 1, StandingOrders: 1, EpisodicOrders: 1, ModelVersions: 0);
 
     private Task<IReadOnlyDictionary<Guid, OwnerDataCountsResponseDto>> CountsAsync() =>
         _service.AsSystemAsync(() => _service.CountByOwnerAsync(default), default);

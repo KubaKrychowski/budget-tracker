@@ -1,3 +1,4 @@
+using BudgetTracker.Identity.Services.Api;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
 using BudgetTracker.Identity.Resources;
@@ -25,6 +26,7 @@ public sealed class AccountController(
     SpaOrigins spaOrigins,
     UserDeletionService userDeletion,
     AdminRoleService adminRoles,
+    IUserDataClient userData,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AccountController> logger) : Controller
 {
@@ -92,6 +94,18 @@ public sealed class AccountController(
         {
             foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
+        }
+
+        // ⚠️ Magazyn plików zakładamy OD RAZU, ale niepowodzenie NIE przerywa rejestracji: konto już
+        // istnieje, a odwracanie go z powodu chwilowej niedostępności API byłoby gorsze niż brak kontenera.
+        // Brakujące magazyny zakłada się z panelu administracyjnego (akcja przy użytkowniku).
+        try
+        {
+            await userData.CreateUserContainerAsync(user.Id, HttpContext.RequestAborted);
+        }
+        catch (UserDataServiceException ex)
+        {
+            logger.LogError(ex, "Nie udało się założyć magazynu plików dla konta {UserId}.", user.Id);
         }
 
         // Konto istnieje, ale RequireConfirmedAccount blokuje logowanie do kliknięcia w link —

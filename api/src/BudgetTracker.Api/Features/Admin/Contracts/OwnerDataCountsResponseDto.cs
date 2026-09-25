@@ -12,10 +12,11 @@ public sealed record OwnerDataCountsResponseDto(
     int SavingsGoals,
     int SavingsReservations,
     int StandingOrders,
-    int EpisodicOrders)
+    int EpisodicOrders,
+    int ModelVersions)
 {
-    public static OwnerDataCountsResponseDto Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0);
+    public static OwnerDataCountsResponseDto Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     public int Total => Budgets + BudgetItems + Transactions + ImportBatches
-        + SavingsGoals + SavingsReservations + StandingOrders + EpisodicOrders;
+        + SavingsGoals + SavingsReservations + StandingOrders + EpisodicOrders + ModelVersions;
 }

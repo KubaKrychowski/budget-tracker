@@ -39,7 +39,9 @@
               "src/theme.less",
               "src/styles.scss"
             ],
-            "externalDependencies": ["marked-katex-extension"]
+            "externalDependencies": [
+              "marked-katex-extension"
+            ]
           },
           "configurations": {
             "production": {
@@ -56,7 +58,9 @@
                 }
               ],
               "outputHashing": "all",
-              "security": { "autoCsp": true }
+              "security": {
+                "autoCsp": true
+              }
             },
             "development": {
               "optimization": false,
@@ -85,7 +89,12 @@
           }
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "setupFiles": [
+              "src/test-setup.ts"
+            ]
+          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",

@@ -19,6 +19,20 @@ export interface SystemAction {
   /** Sciezka do ikony z design systemu w `public/icons/`. Gdy jest, wygrywa z `icon`. */
   readonly svg?: string;
   readonly route: string | null;
+  /**
+   * Parametry adresu dolaczane do `route` — dzis wylacznie zakladki ustawien (`?tab=rules`).
+   * Bez nich „Reguly kategoryzacji" ladowalyby na domyslnej zakladce budzetow.
+   */
+  readonly queryParams?: Record<string, string>;
   /** Czy pokazywac jako kafel „Szybkich akcji". */
   readonly quickAction: boolean;
+  /** Sekcja katalogu „Wszystkie funkcje" — patrz `FUNCTION_GROUPS`. */
+  readonly group: FunctionGroup;
 }
+
+/**
+ * Sekcje katalogu funkcji. Podzial jest wedlug TEGO, PO CO sie wchodzi, a nie wedlug
+ * tego, gdzie lezy kod — „Popraw kategorie" to codzienna robota przy transakcjach,
+ * mimo ze kategoryzacja siedzi w ustawieniach.
+ */
+export type FunctionGroup = 'daily' | 'planning' | 'budgets' | 'settings';

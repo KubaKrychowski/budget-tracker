@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.29.2" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
@@ -17,6 +19,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.14.1" />
     <PackageReference Include="Microsoft.ML" Version="5.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="8.0.0-preview.4.26456.66" />

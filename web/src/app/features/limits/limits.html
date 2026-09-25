@@ -27,13 +27,41 @@
     </nz-alert>
   } @else {
     @if (lastData(); as last) {
-      <!-- Karta „Konfiguracja" z makiety (203:3) — ten sam nagłówek co na dashboardzie. -->
+      <!-- Karta „Konfiguracja" z makiety (203:3) — ten sam nagłówek i układ pól co na dashboardzie. -->
       <div class="lim__config">
         <h3 class="lim__config-title">{{ 'dashboard.configuration' | translate }}</h3>
-        <app-budget-switcher
-          [budgets]="last.budgets"
-          [selectedId]="last.selectedBudgetIds[0] ?? null"
-          (budgetChange)="switchBudget($event)" />
+
+        <div class="lim__config-fields">
+          <app-budget-switcher
+            [budgets]="last.budgets"
+            [selectedId]="last.selectedBudgetIds[0] ?? null"
+            (budgetChange)="switchBudget($event)" />
+
+          <!-- ⚠️ CAŁY wybór miesiąca jest tutaj, a nie na pasku nad tabelą (odejście od makiety 203:3).
+               Tamten pasek renderuje się w gałęzi z tabelą, więc znikał razem z nią, gdy oglądany miesiąc
+               nie miał ANI JEDNEGO limitu — limity ustawione na przyszłość były wtedy z interfejsu
+               nieosiągalne. Jedno miejsce zamiast dwóch: kalendarz do skoku, strzałki o miesiąc. -->
+          <div class="lim__config-field">
+            <label class="lim__config-label" for="limits-month">
+              {{ 'dashboard.periodLabel' | translate }}
+            </label>
+            <nz-date-picker
+              nzId="limits-month"
+              class="lim__config-control"
+              nzMode="month"
+              [nzAllowClear]="false"
+              [ngModel]="viewedMonth()"
+              (ngModelChange)="onMonthChange($event)" />
+            <span class="lim__config-steps">
+              <button nz-button (click)="shiftMonth(-1)" [attr.aria-label]="'limits.prevMonth' | translate">‹</button>
+              <button nz-button (click)="shiftMonth(1)" [attr.aria-label]="'limits.nextMonth' | translate">›</button>
+            </span>
+            <!-- Link, nie przycisk z ramką — makieta 203:3 / 206:182. -->
+            <button nz-button nzType="link" [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
+              {{ 'limits.currentMonth' | translate }}
+            </button>
+          </div>
+        </div>
       </div>
     }
 
@@ -61,12 +89,14 @@
             [nzMessage]="'limits.banner.noLimitsClosed' | translate: { month: monthLabel(d.month) }"
           />
         } @else if (d.limits.length === 0) {
+          <!-- ⚠️ Dwa różne zdania. „Ten budżet nie ma limitów" przy limitach ustawionych na przyszły
+               miesiąc to nieprawda, która kosztowała szukanie — patrz `HasAnyLimit` po stronie serwera. -->
           <nz-alert
             class="lim__banner"
             nzType="info"
             nzShowIcon
-            [nzMessage]="'limits.banner.noLimits' | translate"
-            [nzDescription]="'limits.banner.noLimitsBody' | translate"
+            [nzMessage]="(d.hasAnyLimit ? 'limits.banner.noLimitsThisMonth' : 'limits.banner.noLimits') | translate"
+            [nzDescription]="(d.hasAnyLimit ? 'limits.banner.noLimitsThisMonthBody' : 'limits.banner.noLimitsBody') | translate"
           />
         } @else if (overRows().length === 1) {
           <nz-alert
@@ -134,23 +164,19 @@
             <p class="lim__hint">{{ 'limits.table.hint' | translate }}</p>
 
             @if (d.limits.length === 0 && !d.readOnly) {
-              <!-- Pusty stan bieżącego miesiąca (makieta 203:13079): bez paska miesięcy, jedno wezwanie do działania. -->
+              <!-- Pusty stan bieżącego miesiąca (makieta 203:13079): jedno wezwanie do działania.
+                   Zdanie zależy od tego, czy budżet ma limity gdzie indziej — „dodaj pierwszy" do budżetu
+                   bez ani jednego limitu byłoby nieprawdą, gdy limity czekają w innym miesiącu. -->
               <div class="lim__empty">
-                <p>{{ 'limits.table.emptyBudget' | translate }}</p>
+                <p>{{ (d.hasAnyLimit ? 'limits.table.empty' : 'limits.table.emptyBudget') | translate }}</p>
                 <button nz-button nzType="primary" (click)="openEditor(null)">
                   <nz-icon nzType="plus-circle" />
-                  {{ 'limits.addFirst' | translate }}
+                  {{ (d.hasAnyLimit ? 'limits.add' : 'limits.addFirst') | translate }}
                 </button>
               </div>
             } @else {
             <div class="lim__toolbar">
-              <button nz-button (click)="shiftMonth(-1)" [attr.aria-label]="'limits.prevMonth' | translate">‹</button>
               <span class="lim__month">{{ monthLabel(d.month) }}</span>
-              <button nz-button (click)="shiftMonth(1)" [attr.aria-label]="'limits.nextMonth' | translate">›</button>
-              <!-- Link, nie przycisk z ramką — makieta 203:3 / 206:182. -->
-              <button nz-button nzType="link" [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
-                {{ 'limits.currentMonth' | translate }}
-              </button>
               <span class="lim__spacer"></span>
               @if (!d.readOnly) {
                 <button nz-button nzType="primary" (click)="openEditor(null)">

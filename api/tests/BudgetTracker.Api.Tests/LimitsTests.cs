@@ -183,6 +183,21 @@ public sealed class LimitsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Miesiac_bez_limitow_odroznia_sie_od_budzetu_bez_limitow()
+    {
+        // Limit tylko na październik: wrzesień jest pusty, ale budżet limity MA. Ekran musi umieć
+        // powiedzieć „w tym miesiącu", zamiast twierdzić, że nie ustawiono jeszcze żadnego.
+        var pusty = await Query().HandleAsync(_budgetId, September, default);
+        Assert.False(pusty.HasAnyLimit);
+
+        await SetAsync(_food, 1000m, October);
+
+        var wrzesien = await Query().HandleAsync(_budgetId, September, default);
+        Assert.Empty(wrzesien.Limits);
+        Assert.True(wrzesien.HasAnyLimit);
+    }
+
+    [Fact]
     public async Task Usuniecie_limitu_zakonczonego_przed_biezacym_miesiacem_to_409()
     {
         var old = await SetAsync(_food, 1000m, August);

@@ -10,36 +10,9 @@
     </span>
   </a>
 
-  <!-- NG-ZORRO 22 usunęło `nz-input-group` z [nzPrefix]. Zamiennikiem jest
-       `nz-input-wrapper` z dyrektywą `nzInputPrefix` na samej ikonie. -->
-  <nz-input-wrapper class="app-header__search">
-    <nz-icon nzInputPrefix nzType="search" class="app-header__search-icon" />
-    <input
-      nz-input
-      [placeholder]="'app.searchPlaceholder' | translate"
-      [ngModel]="query()"
-      (ngModelChange)="query.set($event)"
-      [nzAutocomplete]="actionAuto"
-    />
-  </nz-input-wrapper>
-
-  <nz-autocomplete #actionAuto>
-    @for (action of suggestions(); track action.key) {
-      <!-- selectionChange emituje TAKŻE przy samym otwarciu listy, gdy komponent
-           oznacza opcje jako aktywne. Bez filtra isUserInput komunikaty wyskakiwały
-           dla wszystkich podpowiedzi od razu po wejściu w pole. -->
-      <nz-auto-option
-        [nzValue]="action.labelKey | translate"
-        [nzDisabled]="!action.route"
-        (selectionChange)="select($event, action)"
-      >
-        <!-- alt="" celowo: nazwa akcji stoi zaraz obok, więc ikona jest dekoracją.
-             Opis powtórzyłby czytnikowi ekranu ten sam tekst dwa razy. -->
-        <img class="app-header__action-icon" [src]="action.svg" alt="" />
-        {{ action.labelKey | translate }}
-      </nz-auto-option>
-    }
-  </nz-autocomplete>
+  <!-- Wyszukiwarka wraz z rozwijanym menu (historia, ostatnie ekrany, wyniki) — patrz `SearchMenu`.
+       Zastąpiła `nz-autocomplete`, który znał wyłącznie akcje systemu i milczał do trzeciego znaku. -->
+  <app-search-menu class="app-header__search" />
 
   <!-- Ikony po prawej. Podręcznik i zębatka jako <a routerLink> (to nawigacja, ma działać
        środkowym klikiem i „otwórz w nowej karcie"); terminal to <button> — otwiera panel

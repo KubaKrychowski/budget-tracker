@@ -15,6 +15,13 @@ namespace BudgetTracker.Api.Features.Limits.Contracts;
 /// Wydatki bez kategorii w miesiącu. ⚠️ Nie liczą się do ŻADNEGO limitu (nie ma do czego ich przypisać),
 /// więc ekran musi to powiedzieć — inaczej limit wygląda bezpieczniej, niż jest.
 /// </param>
+/// <param name="HasAnyLimit">
+/// Czy budżet ma limit w JAKIMKOLWIEK miesiącu — nie tylko w oglądanym.
+///
+/// ⚠️ Bez tego pusty miesiąc nie do odróżnienia od pustego budżetu, a to dwie różne wiadomości:
+/// „nie ustawiłeś jeszcze żadnego limitu" kontra „w tym miesiącu ich nie ma, ale w innych są".
+/// Druga myliła użytkownika, który ustawił limity na przyszły miesiąc i usłyszał, że nie ma żadnych.
+/// </param>
 public sealed record LimitsResponseDto(
     DateOnly Month,
     DateOnly CurrentMonth,
@@ -29,4 +36,5 @@ public sealed record LimitsResponseDto(
     int UncategorizedCount,
     decimal UncategorizedAmount,
     IReadOnlyList<Guid> SelectedBudgetIds,
-    IReadOnlyList<LimitsBudgetOptionResponseDto> Budgets);
+    IReadOnlyList<LimitsBudgetOptionResponseDto> Budgets,
+    bool HasAnyLimit);

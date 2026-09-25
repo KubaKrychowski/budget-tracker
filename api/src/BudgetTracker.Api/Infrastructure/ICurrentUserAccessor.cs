@@ -40,7 +40,10 @@ public sealed class HttpContextCurrentUserAccessor(IHttpContextAccessor httpCont
         {
             var user = httpContextAccessor.HttpContext?.User;
             var sub = user?.FindFirst(SubjectClaimType)?.Value ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(sub, out var id) ? id : null;
+            if (Guid.TryParse(sub, out var id)) return id;
+
+            // Poza żądaniem (Hangfire, CLI) właściciel pochodzi z jawnego zakresu — patrz BackgroundUser.
+            return BackgroundUser.UserId;
         }
     }
 

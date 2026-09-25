@@ -17,8 +17,10 @@ import { valueOf } from '../../../core/api/resource-value';
 import {
   ModelVersion,
   RecategorizeReport,
+  TrainingQueued,
   TrainingReport,
   TrainingSetOverview,
+  TrainingStatus,
 } from '../../../core/api/models/training-set-overview';
 
 /** Klucz pamięci przeglądarki: czy użytkownik zamknął ostrzeżenie o trafnościach. */
@@ -126,21 +128,70 @@ export class Training {
     return max === 0 ? '0%' : `${Math.round((count / max) * 100)}%`;
   }
 
+  /**
+   * Zgłoszenie treningu, na którego wynik jeszcze czekamy; `null` = nie ma o co pytać.
+   *
+   * ⚠️ Żyje tylko w pamięci karty. Przeładowanie strony gubi numer zgłoszenia i to jest w porządku:
+   * gotowy trening i tak widać na liście wersji, a ten alert jest wygodą, nie źródłem prawdy.
+   */
+  protected readonly queuedJobId = signal<string | null>(null);
+
+  /** Trwa sprawdzanie wyniku — żeby dwa kliknięcia nie wysłały dwóch pytań. */
+  protected readonly checkingStatus = signal(false);
+
+  /**
+   * Zgłasza trening do kolejki i NA TYM KOŃCZY.
+   *
+   * ⚠️ Świadomie bez odpytywania w pętli: trening bywa długi, a ekran, który sam wali do serwera co
+   * kilka sekund, robi to także wtedy, gdy nikt na niego nie patrzy. Wynik sprawdza człowiek, wtedy
+   * gdy go potrzebuje — przyciskiem na alercie.
+   */
   protected async train(): Promise<void> {
     this.busy.set(true);
     try {
-      const report = await firstValueFrom(
-        this.http.post<TrainingReport>('/api/categorization/train', {}),
+      const queued = await firstValueFrom(
+        this.http.post<TrainingQueued>('/api/categorization/train', {}),
       );
-      this.lastRun.set(report);
+      this.queuedJobId.set(queued.jobId);
+      this.lastRun.set(null);
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /**
+   * Pyta RAZ o wynik zgłoszonego treningu.
+   *
+   * ⚠️ Brak wyniku znaczy „czeka w kolejce, trwa albo się nie powiódł” — tego się stąd nie rozróżni,
+   * więc komunikat mówi tylko tyle, ile wiadomo. Nieudane przebiegi widać w panelu zadań.
+   */
+  protected async checkTrainingStatus(): Promise<void> {
+    const jobId = this.queuedJobId();
+    if (jobId === null || this.checkingStatus()) return;
+
+    this.checkingStatus.set(true);
+    try {
+      const status = await firstValueFrom(
+        this.http.get<TrainingStatus>(`/api/categorization/train/${jobId}`),
+      );
+
+      if (!status.ready || status.report === null) {
+        this.message.info(this.translate.instant('settings.training.stillRunning'));
+        return;
+      }
+
+      this.lastRun.set(status.report);
+      this.queuedJobId.set(null);
       this.message.success(this.translate.instant('settings.training.trainSuccess', {
-        rows: report.rows,
+        rows: status.report.rows,
       }));
       this.overview.reload();
     } catch (e) {
       this.message.error(this.errorMessages.of(e));
     } finally {
-      this.busy.set(false);
+      this.checkingStatus.set(false);
     }
   }
 
@@ -187,7 +238,7 @@ export class Training {
     this.busy.set(true);
     try {
       await firstValueFrom(
-        this.http.post('/api/categorization/activate', { version: model.version }),
+        this.http.post('/api/categorization/activate', { versionId: model.id }),
       );
       // Raport z bieżącej sesji przestaje opisywać aktywny model — zostawiony wprowadzałby w błąd.
       this.lastRun.set(null);

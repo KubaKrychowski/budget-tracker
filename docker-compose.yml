@@ -30,5 +30,44 @@ services:
       - "${MAILHOG_SMTP_PORT:-1025}:1025"
       - "${MAILHOG_UI_PORT:-8025}:8025"
 
+  # Emulator Azure Blob/Queue/Table (Azurite) — ten sam kod i ten sam pakiet Azure.Storage.Blobs
+  # działa lokalnie i na Azure, więc artefakty (wersje modelu kategoryzacji) nie wymagają chmury
+  # przy pracy na sucho. Konto `devstoreaccount1` i jego klucz są jawne w dokumentacji Microsoftu —
+  # to emulator, nie sekret. Connection string dla aplikacji: UseDevelopmentStorage=true.
+  #
+  # ⚠️ Azurite NIE udaje reguł cyklu życia ani warstw Hot/Cool: przenoszenia starych modeli do Cool
+  # (reguła w repozytorium infrastruktury) lokalnie nie da się sprawdzić.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    container_name: budget-tracker-azurite
+    restart: unless-stopped
+    # --skipApiVersionCheck: SDK w wersji beta deklaruje nowszą wersję API Azure Storage, niż zna Azurite,
+    # i bez tego każde żądanie kończy się 400. Dotyczy WYŁĄCZNIE emulatora — prawdziwy storage tę wersję zna.
+    # --oauth basic + HTTPS: aplikacja może lokalnie chodzić tą samą ścieżką co w Azure
+    # (DefaultAzureCredential), zamiast klucza konta. ⚠️ Azurite sprawdza w tokenie tylko wystawcę,
+    # odbiorcę i termin ważności — NIE sprawdza podpisu ani uprawnień. Przejście lokalnie nie dowodzi,
+    # że tożsamość ma w Azure rolę „Storage Blob Data Contributor”; to wyjdzie dopiero jako 403 w chmurze.
+    # --disableProductStyleUrl: nazwa konta czytana ze ŚCIEŻKI, bo adres to https://localhost:10000/devstoreaccount1
+    # (certyfikat deweloperski .NET jest wystawiony na localhost, więc adres z 127.0.0.1 odpadnie na nazwie).
+    command: >
+      azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data
+      --oauth basic --cert /certs/azurite.pem --key /certs/azurite.key --disableProductStyleUrl
+      --skipApiVersionCheck
+    ports:
+      - "${AZURITE_BLOB_PORT:-10000}:10000"
+      - "${AZURITE_QUEUE_PORT:-10001}:10001"
+      - "${AZURITE_TABLE_PORT:-10002}:10002"
+    volumes:
+      - azurite:/data
+      # Certyfikat z `dotnet dev-certs https --export-path certs/azurite.pem --format PEM --no-password`.
+      # Katalog certs/ jest w .gitignore — to klucz prywatny, choćby i deweloperski.
+      - ./certs:/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 10000 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   pgdata:
+  azurite:

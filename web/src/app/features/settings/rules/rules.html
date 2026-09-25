@@ -20,9 +20,22 @@
 
 <div class="rul__header">
   <h3 class="rul__title">{{ 'settings.rules.listTitle' | translate }}</h3>
-  <button nz-button nzType="primary" (click)="openCreate()">
-    {{ 'settings.rules.create' | translate }}
-  </button>
+  <div class="rul__tools">
+    <!-- NG-ZORRO 22: `nz-input-wrapper` + dyrektywa `nzInputPrefix` — ten sam układ co w podglądzie importu. -->
+    <nz-input-wrapper class="rul__search" nzAllowClear>
+      <nz-icon nzInputPrefix nzType="search" />
+      <input
+        nz-input
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        [attr.aria-label]="'settings.rules.searchLabel' | translate"
+        [placeholder]="'settings.rules.searchPlaceholder' | translate"
+      />
+    </nz-input-wrapper>
+    <button nz-button nzType="primary" (click)="openCreate()">
+      {{ 'settings.rules.create' | translate }}
+    </button>
+  </div>
 </div>
 
 <nz-spin [nzSpinning]="loading()">
@@ -31,10 +44,10 @@
        było nieosiągalnych i nic tego nie sygnalizowało. -->
   <nz-table
     #rulesTable
-    [nzData]="rules()"
+    [nzData]="visibleRules()"
     [nzPageSize]="20"
     nzSize="middle"
-    [nzNoResult]="'settings.rules.empty' | translate"
+    [nzNoResult]="(nothingMatches() ? 'settings.rules.noMatches' : 'settings.rules.empty') | translate"
   >
     <thead>
       <tr>

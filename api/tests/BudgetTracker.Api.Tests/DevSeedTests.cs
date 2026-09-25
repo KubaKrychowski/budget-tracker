@@ -43,7 +43,7 @@ public sealed class DevSeedTests : IAsyncLifetime
     private async Task DeleteOwnerDataAsync(Guid ownerId)
     {
         // To samo, co robi „Usuń” na ekranie administratora: trwale kasuje dane właściciela, konta seedu zostają.
-        var service = new OwnerDataService(_db);
+        var service = new OwnerDataService(_db, TestBlobs.Client());
         await service.AsSystemAsync(() => service.DeleteAsync(ownerId, default), default);
     }
 

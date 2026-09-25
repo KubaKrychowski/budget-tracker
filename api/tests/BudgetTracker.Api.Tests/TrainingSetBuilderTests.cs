@@ -26,8 +26,11 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
         "Host=localhost;Port=5432;Database=budgettracker_trainingset_test;Username=budget;Password=budget_dev_only";
 
     private AppDbContext _db = null!;
-    private string _dataDirectory = null!;
-    private string _baseFilePath = null!;
+    private string _container = null!;
+
+    /// <summary>Nazwa blobu ze zbiorem bazowym; test bez pliku wskazuje nazwe, ktorej nie ma.</summary>
+    private const string BaseFileName = "training-set.csv";
+    private const string MissingFileName = "nie-ma.csv";
 
     private int _jedzenieId;
     private int _transportId;
@@ -50,32 +53,29 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
         _jedzenieId = jedzenie.Id;
         _transportId = transport.Id;
 
-        // Katalog per test — pliki bazowe nie moga sie przenikac miedzy przypadkami.
-        _dataDirectory = Path.Combine(Path.GetTempPath(), $"bt-training-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_dataDirectory);
-        _baseFilePath = Path.Combine(_dataDirectory, "training-set.csv");
+        // Kontener per klasa — zbiory bazowe nie moga sie przenikac miedzy przypadkami.
+        _container = await TestBlobs.CreateContainerAsync("trainingset");
     }
 
     public async Task DisposeAsync()
     {
         await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
-        if (Directory.Exists(_dataDirectory)) Directory.Delete(_dataDirectory, recursive: true);
+        await TestBlobs.DropContainerAsync(_container);
     }
 
     /// <summary>Plik bazowy w tym samym formacie co produkcyjny: opis, typ, kwota, kategoria.</summary>
-    private void WriteBaseFile(params string[] rows) =>
-        File.WriteAllLines(_baseFilePath, [
+    private Task WriteBaseFile(params string[] rows) =>
+        TestBlobs.UploadTextAsync(_container, BaseFileName, string.Join(Environment.NewLine, [
             "\"opis\",\"typ_transakcji\",\"kwota\",\"kategoria\",\"duzy_wydatek\"",
             .. rows,
-        ]);
+        ]));
 
     private TrainingSetBuilder Builder(bool withBaseFile = true) => new(
         _db,
-        Options.Create(new CategorizationOptions
-        {
-            TrainingDataPath = withBaseFile ? _baseFilePath : Path.Combine(_dataDirectory, "nie-ma.csv"),
-        }));
+        Options.Create(new CategorizationOptions()),
+        TestBlobs.Client(),
+        TestBlobs.Configuration(_container, withBaseFile ? BaseFileName : MissingFileName));
 
     private Transaction New(
         decimal amount, string description, int? categoryId, TransactionStatus status,
@@ -187,7 +187,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     {
         // Plik bazowy powstal z TYCH SAMYCH realnych transakcji, ktore sa w bazie. Bez odsiania
         // te same przyklady weszlyby dwa razy i przewazyly zbior w strone tego, co juz w nim jest.
-        WriteBaseFile("\"lidl 123 miasto warszawa\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"lidl 123 miasto warszawa\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
 
         _db.Transactions.Add(New(-30m, "LIDL 123 Miasto Warszawa", _jedzenieId, TransactionStatus.Confirmed));
         await _db.SaveChangesAsync();
@@ -205,7 +205,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     {
         // Biedronka na 12 zl i na 300 zl to dwa rozne przyklady — kwota jest cecha modelu,
         // wiec nie moze wypasc z klucza deduplikacji.
-        WriteBaseFile("\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
 
         _db.Transactions.Add(New(-300m, "LIDL", _jedzenieId, TransactionStatus.Confirmed));
         await _db.SaveChangesAsync();
@@ -222,10 +222,10 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     {
         // Typ operacji jest cecha rownorzedna z opisem (patrz Transaction.TransactionType):
         // wyplata z bankomatu i zakup w tym samym miejscu maja ten sam opis.
-        WriteBaseFile("\"obcy legnicka 29\",\"Obciazenie\",\"-200\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"obcy bankomat 12\",\"Obciazenie\",\"-200\",\"Jedzenie\",\"0\"");
 
         _db.Transactions.Add(New(
-            -200m, "OBCY LEGNICKA 29", _transportId, TransactionStatus.Confirmed,
+            -200m, "OBCY BANKOMAT 12", _transportId, TransactionStatus.Confirmed,
             type: "Wyplata w bankomacie"));
         await _db.SaveChangesAsync();
 
@@ -241,7 +241,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     public async Task The_set_is_the_file_plus_corrections()
     {
         // Rdzen zadania: zbior przestaje byc plikiem, a staje sie plikiem PLUS poprawkami.
-        WriteBaseFile(
+        await WriteBaseFile(
             "\"biedronka\",\"Obciazenie\",\"-10\",\"Jedzenie\",\"0\"",
             "\"orlen\",\"Obciazenie\",\"-250\",\"Transport\",\"0\"");
 
@@ -298,7 +298,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
         // ⚠️ REGRESJA. Poprawka wiersza, ktory JUZ JEST w pliku, byla wyrzucana razem
         // z duplikatami — wiec model dalej uczyl sie starej, zlej etykiety z pliku.
         // To dokladnie te poprawki sa najcenniejsze: powstaja tam, gdzie plik sie myli.
-        WriteBaseFile("\"castorama\",\"Obciazenie\",\"-120\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"castorama\",\"Obciazenie\",\"-120\",\"Jedzenie\",\"0\"");
 
         _db.Transactions.Add(New(-120m, "CASTORAMA", _transportId, TransactionStatus.ManuallyCategorized));
         await _db.SaveChangesAsync();
@@ -320,7 +320,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     {
         // Odsiewanie zostaje tam, gdzie mialo sens: ten sam przyklad z TA SAMA etykieta
         // wszedlby do zbioru dwa razy i przewazylby go.
-        WriteBaseFile("\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
 
         _db.Transactions.Add(New(-30m, "LIDL", _jedzenieId, TransactionStatus.Confirmed));
         await _db.SaveChangesAsync();
@@ -337,7 +337,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     {
         // Wiersze o IDENTYCZNYCH cechach i sprzecznych etykietach to dla modelu szum,
         // a nie dwie opinie — wiec decyzja czlowieka przestawia wszystkie wystapienia.
-        WriteBaseFile(
+        await WriteBaseFile(
             "\"zabka\",\"Obciazenie\",\"-12\",\"Jedzenie\",\"0\"",
             "\"zabka\",\"Obciazenie\",\"-12\",\"Jedzenie\",\"0\"",
             "\"zabka\",\"Obciazenie\",\"-12\",\"Jedzenie\",\"0\"");
@@ -357,7 +357,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     {
         // Bez jawnej kolejnosci wynik zalezalby od tego, co zwroci baza. Nowsza decyzja
         // czlowieka jest najlepsza dostepna prawda.
-        WriteBaseFile("\"castorama\",\"Obciazenie\",\"-120\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"castorama\",\"Obciazenie\",\"-120\",\"Jedzenie\",\"0\"");
 
         var starsza = New(-120m, "CASTORAMA", _transportId, TransactionStatus.ManuallyCategorized,
             createdAt: new DateTimeOffset(2026, 3, 1, 0, 0, 0, TimeSpan.Zero));
@@ -377,7 +377,7 @@ public sealed class TrainingSetBuilderTests : IAsyncLifetime
     public async Task A_correction_of_a_row_that_is_not_in_the_file_still_just_adds_it()
     {
         // Sciezka „nowy przyklad" nie moze ucierpiec na zmianie regul dla sprzecznych etykiet.
-        WriteBaseFile("\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
+        await WriteBaseFile("\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"");
 
         _db.Transactions.Add(New(-77m, "ZABKA", _transportId, TransactionStatus.Confirmed));
         await _db.SaveChangesAsync();

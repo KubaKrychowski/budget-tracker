@@ -43,6 +43,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<RuleDirectionDictionary> RuleDirections => Set<RuleDirectionDictionary>();
     public DbSet<AccountTypeDictionary> AccountTypes => Set<AccountTypeDictionary>();
     public DbSet<StandingOrderRhythmDictionary> StandingOrderRhythms => Set<StandingOrderRhythmDictionary>();
+    public DbSet<ModelVersion> ModelVersions => Set<ModelVersion>(); 
 
     /// <summary>
     /// Kwoty pieniężne zawsze <c>numeric(18,2)</c> — nigdy float/double. Konwencja globalna,
@@ -271,6 +272,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
                 .HasFilter($"\"SettledTransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
 
             e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
+        });
+
+        b.Entity<ModelVersion>(e =>
+        {
+            e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.BusinessId);
+
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
     }

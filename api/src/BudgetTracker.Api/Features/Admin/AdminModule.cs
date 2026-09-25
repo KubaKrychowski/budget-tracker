@@ -37,6 +37,7 @@ public static class AdminModule
         services.AddScoped<GetOrphanedDataQueryHandler>();
         services.AddScoped<DeleteOwnerDataCommandHandler>();
         services.AddScoped<ReassignOwnerDataCommandHandler>();
+        services.AddScoped<CreateUserStorageCommandHandler>();
         return services;
     }
 
@@ -71,6 +72,17 @@ public static class AdminModule
             .WithName("ReassignOwnerData")
             .Produces<OwnerDataChangeResponseDto>()
             .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        // 204, bo nie ma czego zwracać: kontener albo powstał, albo już był. Powtórzenie jest bezpieczne.
+        admin.MapPost("/users/{userId:guid}/container", async (
+            Guid userId, CreateUserStorageCommandHandler handler, CancellationToken ct) =>
+        {
+            await handler.HandleAsync(userId, ct);
+            return Results.NoContent();
+        })
+            .WithName("CreateUserStorage")
+            .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status403Forbidden);
 
         return app;

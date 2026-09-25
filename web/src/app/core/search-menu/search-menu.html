@@ -1,0 +1,155 @@
+<!-- Zamykanie obsługuje `@HostListener` na dokumencie, nie ten element — patrz `SearchMenu.onDocumentClick`. -->
+<div class="smn">
+  <!-- NG-ZORRO 22 usunęło `nz-input-group` z [nzPrefix] — zamiennikiem jest `nz-input-wrapper`. -->
+  <nz-input-wrapper class="smn__field">
+    <nz-icon nzInputPrefix nzType="search" class="smn__field-icon" />
+    <input
+      nz-input
+      [placeholder]="'search.placeholder' | translate"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+      (focus)="focus()"
+      (keydown.escape)="onEscape()"
+      (keydown.enter)="submit()"
+    />
+  </nz-input-wrapper>
+
+  @if (open()) {
+    <div class="smn__panel">
+      @if (searching()) {
+        <!-- ── Wyniki dla frazy ──────────────────────────────────────────────────────── -->
+        @if (actionHits().length > 0) {
+          <div class="smn__section">
+            <span class="smn__section-title">{{ 'search.groups.actions' | translate }}</span>
+            <span class="smn__section-count">({{ actionHits().length }})</span>
+          </div>
+          @for (action of actionHits(); track action.key) {
+            <button type="button" class="smn__row" [disabled]="!action.route" (click)="pickScreen(action)">
+              <img class="smn__row-icon" [src]="action.svg" alt="" />
+              <span class="smn__row-label">{{ action.labelKey | translate }}</span>
+            </button>
+          }
+        }
+
+        @for (group of groups(); track group.kind) {
+          <div class="smn__divider"></div>
+          <div class="smn__section">
+            <span class="smn__section-title">{{ groupLabelKey(group.kind) | translate }}</span>
+            <!-- Licznik mówi o CAŁOŚCI, nie o podglądzie — inaczej pięć wierszy wygląda jak komplet. -->
+            <span class="smn__section-count">({{ group.total }})</span>
+          </div>
+          @for (hit of group.hits; track hit.id) {
+            <button type="button" class="smn__row" (click)="pickHit(group.kind, hit)">
+              <span class="smn__row-body">
+                <span class="smn__row-label">{{ hit.label }}</span>
+                @if (hit.categoryName || hit.date || hit.budgetName) {
+                  <span class="smn__row-sub">
+                    {{ hit.categoryName }}{{ hit.categoryName && hit.date ? ' · ' : '' }}{{ day(hit.date) }}{{ (hit.categoryName || hit.date) && hit.budgetName ? ' · ' : '' }}{{ hit.budgetName }}
+                  </span>
+                }
+              </span>
+              @if (hit.amount !== null) {
+                <span class="smn__row-amount tnum">
+                  {{ money(hit.amount) }} {{ 'dashboard.currency' | translate }}
+                </span>
+              }
+            </button>
+          }
+        }
+
+        <!-- ⚠️ Błąd MUSI być widoczny. Bez tego padające żądanie (np. starsze API bez /api/search)
+             daje pusty panel, nieodróżnialny od „nic nie znaleziono" — a to zupełnie inna wiadomość. -->
+        @if (failure()) {
+          <div class="smn__empty">
+            <p class="smn__empty-title">{{ 'search.error.title' | translate }}</p>
+            <p class="smn__empty-body">{{ 'search.error.body' | translate }}</p>
+          </div>
+        }
+
+        @if (nothingFound()) {
+          <div class="smn__empty">
+            <p class="smn__empty-title">{{ 'search.empty.title' | translate: { query: query() } }}</p>
+            <p class="smn__empty-body">
+              {{ (data()?.allBudgets ? 'search.empty.bodyAll' : 'search.empty.body')
+                 | translate: { budget: data()?.budgetName } }}
+            </p>
+          </div>
+        }
+
+        <div class="smn__divider"></div>
+        <div class="smn__foot">
+          @if (data() && data()!.total > 0) {
+            <button type="button" class="smn__link" (click)="showAll()">
+              {{ 'search.showAll' | translate: { count: data()!.total } }}
+            </button>
+          } @else if (loading()) {
+            <!-- „Szukam…" tylko gdy faktycznie szukamy. Przy błędzie wisiałoby w nieskończoność. -->
+            <span class="smn__foot-note">{{ 'search.loading' | translate }}</span>
+          }
+          <span class="smn__spacer"></span>
+          @if (allBudgets()) {
+            <button type="button" class="smn__link" (click)="toggleAllBudgets()">
+              {{ 'search.scope.backToBudget' | translate }}
+            </button>
+          } @else {
+            <button type="button" class="smn__link" (click)="toggleAllBudgets()">
+              {{ 'search.scope.searchAll' | translate }}
+            </button>
+          }
+        </div>
+      } @else {
+        <!-- ── Menu bez wpisanej frazy ───────────────────────────────────────────────── -->
+        <div class="smn__section">
+          <span class="smn__section-title">{{ 'search.history.title' | translate }}</span>
+          <span class="smn__spacer"></span>
+          @if (history.entries().length > 0) {
+            <button type="button" class="smn__chip" (click)="clearHistory()">
+              {{ 'search.history.clear' | translate }}
+            </button>
+          }
+        </div>
+        @if (history.entries().length > 0) {
+          @for (entry of history.entries(); track entry) {
+            <button type="button" class="smn__row" (click)="pickHistory(entry)">
+              <nz-icon nzType="clock-circle" class="smn__row-icon-nz" />
+              <span class="smn__row-label">{{ entry }}</span>
+            </button>
+          }
+        } @else {
+          <p class="smn__hint">{{ 'search.history.empty' | translate }}</p>
+        }
+
+        <div class="smn__divider"></div>
+
+        @if (recent.screens().length > 0) {
+          <div class="smn__section">
+            <span class="smn__section-title">{{ 'search.recentScreens' | translate }}</span>
+          </div>
+          <div class="smn__grid">
+            @for (screen of recent.screens(); track screen.key) {
+              <button type="button" class="smn__cell" (click)="pickScreen(screen)">
+                <img class="smn__cell-icon" [src]="screen.svg" alt="" />
+                <span class="smn__cell-label">{{ screen.labelKey | translate }}</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="smn__section">
+            <span class="smn__section-title">{{ 'search.firstSteps' | translate }}</span>
+          </div>
+          @for (action of firstSteps; track action.key) {
+            <button type="button" class="smn__row" [disabled]="!action.route" (click)="pickScreen(action)">
+              <img class="smn__row-icon" [src]="action.svg" alt="" />
+              <span class="smn__row-label">{{ action.labelKey | translate }}</span>
+            </button>
+          }
+        }
+
+        <div class="smn__divider"></div>
+        <div class="smn__foot">
+          <span class="smn__foot-note">{{ 'search.scope.hint' | translate }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>

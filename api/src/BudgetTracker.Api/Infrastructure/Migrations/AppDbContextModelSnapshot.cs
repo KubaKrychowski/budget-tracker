@@ -440,6 +440,64 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.ToTable("ImportBatches");
                 });
 
+            modelBuilder.Entity("BudgetTracker.Api.Domain.ModelVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Accuracy")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("AverageAccuracy")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CategoriesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ETag")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JobId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TrainingSet")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ModelVersions");
+                });
+
             modelBuilder.Entity("BudgetTracker.Api.Domain.RuleDirectionDictionary", b =>
                 {
                     b.Property<string>("Code")

@@ -1,41 +1,32 @@
 using BudgetTracker.Api.Features.Categorization.Contracts;
-using BudgetTracker.Api.Features.Categorization.Exceptions;
-using BudgetTracker.Api.Features.Categorization.Services;
+using BudgetTracker.Api.Features.Categorization.Jobs;
+using BudgetTracker.Api.Infrastructure;
+using Hangfire;
 
 namespace BudgetTracker.Api.Features.Categorization.Commands;
 
 /// <summary>
-/// Douczanie modelu — na zbiorze z DWÓCH źródeł (plik bazowy + poprawki) i z zapisem,
-/// który nie niszczy poprzedniego modelu.
+/// Zgłasza douczanie modelu do kolejki — samo uczenie dzieje się w tle.
 /// </summary>
 /// <remarks>
 /// <list type="bullet">
-/// <item>Blokada PRZED zbudowaniem zbioru: składanie go czyta bazę i plik, więc nie ma sensu zaczynać,
-/// jeśli i tak nie wolno opublikować wyniku. W trakcie importu kończy się 409.</item>
-/// <item>Zapis idzie do pliku tymczasowego, nie pod ścieżkę aktywnego modelu — patrz <see cref="ModelStore"/>.
-/// Trening mógł się wywalić po utworzeniu pliku; <c>Publish</c> go przenosi, więc na końcu zostaje do usunięcia
-/// tylko śmieć po nieudanej próbie.</item>
+/// <item>⚠️ <b>Odpowiedź nie niesie metryk</b>, bo w chwili odpowiedzi trening się jeszcze nie zaczął.
+/// Ekran poznaje zakończony trening po NOWEJ AKTYWNEJ WERSJI na liście modeli, nie po tej odpowiedzi.</item>
+/// <item>Zgłoszenie jest tanie i celowo NIE sprawdza, czy jest z czego uczyć: składanie zbioru czyta bazę
+/// i blob, więc trzymałoby żądanie otwarte przez całą tę pracę. Pusty zbiór kończy zadanie błędem
+/// widocznym w panelu (<see cref="TrainCategoryModelJob"/>).</item>
+/// <item>Właściciel jedzie ARGUMENTEM zadania — w tle nie ma tokenu, a bez identyfikatora polityki RLS
+/// nie pokazałyby zadaniu ani jednego wiersza.</item>
 /// </list>
 /// </remarks>
-public sealed class TrainCategoryModelCommandHandler(TrainingSetBuilder builder, ModelStore store)
+public sealed class TrainCategoryModelCommandHandler(IBackgroundJobClient jobs, ICurrentUserAccessor currentUser)
 {
-    public async Task<TrainingReportResponseDto> HandleAsync(CancellationToken ct)
+    public TrainingQueuedResponseDto Handle()
     {
-        using var lease = store.TryBeginTraining() ?? throw new TrainingBusyException();
+        var userId = currentUser.UserId;
+        // PerformContext i token uzupełnia Hangfire przy wykonaniu — w wyrażeniu idą jako null/None.
+        var jobId = jobs.Enqueue<TrainCategoryModelJob>(job => job.RunAsync(userId, null!, CancellationToken.None));
 
-        var set = await builder.BuildAsync(ct);
-        if (set.Rows.Count == 0) throw new TrainingDataMissingException();
-
-        var staging = store.CreateStagingPath();
-        try
-        {
-            var report = CategoryModelTrainer.Train(set.Rows, staging);
-            store.Publish(lease, staging, report);
-            return report;
-        }
-        finally
-        {
-            if (File.Exists(staging)) File.Delete(staging);
-        }
+        return new TrainingQueuedResponseDto(jobId);
     }
 }

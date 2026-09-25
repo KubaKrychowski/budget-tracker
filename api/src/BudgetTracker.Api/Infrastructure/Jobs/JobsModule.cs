@@ -1,4 +1,6 @@
+using BudgetTracker.Api.Features.Categorization.Jobs;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 
 namespace BudgetTracker.Api.Infrastructure.Jobs;
@@ -37,15 +39,48 @@ public static class JobsModule
             .UseFilter(new JobHistoryRetentionFilter(TimeSpan.FromDays(jobs.HistoryRetentionDays))));
 
         services.AddHangfireServer();
+
+        // ⚠️ Trening chodzi na WŁASNEJ kolejce z JEDNYM wykonawcą. Domyślny serwer ma 20 workerów,
+        // więc samo wrzucenie zadania do Hangfire'a niczego nie szereguje — dwa treningi poszłyby
+        // równolegle i biły się o procesor z importem. Serwer domyślny nasłuchuje tylko „default”,
+        // więc nie podbierze zadań z tej kolejki.
+        //
+        // ⚠️ To szereguje w obrębie PROCESU. Przy dwóch instancjach aplikacji każda postawi własny
+        // serwer z jednym wykonawcą i równoległość wróci — wtedy potrzebna jest blokada rozproszona
+        // albo niezmiennik w bazie (jedna aktywna wersja na użytkownika).
+        services.AddHangfireServer(options =>
+        {
+            options.ServerName = $"{Environment.MachineName}:training";
+            options.Queues = [TrainCategoryModelJob.QueueName];
+            options.WorkerCount = 1;
+        });
+
         return services;
     }
 
     /// <summary>Panel Hangfire pod <c>/hangfire</c> — wyłącznie w środowisku deweloperskim.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>⚠️ <c>AllowAnonymous</c> jest KONIECZNE, a nie wygodne: aplikacja ma globalną politykę
+    /// <c>RequireAuthenticatedUser</c>, a panel to zwykłe strony HTML, które nie mają jak wysłać tokenu
+    /// dostępu. Bez tego każde wejście kończyło się 401 i pustym ekranem zamiast panelu.</item>
+    /// <item>Dostęp ogranicza <see cref="LocalRequestsOnlyAuthorizationFilter"/> — panel odpowiada tylko
+    /// na połączenia z tej maszyny. To jedyna ochrona, jaką ma, więc mapujemy go wyłącznie
+    /// w Development (CLAUDE.md §4).</item>
+    /// <item>⚠️ Panel pokazuje ARGUMENTY zadań, a w nich jedzie identyfikator użytkownika. To kolejny
+    /// powód, żeby nie wystawiać go poza maszyną deweloperską. Wersja produkcyjna wymagałaby własnego
+    /// filtru sprawdzającego rolę administratora (<c>AdminModule.ConfigureAdminPolicy</c>).</item>
+    /// </list>
+    /// </remarks>
     public static WebApplication UseJobsDashboard(this WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseHangfireDashboard("/hangfire");
+            app.MapHangfireDashboard("/hangfire", new DashboardOptions
+                {
+                    Authorization = [new LocalRequestsOnlyAuthorizationFilter()],
+                })
+                .AllowAnonymous();
         }
 
         return app;

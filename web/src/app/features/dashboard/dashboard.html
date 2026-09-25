@@ -18,10 +18,23 @@
 
   <nz-spin [nzSpinning]="loading()">
 
+    <!-- „Ostatnie akcje" — ekrany, na których byłeś (makieta „Wyszukiwarka i ostatnie akcje”, ramka 1).
+         Przy pustej historii kafle wracają do pierwszych kroków; pusta karta na najczęściej
+         otwieranym ekranie wyglądałaby jak awaria. -->
     <section class="dash__section dash__boxed">
-      <h2 class="dash__caption">{{ 'dashboard.quickActions' | translate }}</h2>
+      <div class="dash__recent-head">
+        <div>
+          <h2 class="dash__caption">{{ 'dashboard.recentActions' | translate }}</h2>
+          <p class="dash__recent-hint">
+            {{ (hasVisitedScreens() ? 'dashboard.recentActionsHint' : 'dashboard.firstStepsHint') | translate }}
+          </p>
+        </div>
+        <a class="dash__recent-all" routerLink="/functions">
+          {{ 'dashboard.allActions' | translate }}
+        </a>
+      </div>
       <div class="dash__tiles">
-        @for (action of quickActions; track action.key) {
+        @for (action of recentTiles(); track action.key) {
           <button
             type="button"
             class="tile"

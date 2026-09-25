@@ -435,6 +435,14 @@
            bez tego menu jest nieosiągalne z klawiatury (tak samo jak w imporcie). -->
       <nz-dropdown-menu #rowMenu="nzDropdownMenu">
         <ul nz-menu>
+          <!-- Tylko dla wierszy czekających na decyzję człowieka i mających już kategorię:
+               jedno kliknięcie zamiast wchodzenia w edycję albo akcji masowej. -->
+          @if (canAcceptMenuRow()) {
+            <li nz-menu-item tabindex="0" (click)="acceptMenuRow()" (keydown.enter)="acceptMenuRow()">
+              {{ 'transactions.rowMenu.accept' | translate }}
+            </li>
+          }
+
           <li nz-menu-item tabindex="0" (click)="editMenuRow()" (keydown.enter)="editMenuRow()">
             {{ 'transactions.rowMenu.edit' | translate }}
           </li>

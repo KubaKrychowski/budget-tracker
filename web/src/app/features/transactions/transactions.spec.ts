@@ -73,6 +73,8 @@ describe('Transactions', () => {
     saveEdits(): Promise<void>;
     cancelEdit(): void;
     menuRow: { set(v: TransactionListItem): void };
+    canAcceptMenuRow(): boolean;
+    acceptMenuRow(): Promise<void>;
     deleteMenuRow(): void;
     episodicMenuRow(): void;
     episodicOpen(): boolean;
@@ -340,6 +342,36 @@ describe('Transactions', () => {
     await fixture.whenStable();
 
     http.expectNone('/api/transactions/bulk-delete');
+  });
+
+  it('„Zatwierdź kategorię” wychodzi z kolejki przeglądu bez wchodzenia w edycję', async () => {
+    // Sedno: wiersz „do przeglądu" z już podpowiedzianą kategorią da się przyjąć jednym kliknięciem.
+    // Wcześniej trzeba było użyć masowego ustawiania kategorii, żeby zmienić sam status.
+    const pending = row({ status: 'PendingReview', categoryId: 'c1000000-0000-4000-8000-000000000001' });
+    api().menuRow.set(pending);
+    expect(api().canAcceptMenuRow()).toBe(true);
+
+    const accepting = api().acceptMenuRow();
+    const request = http.expectOne(
+      (r) => r.method === 'POST' && r.url === '/api/transactions/bulk-set-category');
+
+    // Kategoria jedzie TA SAMA, którą wiersz już ma — zmienia się wyłącznie status.
+    expect(request.request.body).toEqual({
+      selection: { ids: [pending.id], filter: (request.request.body as { selection: { filter: unknown } }).selection.filter },
+      categoryId: 'c1000000-0000-4000-8000-000000000001',
+    });
+    request.flush({ affected: 1 });
+    await accepting;
+  });
+
+  it('nie proponuje zatwierdzenia tam, gdzie nie ma czego przyjąć', async () => {
+    // ⚠️ Wiersz bez kategorii i wiersz już zatwierdzony to dwa powody, dla których akcja nie ma sensu.
+    // Pokazana mimo to obiecywałaby zmianę, która nic nie robi.
+    api().menuRow.set(row({ status: 'PendingReview', categoryId: null, categoryName: null }));
+    expect(api().canAcceptMenuRow()).toBe(false);
+
+    api().menuRow.set(row({ status: 'Confirmed' }));
+    expect(api().canAcceptMenuRow()).toBe(false);
   });
 
   it('„Oznacz jako zlecenie epizodyczne” podpowiada nazwę z tytułu i wysyła transakcję bez budżetu', async () => {

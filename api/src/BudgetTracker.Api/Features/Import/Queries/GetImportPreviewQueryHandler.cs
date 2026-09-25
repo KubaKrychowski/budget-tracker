@@ -17,7 +17,6 @@ namespace BudgetTracker.Api.Features.Import.Queries;
 public sealed class GetImportPreviewQueryHandler(
     AppDbContext db,
     ICategorizer categorizer,
-    ModelStore modelStore,
     ImportBudgetLookup budgets,
     ExistingTransactionKeys existingTransactionKeys,
     ImportConfidenceThreshold threshold)
@@ -46,8 +45,6 @@ public sealed class GetImportPreviewQueryHandler(
     public async Task<ImportPreviewResponseDto> HandleAsync(
         IReadOnlyList<ParsedRow> rows, Guid budgetId, CancellationToken ct)
     {
-        using var lease = modelStore.BeginImport();
-
         var budget = await budgets.FindAcceptingAsync(budgetId, ct);
         var merged = MergeDuplicates(rows);
         var existingKeys = await existingTransactionKeys.LoadAsync(merged, budget.BusinessId, ct);

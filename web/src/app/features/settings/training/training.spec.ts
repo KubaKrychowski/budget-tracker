@@ -50,13 +50,15 @@ describe('Training', () => {
     correctionsSinceLastTraining: 43,
     models: [
       {
-        version: '20260906045531',
+        id: '0199a0f0-1111-7000-8000-000000000001',
+        name: 'model-20260906045531.zip',
         createdAt: '2026-09-06T04:55:31+00:00',
         isActive: true,
         report: { rows: 1267, categories: 25, microAccuracy: 0.9076, macroAccuracy: 0.8466 },
       },
       {
-        version: '20260902043132',
+        id: '0199a0f0-1111-7000-8000-000000000002',
+        name: 'model-20260902043132.zip',
         createdAt: '2026-09-02T04:31:32+00:00',
         isActive: false,
         report: null,
@@ -120,6 +122,9 @@ describe('Training', () => {
           upToDate: 'Model uczył się na wszystkich dotychczasowych poprawkach.',
           train: 'Doucz model',
           trainSuccess: 'Model douczony na {{rows}} przykładach.',
+          queued: 'Trening liczy się w tle. Wynik pojawi się, gdy skończy.',
+          checkStatus: 'Sprawdź status',
+          stillRunning: 'Trening jeszcze trwa.',
           report: {
             title: 'Trening zakończony',
             body: '{{rows}} przykładów, {{categories}} kategorii. {{micro}} / {{macro}}.',
@@ -229,26 +234,64 @@ describe('Training', () => {
     expect(text()).toContain('uczył się na wszystkich');
   });
 
-  it('pokazuje raport po zakończonym treningu', async () => {
+  it('zgłasza trening do kolejki i pokazuje alert, zamiast czekać na wynik', async () => {
+    // Sedno: żądanie zwraca SAM NUMER zgłoszenia. Ekran nie ma prawa wisieć ani odpytywać
+    // serwera w pętli — trening bywa długi, a nikt nie musi patrzeć na tę zakładkę.
     const component = fixture.componentInstance as unknown as { train(): Promise<void> };
-    void component.train();
+
+    const queueing = component.train();
     await fixture.whenStable();
 
-    http.expectOne('/api/categorization/train').flush({
-      rows: 1300, categories: 25, microAccuracy: 0.91, macroAccuracy: 0.85,
+    http.expectOne('/api/categorization/train').flush({ jobId: 'job-1' });
+    await queueing;
+    fixture.detectChanges();
+
+    expect(text()).toContain('Trening liczy się w tle');
+    expect(text()).toContain('Sprawdź status');
+    http.expectNone('/api/categorization/train/job-1');
+  });
+
+  it('sprawdza wynik dopiero na żądanie i dopiero wtedy pokazuje raport', async () => {
+    const component = fixture.componentInstance as unknown as {
+      train(): Promise<void>;
+      checkTrainingStatus(): Promise<void>;
+    };
+
+    const queueing = component.train();
+    await fixture.whenStable();
+    http.expectOne('/api/categorization/train').flush({ jobId: 'job-1' });
+    await queueing;
+
+    // Pierwsze sprawdzenie trafia w trening, który jeszcze trwa — alert zostaje.
+    const firstCheck = component.checkTrainingStatus();
+    await fixture.whenStable();
+    http.expectOne('/api/categorization/train/job-1').flush({ ready: false, report: null });
+    await firstCheck;
+    fixture.detectChanges();
+
+    expect(text()).toContain('Sprawdź status');
+    expect(text()).not.toContain('1300 przykładów');
+
+    const secondCheck = component.checkTrainingStatus();
+    await fixture.whenStable();
+    http.expectOne('/api/categorization/train/job-1').flush({
+      ready: true,
+      report: { rows: 1300, categories: 25, microAccuracy: 0.91, macroAccuracy: 0.85 },
     });
+    await secondCheck;
     await settle();
 
     expect(text()).toContain('1300 przykładów, 25 kategorii');
     expect(text()).toContain('91%');
-    expect(text()).toContain('85%');
+    // Alert znika razem z pojawieniem się wyniku — nie ma już czego sprawdzać.
+    expect(text()).not.toContain('Sprawdź status');
   });
 
   it('pyta przed przywróceniem i nie rusza modelu po odmowie', async () => {
     const component = fixture.componentInstance as unknown as {
-      restore(m: { version: string }): Promise<void>;
+      restore(m: { id: string }): Promise<void>;
     };
-    void component.restore({ version: '20260902043132' });
+    void component.restore({ id: '0199a0f0-1111-7000-8000-000000000002' });
     await fixture.whenStable();
 
     expect(confirmDialog.lastOptions?.header).toContain('Przywrócić');
@@ -261,15 +304,17 @@ describe('Training', () => {
 
   it('przywraca wskazaną wersję po potwierdzeniu', async () => {
     const component = fixture.componentInstance as unknown as {
-      restore(m: { version: string }): Promise<void>;
+      restore(m: { id: string }): Promise<void>;
     };
-    void component.restore({ version: '20260902043132' });
+    void component.restore({ id: '0199a0f0-1111-7000-8000-000000000002' });
     await fixture.whenStable();
     confirmDialog.respond(true);
     await fixture.whenStable();
 
     const request = http.expectOne('/api/categorization/activate');
-    expect((request.request.body as { version: string }).version).toBe('20260902043132');
+    // Sedno: w ciele leci PUBLICZNY IDENTYFIKATOR wersji, a nie nazwa pliku w magazynie.
+    expect((request.request.body as { versionId: string }).versionId)
+      .toBe('0199a0f0-1111-7000-8000-000000000002');
     request.flush(null);
     await settle();
   });

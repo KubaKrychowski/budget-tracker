@@ -40,6 +40,7 @@ interface LimitsApi {
   remove(row: LimitRow): Promise<void>;
   shiftMonth(delta: number): void;
   goToCurrentMonth(): void;
+  onMonthChange(date: Date | null): void;
   disabledMonth(date: Date): boolean;
 }
 
@@ -85,6 +86,7 @@ describe('Limits', () => {
     uncategorizedAmount: 0,
     selectedBudgetIds: ['b1'],
     budgets: [{ id: 'b1', name: 'Domowy', month: '2026-09-01', disabled: false }],
+    hasAnyLimit: true,
     ...over,
   });
 
@@ -134,6 +136,8 @@ describe('Limits', () => {
         currentMonth: 'Bieżący miesiąc',
         banner: {
           noLimits: 'Ten budżet nie ma jeszcze limitów.',
+          noLimitsThisMonth: 'W tym miesiącu ten budżet nie ma żadnego limitu.',
+          noLimitsThisMonthBody: 'Limity są ustawione w innych miesiącach — przestaw okres w „Konfiguracji" powyżej.',
           noLimitsClosed: '{{month}} — w tym miesiącu budżet nie miał żadnych limitów.',
           overOne: 'Ponad limitem: {{name}} — {{spent}} zł z {{limit}} zł.',
           overMany: 'Kategorie ponad limitem: {{count}}.',
@@ -196,15 +200,24 @@ describe('Limits', () => {
 
   // ── Baner ────────────────────────────────────────────────────────────────────────────
 
-  it('bez limitów w bieżącym miesiącu: jedno wezwanie „Dodaj pierwszy limit", bez tabeli i paska miesięcy', async () => {
-    // Makieta 203:13079 — pusty stan nie ma strzałek miesięcy, tylko zdanie i przycisk.
-    await settle(response({ limits: [], limitTotal: 0, spentInLimited: 0 }));
+  it('budżet BEZ ANI JEDNEGO limitu dostaje „Dodaj pierwszy limit", bez tabeli', async () => {
+    // Makieta 203:13079 — pusty stan to zdanie i jedno wezwanie do działania.
+    await settle(response({ limits: [], limitTotal: 0, spentInLimited: 0, hasAnyLimit: false }));
 
     expect(text()).toContain('Ten budżet nie ma jeszcze limitów.');
     expect(text()).toContain('Brak limitów w tym budżecie');
     expect(text()).toContain('Dodaj pierwszy limit');
-    expect(text()).not.toContain('Bieżący miesiąc');
     expect(fixture.nativeElement.querySelector('.lim__track')).toBeNull();
+  });
+
+  it('pusty miesiąc w budżecie, który MA limity gdzie indziej, nie mówi „nie ma jeszcze limitów"', async () => {
+    // To zdanie wysłało użytkownika w poszukiwania limitów, które były ustawione miesiąc dalej.
+    await settle(response({ limits: [], limitTotal: 0, spentInLimited: 0, hasAnyLimit: true }));
+
+    expect(text()).toContain('W tym miesiącu ten budżet nie ma żadnego limitu.');
+    expect(text()).toContain('Limity są ustawione w innych miesiącach');
+    expect(text()).not.toContain('Ten budżet nie ma jeszcze limitów.');
+    expect(text()).not.toContain('Dodaj pierwszy limit');
   });
 
   it('przełącznik budżetu siedzi w karcie „Konfiguracja"', async () => {
@@ -213,6 +226,33 @@ describe('Limits', () => {
     const config = fixture.nativeElement.querySelector('.lim__config') as HTMLElement;
     expect(config.textContent).toContain('Konfiguracja');
     expect(config.querySelector('app-budget-switcher')).not.toBeNull();
+  });
+
+  it('CAŁY wybór miesiąca jest w „Konfiguracji" i zostaje, gdy miesiąc nie ma ANI JEDNEGO limitu', async () => {
+    // Regresja: pasek miesięcy nad tabelą renderował się w gałęzi z tabelą, więc znikał razem z nią —
+    // limity ustawione na przyszły miesiąc były wtedy osiągalne tylko przez ręczne `?month=` w adresie.
+    await settle(response({ limits: [], limitTotal: 0, spentInLimited: 0, hasAnyLimit: true }));
+
+    const config = fixture.nativeElement.querySelector('.lim__config') as HTMLElement;
+    expect(config.querySelector('nz-date-picker')).not.toBeNull();
+    expect(config.textContent).toContain('Bieżący miesiąc');
+    expect(config.querySelectorAll('.lim__config-steps button')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelector('.lim__toolbar')).toBeNull();
+  });
+
+  it('wybór miesiąca z kalendarza zmienia miesiąc w ADRESIE', async () => {
+    await settle();
+
+    const tick = () => new Promise((resolve) => setTimeout(resolve));
+
+    api().onMonthChange(new Date(2026, 9, 1));
+    await tick();
+    expect(queryParam('month')).toBe('2026-10-01');
+
+    // Kalendarz nie ma czyszczenia, ale gdyby przyszedł pusty — adres zostaje bez zmian.
+    api().onMonthChange(null);
+    await tick();
+    expect(queryParam('month')).toBe('2026-10-01');
   });
 
   it('przekroczenie nazywa kategorię i kwoty, a wydatki bez kategorii dostają osobne zdanie', async () => {

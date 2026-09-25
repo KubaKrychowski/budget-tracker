@@ -23,7 +23,6 @@ namespace BudgetTracker.Api.Features.Categorization.Commands;
 /// </remarks>
 public sealed class RecategorizeTransactionsCommandHandler(
     AppDbContext db,
-    ModelStore store,
     ICategorizer categorizer,
     IOptions<CategorizationOptions> options)
 {
@@ -45,29 +44,9 @@ public sealed class RecategorizeTransactionsCommandHandler(
         TransactionStatus.AutoCategorized,
         TransactionStatus.PendingReview,
     ];
-
-    /// <summary>Przelicza wiersze bez decyzji człowieka i raportuje, co się zmieniło.</summary>
-    /// <remarks>
-    /// <list type="bullet">
-    /// <item>Ta sama blokada co przy imporcie, i z tego samego powodu: przez cały przebieg ma obowiązywać JEDNA
-    /// wersja modelu. Bez niej trening opublikowany w trakcie przeliczania rozdzieliłby wynik na „przed" i „po"
-    /// — w jednej operacji.</item>
-    /// <item>Wyłączone budżety też — <c>DisabledAt</c> zamyka budżet na NOWE dane (CLAUDE.md §5), a to jest
-    /// przeliczenie tego, co już w nim jest, nie dopisywanie.</item>
-    /// <item>Ta sama droga co w imporcie: normalizacja, potem reguły, potem model. Dzięki temu przeliczenie łapie też
-    /// reguły dodane PO imporcie, nie tylko nowy model.</item>
-    /// <item>⚠️ Kategorię przepisujemy TAKŻE poniżej progu — ta sama zasada co w imporcie
-    /// (<c>CommitImportCommandHandler.StatusFor</c>): próg rozstrzyga STATUS, a nie to, czy podpowiedź w ogóle
-    /// zostaje. Wiersz bez kategorii i wiersz z niepewną kategorią wołają o to samo (przegląd), ale ten drugi
-    /// wystarczy potwierdzić.</item>
-    /// <item>Kategoria ta sama, ale model stracił pewność — wiersz wraca do kolejki, więc licznik przeniesionych
-    /// do przeglądu musi to pokazać. Bez tego użytkownik zobaczyłby „0 zmian" nad kolejką, która właśnie urosła.</item>
-    /// </list>
-    /// </remarks>
+    
     public async Task<RecategorizeReportResponseDto> HandleAsync(CancellationToken ct)
     {
-        using var lease = store.BeginImport();
-
         var rows = await db.Transactions
             .Where(t => WithoutHumanDecision.Contains(t.Status))
             .ToListAsync(ct);

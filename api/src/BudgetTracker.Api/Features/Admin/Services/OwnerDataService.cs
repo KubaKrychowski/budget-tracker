@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Azure.Storage.Blobs;
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Admin.Contracts;
 using BudgetTracker.Api.Infrastructure;
@@ -28,7 +29,7 @@ namespace BudgetTracker.Api.Features.Admin.Services;
 /// (klucze obce są <c>Restrict</c>). Zmiana kolejności kończy się błędem klucza obcego, nie cichą utratą danych.
 /// </para>
 /// </remarks>
-public sealed class OwnerDataService(AppDbContext db)
+public sealed class OwnerDataService(AppDbContext db, BlobServiceClient blobServiceClient)
 {
     /// <summary>Wykonuje <paramref name="work"/> w jednej transakcji z rolą omijającą RLS.</summary>
     public async Task<T> AsSystemAsync<T>(Func<Task<T>> work, CancellationToken ct)
@@ -53,15 +54,17 @@ public sealed class OwnerDataService(AppDbContext db)
         var reservations = await CountAsync(db.SavingsReservations, x => x.UserId, ct);
         var standing = await CountAsync(db.StandingOrders, x => x.UserId, ct);
         var episodic = await CountAsync(db.EpisodicOrders, x => x.UserId, ct);
+        var models = await CountAsync(db.ModelVersions, x => x.UserId, ct);
 
         var owners = budgets.Keys.Concat(budgetItems.Keys).Concat(transactions.Keys).Concat(imports.Keys)
             .Concat(goals.Keys).Concat(reservations.Keys).Concat(standing.Keys).Concat(episodic.Keys)
+            .Concat(models.Keys)
             .Distinct();
 
         return owners.ToDictionary(o => o, o => new OwnerDataCountsResponseDto(
             budgets.GetValueOrDefault(o), budgetItems.GetValueOrDefault(o), transactions.GetValueOrDefault(o),
             imports.GetValueOrDefault(o), goals.GetValueOrDefault(o), reservations.GetValueOrDefault(o),
-            standing.GetValueOrDefault(o), episodic.GetValueOrDefault(o)));
+            standing.GetValueOrDefault(o), episodic.GetValueOrDefault(o), models.GetValueOrDefault(o)));
     }
 
     /// <summary>Najnowszy znacznik czasu z budżetów i transakcji każdego właściciela.</summary>
@@ -79,6 +82,25 @@ public sealed class OwnerDataService(AppDbContext db)
             .ToDictionary(g => g.Key, g => g.Max(x => x.Last));
     }
 
+    /// <summary>Kasuje magazyn plików właściciela razem z jego zawartością.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ Usunięcie danych ma zabrać WSZYSTKO, także modele — inaczej po skasowanym koncie zostawałyby
+    /// pliki, których nikt już nie potrafi przypisać do człowieka, a to najgorszy możliwy rodzaj resztki.
+    /// </para>
+    /// <para>
+    /// Brak kontenera nie jest błędem: konto mogło go nigdy nie dostać (awaria API przy rejestracji),
+    /// a usuwanie ma być idempotentne — serwer tożsamości ponawia je po przerwanym usuwaniu konta.
+    /// </para>
+    /// <para>
+    /// ⚠️ Azure zwalnia nazwę kontenera z opóźnieniem. Założenie kontenera o tej samej nazwie zaraz po
+    /// usunięciu kończy się konfliktem — dla identyfikatorów kont to bez znaczenia, bo nie wracają,
+    /// ale nie próbuj tego użyć jako „czyszczenia" konta, które ma dalej działać.
+    /// </para>
+    /// </remarks>
+    private async Task DeleteStorageAsync(Guid ownerId, CancellationToken ct) =>
+        await UserBlobContainer.For(blobServiceClient, ownerId).DeleteIfExistsAsync(cancellationToken: ct);
+
     /// <summary>Kasuje trwale WSZYSTKIE wiersze właściciela (także skasowane logicznie) i zwraca, ile z czego zniknęło.</summary>
     public async Task<OwnerDataCountsResponseDto> DeleteAsync(Guid ownerId, CancellationToken ct)
     {
@@ -90,10 +112,12 @@ public sealed class OwnerDataService(AppDbContext db)
         var standing = await db.StandingOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var episodic = await db.EpisodicOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var budgets = await db.Budgets.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        var models = await db.ModelVersions.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         await DeleteOwnRulesAsync(ownerId, ct);
+        await DeleteStorageAsync(ownerId, ct);
 
         return new OwnerDataCountsResponseDto(
-            budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic);
+            budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic, models);
     }
 
     /// <summary>Zmienia właściciela wszystkich wierszy z <paramref name="ownerId"/> na <paramref name="targetUserId"/>; nic nie kasuje.</summary>
@@ -118,7 +142,7 @@ public sealed class OwnerDataService(AppDbContext db)
         await ReassignOwnRulesAsync(ownerId, targetUserId, ct);
 
         return new OwnerDataCountsResponseDto(
-            budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic);
+            budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic, ModelVersions: 0);
     }
 
     /// <summary>Kasuje trwale reguły konta (także skasowane logicznie); reguł wspólnych nie rusza nigdy.</summary>

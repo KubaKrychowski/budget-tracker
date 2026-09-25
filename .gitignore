@@ -52,3 +52,6 @@ web/.certs/
 *.cer
 *.jks
 *.keystore
+
+# Certyfikat deweloperski dla Azurite (klucz prywatny).
+certs/

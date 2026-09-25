@@ -18,6 +18,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/dodaj-transakcje-azure.svg',
     route: null,
     quickAction: true,
+    group: 'daily',
   },
   {
     key: 'create-budget',
@@ -26,6 +27,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/utworz-budzet-azure.svg',
     route: '/create-budget',
     quickAction: true,
+    group: 'budgets',
   },
   {
     key: 'transaction-list',
@@ -34,6 +36,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/lista-transakcji-azure.svg',
     route: '/transactions',
     quickAction: true,
+    group: 'daily',
   },
   {
     key: 'review-queue',
@@ -42,6 +45,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/popraw-kategorie-azure.svg',
     route: null,
     quickAction: true,
+    group: 'daily',
   },
   {
     key: 'import-statement',
@@ -50,6 +54,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/import-azure.svg',
     route: '/import',
     quickAction: false,
+    group: 'daily',
   },
   {
     key: 'savings',
@@ -59,6 +64,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/cele-oszczednosciowe-azure.svg',
     route: '/savings',
     quickAction: false,
+    group: 'planning',
   },
   {
     key: 'limits',
@@ -68,6 +74,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/limity-wydatkow-azure.svg',
     route: '/limits',
     quickAction: false,
+    group: 'planning',
   },
   {
     key: 'standing-orders',
@@ -77,6 +84,7 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/zlecenia-stale-azure.svg',
     route: '/standing-orders',
     quickAction: false,
+    group: 'planning',
   },
   {
     key: 'episodic-orders',
@@ -86,8 +94,72 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     svg: 'icons/wydatki-epizodyczne-azure.svg',
     route: '/episodic-orders',
     quickAction: false,
+    group: 'planning',
+  },
+  // ── Ekrany spoza kafli: nie sa „szybka akcja", ale katalog i wyszukiwarka maja je znac ──
+  {
+    key: 'dashboard',
+    labelKey: 'actions.dashboard',
+    icon: 'pie-chart',
+    svg: 'icons/dashboard-azure.svg',
+    route: '/dashboard',
+    quickAction: false,
+    group: 'budgets',
+  },
+  {
+    key: 'reservations',
+    labelKey: 'actions.reservations',
+    icon: 'wallet',
+    svg: 'icons/cele-oszczednosciowe-azure.svg',
+    route: '/savings/reservations',
+    quickAction: false,
+    group: 'planning',
+  },
+  {
+    key: 'category-rules',
+    labelKey: 'actions.categoryRules',
+    icon: 'exception',
+    svg: 'icons/popraw-kategorie-azure.svg',
+    route: '/settings',
+    queryParams: { tab: 'rules' },
+    quickAction: false,
+    group: 'settings',
+  },
+  {
+    key: 'model-training',
+    labelKey: 'actions.modelTraining',
+    icon: 'pie-chart',
+    svg: 'icons/limity-wydatkow-azure.svg',
+    route: '/settings',
+    queryParams: { tab: 'training' },
+    quickAction: false,
+    group: 'settings',
+  },
+  {
+    key: 'all-functions',
+    labelKey: 'actions.allFunctions',
+    icon: 'unordered-list',
+    svg: 'icons/dashboard-azure.svg',
+    route: '/functions',
+    quickAction: false,
+    group: 'settings',
+  },
+  {
+    key: 'handbook',
+    labelKey: 'actions.handbook',
+    icon: 'unordered-list',
+    svg: 'icons/lista-transakcji-azure.svg',
+    route: '/handbook',
+    quickAction: false,
+    group: 'settings',
   },
 ];
+
+/**
+ * Kolejnosc sekcji w katalogu „Wszystkie funkcje". Od tego, co robi sie najczesciej,
+ * do tego, co ustawia sie raz.
+ */
+export const FUNCTION_GROUPS = ['daily', 'planning', 'budgets', 'settings'] as const;
 
 /**
  * Akcje odnajdujemy po kluczu, nigdy po indeksie tablicy. Wcześniej CTA pustego

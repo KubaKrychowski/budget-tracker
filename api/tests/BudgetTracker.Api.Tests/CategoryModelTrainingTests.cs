@@ -2,6 +2,7 @@ using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Categorization;
 using BudgetTracker.Api.Features.Categorization.Commands;
+using BudgetTracker.Api.Features.Categorization.Jobs;
 using BudgetTracker.Api.Features.Categorization.Contracts;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Models;
@@ -9,6 +10,7 @@ using BudgetTracker.Api.Features.Categorization.Queries;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -30,6 +32,10 @@ public sealed class CategoryModelTrainingTests : IAsyncLifetime
     private FakeTimeProvider _clock = null!;
     private ModelStore _store = null!;
     private IOptions<CategorizationOptions> _categorization = null!;
+    private IConfiguration _configuration = null!;
+
+    /// <summary>Wlasciciel modeli w tescie — kontener w Azurite nazywa sie jego identyfikatorem.</summary>
+    private readonly FakeCurrentUserAccessor _user = new(Guid.CreateVersion7());
     private StubCategorizer _categorizer = null!;
 
     private int _jedzenieId;
@@ -58,33 +64,41 @@ public sealed class CategoryModelTrainingTests : IAsyncLifetime
         _directory = Path.Combine(Path.GetTempPath(), $"bt-handler-{Guid.NewGuid():N}");
         Directory.CreateDirectory(_directory);
 
-        var categorization = Options.Create(new CategorizationOptions
-        {
-            ModelPath = Path.Combine(_directory, "category-model.zip"),
-            TrainingDataPath = Path.Combine(_directory, "training-set.csv"),
-        });
+        var categorization = Options.Create(new CategorizationOptions());
 
         _clock = new FakeTimeProvider(new DateTimeOffset(2026, 9, 6, 10, 0, 0, TimeSpan.Zero));
-        _store = new ModelStore(categorization, _clock);
+
+        // Kontener musi istniec przed pierwsza publikacja — zaklada go rejestracja uzytkownika,
+        // wiec w tescie robimy to samo, zamiast liczyc na tworzenie w locie.
+        await TestBlobs.CreateNamedContainerAsync(_user.UserId.ToString());
+        _configuration = TestBlobs.Configuration(_user.UserId.ToString());
+
+        _store = new ModelStore(_clock, _db, TestBlobs.Client(), _configuration);
         _categorizer = new StubCategorizer(_answers);
         _categorization = categorization;
     }
 
-    private GetTrainingSetQueryHandler OverviewHandler() =>
-        new(_db, new TrainingSetBuilder(_db, _categorization), _store);
+    private TrainingSetBuilder Builder() =>
+        new(_db, _categorization, TestBlobs.Client(), _configuration);
 
-    private TrainCategoryModelCommandHandler TrainHandler() =>
-        new(new TrainingSetBuilder(_db, _categorization), _store);
+    private GetTrainingSetQueryHandler OverviewHandler() => new(_db, Builder(), _user);
+
+    /// <summary>
+    /// Trening zyje w ZADANIU, nie w handlerze: handler tylko kolejkuje. Testujemy zadanie,
+    /// bo to ono buduje zbior, uczy model i publikuje wersje.
+    /// </summary>
+    private TrainCategoryModelJob TrainJob() => new(Builder(), _store);
 
     private RecategorizeTransactionsCommandHandler RecategorizeHandler() =>
-        new(_db, _store, _categorizer, _categorization);
+        new(_db, _categorizer, _categorization);
 
-    private ActivateCategoryModelCommandHandler ActivateHandler() => new(_store);
+    private ActivateCategoryModelCommandHandler ActivateHandler() => new(_db);
 
     public async Task DisposeAsync()
     {
         await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
+        await TestBlobs.DropContainerAsync(_user.UserId.ToString());
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);
     }
 
@@ -174,12 +188,12 @@ public sealed class CategoryModelTrainingTests : IAsyncLifetime
     {
         // Punktem odniesienia jest plik bazowy — to na nim uczyl sie model, ktory dziala dzis.
         // Liczenie WSZYSTKICH kwalifikujacych sie obiecywaloby material, ktory model juz widzial.
-        File.WriteAllLines(
-            Path.Combine(_directory, "training-set.csv"),
+        await TestBlobs.UploadTextAsync(_user.UserId.ToString(), "training-set.csv", string.Join(
+            Environment.NewLine,
             [
                 "\"opis\",\"typ_transakcji\",\"kwota\",\"kategoria\",\"duzy_wydatek\"",
                 "\"lidl\",\"Obciazenie\",\"-30\",\"Jedzenie\",\"0\"",
-            ]);
+            ]));
 
         AddCorrection(-30m, "LIDL");   // juz w pliku — model to widzial
         AddCorrection(-77m, "ZABKA");  // nowe
@@ -192,49 +206,68 @@ public sealed class CategoryModelTrainingTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Training_is_refused_with_409_while_an_import_is_categorising()
-    {
-        AddCorrection(-30m, "LIDL");
-        await _db.SaveChangesAsync();
-
-        using var import = _store.BeginImport();
-
-        await Assert.ThrowsAsync<TrainingBusyException>(() => TrainHandler().HandleAsync(default));
-    }
-
-    [Fact]
     public async Task Training_with_nothing_to_learn_from_is_a_bad_request_not_a_crash()
     {
         // Ani pliku bazowego, ani kwalifikujacych sie poprawek — to stan konfiguracji,
         // nie awaria, wiec 400. Bez tego ML.NET wywalilby sie na pustym zbiorze (500).
-        await Assert.ThrowsAsync<TrainingDataMissingException>(() => TrainHandler().HandleAsync(default));
+        await Assert.ThrowsAsync<TrainingDataMissingException>(() => TrainJob().RunAsync(_user.UserId, context: null, default));
+    }
+
+    // ── Wynik zgloszonego treningu ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Ekran kolejkuje trening i dostaje numer zgloszenia — po nim, i tylko po nim, poznaje SWOJ wynik.
+    /// Szukanie po „najnowszej aktywnej wersji" myliloby sie po przywroceniu starszego modelu.
+    /// </summary>
+    [Fact]
+    public async Task Wynik_treningu_rozpoznajemy_po_numerze_zgloszenia()
+    {
+        _db.Add(new ModelVersion(_user.UserId, true, "model-1.zip", 1200, 24, 0.91m, 0.85m, "\"etag\"", "job-1"));
+        await _db.SaveChangesAsync();
+
+        var status = await new GetTrainingStatusQueryHandler(_db).HandleAsync("job-1", default);
+
+        Assert.True(status.Ready);
+        Assert.Equal(1200, status.Report!.Rows);
+        Assert.Equal(24, status.Report.Categories);
     }
 
     [Fact]
-    public async Task A_failed_training_does_not_hold_the_lock_forever()
+    public async Task Zgloszenie_bez_wyniku_nie_jest_bledem()
     {
-        // Blokada zwalniana przez `using`, takze gdy trening rzuci — inaczej pierwszy nieudany
-        // trening zablokowalby wszystkie nastepne az do restartu procesu.
-        await Assert.ThrowsAsync<TrainingDataMissingException>(() => TrainHandler().HandleAsync(default));
+        // Zadanie moze czekac w kolejce, trwac albo sie nie powiesc — dla ekranu to jeden stan.
+        var status = await new GetTrainingStatusQueryHandler(_db).HandleAsync("job-ktorego-nie-ma", default);
 
-        using var lease = _store.TryBeginTraining();
-        Assert.NotNull(lease);
+        Assert.False(status.Ready);
+        Assert.Null(status.Report);
+    }
+
+    /// <summary>
+    /// Sedno: numery zgloszen Hangfire sa kolejnymi liczbami, wiec sam identyfikator NIE MOZE
+    /// wystarczyc do obejrzenia cudzego treningu. Zaweza je filtr wlascicielski.
+    /// </summary>
+    [Fact]
+    public async Task Cudze_zgloszenie_wyglada_dokladnie_jak_nieistniejace()
+    {
+        _db.Add(new ModelVersion(Guid.CreateVersion7(), true, "model-obcy.zip", 900, 20, 0.5m, 0.4m, "\"etag\"", "job-obcy"));
+        await _db.SaveChangesAsync();
+
+        await using var asUser = new AppDbContext(
+            new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(TestConnection).Options, _user);
+
+        var status = await new GetTrainingStatusQueryHandler(asUser).HandleAsync("job-obcy", default);
+
+        Assert.False(status.Ready);
+        Assert.Null(status.Report);
     }
 
     [Fact]
-    public void Restoring_an_unknown_version_reports_not_found()
+    public async Task Restoring_an_unknown_version_reports_not_found()
     {
-        Assert.Throws<ModelVersionNotFoundException>(() => ActivateHandler().Handle("20990101000000"));
-    }
-
-    [Fact]
-    public void Restoring_is_refused_while_an_import_is_categorising()
-    {
-        // Podmiana modelu w trakcie importu jest tak samo grozna jak trening: polowa wyciagu
-        // dostalaby kategorie z jednego modelu, polowa z drugiego.
-        using var import = _store.BeginImport();
-
-        Assert.Throws<TrainingBusyException>(() => ActivateHandler().Handle("20260906100000"));
+        // Wersje sa zawezone filtrem wlascicielskim, wiec CUDZA wersja wyglada tak samo
+        // jak nieistniejaca — i jedna, i druga konczy sie 404, nigdy 403.
+        await Assert.ThrowsAsync<ModelVersionNotFoundException>(
+            () => ActivateHandler().HandleAsync(Guid.CreateVersion7(), default));
     }
 
     // ── Przeliczanie kategorii wierszy, które są już w bazie ─────────────────────────────
@@ -340,31 +373,4 @@ public sealed class CategoryModelTrainingTests : IAsyncLifetime
         Assert.Equal(1, report.Unchanged);
     }
 
-    /// <summary>
-    /// Przeliczanie trzyma tę samą blokadę co import — czyli PRZEZ CAŁY PRZEBIEG nie da się
-    /// opublikować nowego modelu. Bez tego trening w trakcie przeliczania rozdzieliłby wynik
-    /// na „przed" i „po" w obrębie jednej operacji.
-    ///
-    /// Blokada jest jednostronna (patrz <c>ModelStore.BeginImport</c>), więc sprawdzamy jej
-    /// JEDYNY kierunek: pytamy o trening z wnętrza przebiegu, przez atrapę kategoryzatora.
-    /// </summary>
-    [Fact]
-    public async Task W_trakcie_przeliczania_nie_da_sie_wystartowac_treningu()
-    {
-        AddTransaction("zabka", TransactionStatus.AutoCategorized, _jedzenieId, 0.9m);
-        await _db.SaveChangesAsync();
-
-        var asked = false;
-        ModelWriteLease? granted = null;
-        _categorizer.OnCall = () =>
-        {
-            asked = true;
-            granted = _store.TryBeginTraining();
-        };
-
-        await RecategorizeHandler().HandleAsync(default);
-
-        Assert.True(asked, "atrapa nie została wywołana — test nie sprawdził niczego");
-        Assert.Null(granted);
-    }
 }

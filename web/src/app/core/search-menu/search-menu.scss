@@ -1,0 +1,215 @@
+/* Wymiary i odstępy z makiety „Wyszukiwarka i ostatnie akcje" (strona Figma 311:2). */
+.smn {
+  position: relative;
+  width: 600px;
+  max-width: 100%;
+
+  &__field {
+    width: 100%;
+  }
+
+  &__field-icon {
+    color: #78877c;
+  }
+
+  /* Panel wisi nad treścią strony — stąd absolutne pozycjonowanie i cień, jak w makiecie. */
+  &__panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 8px 0 0;
+    background: #fff;
+    border: 1px solid #d9e8dd;
+    border-radius: 2px;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 16%);
+    z-index: 20;
+  }
+
+  &__section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #78877c;
+  }
+
+  &__section-count {
+    font-weight: 400;
+    color: #a1b4a6;
+  }
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
+
+  &__divider {
+    height: 1px;
+    background: #e8efea;
+  }
+
+  &__hint {
+    margin: 0;
+    padding: 0 16px 10px;
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  /* Wiersz jest <button>, nie <div>: ma być osiągalny z klawiatury bez dokładania tabindex i roli. */
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 16px;
+    background: none;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: #252b27;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: #eef7f1;
+    }
+
+    &:disabled {
+      color: #a1b4a6;
+      cursor: default;
+    }
+  }
+
+  &__row-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+  }
+
+  &__row-icon-nz {
+    color: #78877c;
+  }
+
+  &__row-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__row-label {
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__row-sub {
+    font-size: 11px;
+    color: #78877c;
+  }
+
+  &__row-amount {
+    margin-left: auto;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  /* Siatka ekranów — odpowiednik „Recent services" z Azure. */
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 0 8px 8px;
+  }
+
+  &__cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 4px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    color: #252b27;
+
+    &:hover,
+    &:focus-visible {
+      background: #eef7f1;
+    }
+  }
+
+  &__cell-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  &__cell-label {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  &__empty {
+    padding: 8px 16px 12px;
+  }
+
+  &__empty-title {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #252b27;
+  }
+
+  &__empty-body {
+    margin: 0;
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  &__foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f6faf7;
+  }
+
+  &__foot-note {
+    font-size: 12px;
+    color: #78877c;
+  }
+
+  &__link {
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    color: #51c273;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__chip {
+    padding: 4px 14px;
+    background: none;
+    border: 1px solid #c0d7c6;
+    border-radius: 2px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    color: #252b27;
+
+    &:hover {
+      border-color: #51c273;
+    }
+  }
+}

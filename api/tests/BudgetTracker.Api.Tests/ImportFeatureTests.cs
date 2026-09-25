@@ -94,10 +94,8 @@ public sealed class ImportFeatureTests : IAsyncLifetime
             Options.Create(new CategorizationOptions { ConfidenceThreshold = threshold }));
 
         return new ImportHandlers(
-            new GetImportPreviewQueryHandler(_db, new StubCategorizer(KeyOf(categoryId), confidence),
-                // Prawdziwy ModelStore, nie atrapa: import bierze z niego wylacznie znacznik
-                // "trwa kategoryzacja", ktory nie dotyka dysku.
-                new ModelStore(Options.Create(new CategorizationOptions()), _clock),
+            new GetImportPreviewQueryHandler(
+                _db, new StubCategorizer(KeyOf(categoryId), confidence),
                 budgets, existingKeys, confidenceThreshold),
             new CommitImportCommandHandler(
                 _db, _clock, budgets, existingKeys, confidenceThreshold,

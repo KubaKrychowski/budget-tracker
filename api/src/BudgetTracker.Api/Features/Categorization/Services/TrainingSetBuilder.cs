@@ -1,3 +1,6 @@
+using Azure;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Categorization.Contracts;
@@ -17,10 +20,8 @@ namespace BudgetTracker.Api.Features.Categorization.Services;
 /// z CLAUDE.md §3 (model przewiduje → człowiek poprawia → poprawka uczy model) była przerwana
 /// na ostatnim kroku: można było poprawiać kategorie bez końca, a model zostawał ten sam.
 /// </remarks>
-public sealed class TrainingSetBuilder(AppDbContext db, IOptions<CategorizationOptions> options)
+public sealed class TrainingSetBuilder(AppDbContext db, IOptions<CategorizationOptions> options, BlobServiceClient blobServiceClient, IConfiguration configuration)
 {
-    private readonly string _trainingDataPath = options.Value.TrainingDataPath;
-
     /// <summary>
     /// Statusy, które ZNACZĄ „tak zdecydował człowiek".
     /// </summary>
@@ -58,7 +59,7 @@ public sealed class TrainingSetBuilder(AppDbContext db, IOptions<CategorizationO
     /// </remarks>
     public async Task<TrainingSet> BuildAsync(CancellationToken ct)
     {
-        var fromFile = LoadBaseFile();
+        var fromFile = await LoadBaseFileAsync(ct);
 
         var byKey = new Dictionary<(string, string, decimal), List<TransactionFeatures>>();
         foreach (var row in fromFile)
@@ -150,15 +151,31 @@ public sealed class TrainingSetBuilder(AppDbContext db, IOptions<CategorizationO
     /// deklaruje <c>LoadColumn(0..3)</c>. To nie jest przeoczenie tego kodu — flaga nigdy nie była
     /// cechą modelu, a dodanie jej byłoby zmianą cech, czyli strojeniem, nie utrzymaniem.
     /// </remarks>
-    private List<TransactionFeatures> LoadBaseFile()
+    private async Task<List<TransactionFeatures>> LoadBaseFileAsync(CancellationToken ct)
     {
-        if (!File.Exists(_trainingDataPath)) return [];
+        var blob = blobServiceClient
+            .GetBlobContainerClient(configuration["Storage:SharedContainerName"]!)
+            .GetBlobClient(configuration["Storage:TrainingSetName"]!);
+        
+        var path = Path.Combine(Path.GetTempPath(), $"training-set-{Guid.NewGuid():N}.csv");
+        try
+        {
+            await blob.DownloadToAsync(path, ct);
 
-        var ml = new MLContext();
-        var data = ml.Data.LoadFromTextFile<TransactionFeatures>(
-            _trainingDataPath, separatorChar: ',', hasHeader: true, allowQuoting: true, trimWhitespace: true);
-
-        return [.. ml.Data.CreateEnumerable<TransactionFeatures>(data, reuseRowObject: false)];
+            var ml = new MLContext();
+            var data = ml.Data.LoadFromTextFile<TransactionFeatures>(
+                path, separatorChar: ',', hasHeader: true, allowQuoting: true, trimWhitespace: true);
+            
+            return [.. ml.Data.CreateEnumerable<TransactionFeatures>(data, reuseRowObject: false)];
+        }
+        catch (RequestFailedException e) when (e.Status == StatusCodes.Status404NotFound)
+        {
+            return [];
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ using BudgetTracker.Api.Features.Categorization.Models;
 using BudgetTracker.Api.Features.Categorization.Queries;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Infrastructure;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
@@ -31,12 +32,19 @@ public sealed class MlCategorizerTests : IAsyncLifetime
     private const string TestConnection =
         "Host=localhost;Port=5432;Database=budgettracker_ml_test;Username=budget;Password=budget_dev_only";
 
+    /// <summary>Nazwa wersji w bazie i sciezka blobu — ta sama konwencja co w ModelStore.</summary>
+    private const string ModelFileName = "model.zip";
+    private const string ModelBlobName = "modelVersions/" + ModelFileName;
+
     private const string SkewedType = "karta";
     private const string NeutralType = "sklep";
 
     private AppDbContext _db = null!;
-    private string _dir = null!;
-    private string _modelPath = null!;
+
+    /// <summary>Wlasciciel modelu — kontener w Azurite nazywa sie jego identyfikatorem.</summary>
+    private readonly FakeCurrentUserAccessor _user = new(Guid.CreateVersion7());
+
+    private string Container => _user.UserId.ToString();
 
     public async Task InitializeAsync()
     {
@@ -55,16 +63,23 @@ public sealed class MlCategorizerTests : IAsyncLifetime
             new Category("Jedzenie"));
         await _db.SaveChangesAsync();
 
-        _dir = Directory.CreateTempSubdirectory("ml-categorizer-test").FullName;
-        _modelPath = Path.Combine(_dir, "model.zip");
-        CategoryModelTrainer.Train(TrainingRows(), _modelPath);
+        // Model zyje tam, gdzie na produkcji: w blobie uzytkownika, wskazany aktywnym wierszem ModelVersion.
+        await TestBlobs.CreateNamedContainerAsync(Container);
+
+        var trained = CategoryModelTrainer.Train(TrainingRows());
+        var eTag = await TestBlobs.UploadStreamAsync(Container, ModelBlobName, trained.buffer);
+        await trained.buffer.DisposeAsync();
+
+        _db.Add(new ModelVersion(_user.UserId, true, ModelFileName, trained.Item1.Rows,
+            trained.Item1.Categories, 1m, 1m, eTag));
+        await _db.SaveChangesAsync();
     }
 
     public async Task DisposeAsync()
     {
         await TestDatabase.DropAsync(TestConnection);
         await _db.DisposeAsync();
-        if (Directory.Exists(_dir)) Directory.Delete(_dir, recursive: true);
+        await TestBlobs.DropContainerAsync(Container);
     }
 
     /// <summary>
@@ -101,12 +116,15 @@ public sealed class MlCategorizerTests : IAsyncLifetime
         // Plik zbioru celowo nie istnieje: bez danych treningowych bramka liczy każde znane słowo,
         // czyli dokładnie to zachowanie, którego pilnują testy w tej klasie. Rozlane słowa sprawdza
         // osobno MlCategorizerBoilerplateTests.
-        var options = Options.Create(new CategorizationOptions
-        {
-            ModelPath = _modelPath,
-            TrainingDataPath = Path.Combine(_dir, "nieistotne.csv"),
-        });
-        return new(_db, options, new TrainingSetBuilder(_db, options));
+        var options = Options.Create(new CategorizationOptions());
+        var configuration = TestBlobs.Configuration(Container, "nie-ma.csv");
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        return new MlCategorizer(
+            _db,
+            new CategoryModelSource(_db, TestBlobs.Client(), _user, cache),
+            new VocabularyGate(
+                new TrainingSetBuilder(_db, options, TestBlobs.Client(), configuration), options, _user, cache));
     }
 
     /// <summary>
@@ -117,10 +135,10 @@ public sealed class MlCategorizerTests : IAsyncLifetime
     /// i nie pilnowałyby już niczego.
     /// </summary>
     [Fact]
-    public void Sam_model_jest_PEWNY_nieznanego_opisu__i_to_jest_ten_blad()
+    public async Task Sam_model_jest_PEWNY_nieznanego_opisu__i_to_jest_ten_blad()
     {
         var ml = new MLContext();
-        using var stream = File.OpenRead(_modelPath);
+        await using var stream = await TestBlobs.OpenReadAsync(Container, ModelBlobName);
         using var engine = ml.Model.CreatePredictionEngine<TransactionFeatures, CategoryPrediction>(
             ml.Model.Load(stream, out _));
 
@@ -220,10 +238,10 @@ public sealed class MlCategorizerTests : IAsyncLifetime
     /// bo tripwire powtarzający implementację nie pilnowałby niczego.
     /// </summary>
     [Fact]
-    public void Model_wystawia_blok_cech_slownych_pod_znana_nazwa()
+    public async Task Model_wystawia_blok_cech_slownych_pod_znana_nazwa()
     {
         var ml = new MLContext();
-        using var stream = File.OpenRead(_modelPath);
+        await using var stream = await TestBlobs.OpenReadAsync(Container, ModelBlobName);
         using var engine = ml.Model.CreatePredictionEngine<TransactionFeatures, CategoryPrediction>(
             ml.Model.Load(stream, out _));
 

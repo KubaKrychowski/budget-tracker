@@ -123,7 +123,7 @@ public sealed class DemoSeedTests : IAsyncLifetime
         await DemoSeed.SeedAsync(_db, _clock);
         var accountsBefore = await _db.Accounts.CountAsync();
 
-        var service = new BudgetTracker.Api.Features.Admin.Services.OwnerDataService(_db);
+        var service = new BudgetTracker.Api.Features.Admin.Services.OwnerDataService(_db, TestBlobs.Client());
         await service.AsSystemAsync(
             () => service.DeleteAsync(DeterministicGuid.For("demo:user:owner"), default), default);
         Assert.Empty(await _db.Transactions.ToListAsync());
