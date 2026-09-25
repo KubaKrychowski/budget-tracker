@@ -3,7 +3,11 @@
     <nz-breadcrumb-item>
       <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
     </nz-breadcrumb-item>
-    <nz-breadcrumb-item>{{ 'functions.title' | translate }}</nz-breadcrumb-item>
+    <!-- Ikona przy BIEŻĄCEJ sekcji, jak na limitach i celach. -->
+    <nz-breadcrumb-item>
+      <img class="fun__crumb-icon" src="icons/dashboard-azure.svg" alt="" width="20" height="20" />
+      {{ 'functions.title' | translate }}
+    </nz-breadcrumb-item>
   </nz-breadcrumb>
 
   <!-- Filtr zawęża katalog NA MIEJSCU. Celowo nie otwiera menu wyszukiwarki: dwa pola

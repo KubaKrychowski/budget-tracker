@@ -67,4 +67,22 @@ describe('AccountSecurity', () => {
 
     expect(links(fixture).some((href) => href.startsWith(`${IDENTITY_AUTHORITY}/Account/DeleteAccount?returnUrl=`))).toBe(true);
   });
+
+  const tags = (fixture: ComponentFixture<AccountSecurity>): string[] =>
+    Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('nz-tag')).map((t) => t.textContent?.trim() ?? '');
+
+  it('mowi, ze 2FA jest WYLACZONA, gdy jest wylaczona', () => {
+    // Zielony znacznik "wlaczona" stal w szablonie bezwarunkowo, wiec ekran twierdzil
+    // jednoczesnie, ze 2FA jest i wlaczona, i wylaczona. Przy pytaniu o bezpieczenstwo konta
+    // to najgorszy mozliwy rodzaj bledu: uzytkownik nie wie, ktoremu zdaniu wierzyc.
+    const fixture = create({ email: 'jan@example.com', role: [], two_factor_enabled: 'false' });
+
+    expect(tags(fixture)).toEqual(['settings.account.twoFactor.disabled']);
+  });
+
+  it('mowi, ze 2FA jest wlaczona, gdy jest wlaczona', () => {
+    const fixture = create({ email: 'jan@example.com', role: [], two_factor_enabled: 'true' });
+
+    expect(tags(fixture)).toEqual(['settings.account.twoFactor.enabled']);
+  });
 });

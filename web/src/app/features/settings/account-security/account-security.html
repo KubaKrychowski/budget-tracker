@@ -9,8 +9,14 @@
 
   <div class="acs__caption-container">
     <h3 class="acs__subcaption">{{ 'settings.account.twoFactor.caption' | translate }}</h3>
-    <nz-tag nzColor="success">{{ 'settings.account.twoFactor.enabled' | translate }}</nz-tag>
-
+    <!-- ⚠️ Znacznik MUSI zależeć od stanu. Zielone „Włączona" stało tu bezwarunkowo, więc przy
+         wyłączonym 2FA ekran mówił dwie sprzeczne rzeczy naraz — a to pytanie o bezpieczeństwo
+         konta, przy którym zgadywanie jest najgorszą z możliwych odpowiedzi. -->
+    @if (twoFactorEnabled()) {
+      <nz-tag nzColor="success">{{ 'settings.account.twoFactor.enabled' | translate }}</nz-tag>
+    } @else {
+      <nz-tag>{{ 'settings.account.twoFactor.disabled' | translate }}</nz-tag>
+    }
   </div>
 
   <p class="acs__description">{{ 'settings.account.twoFactor.description' | translate }}</p>
@@ -25,8 +31,7 @@
       </a>
     </div>
   } @else {
-    <nz-tag>{{ 'settings.account.twoFactor.disabled' | translate }}</nz-tag>
-
+    <!-- Znacznik stanu stoi już przy nagłówku — drugi w tym samym miejscu tylko dublował informację. -->
     <div class="acs__actions">
       <a nz-button nzType="primary" [href]="enableTwoFactorUrl">
         {{ 'settings.account.twoFactor.enable' | translate }}
