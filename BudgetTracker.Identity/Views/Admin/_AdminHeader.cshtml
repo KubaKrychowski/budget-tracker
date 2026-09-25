@@ -16,6 +16,7 @@
 
 <nav class="admin-tabs">
     <a asp-action="Users" class="admin-tab @(Model.Active == AdminTab.Users ? "active" : "")">@L["Admin_Tab_Users", Model.UsersCount]</a>
+    <a asp-action="Invites" class="admin-tab @(Model.Active == AdminTab.Invites ? "active" : "")">@L["Admin_Tab_Invites", Model.InvitesCount]</a>
     <a asp-action="Orphans" class="admin-tab @(Model.Active == AdminTab.Orphans ? "active" : "")">
         @(Model.OrphansCount is { } n ? L["Admin_Tab_Orphans", n] : L["Admin_Tab_OrphansNoCount"])
     </a>

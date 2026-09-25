@@ -1,0 +1,76 @@
+@model AdminInvitesViewModel
+@{
+    ViewData["Title"] = L["Admin_Invites_Title"];
+}
+
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_Invites_Title", "Admin_Invites_Subtitle", AdminTab.Invites, Model.UsersCount, Model.Total, null, Model.HistoryCount, Model.Flash))"/>
+
+@* Ekran musi powiedzieć wprost, że lista niczego nie ogranicza — inaczej wygląda dokładnie tak samo
+   jak lista, która ogranicza, a administrator nie ma skąd poznać różnicy. *@
+@if (!Model.ClosedBeta)
+{
+    <div class="alert alert-danger" role="alert">
+        <div class="alert-body">
+            <span class="alert-title">@L["Admin_Invites_Open_Title"]</span>
+            <span>@L["Admin_Invites_Open_Text"]</span>
+        </div>
+    </div>
+}
+
+<form asp-action="AddInvite" method="post" class="admin-add">
+    <div class="auth-field">
+        <label for="email">@L["Admin_Invites_AddLabel"]</label>
+        <input id="email" name="email" type="email" placeholder="@L["Placeholder_Email"]" autocomplete="off" required/>
+    </div>
+    <button type="submit" class="btn-primary">@L["Admin_Invites_AddSubmit"]</button>
+</form>
+
+@if (Model.Invites.Count == 0)
+{
+    <p class="admin-muted">@L["Admin_Invites_Empty"]</p>
+}
+else
+{
+    <table class="admin-table">
+        <thead>
+        <tr>
+            <th>@L["Admin_Col_Invited"]</th>
+            <th>@L["Admin_Col_Status"]</th>
+            <th>@L["Admin_Col_InvitedAt"]</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var invite in Model.Invites)
+        {
+            <tr>
+                <td>@invite.Email</td>
+                <td>
+                    <div class="admin-chips">
+                        <span class="admin-chip @(invite.HasAccount ? "ok" : "")">
+                            @L[invite.HasAccount ? "Admin_Invite_Registered" : "Admin_Invite_Pending"]
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <div>@invite.AddedAt.UtcDateTime.ToString("d")</div>
+                    <div class="admin-muted admin-small">@invite.AddedAt.UtcDateTime.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)</div>
+                </td>
+                <td class="admin-actions">
+                    <form asp-action="RemoveInvite" asp-route-id="@invite.Id" method="post" class="admin-inline-form">
+                        <button type="submit" class="btn-danger-outline">@L["Admin_Invite_Remove"]</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="admin-pager">
+        <span class="admin-muted">@L["Admin_Paging_Shown", Model.Shown, Model.Total]</span>
+        <div class="admin-pager-buttons">
+            @if (Model.HasPrevious) { <a asp-action="Invites" asp-route-page="@(Model.Page - 1)" class="btn-secondary">@L["Admin_Paging_Prev"]</a> }
+            @if (Model.HasNext) { <a asp-action="Invites" asp-route-page="@(Model.Page + 1)" class="btn-secondary">@L["Admin_Paging_Next"]</a> }
+        </div>
+    </div>
+}

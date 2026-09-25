@@ -26,6 +26,7 @@ public sealed class AccountController(
     SpaOrigins spaOrigins,
     UserDeletionService userDeletion,
     AdminRoleService adminRoles,
+    BetaInviteService invites,
     IUserDataClient userData,
     IStringLocalizer<SharedResource> localizer,
     ILogger<AccountController> logger) : Controller
@@ -74,18 +75,33 @@ public sealed class AccountController(
     }
 
     [HttpGet]
-    public IActionResult Register(string? returnUrl = null) => View(new RegisterViewModel { ReturnUrl = returnUrl });
+    public IActionResult Register(string? returnUrl = null) =>
+        View(new RegisterViewModel { ReturnUrl = returnUrl, ClosedBeta = invites.ClosedBeta });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        model.ClosedBeta = invites.ClosedBeta;
+
         if (!model.AcceptTerms)
         {
             ModelState.AddModelError(nameof(model.AcceptTerms), localizer["Validation_TermsRequired"]);
         }
 
         if (!ModelState.IsValid) return View(model);
+
+        // ⚠️ Sprawdzenie idzie PRZED CreateAsync, a nie po: konto niezaproszonego nie ma powstać nawet na chwilę.
+        // Odmowa mówi wprost, że adresu nie ma na liście — to ujawnia, KOGO zaproszono, ale nie ujawnia, kto ma
+        // konto, i tej granicy pilnuje reszta ekranów (ForgotPassword, ResendEmailConfirmation odpowiadają
+        // zawsze tak samo). Zamknięta beta bez tej informacji byłaby nie do odróżnienia od zepsutego formularza:
+        // zaproszony z literówką w adresie i niezaproszony widzieliby dokładnie to samo.
+        if (!await invites.IsAllowedToRegisterAsync(model.Email, HttpContext.RequestAborted))
+        {
+            logger.LogInformation("Odrzucono rejestrację adresu spoza listy zaproszeń.");
+            ModelState.AddModelError(nameof(model.Email), localizer["Register_NotInvited"]);
+            return View(model);
+        }
 
         var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
         var result = await userManager.CreateAsync(user, model.Password);

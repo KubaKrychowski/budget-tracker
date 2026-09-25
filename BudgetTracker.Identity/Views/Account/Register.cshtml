@@ -8,6 +8,18 @@
     <p>@L["Register_Subtitle"]</p>
 </div>
 
+@* Informacja idzie PRZED formularzem, nie po odesłaniu go: wypełnianie hasła i regulaminu po to, żeby
+   usłyszeć „nie ma cię na liście", jest kosztem, który da się zdjąć jednym zdaniem na górze. *@
+@if (Model.ClosedBeta)
+{
+    <div class="alert" role="note">
+        <div class="alert-body">
+            <span class="alert-title">@L["Register_ClosedBeta_Title"]</span>
+            <span>@L["Register_ClosedBeta_Text"]</span>
+        </div>
+    </div>
+}
+
 <form asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
     <div asp-validation-summary="ModelOnly"></div>
 

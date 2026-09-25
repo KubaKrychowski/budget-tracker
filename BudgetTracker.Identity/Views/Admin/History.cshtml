@@ -3,7 +3,7 @@
     ViewData["Title"] = L["Admin_History_Title"];
 }
 
-<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_History_Title", "Admin_History_Subtitle", AdminTab.History, Model.UsersCount, null, Model.Total, null))"/>
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_History_Title", "Admin_History_Subtitle", AdminTab.History, Model.UsersCount, Model.InvitesCount, null, Model.Total, null))"/>
 
 <div class="alert" role="note">
     <div class="alert-body">
