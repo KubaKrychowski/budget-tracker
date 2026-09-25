@@ -22,6 +22,13 @@ terraform {
 
 provider "azurerm" {
   subscription_id = var.subscription_id
+
+  # ⚠️ WYMAGANE, skoro konto ma wyłączone klucze dostępu. Bez tego provider próbuje sięgnąć do warstwy
+  # danych (sprawdzenie dostępności Blob Service, zakładanie kontenera) kluczem konta i dostaje
+  # „403 Key based authentication is not permitted on this storage account" — już przy TWORZENIU konta,
+  # nie dopiero przy kontenerze. Sprawdzone empirycznie 2026-09-25.
+  storage_use_azuread = true
+
   features {}
 }
 
@@ -42,6 +49,12 @@ resource "azurerm_storage_account" "state" {
   name                = substr("${replace(var.project, "-", "")}tfstate${random_string.suffix.result}", 0, 24)
   resource_group_name = azurerm_resource_group.state.name
   location            = azurerm_resource_group.state.location
+
+  # ⚠️ Rola MUSI istnieć, zanim powstanie konto. Provider zaraz po utworzeniu odpytuje warstwę danych,
+  # a przy wyłączonych kluczach robi to tożsamością wywołującego — bez przypisanej roli dostaje 403
+  # i `apply` przerywa się z kontem, które już istnieje. Rola jest na grupie zasobów właśnie po to,
+  # żeby dało się ją nadać przed kontem (na samym koncie byłby cykl).
+  depends_on = [azurerm_role_assignment.state_writer]
 
   account_tier             = "Standard"
   account_replication_type = "LRS"
@@ -72,10 +85,14 @@ resource "azurerm_storage_container" "state" {
   container_access_type = "private"
 }
 
-# Bez tego `terraform init` z `use_azuread_auth = true` dostaje 403: przypisanie roli na koncie magazynu
-# jest osobną decyzją od „mam dostęp do subskrypcji".
+# Bez tego `terraform init` z `use_azuread_auth = true` dostaje 403: dostęp do DANYCH w blobie jest osobną
+# rolą niż „jestem właścicielem subskrypcji" — Owner nie czyta blobów.
+#
+# ⚠️ Zakres to GRUPA ZASOBÓW, nie konto magazynu. Na koncie powstałby cykl: konto czeka na rolę (bo zaraz
+# po utworzeniu odpytuje warstwę danych), a rola czeka na identyfikator konta. Grupa jest tu dedykowana
+# wyłącznie stanowi, więc szerszy zakres nie daje dostępu do niczego poza nim.
 resource "azurerm_role_assignment" "state_writer" {
-  scope                = azurerm_storage_account.state.id
+  scope                = azurerm_resource_group.state.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.state_writer_principal_id
 }

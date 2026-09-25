@@ -193,3 +193,8 @@ cd infra && terraform output -raw front_deployment_token
   dlatego adres frontu trafia do ustawień API, a `UseCors` w API obowiązuje w każdym środowisku.
 - **W stanie Terraforma leżą sekrety jawnym tekstem.** Dlatego konto magazynu na stan ma wyłączone klucze
   dostępu i wymusza tożsamość Entra ID, a `terraform.tfvars` i `backend.hcl` są w `.gitignore`.
+- **Wyłączenie kluczy do konta magazynu wymaga `storage_use_azuread = true` w providerze.** Bez tego
+  `apply` pada na `403 Key based authentication is not permitted` już przy TWORZENIU konta, a nie dopiero
+  przy kontenerze — provider zaraz po utworzeniu odpytuje warstwę danych. Do tego rola
+  `Storage Blob Data Contributor` musi istnieć **przed** kontem, dlatego jest nadana na grupie zasobów:
+  na samym koncie byłby cykl. Bycie właścicielem subskrypcji **nie** daje dostępu do danych w blobie.
