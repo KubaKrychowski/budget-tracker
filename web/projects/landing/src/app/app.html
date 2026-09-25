@@ -33,7 +33,12 @@
           i mówi wprost, czego w nim nie ma.
         </p>
         <div class="hero__cta">
-          <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+          <!-- Przejście do lokalnej instancji — patrz REWIZJA przy `App.appUrl`. -->
+          <a nz-button nzType="primary" nzSize="large" [href]="appUrl">
+            <nz-icon nzType="arrow-right" />
+            Przejdź do aplikacji
+          </a>
+          <a nz-button nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
             <nz-icon nzType="github" />
             Zobacz kod na GitHubie
           </a>
@@ -344,18 +349,24 @@
   </section>
 
   <!-- ── CTA ───────────────────────────────────────────────────────────────────────────
-       Jedno i prawdziwe. „Wypróbuj” nie ma dokąd prowadzić: nie ma hostingu, nie ma
-       rejestracji, jest jedna baza z prywatnymi danymi. -->
+       Nadal bez „Wypróbuj”: nie ma hostingu, nie ma rejestracji, jest jedna baza z prywatnymi
+       danymi. Przycisk do aplikacji prowadzi do instancji LOKALNEJ i mówi to wprost. -->
   <section class="wrap section cta">
     <h2>Kod jest otwarty</h2>
     <p class="section-lead">
       Nie ma wersji demo ani rejestracji — aplikacja działa lokalnie, dla jednej osoby.
       Jest za to repozytorium razem z decyzjami projektowymi i ich uzasadnieniami.
     </p>
-    <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
-      <nz-icon nzType="github" />
-      Zobacz kod na GitHubie
-    </a>
+    <div class="cta__buttons">
+      <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
+        <nz-icon nzType="github" />
+        Zobacz kod na GitHubie
+      </a>
+      <a nz-button nzSize="large" [href]="appUrl">
+        <nz-icon nzType="arrow-right" />
+        Przejdź do aplikacji
+      </a>
+    </div>
   </section>
 </main>
 

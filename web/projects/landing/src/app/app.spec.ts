@@ -92,23 +92,36 @@ describe('Landing', () => {
     }
   });
 
-  it('ma jedno prawdziwe CTA i nie zaprasza do wypróbowania czegoś, czego nie ma', () => {
-    // Nie ma hostingu, nie ma rejestracji, jest jedna baza z prywatnymi danymi. Przycisk
-    // „Wypróbuj” prowadziłby donikąd — a strona, która obiecuje coś, czego nie ma czym
-    // spełnić, szkodzi bardziej niż jej brak.
-    const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
-    expect(links.length).toBeGreaterThan(0);
-
-    // ⚠️ Sprawdzamy KONKRETNY adres, nie samo `github.com`. Słabsza wersja tego warunku
-    // przepuściła adres repozytorium PRYWATNEGO: wszystkie trzy linki były w domenie
-    // github.com i dawały 404 każdemu, kto nie jest autorem — czyli jedyne CTA na stronie
-    // nie prowadziło nigdzie. „Link do kodu" bez publicznego kodu to nie jest link do kodu.
-    const repoUrl = 'https://github.com/KubaKrychowski/budget-tracker';
-    expect(links.every((a) => a.getAttribute('href') === repoUrl)).toBe(true);
-
+  it('nie zaprasza do wypróbowania czegoś, czego nie ma', () => {
+    // Nie ma hostingu ani rejestracji, jest jedna baza z prywatnymi danymi. Strona, która
+    // obiecuje coś, czego nie ma czym spełnić, szkodzi bardziej niż jej brak.
     expect(text()).not.toContain('Wypróbuj');
     expect(text()).not.toContain('Zarejestruj');
     expect(text()).not.toContain('Załóż konto');
+  });
+
+  it('każdy link wychodzący prowadzi ALBO do publicznego repo, ALBO do lokalnej aplikacji', () => {
+    // ⚠️ Sprawdzamy KONKRETNE adresy, nie samo „github.com". Słabsza wersja tego warunku
+    // przepuściła adres repozytorium PRYWATNEGO: wszystkie linki były w domenie github.com
+    // i dawały 404 każdemu, kto nie jest autorem — czyli jedyne CTA nie prowadziło nigdzie.
+    //
+    // ⚠️ REWIZJA (2026-09-25): doszedł drugi dozwolony adres — lokalna instancja aplikacji.
+    // Jest dopuszczalny WYŁĄCZNIE dopóki landing chodzi lokalnie. Gdy trafi na publiczny
+    // hosting, `localhost` stanie się tym samym błędem co dawne prywatne repo, a ten test
+    // ma wtedy paść i o tym przypomnieć.
+    const allowed = ['https://github.com/KubaKrychowski/budget-tracker', 'https://localhost:4200'];
+    const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
+
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((a) => allowed.includes(a.getAttribute('href') ?? ''))).toBe(true);
+  });
+
+  it('ma przycisk prowadzący do aplikacji', () => {
+    const toApp = [...fixture.nativeElement.querySelectorAll('a[href]')]
+      .filter((a) => (a as HTMLAnchorElement).getAttribute('href') === 'https://localhost:4200');
+
+    expect(toApp.length).toBeGreaterThan(0);
+    expect(text()).toContain('Przejdź do aplikacji');
   });
 
   it('opisuje kolejkę do przeglądu razem z progiem, a nie samo „mądre AI”', () => {

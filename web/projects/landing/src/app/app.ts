@@ -48,6 +48,21 @@ export class App {
   protected readonly repoUrl = 'https://github.com/KubaKrychowski/budget-tracker';
 
   /**
+   * Adres lokalnej instancji aplikacji.
+   *
+   * ⚠️ REWIZJA decyzji z issue #12 (2026-09-25, na prośbę właściciela). Landing celowo NIE miał
+   * przycisku do aplikacji: bez hostingu i rejestracji prowadziłby donikąd, a strona obiecująca
+   * coś, czego nie ma czym spełnić, szkodzi bardziej niż jej brak. Przycisk wraca, bo dziś ta
+   * strona jest serwowana WYŁĄCZNIE lokalnie (`ng serve landing`), obok aplikacji na 4200 —
+   * w tym jedynym użyciu link prowadzi dokładnie tam, gdzie zapowiada.
+   *
+   * ⚠️ Gdy landing trafi na publiczny hosting, ten przycisk MUSI zniknąć albo dostać prawdziwy
+   * adres. `localhost` u obcego czytelnika to dokładnie ten sam błąd, co dawny link do repo
+   * prywatnego: jedyne CTA na stronie, które nie prowadzi nigdzie. Pilnuje tego `app.spec.ts`.
+   */
+  protected readonly appUrl = 'https://localhost:4200';
+
+  /**
    * DOMYŚLNY próg pewności, poniżej którego transakcja idzie do przeglądu zamiast dostać kategorię.
    *
    * ⚠️ To kopia wartości z backendu (`MlCategorizer.ConfidenceThreshold`, domyślnie `0.7m`,

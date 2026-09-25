@@ -6,8 +6,13 @@ odnoszą się do zakładki „Issues" tego repozytorium. Plan i uzasadnienia: `p
 (też poza repo).
 
 To jest **prezentacja projektu**, nie landing produktu — aplikacja jest single-user, bez
-rejestracji i bez hostingu, więc „Wypróbuj za darmo" nie miałoby dokąd prowadzić. Jedyne CTA
-prowadzi do repozytorium.
+rejestracji i bez hostingu, więc „Wypróbuj za darmo" nie miałoby dokąd prowadzić.
+
+**REWIZJA 2026-09-25:** obok CTA do repozytorium jest teraz przycisk „Przejdź do aplikacji"
+prowadzący na `https://localhost:4200`. Jest dopuszczalny WYŁĄCZNIE dlatego, że ta strona chodzi
+dziś tylko lokalnie, obok aplikacji. **Zanim landing trafi na publiczny hosting, ten przycisk
+musi zniknąć albo dostać prawdziwy adres** — `localhost` u obcego czytelnika to ten sam błąd,
+co dawny link do prywatnego repo. Pilnuje tego test w `app.spec.ts`.
 
 ```bash
 cd web && npx ng serve landing --port 4300
