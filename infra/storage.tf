@@ -9,10 +9,21 @@ resource "random_string" "storage_suffix" {
   upper   = false
 }
 
+# Dostęp do DANYCH w blobie dla tożsamości, którą działa Terraform. Musi istnieć ZANIM powstanie konto:
+# provider zaraz po utworzeniu odpytuje warstwę danych, a przy wyłączonych kluczach robi to tożsamością
+# wywołującego. Zakres to grupa zasobów, bo na samym koncie byłby cykl (konto czeka na rolę, rola na konto).
+resource "azurerm_role_assignment" "terraform_blob" {
+  scope                = data.azurerm_resource_group.main.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 resource "azurerm_storage_account" "models" {
   name                = substr("${replace(local.prefix, "-", "")}models${random_string.storage_suffix.result}", 0, 24)
   resource_group_name = data.azurerm_resource_group.main.name
-  location            = data.azurerm_resource_group.main.location
+  location            = local.location
+
+  depends_on = [azurerm_role_assignment.terraform_blob]
 
   account_tier             = "Standard"
   account_replication_type = "LRS"

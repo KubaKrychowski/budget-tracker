@@ -1,4 +1,6 @@
 locals {
+  location = coalesce(var.location, data.azurerm_resource_group.main.location)
+
   # ACS najczesciej stoi w tej samej grupie co reszta, ale nie musi - stad osobna zmienna z pustym
   # domyslnym. Zmienne nie moga odwolywac sie do innych zmiennych, wiec sklejenie jest tutaj.
   communication_service_resource_group = coalesce(var.communication_service_resource_group_name, var.resource_group_name)

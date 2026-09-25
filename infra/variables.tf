@@ -152,3 +152,15 @@ variable "email_sender_address" {
   EOT
   type        = string
 }
+
+variable "location" {
+  description = <<-EOT
+    Region zasobow. Puste = region grupy zasobow.
+
+    Grupa zasobow w Azure NIE ogranicza regionu zasobow w niej stojacych, wiec ta zmienna pozwala
+    postawic aplikacje w innym regionie niz grupa. Powod praktyczny: limit darmowych planow F1 jest
+    per region, wiec quota bywa w jednym regionie, a grupa w drugim.
+  EOT
+  type        = string
+  default     = null
+}

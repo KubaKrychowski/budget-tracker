@@ -1,0 +1,47 @@
+name: Front (aplikacja)
+
+# Static Web Apps w planie Free nie ma "linked backend", wiec front wola API miedzy originami przez CORS.
+# Adres frontu trafia do ustawien API w Terraformie (Cors__Origins__0) - po zmianie adresu SWA trzeba
+# puscic `terraform apply`, inaczej przegladarka odrzuci kazde zadanie.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '!web/projects/landing/**'
+      - '.github/workflows/deploy-front.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-front
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+        working-directory: web
+
+      # Testy przed wdrozeniem, nie po. Bramka jakosci z CLAUDE.md.
+      - run: npx ng test --watch=false --browsers=ChromeHeadless
+        working-directory: web
+
+      - run: npx ng build web --configuration production
+        working-directory: web
+
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN_FRONT }}
+          action: upload
+          # Gotowy build, bez budowania po stronie Oryx - dlatego skip_app_build.
+          app_location: web/dist/web/browser
+          skip_app_build: true

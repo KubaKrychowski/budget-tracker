@@ -26,8 +26,18 @@ terraform {
 
 provider "azurerm" {
   subscription_id = var.subscription_id
+
+  # ⚠️ WYMAGANE, bo konto magazynu na modele ma wyłączone klucze dostępu. Bez tego provider próbuje
+  # sięgnąć do warstwy danych kluczem i dostaje „403 Key based authentication is not permitted" już przy
+  # TWORZENIU konta. Ta sama poprawka jest w module bootstrap — tam trafiła wcześniej, tu jej brakowało.
+  storage_use_azuread = true
+
   features {}
 }
+
+# Tożsamość, którą działa Terraform — potrzebna, żeby nadać jej dostęp do danych w blobie przed
+# utworzeniem konta magazynu. Bycie właścicielem subskrypcji tego dostępu NIE daje.
+data "azurerm_client_config" "current" {}
 
 # ⚠️ Grupa zasobów jest ISTNIEJĄCA, nie tworzona tutaj. Stoją w niej rzeczy, których Terraform nie zna
 # i znać nie powinien (Azure Communication Services z domeną poczty), więc `terraform destroy` nie ma

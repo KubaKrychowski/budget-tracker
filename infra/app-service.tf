@@ -13,7 +13,7 @@
 resource "azurerm_service_plan" "main" {
   name                = "${local.prefix}-plan"
   resource_group_name = data.azurerm_resource_group.main.name
-  location            = data.azurerm_resource_group.main.location
+  location            = local.location
 
   os_type  = "Linux"
   sku_name = "F1"
