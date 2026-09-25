@@ -1,0 +1,36 @@
+# Skopiuj na terraform.tfvars i uzupełnij. ⚠️ terraform.tfvars jest w .gitignore i ma tam zostać —
+# zawiera connection stringi, hasło SMTP i hasła do certyfikatów w postaci jawnej.
+
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+project     = "wydatki"
+environment = "beta"
+
+location                 = "westeurope"
+static_web_apps_location = "westeurope"
+
+# Baza: Neon, poza Terraformem. ⚠️ Rola budget_app, NIE właściciel bazy — RLS nie dotyczy właściciela
+# tabel, więc połączenie właścicielem po cichu wyłącza izolację danych między kontami.
+postgres_connection_string_api      = "Host=...neon.tech;Database=budgettracker;Username=budget_app;Password=...;SSL Mode=Require"
+postgres_connection_string_identity = "Host=...neon.tech;Database=budgettracker_identity;Username=...;Password=...;SSL Mode=Require"
+
+# Adres, który dostanie rolę administratora po potwierdzeniu e-maila. Przy zamkniętej becie to jedyny
+# adres, który może założyć konto, zanim ktokolwiek zostanie zaproszony.
+admin_emails = ["ty@example.com"]
+
+registration_closed_beta = true
+
+# openssl rand -base64 48
+admin_client_secret                      = ""
+identity_signing_certificate_password    = ""
+identity_encryption_certificate_password = ""
+
+smtp = {
+  host          = "smtp-relay.brevo.com"
+  port          = 587
+  use_start_tls = true
+  from_address  = "no-reply@twoja-domena.pl"
+  from_name     = "Wydatki.pl"
+  username      = ""
+  password      = ""
+}

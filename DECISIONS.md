@@ -1075,3 +1075,60 @@ konta**, które na nim powstało, i ekran nie może sugerować inaczej. Dopisani
 
 **Czego to nie zamyka.** Zaproszenie nie wysyła maila (dostajesz adres kanałem, którym i tak się umawiasz), nie ma
 wygasania ani limitu użyć, nie ma importu listy hurtem, a rejestracja nie jest ograniczona co do liczby kont na adres IP.
+
+## 13. Wdrożenie na Azure (Terraform)
+
+Kod infrastruktury: `infra/`. Instrukcja uruchomienia i kroki ręczne: `infra/README.md`. Tu są same decyzje.
+
+**App Service F1 na obie aplikacje .NET, jeden plan.** Limit to 10 aplikacji na plan, więc API i serwer
+tożsamości mieszczą się bez sztuczek. Dzielą za to 60 minut CPU na dobę (⚠️ liczone **per region per
+subskrypcja**, nie per aplikacja — po przekroczeniu App Service odpowiada 403 do końca doby), 1 GB pamięci
+na cały plan i 165 MB transferu dziennie. Dla zamkniętej bety na kilka osób to wystarcza; dla pokazu na
+żywo przed publicznością nie.
+
+⚠️ **W F1 nie ma Always On, więc Hangfire faktycznie nie działa.** Proces jest usypiany po ok. 20 minutach
+bez ruchu, a zakolejkowane zadanie nie ruszy, dopóki ktoś nie obudzi aplikacji żądaniem. Dotyczy to treningu
+modelu i `BudgetPurger`. To jest znany koszt wybranego planu, nie usterka do naprawienia w kodzie — jeśli
+zadania w tle mają działać naprawdę, trzeba B1 (ok. 13 USD/mies.) albo przeniesienie ich poza App Service.
+
+**Front i landing na dwóch osobnych Static Web Apps.** Dwa osobne buildy w jednym workspace i dwaj różni
+adresaci. Plan Free: 100 GB transferu miesięcznie, 500 MB na aplikację, własne domeny z certyfikatem w cenie.
+⚠️ Static Web Apps istnieje tylko w pięciu regionach (`westeurope`, `eastus2`, `centralus`, `westus2`,
+`eastasia`), dlatego region SWA jest w Terraformie **osobną zmienną** niż region App Service — wpisanie tam
+`polandcentral` kończy się błędem przy `apply`, nie ostrzeżeniem.
+
+⚠️ **Plan Free Static Web Apps nie ma „linked backend"**, więc odwrotne proxy do App Service nie wchodzi w grę:
+front woła API między originami, czyli przez CORS. **REWIZJA (2026-09-25):** `app.UseCors` w API stało dotąd
+wyłącznie w gałęzi `IsDevelopment()`. Było to poprawne, dopóki front i API chodziły na jednym localhoście —
+na Azure oznaczałoby, że aplikacja nie może wykonać ani jednego żądania, mimo poprawnego tokenu. Polityka
+obowiązuje teraz w każdym środowisku, a lista originów dalej pochodzi wyłącznie z konfiguracji (pusta lista
+nie otwiera niczego, bo `WithOrigins()` bez wartości nie dopasuje żadnego żądania).
+
+**Baza poza Terraformem, na Neonie.** Azure nie ma darmowego Postgresa na stałe (Flexible Server B1ms jest
+darmowy 12 miesięcy na nowej subskrypcji, potem płatny). Terraform przyjmuje gotowe connection stringi
+i tylko je wstrzykuje. ⚠️ Connection string API musi używać roli `budget_app`, **nie właściciela bazy**:
+RLS nie dotyczy właściciela tabel, więc połączenie właścicielem po cichu wyłącza izolację danych.
+
+⚠️ **Ryzyko niesprawdzone:** schemat wymaga roli `budget_jobs` z atrybutem `BYPASSRLS`, a ten atrybut może
+nadać wyłącznie rola, która sama go ma (atrybutów ról nie dziedziczy się przez członkostwo). Rola właściciela
+u Neona jest członkiem `neon_superuser`, co nie jest tym samym. Do sprawdzenia jedną komendą na świeżym
+projekcie, zanim cokolwiek zostanie wdrożone — patrz `infra/README.md`.
+
+**Stan Terraforma w Azure Storage, nie lokalnie.** W stanie leżą sekrety jawnym tekstem (connection stringi,
+hasło SMTP, hasła do certyfikatów, sekret klienta admina), więc konto magazynu na stan ma **wyłączone klucze
+dostępu** i wymusza tożsamość Entra ID — nie powstaje druga, cicha droga dostępu, której nikt nie odbierze.
+Problem kury i jajka rozwiązuje osobny moduł `infra/bootstrap`, który trzyma swój stan lokalnie; jego stan
+jest odtwarzalny, stan modułu głównego nie.
+
+**Tożsamość zarządzana zamiast kluczy do magazynu.** API czyta i zapisuje modele przez `DefaultAzureCredential`,
+które poza `Development` nie wyklucza `ManagedIdentityCredential`. Konto magazynu na modele ma więc też
+wyłączone klucze, a dostęp daje przypisanie roli `Storage Blob Data Contributor` tożsamości aplikacji.
+
+**Certyfikaty OpenIddict zostają krokiem ręcznym.** `ServerCertificateLoader` czyta PFX ze ścieżki, więc pliki
+muszą wjechać w paczce wdrożeniowej; Terraform zna tylko ścieżki i hasła. Wygodniejsze byłoby czytanie
+certyfikatu ze zmiennej środowiskowej (base64) — to zmiana w kodzie, świadomie odłożona.
+
+**Czego ten Terraform nie robi.** Nie wgrywa kodu (Static Web Apps przez akcję GitHuba z tokenem wdrożeniowym,
+App Service przez `az webapp deploy`), nie zakłada bazy ani ról, nie generuje certyfikatów, nie uruchamia
+migracji i nie konfiguruje dostawcy poczty. ⚠️ Bez SMTP serwer tożsamości **nie wstanie** (`ValidateOnStart`),
+a rejestracja i tak wymaga maila z potwierdzeniem adresu — Azure darmowego SMTP nie ma.
