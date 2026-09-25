@@ -4,7 +4,7 @@
   <div class="wrap bar__inner">
     <span class="bar__brand">
       <img class="bar__logo" src="logo.svg" width="32" height="32" alt="" />
-      <span class="bar__name">Budżet tracker</span>
+      <span class="bar__name">Wydatki.pl</span>
     </span>
     <a class="bar__link" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
       <nz-icon nzType="github" />
@@ -282,7 +282,7 @@
       <h2>Roadmapa</h2>
       <p class="section-lead">
         Kolejność wynika z zależności, nie z ochoty: każdy etap potrzebuje danych z poprzedniego.
-        Zrobiony jest pierwszy punkt — pozostałe jeszcze nie istnieją.
+        Cztery pierwsze punkty działają; dwa ostatnie jeszcze nie istnieją.
       </p>
 
       <ol class="road">
@@ -298,9 +298,9 @@
           </div>
         </li>
 
-        <li class="road__item road__item--next">
+        <li class="road__item road__item--done">
           <div class="road__body">
-            <p class="road__status">Następne</p>
+            <p class="road__status">Gotowe</p>
             <h3>Limity na kategorie</h3>
             <p>
               Limit ma sens dopiero wtedy, gdy jest z czego go ustalić. Postawiony na pustej
@@ -310,21 +310,33 @@
           </div>
         </li>
 
-        <li class="road__item">
+        <li class="road__item road__item--done">
           <div class="road__body">
-            <p class="road__status">Później</p>
+            <p class="road__status">Gotowe</p>
             <h3>Wydatki stałe kontra epizodyczne</h3>
             <p>
-              Czynsz i wakacje to dwie różne rzeczy, a dziś jedno i drugie jest po prostu
-              wydatkiem. Bez tego rozdzielenia każda średnia miesza rachunki, które przyjdą
-              na pewno, z zakupami, które się nie powtórzą.
+              Czynsz i wakacje to dwie różne rzeczy. Zlecenia stałe mają własny rytm i pilnują,
+              czy rata przyszła w oczekiwanej kwocie; zlecenia epizodyczne obsługują wydatki
+              jednorazowe — przeszłe i zaplanowane, z rezerwacją pieniędzy na te drugie.
             </p>
           </div>
         </li>
 
-        <li class="road__item">
+        <li class="road__item road__item--done">
           <div class="road__body">
-            <p class="road__status">Później</p>
+            <p class="road__status">Gotowe</p>
+            <h3>Wyszukiwarka i katalog funkcji</h3>
+            <p>
+              Jedno pole szuka po transakcjach, kategoriach, budżetach i zleceniach naraz,
+              z historią i ostatnio odwiedzanymi ekranami. Obok katalog wszystkich funkcji
+              pogrupowany po tym, po co się do nich wchodzi.
+            </p>
+          </div>
+        </li>
+
+        <li class="road__item road__item--next">
+          <div class="road__body">
+            <p class="road__status">Następne</p>
             <h3>Prognozy</h3>
             <p>
               Stoją na poprzednim punkcie i bez niego nie mają sensu — prognoza, która nie
@@ -375,7 +387,7 @@
     <div class="foot__inner">
       <img class="foot__logo" src="logo.svg" width="40" height="40" alt="" />
       <p>
-        Budżet tracker — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
+        Wydatki.pl — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
         Zrzuty ekranu pochodzą z danych demonstracyjnych.
       </p>
     </div>

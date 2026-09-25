@@ -62,10 +62,15 @@ describe('Landing', () => {
     }
 
     const done = items.filter((i) => i.classList.contains('road__item--done'));
-    expect(done.length).toBe(1);
+    expect(done.length).toBeGreaterThan(0);
 
-    const doneText = done[0].textContent ?? '';
-    for (const feature of ['Prognozy', 'Paragony', 'Limity na kategorie']) {
+    // ⚠️ Lista pilnuje wyłącznie tego, czego JESZCZE NIE MA. Wcześniej stały tu na sztywno
+    // „dokładnie jeden punkt zrobiony" i „limity nie są gotowe" — obie asercje przeżyły
+    // wdrożenie limitów oraz zleceń i przez to WYMUSZAŁY na stronie nieprawdę. Test ma
+    // bronić uczciwości, a nie zamrażać stan sprzed roku: dopisując tu funkcję, dopisuj ją
+    // dopiero wtedy, gdy naprawdę jej nie ma.
+    const doneText = done.map((i) => i.textContent ?? '').join(' ');
+    for (const feature of ['Prognozy', 'Paragony']) {
       const owner = items.find((i) => i.textContent?.includes(feature));
       expect(owner).toBeDefined();
       expect(owner!.classList.contains('road__item--done')).toBe(false);
