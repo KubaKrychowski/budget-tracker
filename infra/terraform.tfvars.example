@@ -1,9 +1,8 @@
 # Skopiuj na terraform.tfvars i uzupełnij. Plik jest w .gitignore i ma tam zostać.
 #
-# ⚠️ SEKRETÓW TU NIE MA i lepiej, żeby nie było. Cztery wartości (dwa connection stringi, sekret klienta
-# admina, hasło SMTP) są zmiennymi `sensitive` i podaje się je przez zmienne środowiskowe `TF_VAR_<nazwa>`
-# — patrz sekcja „Sekrety przez zmienne środowiskowe" w README. Terraform bierze je stamtąd sam, bez
-# dodatkowych przełączników.
+# ⚠️ SEKRETÓW TU NIE MA i lepiej, żeby nie było. Dwa connection stringi do bazy podaje się przez zmienne
+# środowiskowe TF_VAR_postgres_connection_string_api i TF_VAR_postgres_connection_string_identity —
+# patrz sekcja „Sekrety przez zmienne środowiskowe" w README. Connection string do poczty czyta się sam.
 
 subscription_id = "00000000-0000-0000-0000-000000000000"
 
@@ -30,12 +29,11 @@ registration_closed_beta = true
 # wpisania. UWAGA: skrocenie tej wartosci i `apply` = wymiana kluczy = wylogowanie wszystkich.
 # token_certificate_validity_hours = 43800
 
-# Czesc JAWNA konfiguracji poczty. Login i haslo ida przez TF_VAR_smtp_username i TF_VAR_smtp_password.
-smtp = {
-  host          = "smtp.azurecomm.net"
-  port          = 587
-  use_start_tls = true
-  # Domena zarzadzana przez Azure; odczytasz ja w zasobie Email Service jako mailFromSenderDomain.
-  from_address = "DoNotReply@<guid>.azurecomm.net"
-  from_name    = "Wydatki.pl"
-}
+# Poczta: ISTNIEJACY zasob Azure Communication Services. Terraform go nie tworzy - czyta z niego
+# connection string, wiec nie ma tu zadnego sekretu do wpisania.
+communication_service_name = "acs-wydatki-prod"
+# Puste = ta sama grupa co resource_group_name.
+# communication_service_resource_group_name = null
+
+# Musi nalezec do domeny podpietej do tego ACS. Guid odczytasz w Email Service jako mailFromSenderDomain.
+email_sender_address = "DoNotReply@<guid>.azurecomm.net"

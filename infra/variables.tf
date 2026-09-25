@@ -108,59 +108,47 @@ variable "token_certificate_validity_hours" {
 # Poczta — Identity ma ValidateOnStart na tej sekcji, więc bez niej serwer NIE WSTANIE.
 # ---------------------------------------------------------------------------------------------------
 
-variable "smtp" {
-  description = <<-EOT
-    Serwer poczty wychodzącej dla potwierdzeń adresu, resetu hasła i kodów 2FA — część JAWNA.
-
-    Domyślnie przekaźnik SMTP Azure Communication Services. ⚠️ Port 25 odpada: App Service go blokuje.
-    `from_address` przy domenie zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net`
-    i odczytasz go w zasobie Email Service jako `mailFromSenderDomain`.
-
-    Dane logowania są osobno (`smtp_username`, `smtp_password`) — patrz komentarz przy nich.
-  EOT
-  type = object({
-    host          = string
-    port          = number
-    use_start_tls = bool
-    from_address  = string
-    from_name     = string
-  })
-  default = {
-    host          = "smtp.azurecomm.net"
-    port          = 587
-    use_start_tls = true
-    from_address  = ""
-    from_name     = "Wydatki.pl"
-  }
-
-  validation {
-    condition     = length(var.smtp.from_address) > 0
-    error_message = "Podaj from_address — bez adresu nadawcy serwer tożsamości nie wyśle potwierdzenia rejestracji."
-  }
-}
-
 # ---------------------------------------------------------------------------------------------------
 # Sekrety wydzielone z obiektów. Każdy jest osobną zmienną skalarną, żeby dało się go podać przez
 # zmienną środowiskową `TF_VAR_<nazwa>` i nie zapisywać w żadnym pliku:
 #
-#   TF_VAR_smtp_password, TF_VAR_postgres_connection_string_api, TF_VAR_smtp_username, …
+#   TF_VAR_postgres_connection_string_api, TF_VAR_postgres_connection_string_identity
 #
 # ⚠️ To trzyma sekret poza repozytorium i poza `terraform.tfvars`, ale NIE poza stanem Terraforma
 # i NIE poza ustawieniami App Service — tam musi trafić, żeby aplikacja działała. Zmienna środowiskowa
 # zmienia to, kto widzi wartość PO DRODZE, a nie to, gdzie ona ostatecznie leży.
 # ---------------------------------------------------------------------------------------------------
 
-variable "smtp_username" {
+
+# ---------------------------------------------------------------------------------------------------
+# Poczta — Azure Communication Services (odczyt istniejących zasobów, patrz email.tf)
+# ---------------------------------------------------------------------------------------------------
+
+variable "communication_service_name" {
   description = <<-EOT
-    Nazwa zasobu „SMTP Username" z ACS (portal → zasób ACS → *SMTP Usernames*).
-    ⚠️ To NIE jest identyfikator rejestracji aplikacji ani adres e-mail konta.
+    Nazwa ISTNIEJĄCEGO zasobu Azure Communication Services, z którego idą maile.
+    Terraform go nie tworzy i nie usuwa — czyta z niego tylko connection string, żeby nie musiał
+    przechodzić przez plik ani przez zmienną środowiskową.
   EOT
   type        = string
-  sensitive   = true
 }
 
-variable "smtp_password" {
-  description = "Sekret klienta rejestracji aplikacji w Entra ID powiązanej z tym SMTP Username."
+variable "communication_service_resource_group_name" {
+  description = <<-EOT
+    Grupa zasobów, w której stoi ACS. Puste = ta sama co `resource_group_name`.
+  EOT
   type        = string
-  sensitive   = true
+  default     = null
+}
+
+variable "email_sender_address" {
+  description = <<-EOT
+    Adres nadawcy maili z potwierdzeniem konta, resetem hasła i kodami 2FA.
+
+    ⚠️ Musi należeć do domeny podpiętej do tego zasobu ACS — inaczej wysyłka jest odrzucana. Przy domenie
+    zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net`; `<guid>` odczytasz w zasobie
+    Email Service jako `mailFromSenderDomain`. Prowider Terraforma nie ma źródła danych na domeny poczty,
+    więc trzeba to podać wprost.
+  EOT
+  type        = string
 }

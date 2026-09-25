@@ -127,13 +127,9 @@ resource "azurerm_linux_web_app" "identity" {
 
       Registration__ClosedBeta = tostring(var.registration_closed_beta)
 
-      Smtp__Host        = var.smtp.host
-      Smtp__Port        = tostring(var.smtp.port)
-      Smtp__UseStartTls = tostring(var.smtp.use_start_tls)
-      Smtp__FromAddress = var.smtp.from_address
-      Smtp__FromName    = var.smtp.from_name
-      Smtp__Username    = var.smtp_username
-      Smtp__Password    = var.smtp_password
+      # Connection string czytany wprost z zasobu ACS - nie przechodzi przez tfvars ani przez rece.
+      Acs__Email__ConnectionString = data.azurerm_communication_service.email.primary_connection_string
+      Acs__Email__SenderAddress    = var.email_sender_address
 
       Clients__Spa__RedirectUris__0           = "${local.front_url}/auth-callback"
       Clients__Spa__RedirectUris__1           = "${local.front_url}/silent-renew.html"

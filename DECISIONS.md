@@ -1154,9 +1154,22 @@ App Service przez `az webapp deploy`), nie zakłada bazy ani ról, nie uruchamia
 dostawcy poczty. ⚠️ Bez SMTP serwer tożsamości **nie wstanie** (`ValidateOnStart`),
 a rejestracja i tak wymaga maila z potwierdzeniem adresu.
 
-**Poczta: przekaźnik SMTP Azure Communication Services** (`smtp.azurecomm.net`, port 587, STARTTLS) — zgodnie
-z założeniem z §12 („SMTP z Azure na środowiskach"). Kod nie wymaga zmiany, MailKit traktuje to jak każdy inny
-serwer. ⚠️ ACS, Email Service i domena stoją we WŁASNEJ grupie zasobów i Terraform ich nie zarządza: w `infra/`
-podaje się wyłącznie gotowe dane logowania. ⚠️ Uwierzytelnianie nie jest zwykłą parą login–hasło — hasłem jest
-sekret klienta rejestracji aplikacji w Entra ID, a loginem osobny zasób „SMTP Username" w ACS, powiązany z tą
-aplikacją i wymagający roli `Communication and Email Service Owner` na zasobie ACS.
+**Poczta: Azure Communication Services przez SDK, nie przez przekaźnik SMTP. REWIZJA (2026-09-25):**
+najpierw zapisano tu przekaźnik SMTP, bo nie wymagał zmiany w kodzie. Okazał się jednak drogą, której
+właściciel nie może przejść tym, co ma: klucz dostępu ACS z portalu obsługuje WYŁĄCZNIE SDK, a SMTP
+wymaga rejestracji aplikacji w Entra ID, roli na zasobie ACS i osobnego zasobu „SMTP Username" — trzech
+bytów do założenia ręcznie. Doszła więc druga implementacja `IEmailSender` (`AcsEmailSender`), a wybiera
+je konfiguracja, nie kod: wypełniona sekcja `Acs:Email` wygrywa, pusta zostawia SMTP dla Development
+i MailHoga. Zysk jest większy niż uniknięcie klikania: connection string czyta Terraform wprost z zasobu
+ACS, więc nie przechodzi ani przez plik, ani przez zmienną środowiskową, ani przez niczyje ręce.
+
+⚠️ `WaitUntil.Started`, nie `Completed`: wysyłka jest w ACS operacją długotrwałą, a czekanie na
+doręczenie zatrzymałoby żądanie HTTP rejestracji. Zachowanie jest przez to takie samo jak przy SMTP —
+odrzucenie widać od razu, niepowodzenie doręczenia później jest dla aplikacji niewidoczne.
+
+⚠️ **SPROSTOWANIE:** wcześniejsze wersje tej sekcji i `infra/README.md` twierdziły, że bez konfiguracji
+poczty serwer tożsamości nie wstanie, bo `SmtpOptions` ma `ValidateOnStart`. Nieprawda:
+`ValidateOnStart()` bez żadnej reguły walidacji niczego nie sprawdza, a wiązanie konfiguracji nie
+wymusza `required` (obiekt powstaje przez refleksję). Serwer wstawał z `Host = null`, a wywalała się
+dopiero pierwsza rejestracja — czyli błąd konfiguracji wychodził u użytkownika zamiast przy starcie.
+Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe dopiero teraz.

@@ -139,8 +139,8 @@ Cztery wartości są tak pomyślane i **nie ma ich w `terraform.tfvars.example`*
 |---|---|
 | `postgres_connection_string_api` | `TF_VAR_postgres_connection_string_api` |
 | `postgres_connection_string_identity` | `TF_VAR_postgres_connection_string_identity` |
-| `smtp_username` | `TF_VAR_smtp_username` |
-| `smtp_password` | `TF_VAR_smtp_password` |
+
+Connection stringa do poczty **nie ma na tej liście** — Terraform czyta go wprost z zasobu ACS.
 
 Sekretów klientów OAuth (`budgettracker-admin`, `bt-cli`) **nie podajesz** — generuje je Terraform
 (`secrets.tf`). Są wewnętrzne: serwer tożsamości sam je zapisuje w swojej bazie i sam ich używa, więc
@@ -149,13 +149,13 @@ nie ma drugiej strony, która musiałaby je poznać.
 Na stałe, dla swojego konta w Windows (nowa sesja terminala je zobaczy):
 
 ```powershell
-[Environment]::SetEnvironmentVariable('TF_VAR_smtp_password', '<wartosc>', 'User')
+[Environment]::SetEnvironmentVariable('TF_VAR_postgres_connection_string_api', '<wartosc>', 'User')
 ```
 
 Tylko na czas jednej sesji:
 
 ```powershell
-$env:TF_VAR_smtp_password = '<wartosc>'
+$env:TF_VAR_postgres_connection_string_api = '<wartosc>'
 ```
 
 ⚠️ **Co to daje, a czego nie daje.** Sekret nie trafia do repozytorium ani do `terraform.tfvars` — to jest
@@ -180,31 +180,32 @@ cd infra && terraform init -backend-config=backend.hcl && terraform plan
 
 ## Czego Terraform NIE robi
 
-### Poczta — SMTP Username w Azure Communication Services
+### Poczta — nic do zrobienia, o ile ACS już stoi
 
-`SmtpOptions` ma `ValidateOnStart`, więc bez poprawnej konfiguracji serwer tożsamości **nie wstanie** —
-a rejestracja i tak wymaga maila z potwierdzeniem adresu.
+Maile (potwierdzenie adresu, reset hasła, kod 2FA) idą przez **Azure Communication Services**, jego
+**SDK**, nie przez przekaźnik SMTP. Terraform czyta connection string wprost z zasobu ACS, więc nie
+przechodzi on ani przez `terraform.tfvars`, ani przez zmienną środowiskową, ani przez niczyje ręce.
+W `terraform.tfvars` podaje się tylko dwie jawne wartości: `communication_service_name`
+i `email_sender_address`.
 
-Pocztę daje **Azure Communication Services**, przez przekaźnik SMTP: `smtp.azurecomm.net`, port 587,
-STARTTLS. Kod nie wymaga żadnej zmiany — MailKit rozmawia z tym jak z każdym innym serwerem.
+⚠️ Terraform tych zasobów **nie zarządza**. ACS, Email Service i domena mają przeżyć każdy `destroy` —
+stąd wyłącznie odczyt.
 
-⚠️ Terraform **nie zarządza** tymi zasobami: ACS, Email Service i domena stoją we własnej grupie zasobów,
-osobno od tego, co stawia `infra/`. Tutaj podaje się wyłącznie gotowe dane logowania.
+⚠️ **Klucz dostępu ACS z portalu działa TYLKO tą drogą.** Przekaźnik `smtp.azurecomm.net` go nie przyjmuje:
+tamta droga wymaga rejestracji aplikacji w Entra ID, roli `Communication and Email Service Owner` na
+zasobie ACS oraz osobnego zasobu „SMTP Username" — trzech bytów do założenia ręcznie. Dlatego kod ma dwie
+implementacje `IEmailSender`, a wybiera je konfiguracja: wypełniona sekcja `Acs:Email` wygrywa, pusta
+zostawia SMTP (Development i MailHog).
 
-Uwierzytelnianie nie jest zwykłą parą login–hasło. Trzeba trzech rzeczy:
+⚠️ `email_sender_address` musi należeć do domeny podpiętej do tego ACS, inaczej wysyłka jest odrzucana.
+Przy domenie zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net`, a `<guid>` odczytasz
+w zasobie Email Service jako `mailFromSenderDomain`. Provider Terraforma nie ma źródła danych na domeny
+poczty, więc to jedyna wartość, którą trzeba przepisać.
 
-1. **Rejestracja aplikacji w Entra ID** z sekretem klienta — sekret będzie **hasłem** SMTP.
-2. **Rola na zasobie ACS** dla tej aplikacji: wbudowana `Communication and Email Service Owner` albo rola
-   własna z `Microsoft.Communication/CommunicationServices/read` i `/write` oraz
-   `Microsoft.Communication/EmailServices/write`.
-3. **Zasób „SMTP Username"** w ACS, powiązany z tą aplikacją (portal → zasób ACS → *SMTP Usernames*).
-   Nazwa jest dowolna; jeśli użyjesz formatu adresu e-mail, domena musi być jedną z podpiętych.
-   To ona idzie do `smtp.username`, a nie identyfikator aplikacji.
-
-Adres nadawcy przy domenie zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net` — odczytasz
-go w zasobie Email Service jako `mailFromSenderDomain`.
-
-⚠️ Port 25 odpada: App Service go blokuje, a i tak zalecany jest 587.
+**Sprostowanie do wcześniejszej wersji tego pliku:** stało tu, że bez konfiguracji poczty serwer tożsamości
+„nie wstanie", bo `SmtpOptions` ma `ValidateOnStart`. To była nieprawda — `ValidateOnStart()` bez żadnej
+reguły walidacji niczego nie sprawdza, więc serwer wstawał, a wywalała się dopiero pierwsza rejestracja.
+Reguła została dopisana i **teraz** to zdanie jest prawdziwe.
 
 ### Wdrożenie kodu
 

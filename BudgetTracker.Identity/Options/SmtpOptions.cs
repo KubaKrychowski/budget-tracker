@@ -26,4 +26,15 @@ public sealed class SmtpOptions
     public required string FromAddress { get; init; }
 
     public string FromName { get; init; } = "Budżet tracker";
+
+    /// <summary>
+    /// Czy da się z tego wysłać choćby jednego maila.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Istnieje, bo wiązanie konfiguracji NIE wymusza <c>required</c> — obiekt powstaje przez refleksję
+    /// i brakująca sekcja daje po prostu <c>Host = null</c>. Samo <c>ValidateOnStart()</c> tego nie łapie,
+    /// dopóki nie ma reguły do sprawdzenia: serwer wstawał, a wywalała się dopiero pierwsza rejestracja,
+    /// czyli błąd konfiguracji wychodził u użytkownika zamiast przy starcie.
+    /// </remarks>
+    public bool IsUsable => !string.IsNullOrWhiteSpace(Host) && !string.IsNullOrWhiteSpace(FromAddress);
 }
