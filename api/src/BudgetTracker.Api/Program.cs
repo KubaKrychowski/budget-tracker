@@ -17,11 +17,35 @@ using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 using Microsoft.Extensions.Azure;
 using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Nie ujawniaj stosu (Kestrel/ASP.NET) w nagłówku `Server` — darmowe utrudnienie dla skanerów.
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
+// Globalny, hojny limiter per IP — warstwa obrony przed floodem (API stoi WPROST na Azure, bez WAF/CDN,
+// na jednej instancji B1). Próg wysoko: załadowanie ekranu to kilkanaście żądań, więc człowiek/SPA go nie
+// dotyka, a zalewanie z jednego adresu dostaje 429. IP wiarygodne dzięki ASPNETCORE_FORWARDEDHEADERS_ENABLED.
+// Docelowa ochrona wolumetryczna i tak należy do brzegu (Cloudflare/Front Door) — patrz raport pentestu.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 240,
+                Window = TimeSpan.FromSeconds(10),
+                SegmentsPerWindow = 5,
+                QueueLimit = 0,
+            }));
+});
 
 builder.Services.AddOpenApi();
 
@@ -108,6 +132,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Nagłówki bezpieczeństwa na KAŻDEJ odpowiedzi API. Pierwszy w potoku, żeby objąć też odpowiedzi błędów.
+// API zwraca wyłącznie JSON i nie serwuje HTML/skryptów, więc `default-src 'none'` jest bezpieczne i mocne;
+// `frame-ancestors 'none'` + `X-Frame-Options: DENY` odcinają osadzanie API w ramce, `nosniff` blokuje
+// MIME-sniffing JSON-a, `no-referrer` nie wypuszcza adresu z tokenem w Referer.
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "no-referrer";
+    headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    await next();
+});
+
 var supportedCultures = new[] { new CultureInfo("pl"), new CultureInfo("en") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -166,6 +204,7 @@ app.UseExceptionHandler();
 // jak niezalogowane (401), mimo że front poprawnie go wysłał.
 if (!app.Environment.IsDevelopment())
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 
@@ -175,6 +214,9 @@ app.UseCors(frontendCors);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Globalny limiter per IP (konfiguracja wyżej) — 429 przy zalewaniu z jednego adresu.
+app.UseRateLimiter();
 
 app.UseJobsDashboard();
 app.UseBudgetJobs();

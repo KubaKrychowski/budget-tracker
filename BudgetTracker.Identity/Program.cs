@@ -10,6 +10,8 @@ using BudgetTracker.Identity.Services.Emails;
 using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,12 +22,51 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Nie ujawniaj stosu (Kestrel/ASP.NET) w nagłówku `Server` — darmowe utrudnienie dla skanerów.
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 builder.Services.AddLocalization();
 
 // ErrorMessage w atrybutach walidacji modeli to klucz z SharedResource — patrz AccountViewModels.
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(options =>
         options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
+
+// Ograniczenie tempa na endpointach poświadczeń — do tej pory jedyną barierą był lockout konta (3 próby),
+// który nic nie mówił o próbach z jednego IP na WIELE kont (credential stuffing) ani o spamie maili
+// (ForgotPassword/ResendEmailConfirmation bez żadnego limitu = koszt ACS + zalewanie cudzych skrzynek).
+// Partycja po IP klienta jest wiarygodna, bo App Service ma ASPNETCORE_FORWARDEDHEADERS_ENABLED=true, więc
+// RemoteIpAddress to prawdziwy adres zza X-Forwarded-For, nie adres load balancera.
+// Limity są luźne dla człowieka (jedno logowanie to 1-3 żądania), ciasne dla automatu.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    static string ClientKey(HttpContext http) =>
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+    // Ogólny limit poświadczeń: logowanie, rejestracja, zgadywanie kodów 2FA.
+    options.AddPolicy("auth", http => RateLimitPartition.GetSlidingWindowLimiter(
+        ClientKey(http),
+        _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromMinutes(1),
+            SegmentsPerWindow = 6,
+            QueueLimit = 0,
+        }));
+
+    // Ciaśniej dla endpointów wysyłających maile — chroni koszt ACS i cudze skrzynki przed zalewaniem.
+    options.AddPolicy("email", http => RateLimitPartition.GetSlidingWindowLimiter(
+        ClientKey(http),
+        _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            SegmentsPerWindow = 6,
+            QueueLimit = 0,
+        }));
+});
 
 // Bez trwałych kluczy ochrony danych są efemeryczne — każdy restart procesu wylogowywałby wszystkich, bo
 // ciasteczko przestaje się dać odszyfrować. Kto zdobędzie te klucze, może podrobić ciasteczko logowania, więc
@@ -277,6 +318,10 @@ app.UseCors(spaCors);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Po routingu i autoryzacji — polityki „auth"/„email" nakłada się atrybutem [EnableRateLimiting] na akcjach
+// poświadczeń w AccountController. Odrzucenie = 429.
+app.UseRateLimiter();
 
 app.MapStaticAssets();
 

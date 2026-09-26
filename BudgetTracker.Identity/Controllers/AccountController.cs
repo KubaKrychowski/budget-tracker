@@ -8,6 +8,7 @@ using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Localization;
 using OpenIddict.Abstractions;
@@ -19,6 +20,12 @@ namespace BudgetTracker.Identity.Controllers;
 /// Ekrany logowania/rejestracji/hasła/2FA (makiety w Figmie, plik „Logowanie (Identity)"). Renderowane
 /// po stronie serwera (Razor) — front Angulara nie ma własnego UI logowania, tylko przekierowuje tutaj.
 /// </summary>
+/// <remarks>
+/// Polityka „auth" (limit per IP) na całym kontrolerze — chroni logowanie/rejestrację/zgadywanie kodów 2FA
+/// przed automatyzacją z jednego adresu (lockout konta łapie tylko próby na JEDNO konto). Endpointy wysyłające
+/// maile dostają dodatkowo ciaśniejszą „email" (patrz atrybuty na akcjach). Limity są luźne dla człowieka.
+/// </remarks>
+[EnableRateLimiting("auth")]
 public sealed class AccountController(
     SignInManager<ApplicationUser> signInManager,
     UserManager<ApplicationUser> userManager,
@@ -170,6 +177,7 @@ public sealed class AccountController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("email")]
     public async Task<IActionResult> ResendEmailConfirmation(ResendEmailConfirmationViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
@@ -198,6 +206,7 @@ public sealed class AccountController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("email")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
