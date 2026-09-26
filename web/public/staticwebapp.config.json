@@ -1,0 +1,17 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/i18n/*",
+      "/icons/*",
+      "/handbook/*",
+      "/*.{js,css,map,json,ico,png,jpg,svg,webmanifest,txt,woff,woff2,ttf}"
+    ]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  }
+}
