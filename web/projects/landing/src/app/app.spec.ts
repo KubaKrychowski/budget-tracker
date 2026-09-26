@@ -128,6 +128,7 @@ describe('Landing', () => {
     const allowed = [
       'https://github.com/KubaKrychowski/budget-tracker',
       'https://app.wydatki.com',
+      'https://www.linkedin.com/in/kuba-krychowski/',
     ];
     const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
 
@@ -180,5 +181,20 @@ describe('Landing', () => {
       expect(img.getAttribute('width')).toBeTruthy();
       expect(img.getAttribute('height')).toBeTruthy();
     }
+  });
+
+  it('mówi, kto to napisał, i nie zmyśla przy tym życiorysu', () => {
+    // Strona wielokrotnie powołuje się na to, że projekt jest jednoosobowy — bez tej sekcji ani razu
+    // nie mówi, kim ta osoba jest, a to podkopuje wiarygodność, na której cała reszta stoi.
+    expect(text()).toContain('Kto to napisał');
+
+    // ⚠️ Powód powstania ma pozostać TYM, który podał autor. To jedyne zdanie na stronie, którego nie
+    // da się sprawdzić w kodzie, więc jest jedyne, przy którym łatwo o podmianę na marketingowy ogólnik.
+    expect(text()).toContain('gubienia pieniędzy w środku miesiąca');
+
+    // Sekcja o autorze bez możliwości sprawdzenia, kim jest, jest ślepym zaułkiem.
+    const links = [...fixture.nativeElement.querySelectorAll('a[href]')]
+      .map((a: Element) => a.getAttribute('href'));
+    expect(links).toContain('https://www.linkedin.com/in/kuba-krychowski/');
   });
 });

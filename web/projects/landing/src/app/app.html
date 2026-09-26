@@ -365,14 +365,44 @@
     </div>
   </section>
 
+  <!-- ── O autorze ─────────────────────────────────────────────────────────────────────
+       Sekcja istnieje, bo reszta strony mówi „projekt jednoosobowy”, nie mówiąc, kto nią jest.
+       ⚠️ Każde zdanie tutaj ma być sprawdzalne — to ta sama zasada co w „Czego to nie robi”.
+       Żadnej wymyślonej motywacji ani tytułów, których nie da się potwierdzić. -->
+  <section class="wrap section">
+    <h2>Kto to napisał</h2>
+    <p class="section-lead">
+      Jestem Kuba, od czterech lat piszę zawodowo w Angularze i .NET.
+    </p>
+    <p>
+      Wydatki.com powstały poza pracą, z poczucia gubienia pieniędzy w środku miesiąca
+      i małych oszczędności mimo wystarczających zarobków. Jestem jednocześnie jedynym autorem
+      i jedynym użytkownikiem, więc każda decyzja zapadała pod kątem tego, żeby
+      <strong>mnie</strong> było wygodnie prowadzić własny budżet — nie pod kątem hipotetycznego
+      rynku. Stąd rzeczy, których zwykle nie robi się w projekcie na jedną osobę: izolacja danych
+      na poziomie bazy zamiast filtrowania w kodzie, własny serwer tożsamości zamiast gotowej
+      usługi, model uczony na moich własnych poprawkach.
+    </p>
+    <p>
+      Kod jest publiczny razem z tym, co zwykle się przemilcza: dziennikiem decyzji i listą
+      rzeczy, których aplikacja nie robi.
+    </p>
+    <div class="cta__buttons">
+      <a nz-button nzSize="large" [href]="linkedInUrl" rel="noopener noreferrer" target="_blank">
+        <nz-icon nzType="linkedin" />
+        LinkedIn
+      </a>
+    </div>
+  </section>
+
   <!-- ── CTA ───────────────────────────────────────────────────────────────────────────
-       Nadal bez „Wypróbuj”: nie ma hostingu, nie ma rejestracji, jest jedna baza z prywatnymi
-       danymi. Przycisk do aplikacji prowadzi do instancji LOKALNEJ i mówi to wprost. -->
+       Nadal bez „Wypróbuj”: nie ma rejestracji otwartej dla każdego, jest zamknięta beta
+       na zaproszenia. Przycisk prowadzi do wdrożonej aplikacji i mówi wprost, co zastanie. -->
   <section class="wrap section cta">
     <h2>Kod jest otwarty</h2>
     <p class="section-lead">
-      Nie ma wersji demo ani hostingu — aplikacja stoi lokalnie, u jednej osoby.
-      Jest za to repozytorium razem z decyzjami projektowymi i ich uzasadnieniami.
+      Aplikacja jest wdrożona, ale konto założysz tylko z zaproszeniem — trwa zamknięta beta.
+      Repozytorium jest za to otwarte, razem z decyzjami projektowymi i ich uzasadnieniami.
     </p>
     <div class="cta__buttons">
       <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
