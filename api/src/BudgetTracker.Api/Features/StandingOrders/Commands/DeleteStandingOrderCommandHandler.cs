@@ -18,10 +18,8 @@ public sealed class DeleteStandingOrderCommandHandler(AppDbContext db, StandingO
         var order = await db.StandingOrders.FirstOrDefaultAsync(o => o.BusinessId == id, ct)
             ?? throw new StandingOrderNotFoundException(id);
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await matcher.ForgetAsync(order.BusinessId, ct);
         db.StandingOrders.Remove(order);
         await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
     }
 }

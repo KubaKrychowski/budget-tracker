@@ -20,10 +20,12 @@ public sealed class UpdateTransactionsCommandHandler(
     /// <remarks>
     /// <list type="bullet">
     /// <item>Wszystko w JEDNEJ transakcji bazodanowej, wszystko albo nic. Częściowy zapis przy edycji
-    /// dwudziestu wierszy zostawiłby użytkownika bez wiedzy, które przeszły.</item>
-    /// <item>Walidacja PRZED otwarciem transakcji — nie ma po co jej zaczynać, jeśli wejście i tak jest
-    /// do odrzucenia. Wszystkie wiersze naraz, nie pierwszy z brzegu: przy edycji masowej użytkownik ma
-    /// dowiedzieć się o wszystkich pustych opisach.</item>
+    /// dwudziestu wierszy zostawiłby użytkownika bez wiedzy, które przeszły. Transakcję zakłada raz na całe
+    /// żądanie <see cref="Infrastructure.RlsTransactionEndpointFilter"/> (jedna transakcja = jedno żądanie),
+    /// dlatego handler jej nie otwiera — ale atomowość jednego <c>SaveChanges</c> i tak by ją dała.</item>
+    /// <item>Walidacja PRZED zapisem — nie ma po co go zaczynać, jeśli wejście i tak jest do odrzucenia.
+    /// Wszystkie wiersze naraz, nie pierwszy z brzegu: przy edycji masowej użytkownik ma dowiedzieć się
+    /// o wszystkich pustych opisach.</item>
     /// <item>Zasięg budżetu jest częścią WARUNKU, nie sprawdzeniem po fakcie: wiersz spoza budżetu po prostu
     /// nie wejdzie do słownika, więc rzuci 404 — tak samo jak identyfikator, którego w ogóle nie ma.</item>
     /// <item>Reguła „człowiek poprawił kategorię" ma jedno miejsce — <see cref="ManualCategoryCorrection"/>
@@ -49,8 +51,6 @@ public sealed class UpdateTransactionsCommandHandler(
             .Select(c => new { c.Id, c.BusinessId })
             .ToDictionaryAsync(c => c.BusinessId, c => c.Id, ct);
 
-        await using var dbTransaction = await db.Database.BeginTransactionAsync(ct);
-
         foreach (var edit in request.Edits)
         {
             if (!transactions.TryGetValue(edit.Id, out var transaction))
@@ -69,7 +69,6 @@ public sealed class UpdateTransactionsCommandHandler(
         }
 
         await db.SaveChangesAsync(ct);
-        await dbTransaction.CommitAsync(ct);
 
         return await reader.ReadByIdsAsync(ids, ct);
     }

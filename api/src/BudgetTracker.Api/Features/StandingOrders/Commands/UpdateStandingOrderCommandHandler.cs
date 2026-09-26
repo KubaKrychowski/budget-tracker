@@ -22,10 +22,8 @@ public sealed class UpdateStandingOrderCommandHandler(AppDbContext db, StandingO
 
         order.Change(valid.Name, valid.ExpectedAmount, valid.Rhythm, valid.DueMonth, valid.Rules);
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.SaveChangesAsync(ct);
         var linked = await matcher.RematchAsync(order, ct);
-        await transaction.CommitAsync(ct);
 
         return new StandingOrderSavedResponseDto(order.BusinessId, linked);
     }

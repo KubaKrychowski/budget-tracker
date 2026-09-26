@@ -9,7 +9,7 @@ namespace BudgetTracker.Api.Features.StandingOrders.Commands;
 public sealed class CreateStandingOrderCommandHandler(
     AppDbContext db, StandingOrdersBudgetScope scope, StandingOrderMatcher matcher, ICurrentUserAccessor currentUser)
 {
-    /// <summary>Zapis zlecenia i przypięcia wstecz w JEDNEJ transakcji bazodanowej.</summary>
+    /// <summary>Zapis zlecenia i przypięcia wstecz w jednej transakcji na żądanie (zakłada ją RlsTransactionEndpointFilter).</summary>
     /// <remarks>
     /// Zlecenie zapisane bez przypięć pokazywałoby „czeka” przy czynszu, który zszedł tydzień temu — dlatego oba kroki
     /// idą razem albo wcale.
@@ -24,11 +24,9 @@ public sealed class CreateStandingOrderCommandHandler(
             currentUser.UserId);
         order.ReplaceRules(valid.Rules);
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         db.StandingOrders.Add(order);
         await db.SaveChangesAsync(ct);
         var linked = await matcher.RematchAsync(order, ct);
-        await transaction.CommitAsync(ct);
 
         return new StandingOrderSavedResponseDto(order.BusinessId, linked);
     }

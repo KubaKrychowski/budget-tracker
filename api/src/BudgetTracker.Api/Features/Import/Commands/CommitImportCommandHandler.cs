@@ -36,11 +36,12 @@ public sealed class CommitImportCommandHandler(
     /// import, nie jednym na wiersz. Nieznana kategoria = brak kategorii, nie wyjątek: wiersz trafi do przeglądu
     /// zamiast wywracać cały import przez jeden zły identyfikator z frontu.</item>
     /// <item>Kategoria wskazana przez człowieka nie ma „pewności" — to nie predykcja (<see cref="ManualCategoryCorrection"/>).</item>
-    /// <item><see cref="ImportBatch"/> zapisuje się pierwszym <c>SaveChanges</c> wewnątrz transakcji bazodanowej:
-    /// transakcje odwołują się do niego kluczem, a bez nawigacji EF nie uzupełni go sam. Transakcja bazodanowa pilnuje,
-    /// żeby po nieudanym zapisie wierszy nie został pusty ślad importu.</item>
-    /// <item>Nowe wydatki są przypinane do zleceń stałych budżetu W TEJ SAMEJ transakcji — import, po którym czynsz
-    /// „czeka”, choć właśnie zszedł, byłby gorszy niż brak zleceń. Przypięcie nie zmienia kategorii.</item>
+    /// <item><see cref="ImportBatch"/> zapisuje się pierwszym <c>SaveChanges</c>: transakcje odwołują się do niego
+    /// kluczem, a bez nawigacji EF nie uzupełni go sam. Całość żądania idzie w jednej transakcji zakładanej przez
+    /// <see cref="Infrastructure.RlsTransactionEndpointFilter"/> (jedna transakcja na żądanie) — dlatego handler nie
+    /// otwiera własnej, a mimo dwóch <c>SaveChanges</c> po nieudanym zapisie wierszy nie zostaje pusty ślad importu.</item>
+    /// <item>Nowe wydatki są przypinane do zleceń stałych budżetu W TYM SAMYM żądaniu (tej samej transakcji) — import,
+    /// po którym czynsz „czeka”, choć właśnie zszedł, byłby gorszy niż brak zleceń. Przypięcie nie zmienia kategorii.</item>
     /// <item>Analogicznie: nowe transakcje pasujące do reguł transferu budżetu (<see cref="SavingsTransferMatcher"/>)
     /// dostają od razu <see cref="Transaction.SavingsTransferBudgetBusinessId"/> — bez tego świeży import wyglądałby
     /// jak realny wydatek/przychód, dopóki ktoś ręcznie nie przeliczyłby reguł.</item>
@@ -62,7 +63,6 @@ public sealed class CommitImportCommandHandler(
         var batch = new ImportBatch(budget.Id, request.Bank, request.FileName, rows.Count, now, budget.UserId);
         db.ImportBatches.Add(batch);
 
-        await using var dbTransaction = await db.Database.BeginTransactionAsync(ct);
         await db.SaveChangesAsync(ct);
 
         var saved = new List<Transaction>(rows.Count);
@@ -101,7 +101,6 @@ public sealed class CommitImportCommandHandler(
         var savedIds = saved.Select(t => t.BusinessId).ToList();
         await standingOrders.PinAsync(budget.BusinessId, savedIds, ct);
         await savingsTransfers.PinAsync(budget, savedIds, ct);
-        await dbTransaction.CommitAsync(ct);
 
         return await BuildSummaryAsync(batch, saved, budget, ct);
     }
