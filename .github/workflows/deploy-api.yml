@@ -36,6 +36,20 @@ jobs:
           -v app_password=budget_app_dev_only
           -f api/db/setup-rls-roles.sql
 
+      # ⚠️ Uprawnienia nadajemy w template1, a nie w konkretnej bazie. Kazda klasa testowa zaklada
+      # i kasuje WLASNA baze (TestDatabase.ResetAsync), wiec nie ma tu bazy, na ktorej dalo by sie to
+      # zrobic z gory. CREATE DATABASE kopiuje template1 razem z jego katalogiem domyslnych uprawnien,
+      # wiec kazda nowa baza testowa dziedziczy ALTER DEFAULT PRIVILEGES i tabele tworzone przez
+      # `budget` od razu maja GRANT-y dla budget_app i budget_jobs.
+      #
+      # Bez tego BudgetPurger, ktory wchodzi w budget_jobs przez SET LOCAL ROLE, dostaje
+      # "42501: permission denied for table Budgets" - rola istnieje, ale nie ma do czego siegnac.
+      - name: Domyslne uprawnienia dla nowych baz testowych
+        run: >-
+          psql "postgresql://budget:budget_dev_only@localhost:5432/template1"
+          -v ON_ERROR_STOP=1
+          -f api/db/grant-app-privileges.sql
+
       - run: dotnet test api/tests/BudgetTracker.Api.Tests --configuration Release
 
       - run: dotnet publish api/src/BudgetTracker.Api --configuration Release --output publish
@@ -73,3 +87,11 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+
+      # Emulator Azure Blob Storage. TrainingSetBuilderTests i CategoryModelTrainingTests zapisuja
+      # zbior uczacy i model do bloba, wiec bez niego dostaja "Connection refused (localhost:10000)".
+      # Lokalnie daje go docker-compose; tutaj musi byc osobno.
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite
+        ports:
+          - 10000:10000
