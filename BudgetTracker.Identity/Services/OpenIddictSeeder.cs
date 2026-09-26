@@ -67,7 +67,7 @@ public sealed class OpenIddictSeeder(
         await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
         {
             Name = OAuthDefaults.ApiScope,
-            DisplayName = "Budżet tracker API",
+            DisplayName = "Wydatki.com API",
             Resources = { OAuthDefaults.ApiScope },
         }, ct);
     }
@@ -83,7 +83,7 @@ public sealed class OpenIddictSeeder(
         await scopeManager.CreateAsync(new OpenIddictScopeDescriptor
         {
             Name = OAuthDefaults.AdminApiScope,
-            DisplayName = "Budżet tracker API — polecenia administracyjne",
+            DisplayName = "Wydatki.com API — polecenia administracyjne",
             Resources = { OAuthDefaults.ApiScope },
         }, ct);
     }
@@ -95,7 +95,7 @@ public sealed class OpenIddictSeeder(
         var descriptor = new OpenIddictApplicationDescriptor
         {
             ClientId = clientId,
-            DisplayName = "Budżet tracker — aplikacja webowa",
+            DisplayName = "Wydatki.com — aplikacja webowa",
             ClientType = ClientTypes.Public,
             ConsentType = ConsentTypes.Explicit,
             // Bez GrantTypes.RefreshToken/scope "offline_access" — SPA odnawia sesję ukrytym

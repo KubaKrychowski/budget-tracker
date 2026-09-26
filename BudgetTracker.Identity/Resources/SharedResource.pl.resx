@@ -4,7 +4,7 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value></resheader>
-  <data name="App_Name" xml:space="preserve"><value>Budżet tracker</value></data>
+  <data name="App_Name" xml:space="preserve"><value>Wydatki.com</value></data>
   <data name="Common_BackToLogin" xml:space="preserve"><value>Wróć do logowania</value></data>
   <data name="Common_GoToLogin" xml:space="preserve"><value>Przejdź do logowania</value></data>
   <data name="Common_BackToApp" xml:space="preserve"><value>Wróć do aplikacji</value></data>
@@ -126,22 +126,22 @@
   <data name="OAuth_CliEmailNotConfirmed" xml:space="preserve"><value>Musisz potwierdzić adres e-mail, zanim zalogujesz się przez bt-cli. Sprawdź skrzynkę albo zaloguj się w aplikacji webowej, żeby wysłać link ponownie.</value></data>
   <data name="OAuth_CliTwoFactor" xml:space="preserve"><value>Konto ma włączoną weryfikację dwuetapową — bt-cli jej jeszcze nie obsługuje. Zaloguj się w aplikacji webowej.</value></data>
   <data name="Mail_LinkFallback" xml:space="preserve"><value>Przycisk nie działa? Skopiuj ten adres do przeglądarki:</value></data>
-  <data name="Mail_Confirm_Subject" xml:space="preserve"><value>Potwierdź adres e-mail — Budżet tracker</value></data>
+  <data name="Mail_Confirm_Subject" xml:space="preserve"><value>Potwierdź adres e-mail — Wydatki.com</value></data>
   <data name="Mail_Confirm_Heading" xml:space="preserve"><value>Potwierdź adres e-mail</value></data>
-  <data name="Mail_Confirm_Body" xml:space="preserve"><value>Cześć! Dziękujemy za założenie konta w Budżet tracker. Potwierdź adres e-mail, żeby aktywować konto i móc się zalogować.</value></data>
+  <data name="Mail_Confirm_Body" xml:space="preserve"><value>Cześć! Dziękujemy za założenie konta w Wydatki.com. Potwierdź adres e-mail, żeby aktywować konto i móc się zalogować.</value></data>
   <data name="Mail_Confirm_Button" xml:space="preserve"><value>Potwierdź adres e-mail</value></data>
   <data name="Mail_Confirm_Footer" xml:space="preserve"><value>Jeśli to nie Ty zakładałeś/aś konto, zignoruj tę wiadomość — bez potwierdzenia konto pozostanie nieaktywne.</value></data>
-  <data name="Mail_Reset_Subject" xml:space="preserve"><value>Reset hasła — Budżet tracker</value></data>
+  <data name="Mail_Reset_Subject" xml:space="preserve"><value>Reset hasła — Wydatki.com</value></data>
   <data name="Mail_Reset_Heading" xml:space="preserve"><value>Zresetuj hasło</value></data>
-  <data name="Mail_Reset_Body" xml:space="preserve"><value>Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w Budżet tracker. Kliknij przycisk, żeby ustawić nowe hasło. Reset odblokuje też konto, jeśli zostało zablokowane po nieudanych próbach logowania.</value></data>
+  <data name="Mail_Reset_Body" xml:space="preserve"><value>Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta w Wydatki.com. Kliknij przycisk, żeby ustawić nowe hasło. Reset odblokuje też konto, jeśli zostało zablokowane po nieudanych próbach logowania.</value></data>
   <data name="Mail_Reset_Button" xml:space="preserve"><value>Ustaw nowe hasło</value></data>
   <data name="Mail_Reset_Footer" xml:space="preserve"><value>Jeśli to nie Ty prosiłeś/aś o reset hasła, zignoruj tę wiadomość — Twoje hasło się nie zmieni.</value></data>
-  <data name="Mail_Code_Subject" xml:space="preserve"><value>Kod weryfikacyjny — Budżet tracker</value></data>
+  <data name="Mail_Code_Subject" xml:space="preserve"><value>Kod weryfikacyjny — Wydatki.com</value></data>
   <data name="Mail_Code_Heading" xml:space="preserve"><value>Kod weryfikacyjny</value></data>
-  <data name="Mail_Code_Body" xml:space="preserve"><value>Użyj tego kodu, żeby dokończyć logowanie w Budżet tracker:</value></data>
+  <data name="Mail_Code_Body" xml:space="preserve"><value>Użyj tego kodu, żeby dokończyć logowanie w Wydatki.com:</value></data>
   <data name="Mail_Code_Hint" xml:space="preserve"><value>Kod jest ważny krótko — wpisz go od razu w oknie logowania.</value></data>
   <data name="Mail_Code_Footer" xml:space="preserve"><value>Jeśli to nie Ty próbujesz się zalogować, zignoruj tę wiadomość i rozważ zmianę hasła.</value></data>
-  <data name="Admin_Brand" xml:space="preserve"><value>Budżet tracker · Administracja</value></data>
+  <data name="Admin_Brand" xml:space="preserve"><value>Wydatki.com · Administracja</value></data>
   <data name="Admin_Users_Title" xml:space="preserve"><value>Użytkownicy</value></data>
   <data name="Admin_Users_Subtitle" xml:space="preserve"><value>Konta w serwerze tożsamości i ilość ich danych w aplikacji. Usunięcie konta kasuje też jego dane.</value></data>
   <data name="Admin_Tab_Users" xml:space="preserve"><value>Użytkownicy ({0})</value></data>

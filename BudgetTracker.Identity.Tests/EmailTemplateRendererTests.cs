@@ -10,7 +10,7 @@ public sealed class EmailTemplateRendererTests
     {
         ["Lang"] = "pl",
         ["Title"] = "Temat",
-        ["AppName"] = "Budżet tracker",
+        ["AppName"] = "Wydatki.com",
         ["Heading"] = "Nagłówek",
         ["Body"] = "Treść",
         ["ButtonLabel"] = "Kliknij",

@@ -23,8 +23,8 @@ public sealed class AccountEmailServiceTests
     }
 
     [Theory]
-    [InlineData("pl", "Potwierdź adres e-mail — Budżet tracker", "Dziękujemy za założenie konta")]
-    [InlineData("en", "Confirm your email address — Budget Tracker", "Thanks for creating an account")]
+    [InlineData("pl", "Potwierdź adres e-mail — Wydatki.com", "Dziękujemy za założenie konta")]
+    [InlineData("en", "Confirm your email address — Wydatki.com", "Thanks for creating an account")]
     public async Task Confirmation_mail_is_sent_in_the_language_of_the_request(string culture, string subject, string bodyFragment)
     {
         var (service, sender) = Create();
@@ -41,8 +41,8 @@ public sealed class AccountEmailServiceTests
     }
 
     [Theory]
-    [InlineData("pl", "Reset hasła — Budżet tracker", "odblokuje też konto")]
-    [InlineData("en", "Reset your password — Budget Tracker", "also unlocks the account")]
+    [InlineData("pl", "Reset hasła — Wydatki.com", "odblokuje też konto")]
+    [InlineData("en", "Reset your password — Wydatki.com", "also unlocks the account")]
     public async Task Reset_mail_mentions_that_the_reset_unlocks_the_account(string culture, string subject, string bodyFragment)
     {
         var (service, sender) = Create();
@@ -56,8 +56,8 @@ public sealed class AccountEmailServiceTests
     }
 
     [Theory]
-    [InlineData("pl", "Kod weryfikacyjny — Budżet tracker")]
-    [InlineData("en", "Verification code — Budget Tracker")]
+    [InlineData("pl", "Kod weryfikacyjny — Wydatki.com")]
+    [InlineData("en", "Verification code — Wydatki.com")]
     public async Task Two_factor_mail_carries_the_code(string culture, string subject)
     {
         var (service, sender) = Create();
