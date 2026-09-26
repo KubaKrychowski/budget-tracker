@@ -45,6 +45,48 @@ internal static class TestDatabase
         await ExecuteAsync(connectionString, name, $"DROP DATABASE IF EXISTS \"{name}\" WITH (FORCE)");
         NpgsqlConnection.ClearAllPools();
         await ExecuteAsync(connectionString, name, $"CREATE DATABASE \"{name}\" TEMPLATE template0");
+        await GrantToAppRolesAsync(connectionString);
+    }
+
+    /// <summary>
+    /// Zapowiada uprawnienia dla <c>budget_app</c> i <c>budget_jobs</c> na tabelach, których JESZCZE NIE MA.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ Bez tego <see cref="Features.Budgets.Services.BudgetPurger"/> pada na „42501: permission denied for
+    /// table Budgets". Rola <c>budget_jobs</c> istnieje (zakłada ją <c>api/db/setup-rls-roles.sql</c>), ale nie
+    /// jest właścicielem tabel, więc bez GRANT-ów nie ma do czego sięgnąć — a wchodzi się w nią przez
+    /// <c>SET LOCAL ROLE</c>, więc nie pomaga to, że sama appka łączy się rolą uprzywilejowaną.
+    /// </para>
+    /// <para>
+    /// Uprawnienia nadajemy ZAPOWIEDZIĄ (<c>ALTER DEFAULT PRIVILEGES</c>), a nie <c>ON ALL TABLES</c>, bo w tym
+    /// momencie baza jest pusta — tabele dokłada dopiero <c>EnsureCreatedAsync</c>/<c>MigrateAsync</c> klasy testowej.
+    /// </para>
+    /// <para>
+    /// ⚠️ Nie da się tego załatwić raz, na szablonie: bazy testowe powstają z <c>template0</c> (patrz
+    /// <see cref="ResetAsync"/>), więc nie dziedziczą niczego, co dopisano do <c>template1</c>.
+    /// </para>
+    /// </remarks>
+    private static async Task GrantToAppRolesAsync(string connectionString)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString) { Pooling = false };
+
+        await using var connection = new NpgsqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            GRANT USAGE ON SCHEMA public TO budget_app, budget_jobs;
+
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public
+                GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO budget_app, budget_jobs;
+
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public
+                GRANT USAGE, SELECT ON SEQUENCES TO budget_app, budget_jobs;
+            """,
+            connection);
+
+        await command.ExecuteNonQueryAsync();
     }
 
     /// <summary>Usuwa bazę testową, jeśli istnieje.</summary>
