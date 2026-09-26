@@ -1,4 +1,5 @@
 @using System.Globalization
+@inject BudgetTracker.Identity.Services.SpaOrigins Spa
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
@@ -16,6 +17,13 @@
 </head>
 <body class="auth-page">
 <div class="auth-card">
+    @* ⚠️ Znak stoi w LAYOUCIE, nie w poszczególnych widokach - tych jest 26 i dokładany po jednym
+       prędzej czy później gdzieś by wypadł, a użytkownik zobaczyłby stronę z hasłem bez żadnego
+       oznaczenia, czyja ona jest. O to, żeby stanął OBOK nagłówka, a nie nad nim, dba siatka
+       w auth.css - patrz komentarz przy .auth-card. *@
+    <a class="auth-brand" href="@(Spa.Default ?? "/")">
+        <img class="auth-brand__logo" src="~/logo.svg" width="36" height="36" alt=""/>
+    </a>
     @RenderBody()
 </div>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>

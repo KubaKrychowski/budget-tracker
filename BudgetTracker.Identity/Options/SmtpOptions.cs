@@ -25,7 +25,7 @@ public sealed class SmtpOptions
 
     public required string FromAddress { get; init; }
 
-    public string FromName { get; init; } = "Budżet tracker";
+    public string FromName { get; init; } = "Wydatki.com";
 
     /// <summary>
     /// Czy da się z tego wysłać choćby jednego maila.

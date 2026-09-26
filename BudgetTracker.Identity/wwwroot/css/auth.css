@@ -29,6 +29,13 @@ body.auth-page {
   padding: 24px;
 }
 
+/* ⚠️ Siatka, nie kolumna flex — znak musi stanąć OBOK nagłówka, a jest rodzeństwem całej treści
+   widoku (layout wstawia go raz, przed `@RenderBody`, bo widoków jest 26). W kolumnie flex wylądowałby
+   nad nagłówkiem; w siatce można go posadzić w pierwszym wierszu, w osobnej kolumnie, nie dotykając
+   ani jednego widoku.
+
+   Wszystko poza znakiem i nagłówkiem rozciąga się na obie kolumny, więc formularze i przyciski
+   zachowują pełną szerokość karty. */
 .auth-card {
   width: 100%;
   max-width: 440px;
@@ -36,10 +43,16 @@ body.auth-page {
   border-radius: 16px;
   padding: 40px;
   box-shadow: 0 4px 24px rgba(37, 43, 39, 0.10);
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+  row-gap: 28px;
+  align-content: start;
 }
+
+.auth-card > * { grid-column: 1 / -1; }
+.auth-card > .auth-brand { grid-column: 1; grid-row: 1; align-self: center; }
+.auth-card > .auth-header { grid-column: 2; grid-row: 1; }
 
 .auth-header { display: flex; flex-direction: column; gap: 8px; }
 .auth-header h1 { font-size: 20px; font-weight: 600; margin: 0; }
@@ -177,12 +190,20 @@ body.auth-page {
   word-break: break-all;
 }
 
+
+/* Znak w karcie. Nazwy produktu tu NIE MA - stoi w nagłówku karty jako <h1>, a powtórzona obok
+   znaku czytałaby się dwa razy, także dla czytnika ekranu. */
+.auth-brand { display: block; text-decoration: none; }
+.auth-brand__logo { display: block; }
+
+.admin-brand__logo { display: block; }
+
 /* ===== Administracja (lista użytkowników, dane bez właściciela, okna potwierdzenia) ===== */
 body.admin-page { align-items: flex-start; padding-top: 56px; }
 .auth-card.auth-card-wide { max-width: 1100px; gap: 24px; }
 
 .admin-header { display: flex; align-items: center; justify-content: space-between; }
-.admin-brand { font-size: 18px; font-weight: 600; color: var(--ds-primary-600); }
+.admin-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: var(--ds-primary-600); }
 .admin-titles h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
 .admin-titles p { font-size: 14px; color: var(--ds-neutral-500); margin: 0; }
 

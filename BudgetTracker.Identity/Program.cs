@@ -243,7 +243,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 // Domyślnie polski (jak API); język przeglądarki (Accept-Language) wybiera angielski, gdy go zażąda.
-var supportedCultures = new[] { new CultureInfo("pl"), new CultureInfo("en") };
+// ⚠️ TYLKO polski, choć tłumaczenia angielskie są kompletne i pilnuje ich test.
+//
+// Do 2026-09-26 obsługiwane były `pl` i `en`, a wybór robił nagłówek `Accept-Language`. Skutek był taki,
+// że użytkownik z angielską przeglądarką dostawał ANGIELSKI ekran logowania, po czym trafiał do aplikacji
+// i na stronę projektu, które są wyłącznie po polsku. Jeden produkt mówił do niego dwoma językami, a język
+// zmieniał się dokładnie w miejscu, w którym wpisuje się hasło.
+//
+// Angielskie zasoby zostają: `SharedResource.resx` jest zasobem NEUTRALNYM (awaryjnym), więc i tak musi
+// istnieć, a komplet kluczy w obu plikach jest warunkiem wpięcia drugiego języka, gdy pojawi się dla niego
+// powód. Zmienia się wyłącznie to, że przeglądarka nie decyduje już za użytkownika.
+var supportedCultures = new[] { new CultureInfo("pl") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("pl"),

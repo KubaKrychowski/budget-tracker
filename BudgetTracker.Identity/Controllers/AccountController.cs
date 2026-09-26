@@ -34,7 +34,14 @@ public sealed class AccountController(
     private const int RecoveryCodeCount = 10;
 
     /// <summary>Wystawca w aplikacji uwierzytelniającej — stały, żeby zmiana języka nie zdublowała wpisu w aplikacji.</summary>
-    private const string AuthenticatorIssuer = "Budżet tracker";
+    /// <remarks>
+    /// ⚠️ Zmiana tej wartości NIE unieważnia już skonfigurowanego uwierzytelniania dwuskładnikowego: sekret
+    /// zostaje ten sam, więc kody dalej działają. Zmienia się wyłącznie etykieta — konta zapisane wcześniej
+    /// zachowują starą nazwę, bo aplikacja uwierzytelniająca trzyma ją u siebie i nikt jej stamtąd nie zmieni.
+    /// Przy nazwie zmienionej w trakcie zamkniętej bety to kosmetyka; przy tysiącu kont byłby to rozjazd
+    /// widoczny dla użytkowników i wymagałby ponownej konfiguracji.
+    /// </remarks>
+    private const string AuthenticatorIssuer = "Wydatki.com";
 
     [HttpGet]
     public IActionResult Login(string? returnUrl = null) => View(new LoginViewModel { ReturnUrl = returnUrl });
