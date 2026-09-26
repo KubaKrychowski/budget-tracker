@@ -260,10 +260,29 @@ public sealed class AuthorizationController(
             // jest też jedynym deweloperem, więc grant "password" jest tu świadomym uproszczeniem,
             // nie ogólną praktyką dla klientów zewnętrznych.
             var user = await userManager.FindByEmailAsync(request.Username!);
-            if (user is null || !await userManager.CheckPasswordAsync(user, request.Password!))
+            if (user is null)
             {
                 return ForbidWithError(Errors.InvalidGrant, localizer["Login_InvalidCredentials"]);
             }
+
+            // ⚠️ Lockout egzekwowany RĘCZNIE, bo goły CheckPasswordAsync go nie rusza — bez tego ROPuC był
+            // kanałem na nieograniczone zgadywanie hasła, omijającym blokadę po 3 próbach z logowania webowego.
+            // Ręcznie (nie CheckPasswordSignInAsync), żeby ZACHOWAĆ kolejność: hasło sprawdzamy PRZED wymogiem
+            // potwierdzenia e-maila — inaczej ujawnialibyśmy istnienie niepotwierdzonego konta bez znajomości hasła.
+            if (await userManager.IsLockedOutAsync(user))
+            {
+                return ForbidWithError(Errors.InvalidGrant, localizer["Login_LockedOut"]);
+            }
+
+            if (!await userManager.CheckPasswordAsync(user, request.Password!))
+            {
+                // Zlicza nieudaną próbę i nakłada blokadę po przekroczeniu progu (Lockout w Program.cs).
+                await userManager.AccessFailedAsync(user);
+                return ForbidWithError(Errors.InvalidGrant, localizer["Login_InvalidCredentials"]);
+            }
+
+            // Udane hasło zeruje licznik nieudanych prób — tak samo jak robi to SignInManager przy logowaniu webowym.
+            await userManager.ResetAccessFailedCountAsync(user);
 
             if (!await userManager.IsEmailConfirmedAsync(user))
             {

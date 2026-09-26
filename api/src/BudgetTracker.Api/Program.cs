@@ -23,6 +23,9 @@ using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Nie ujawniaj stosu (Kestrel/ASP.NET) w nagłówku `Server` — darmowe utrudnienie dla skanerów.
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton(TimeProvider.System);
@@ -108,6 +111,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Nagłówki bezpieczeństwa na KAŻDEJ odpowiedzi API. Pierwszy w potoku, żeby objąć też odpowiedzi błędów.
+// API zwraca wyłącznie JSON i nie serwuje HTML/skryptów, więc `default-src 'none'` jest bezpieczne i mocne;
+// `frame-ancestors 'none'` + `X-Frame-Options: DENY` odcinają osadzanie API w ramce, `nosniff` blokuje
+// MIME-sniffing JSON-a, `no-referrer` nie wypuszcza adresu z tokenem w Referer.
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "no-referrer";
+    headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    await next();
+});
+
 var supportedCultures = new[] { new CultureInfo("pl"), new CultureInfo("en") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -166,6 +183,7 @@ app.UseExceptionHandler();
 // jak niezalogowane (401), mimo że front poprawnie go wysłał.
 if (!app.Environment.IsDevelopment())
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
 

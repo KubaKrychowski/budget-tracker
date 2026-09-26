@@ -20,6 +20,9 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Nie ujawniaj stosu (Kestrel/ASP.NET) w nagłówku `Server` — darmowe utrudnienie dla skanerów.
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 builder.Services.AddLocalization();
 
 // ErrorMessage w atrybutach walidacji modeli to klucz z SharedResource — patrz AccountViewModels.

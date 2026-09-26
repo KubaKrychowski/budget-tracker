@@ -4,5 +4,11 @@
     "exclude": [
       "/*.{js,css,map,json,ico,png,jpg,svg,webmanifest,txt,woff,woff2,ttf}"
     ]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   }
 }

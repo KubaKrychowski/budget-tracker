@@ -27,9 +27,36 @@ export class App {
   private readonly recentScreens = inject(RecentScreens);
   protected readonly terminal = inject(TerminalService);
 
-  /** Wylogowanie po stronie klienta — kończy sesję też na serwerze tożsamości (RP-initiated logout). */
+  /**
+   * Wylogowanie po stronie klienta — kończy sesję też na serwerze tożsamości (RP-initiated logout).
+   *
+   * ⚠️ Najpierw czyścimy własny stan w localStorage, DOPIERO potem wołamy `logoff()` (które przekierowuje
+   * na Identity). Klucze aplikacji nie mają prefiksu konta, więc na współdzielonym urządzeniu następny
+   * użytkownik zobaczyłby historię wyszukiwań/komend i aktywny budżet poprzednika. Czyszczenie przed
+   * przekierowaniem gwarantuje, że wykona się niezależnie od tego, jak szybko odejdzie nawigacja.
+   */
   protected logout(): void {
+    this.clearLocalAppState();
     this.oidcSecurityService.logoff().subscribe();
+  }
+
+  /**
+   * Usuwa z localStorage klucze należące do aplikacji (prefiksy `bt.`, `budget-tracker:`, `rules.`).
+   * Prefiksowo, nie po jawnej liście — nowy klucz pod znanym prefiksem znika bez dopisywania go tutaj.
+   * Owinięte w try/catch: w trybie prywatnym albo przy zablokowanym storage wylogowanie ma iść dalej.
+   */
+  private clearLocalAppState(): void {
+    try {
+      const prefixes = ['bt.', 'budget-tracker:', 'rules.'];
+      const toRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && prefixes.some((p) => key.startsWith(p))) toRemove.push(key);
+      }
+      toRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // localStorage niedostępny — nie blokujemy wylogowania.
+    }
   }
 
   /**
