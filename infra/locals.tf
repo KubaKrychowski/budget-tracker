@@ -1,4 +1,9 @@
 locals {
+  # Always On i proces 64-bitowy sa niedostepne w F1 i D1 - przy tych planach apply odrzuca oba
+  # ustawienia. Wyprowadzamy je z SKU, zeby powrot na F1 byl zmiana JEDNEJ wartosci, a nie polowaniem
+  # na trzy miejsca w konfiguracji.
+  supports_always_on = !contains(["F1", "D1"], var.app_service_sku)
+
   # Pelne nazwy hostow, gdy domena wlasna jest ustawiona. Null = zostajemy na adresach Azure.
   custom = var.custom_domain != null && var.custom_domain != ""
 

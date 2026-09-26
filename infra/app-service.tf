@@ -1,14 +1,19 @@
-# Jeden plan F1 na obie aplikacje .NET. Limit to 10 aplikacji na plan, więc dwie mieszczą się bez problemu
-# — problemem jest to, CO dzielą:
+# Jeden plan na obie aplikacje .NET — patrz zmienna `app_service_sku`.
 #
-#   * 60 minut CPU na dobę (per region per subskrypcja, nie per aplikacja). Po przekroczeniu App Service
-#     odpowiada 403 do końca doby. Import CSV i trening modelu potrafią zjeść to w kilka minut.
-#   * 1 GB pamięci NA CAŁY PLAN — dwa procesy ASP.NET dzielą się jednym gigabajtem.
-#   * 165 MB transferu na dobę.
+# REWIZJA (2026-09-26): z F1 na B1. F1 przestał wystarczać nie z powodu wydajności, tylko dlatego, że trzy
+# jego ograniczenia okazały się blokadami funkcjonalnymi:
 #
-# ⚠️ Always On nie istnieje w F1. Konsekwencja nie jest kosmetyczna: proces jest usypiany po ok. 20
-# minutach bez ruchu, więc zadania Hangfire (trening modelu, BudgetPurger) NIE WYKONAJĄ SIĘ, dopóki ktoś
-# nie wejdzie na stronę i nie obudzi procesu. Pierwsze żądanie po uśpieniu to kilkanaście sekund.
+#   * brak własnych domen i certyfikatu — a dopóki Identity stoi pod `*.azurewebsites.net`, a front pod
+#     `*.azurestaticapps.net`, ciasteczko sesji jest ciasteczkiem TRZECIEJ STRONY. Ciche odnawianie sesji
+#     działa wtedy najwyżej w Chrome i tylko do czasu;
+#   * brak Always On — zadania Hangfire (trening modelu, `BudgetPurger`) NIE WYKONYWAŁY SIĘ, dopóki ktoś
+#     nie wszedł na stronę i nie obudził procesu;
+#   * 60 minut CPU na dobę, liczone per region per subskrypcja. Pętla awaryjna po jednej literówce
+#     w connection stringu potrafiła to wyczerpać i wyłączyć obie aplikacje do północy UTC.
+#
+# ⚠️ B1 nalicza się od REZERWACJI, nie od zużycia: plan kosztuje za każdą godzinę istnienia, także przy
+# zerowym ruchu i przy zatrzymanych aplikacjach. Zatrzymanie aplikacji NIE wstrzymuje naliczania —
+# trzeba zejść z powrotem na F1 albo usunąć plan.
 
 resource "azurerm_service_plan" "main" {
   name                = "${local.prefix}-plan"
@@ -16,7 +21,7 @@ resource "azurerm_service_plan" "main" {
   location            = local.location
 
   os_type  = "Linux"
-  sku_name = "F1"
+  sku_name = var.app_service_sku
 
   tags = local.tags
 }
@@ -43,8 +48,8 @@ resource "azurerm_linux_web_app" "api" {
   site_config {
     # ⚠️ Oba ustawienia są WYMUSZONE przez F1, nie są wyborem: Always On jest w tym planie niedostępne,
     # a proces 64-bitowy też. Pozostawienie domyślnych wartości kończy się błędem przy `apply`.
-    always_on         = false
-    use_32_bit_worker = true
+    always_on         = local.supports_always_on
+    use_32_bit_worker = !local.supports_always_on
 
     ftps_state          = "Disabled"
     minimum_tls_version = "1.2"
@@ -90,8 +95,8 @@ resource "azurerm_linux_web_app" "identity" {
   https_only = true
 
   site_config {
-    always_on         = false
-    use_32_bit_worker = true
+    always_on         = local.supports_always_on
+    use_32_bit_worker = !local.supports_always_on
 
     ftps_state          = "Disabled"
     minimum_tls_version = "1.2"
