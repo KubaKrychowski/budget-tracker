@@ -57,6 +57,13 @@ resource "azurerm_linux_web_app" "api" {
   app_settings = {
     ASPNETCORE_ENVIRONMENT = "Production"
 
+    # ⚠️ App Service konczy TLS na froncie i przekazuje zadanie do kontenera zwyklym HTTP, wiec
+    # aplikacja widzi Request.IsHttps == false. Bez tego ustawienia antiforgery z SecurePolicy.Always
+    # rzuca przy kazdym formularzu, a UseHttpsRedirection z UseHsts robi nieskonczone przekierowanie.
+    # Wlacza middleware naglowkow przekazanych - bez zmiany w kodzie, patrz dokumentacja ASP.NET Core
+    # "Configure ASP.NET Core to work with proxy servers and load balancers".
+    ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true"
+
     ConnectionStrings__Postgres = var.postgres_connection_string_api
 
     # Resource server: API waliduje tokeny przez JWKS serwera tożsamości, bez wspólnej bazy.
@@ -99,6 +106,13 @@ resource "azurerm_linux_web_app" "identity" {
   app_settings = merge(
     {
       ASPNETCORE_ENVIRONMENT = "Production"
+
+      # ⚠️ App Service konczy TLS na froncie i przekazuje zadanie do kontenera zwyklym HTTP, wiec
+      # aplikacja widzi Request.IsHttps == false. Bez tego ustawienia antiforgery z SecurePolicy.Always
+      # rzuca przy kazdym formularzu, a UseHttpsRedirection z UseHsts robi nieskonczone przekierowanie.
+      # Wlacza middleware naglowkow przekazanych - bez zmiany w kodzie, patrz dokumentacja ASP.NET Core
+      # "Configure ASP.NET Core to work with proxy servers and load balancers".
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true"
 
       ConnectionStrings__Default = var.postgres_connection_string_identity
 
