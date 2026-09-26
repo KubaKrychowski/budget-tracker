@@ -39,14 +39,19 @@ output "models_storage_account" {
 }
 
 # Rekordy, ktore trzeba zalozyc w Cloudflare ZANIM apply zwiaze domeny - Azure sprawdza wlasnosc
+# odpytujac DNS.
+#
+# UWAGA: wyjscie jest BEZWARUNKOWE i dziala takze przy pustym custom_domain. Tak musi byc, bo te
+# wartosci sa potrzebne WLASNIE WTEDY: najpierw zaklada sie rekordy, dopiero potem ustawia domene
+# i wiaze. Wersja warunkowa zwracala pustke dokladnie w chwili, w ktorej byla potrzebna.
 # odpytujac DNS. Proxy ma byc wylaczone (szara chmurka): przy wlaczonym Azure widzi adresy
 # Cloudflare'a zamiast swoich i weryfikacja nie przechodzi.
 output "dns_do_zalozenia" {
   description = "Rekordy DNS wymagane przez wiazania wlasnej domeny."
-  value = local.custom ? {
+  value = {
     "${var.subdomains.front} (CNAME)"    = azurerm_static_web_app.front.default_host_name
     "${var.subdomains.identity} (CNAME)" = azurerm_linux_web_app.identity.default_hostname
     "${var.subdomains.api} (CNAME)"      = azurerm_linux_web_app.api.default_hostname
     "@ (CNAME, splaszczony)"             = azurerm_static_web_app.landing.default_host_name
-  } : {}
+  }
 }
