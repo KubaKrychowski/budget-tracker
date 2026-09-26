@@ -24,10 +24,28 @@ namespace BudgetTracker.Api.Tests;
 /// </remarks>
 internal static class TestBlobs
 {
-    private const string ConnectionString =
-        "DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;"
-        + "AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;"
-        + "BlobEndpoint=https://localhost:10000/devstoreaccount1;";
+    private const string DefaultBlobEndpoint = "https://localhost:10000/devstoreaccount1";
+
+    private const string AccountKey =
+        "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
+
+    /// <summary>
+    /// Adres emulatora. Domyślnie lokalny kontener po HTTPS; nadpisywalny zmienną <c>AZURITE_BLOB_ENDPOINT</c>.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Zmienna istnieje dla CI, gdzie Azurite chodzi po CZYSTYM HTTP. Certyfikat deweloperski .NET jest
+    /// na maszynie autora i nie da się go tam odtworzyć bez zakładania i instalowania własnego urzędu
+    /// zaufania. Bez tego klient SDK wywalał się na uścisku TLS z komunikatem „Cannot determine the frame
+    /// size or a corrupted frame was received" — czyli rozmową po TLS z gniazdem, które mówi zwykłym HTTP.
+    /// </remarks>
+    private static string BlobEndpoint =>
+        Environment.GetEnvironmentVariable("AZURITE_BLOB_ENDPOINT") is { Length: > 0 } fromEnvironment
+            ? fromEnvironment
+            : DefaultBlobEndpoint;
+
+    private static string ConnectionString =>
+        $"DefaultEndpointsProtocol={(BlobEndpoint.StartsWith("https:", StringComparison.OrdinalIgnoreCase) ? "https" : "http")};"
+        + $"AccountName=devstoreaccount1;AccountKey={AccountKey};BlobEndpoint={BlobEndpoint};";
 
     public static BlobServiceClient Client() => new(ConnectionString);
 

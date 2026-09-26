@@ -55,7 +55,21 @@ jobs:
           -v ON_ERROR_STOP=1
           -f api/db/grant-app-privileges.sql
 
+      # Emulator Azure Blob Storage. Uruchamiany KROKIEM, a nie kontenerem uslugowym: uslugi nie
+      # pozwalaja nadpisac polecenia, a Azurite potrzebuje --skipApiVersionCheck (SDK deklaruje nowsza
+      # wersje API, niz zna emulator, i bez tego kazde zadanie konczy sie 400).
+      #
+      # Czyste HTTP, bez certyfikatu: lokalnie Azurite stoi po HTTPS na certyfikacie deweloperskim .NET,
+      # ktorego na runnerze nie ma. Adres podajemy testom przez AZURITE_BLOB_ENDPOINT.
+      - name: Azurite
+        run: >-
+          docker run -d --name azurite -p 10000:10000
+          mcr.microsoft.com/azure-storage/azurite:3.35.0
+          azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
+
       - run: dotnet test api/tests/BudgetTracker.Api.Tests --configuration Release
+        env:
+          AZURITE_BLOB_ENDPOINT: http://127.0.0.1:10000/devstoreaccount1
 
       - run: dotnet publish api/src/BudgetTracker.Api --configuration Release --output publish
 
@@ -99,10 +113,3 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
 
-      # Emulator Azure Blob Storage. TrainingSetBuilderTests i CategoryModelTrainingTests zapisuja
-      # zbior uczacy i model do bloba, wiec bez niego dostaja "Connection refused (localhost:10000)".
-      # Lokalnie daje go docker-compose; tutaj musi byc osobno.
-      azurite:
-        image: mcr.microsoft.com/azure-storage/azurite
-        ports:
-          - 10000:10000
