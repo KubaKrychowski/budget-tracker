@@ -30,9 +30,39 @@
   <meta property="og:image:alt" content="Dashboard aplikacji Wydatki.pl z podziałem wydatków na kategorie." />
   <meta name="twitter:card" content="summary_large_image" />
 
+  <!--
+    ⚠️ Adres tymczasowy — po podpięciu własnej domeny podmień go TUTAJ, w `robots.txt` i w `sitemap.xml`,
+    i przy okazji zamień względne ścieżki Open Graph wyżej na bezwzględne oraz dopisz `og:url`.
+    Bez `canonical` strona osiągalna pod kilkoma adresami dzieli między nie swoją wartość w wyszukiwarce.
+  -->
+  <link rel="canonical" href="https://victorious-coast-0553a8e03.4.azurestaticapps.net/" />
+
   <!-- Ten sam plik co znak w nagłówku strony — jedna grafika, dwa użycia. -->
   <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="alternate icon" href="favicon.ico" />
+
+  <!--
+    Dane strukturalne. ⚠️ Opisują WYŁĄCZNIE to, co da się sprawdzić na stronie — bez ocen, liczby
+    użytkowników i innych pól, które wyszukiwarka pokazałaby jako fakt, a których nikt nie zmierzył.
+    Ta sama zasada co w treści strony: żadnej obietnicy, której kod nie spełnia.
+  -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Wydatki.pl",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "pl",
+      "description": "Osobisty tracker wydatków: import CSV z banku, kategoryzacja regułami i modelem ML, dashboard, limity, cele oszczędzania i zlecenia. Instalacja dla jednej osoby.",
+      "isAccessibleForFree": true,
+      "author": {
+        "@type": "Person",
+        "name": "Kuba Krychowski"
+      },
+      "codeRepository": "https://github.com/KubaKrychowski/budget-tracker"
+    }
+  </script>
 </head>
 <body>
   <app-root></app-root>
