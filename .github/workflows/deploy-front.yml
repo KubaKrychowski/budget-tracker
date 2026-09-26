@@ -55,10 +55,26 @@ jobs:
           IDENTITY_URL: ${{ vars.IDENTITY_URL }}
           API_URL: ${{ vars.API_URL }}
         run: |
+          # ⚠️ Czyscimy wartosci ze znakow sterujacych i bialych znakow na koncach. Zmienna wklejona
+          # w portalu GitHuba potrafi przyniesc znak nowej linii albo powrot karetki, a taki znak wewnatrz
+          # literalu w JSON-ie jest niedozwolony: przegladarka wywala sie wtedy na
+          # "Bad control character in string literal in JSON", aplikacja nie startuje, a plik w portalu
+          # wyglada normalnie.
+          IDENTITY_URL=$(printf '%s' "$IDENTITY_URL" | tr -d '[:cntrl:]' | xargs)
+          API_URL=$(printf '%s' "$API_URL" | tr -d '[:cntrl:]' | xargs)
+
           test -n "$IDENTITY_URL" || { echo "Brak zmiennej repozytorium IDENTITY_URL"; exit 1; }
           test -n "$API_URL" || { echo "Brak zmiennej repozytorium API_URL"; exit 1; }
+
+          case "$IDENTITY_URL$API_URL" in
+            *'"'*|*'\'*) echo "Adres zawiera cudzyslow albo ukosnik wsteczny - to nie jest adres"; exit 1 ;;
+          esac
+
           printf '{\n  "identityAuthority": "%s",\n  "apiBaseUrl": "%s"\n}\n' "$IDENTITY_URL" "$API_URL" \
             > web/dist/web/browser/config.json
+
+          # Plik ma byc poprawnym JSON-em ZANIM trafi do wdrozenia, a nie dopiero u uzytkownika.
+          node -e 'JSON.parse(require("fs").readFileSync("web/dist/web/browser/config.json","utf8"))'
           cat web/dist/web/browser/config.json
 
       # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
