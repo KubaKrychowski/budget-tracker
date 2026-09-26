@@ -60,11 +60,16 @@ export class App {
    * lokalny. To był dokładnie ten moment, przed którym ostrzegała poprzednia wersja tego komentarza:
    * `localhost` u obcego czytelnika to jedyne CTA prowadzące donikąd.
    *
-   * ⚠️ Adres jest wpisany na sztywno, bo landing nie ma konfiguracji wczytywanej w czasie działania
-   * (aplikacja ma — patrz `core/runtime-config.ts`). Host Static Web Apps ma losowy człon nadany przy
-   * tworzeniu zasobu, więc po odtworzeniu środowiska od zera ten adres trzeba tu podmienić.
+   * ⚠️ REWIZJA (2026-09-26): adres wskazywał host Static Web Apps. Działał, ale logowanie startowało
+   * wtedy z NIEWŁAŚCIWEGO originu — klient SPA buduje `redirect_uri` z `window.location.origin`, więc
+   * wejście przez stary host kończyło się powrotem na stary host, mimo że Identity zna już wyłącznie
+   * `app.wydatki.com`.
+   *
+   * Adres jest wpisany na sztywno, bo landing nie ma konfiguracji wczytywanej w czasie działania
+   * (aplikacja ma — patrz `core/runtime-config.ts`). Od przejścia na własną domenę jest to jednak adres
+   * STABILNY, a nie losowy host, który trzeba było podmieniać po każdym odtworzeniu środowiska.
    */
-  protected readonly appUrl = 'https://salmon-cliff-0ee2c9f03.3.azurestaticapps.net';
+  protected readonly appUrl = 'https://app.wydatki.com';
 
   /**
    * DOMYŚLNY próg pewności, poniżej którego transakcja idzie do przeglądu zamiast dostać kategorię.

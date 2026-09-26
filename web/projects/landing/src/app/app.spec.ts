@@ -127,7 +127,7 @@ describe('Landing', () => {
     // Lista zostaje zamknięta: adres spoza niej to znów CTA prowadzące donikąd.
     const allowed = [
       'https://github.com/KubaKrychowski/budget-tracker',
-      'https://salmon-cliff-0ee2c9f03.3.azurestaticapps.net',
+      'https://app.wydatki.com',
     ];
     const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
 
@@ -137,7 +137,7 @@ describe('Landing', () => {
 
   it('ma przycisk prowadzący do aplikacji', () => {
     const toApp = [...fixture.nativeElement.querySelectorAll('a[href]')]
-      .filter((a) => (a as HTMLAnchorElement).getAttribute('href') === 'https://salmon-cliff-0ee2c9f03.3.azurestaticapps.net');
+      .filter((a) => (a as HTMLAnchorElement).getAttribute('href') === 'https://app.wydatki.com');
 
     expect(toApp.length).toBeGreaterThan(0);
     expect(text()).toContain('Przejdź do aplikacji');
