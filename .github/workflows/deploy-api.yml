@@ -6,14 +6,19 @@ on:
     paths:
       - 'api/**'
       - '.github/workflows/deploy-api.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - '.github/workflows/deploy-api.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-api
+  group: deploy-api-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,14 +41,30 @@ jobs:
           -v app_password=budget_app_dev_only
           -f api/db/setup-rls-roles.sql
 
+      # Emulator Azure Blob Storage. Uruchamiany KROKIEM, a nie kontenerem uslugowym: uslugi nie
+      # pozwalaja nadpisac polecenia, a Azurite potrzebuje --skipApiVersionCheck (SDK deklaruje nowsza
+      # wersje API, niz zna emulator, i bez tego kazde zadanie konczy sie 400).
+      #
+      # Czyste HTTP, bez certyfikatu: lokalnie Azurite stoi po HTTPS na certyfikacie deweloperskim .NET,
+      # ktorego na runnerze nie ma. Adres podajemy testom przez AZURITE_BLOB_ENDPOINT.
+      - name: Azurite
+        run: >-
+          docker run -d --name azurite -p 10000:10000
+          mcr.microsoft.com/azure-storage/azurite:3.35.0
+          azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
+
       - run: dotnet test api/tests/BudgetTracker.Api.Tests --configuration Release
+        env:
+          AZURITE_BLOB_ENDPOINT: http://127.0.0.1:10000/devstoreaccount1
 
       - run: dotnet publish api/src/BudgetTracker.Api --configuration Release --output publish
 
       # ⚠️ MIGRACJE PRZED WDROZENIEM KODU. API nie migruje sie samo przy starcie i ma sie nie migrowac:
       # laczy sie rola budget_app, ktora nie ma prawa do DDL - na tym polega podzial rol pod RLS.
       # Skrypt idempotentny, a nie `database update`, bo daje sie przejrzec w logu przebiegu.
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - name: Skrypt migracji
+        if: github.event_name != 'pull_request'
         run: |
           dotnet tool install --global dotnet-ef
           dotnet ef migrations script --idempotent \
@@ -51,12 +72,16 @@ jobs:
             --output migracja.sql
 
       # ⚠️ Connection string WLASCICIELA bazy, nie ten, ktorym chodzi aplikacja. budget_app nie zrobi DDL.
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - name: Migracja bazy
+        if: github.event_name != 'pull_request'
         env:
           PGCONN: ${{ secrets.POSTGRES_CONNECTION_OWNER }}
         run: psql "$PGCONN" -v ON_ERROR_STOP=1 -f migracja.sql
 
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - uses: azure/webapps-deploy@v3
+        if: github.event_name != 'pull_request'
         with:
           app-name: wydatki-beta-api
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_API }}
@@ -74,10 +99,3 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
 
-      # Emulator Azure Blob Storage. TrainingSetBuilderTests i CategoryModelTrainingTests zapisuja
-      # zbior uczacy i model do bloba, wiec bez niego dostaja "Connection refused (localhost:10000)".
-      # Lokalnie daje go docker-compose; tutaj musi byc osobno.
-      azurite:
-        image: mcr.microsoft.com/azure-storage/azurite
-        ports:
-          - 10000:10000

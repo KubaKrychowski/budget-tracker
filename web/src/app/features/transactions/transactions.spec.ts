@@ -155,13 +155,25 @@ describe('Transactions', () => {
    * bo czeka na żądanie, którego nikt jeszcze nie obsłużył.
    */
   const settle = async (body?: TransactionListResponse): Promise<void> => {
-    for (let round = 0; round < 6; round++) {
+    // ⚠️ Wyjście dopiero po DWÓCH z rzędu pustych rundach, nie po pierwszej.
+    //
+    // Poprzedni warunek (`pending.length === 0 && round > 1`) pozwalał wyjść już po drugim takcie.
+    // Na szybkiej maszynie to wystarczało, na runnerze CI nie: nawigacja wywołana przez komponent
+    // domyka się o takt później niż odpowiedź, więc asercja czytała `router.url` sprzed niej.
+    // Objawiało się to jako test, który przechodzi lokalnie i pada w CI raz na kilka przebiegów —
+    // czyli jako flake, mimo że przyczyna była deterministyczna.
+    //
+    // Pusta runda znaczy tu „nic nie poleciało", a dwie z rzędu — „nic już nie poleci".
+    let quiet = 0;
+
+    for (let round = 0; round < 12 && quiet < 2; round++) {
       fixture.detectChanges();
       const pending = http.match((r) => r.url === '/api/transactions' && r.method === 'GET');
       pending.forEach((r) => r.flush(body ?? response()));
-      if (pending.length === 0 && round > 1) break;
+      quiet = pending.length === 0 ? quiet + 1 : 0;
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
+
     fixture.detectChanges();
   };
 
