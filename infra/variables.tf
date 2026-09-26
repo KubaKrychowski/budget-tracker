@@ -165,6 +165,47 @@ variable "location" {
   default     = null
 }
 
+# ---------------------------------------------------------------------------------------------------
+# Własna domena
+# ---------------------------------------------------------------------------------------------------
+
+variable "custom_domain" {
+  description = <<-EOT
+    Domena własna, np. "wydatki.com". Puste = zostajemy na adresach azurewebsites.net
+    i azurestaticapps.net, a żadne wiązanie domeny nie powstaje.
+
+    ⚠️ To nie jest kosmetyka. Dopóki front i serwer tożsamości stoją pod RÓŻNYMI domenami, ciasteczko
+    sesji Identity jest ciasteczkiem trzeciej strony: ciche odnawianie sesji działa najwyżej w Chrome,
+    a w Safari nie działa wcale. Wspólna domena rejestrowalna rozwiązuje to u źródła.
+
+    ⚠️ Wymaga planu B1 lub wyższego (`app_service_sku`). F1 i D1 nie obsługują własnych domen ani
+    certyfikatów — `apply` odmówi.
+
+    ⚠️ Rekordy DNS muszą istnieć PRZED `apply`: Azure sprawdza własność, odpytując DNS. W Cloudflare
+    proxy ma być WYŁĄCZONE (szara chmurka) — przy włączonym Azure widzi adresy Cloudflare'a
+    zamiast swoich i weryfikacja nie przechodzi.
+  EOT
+  type        = string
+  default     = null
+}
+
+variable "subdomains" {
+  description = <<-EOT
+    Człony subdomen pod poszczególne zasoby. Landing siedzi na samej domenie (bez członu),
+    bo to on jest publiczną twarzą projektu.
+  EOT
+  type = object({
+    front    = string
+    identity = string
+    api      = string
+  })
+  default = {
+    front    = "app"
+    identity = "auth"
+    api      = "api"
+  }
+}
+
 variable "app_service_sku" {
   description = <<-EOT
     Plan App Service dla obu aplikacji .NET.
