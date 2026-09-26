@@ -1,4 +1,4 @@
-# Wydatki.pl
+# Wydatki.com
 
 Osobisty tracker wydatków: import CSV z banków → kategoryzacja (reguły + ML) → dashboard
 „gdzie ucieka kasa", limity, cele oszczędzania i zlecenia. Jedna osoba, jedna instalacja —

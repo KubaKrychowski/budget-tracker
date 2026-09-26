@@ -8,6 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- ⚠️ Jawnie, a nie licząc na to, że przeglądarka sama sięgnie po /favicon.ico. Ta domyślna ścieżka
+         działa tylko na szczycie witryny i bywa pomijana, gdy odpowiedź ma restrykcyjne CSP - a ekrany
+         Identity mają. Ten sam plik co aplikacja Angulara, bo z perspektywy użytkownika to jeden produkt. -->
+    <link rel="icon" href="~/favicon.ico" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true"/>
 </head>
 <body class="auth-page admin-page">
