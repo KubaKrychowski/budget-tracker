@@ -7,10 +7,16 @@ on:
       - 'BudgetTracker.Identity/**'
       - 'BudgetTracker.Identity.Tests/**'
       - '.github/workflows/deploy-identity.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'BudgetTracker.Identity/**'
+      - 'BudgetTracker.Identity.Tests/**'
+      - '.github/workflows/deploy-identity.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-identity
+  group: deploy-identity-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -30,7 +36,9 @@ jobs:
 
       # ⚠️ Brak kroku z migracja jest CELOWY. Serwer tozsamosci migruje swoja baze SAM przy starcie
       # (MigrateAsync w OpenIddictSeeder), dlatego jego connection string ma prawo do DDL.
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - uses: azure/webapps-deploy@v3
+        if: github.event_name != 'pull_request'
         with:
           app-name: wydatki-beta-identity
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_IDENTITY }}

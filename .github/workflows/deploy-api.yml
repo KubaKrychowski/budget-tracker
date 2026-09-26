@@ -6,10 +6,15 @@ on:
     paths:
       - 'api/**'
       - '.github/workflows/deploy-api.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - '.github/workflows/deploy-api.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-api
+  group: deploy-api-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -57,7 +62,9 @@ jobs:
       # ⚠️ MIGRACJE PRZED WDROZENIEM KODU. API nie migruje sie samo przy starcie i ma sie nie migrowac:
       # laczy sie rola budget_app, ktora nie ma prawa do DDL - na tym polega podzial rol pod RLS.
       # Skrypt idempotentny, a nie `database update`, bo daje sie przejrzec w logu przebiegu.
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - name: Skrypt migracji
+        if: github.event_name != 'pull_request'
         run: |
           dotnet tool install --global dotnet-ef
           dotnet ef migrations script --idempotent \
@@ -65,12 +72,16 @@ jobs:
             --output migracja.sql
 
       # ⚠️ Connection string WLASCICIELA bazy, nie ten, ktorym chodzi aplikacja. budget_app nie zrobi DDL.
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - name: Migracja bazy
+        if: github.event_name != 'pull_request'
         env:
           PGCONN: ${{ secrets.POSTGRES_CONNECTION_OWNER }}
         run: psql "$PGCONN" -v ON_ERROR_STOP=1 -f migracja.sql
 
+      # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - uses: azure/webapps-deploy@v3
+        if: github.event_name != 'pull_request'
         with:
           app-name: wydatki-beta-api
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_API }}
