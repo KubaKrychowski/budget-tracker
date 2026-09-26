@@ -135,7 +135,12 @@
               "node_modules/@fontsource/ibm-plex-sans/600.css",
               "projects/landing/src/theme.less",
               "projects/landing/src/styles.scss"
-            ]
+            ],
+            "server": "projects/landing/src/main.server.ts",
+            "prerender": {
+              "discoverRoutes": false,
+              "routesFile": "projects/landing/prerender-routes.txt"
+            }
           },
           "configurations": {
             "production": {
