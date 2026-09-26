@@ -32,7 +32,9 @@ jobs:
           global-json-file: global.json
 
       # Bez bazy - te testy sprawdzaja szablony maili, komplet kluczy tlumaczen, CSP i ladowanie certyfikatow.
+      # Tylko na PR-ze: po mergu testy juz przeszly na tym samym kodzie, a runner F1 i tak czeka.
       - run: dotnet test BudgetTracker.Identity.Tests --configuration Release
+        if: github.event_name == 'pull_request'
 
       - run: dotnet publish BudgetTracker.Identity --configuration Release --output publish
 

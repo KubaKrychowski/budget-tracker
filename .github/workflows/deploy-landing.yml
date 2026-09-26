@@ -36,7 +36,9 @@ jobs:
 
       # Te testy pilnuja UCZCIWOSCI strony (roadmapa, sekcja o granicach, jedno CTA) - patrz app.spec.ts.
       # Dlatego blokuja wdrozenie zamiast byc informacyjne.
+      # Tylko na PR-ze: po mergu testy juz przeszly na tym samym kodzie, a runner F1 i tak czeka.
       - run: npx ng test landing --watch=false
+        if: github.event_name == 'pull_request'
         working-directory: web
 
       - run: npx ng build landing --configuration production

@@ -36,7 +36,9 @@ jobs:
       # rzeczy - kontener musi miec dokladnie te dane. Inne haslo konczy sie
       # "password authentication failed for user budget" w KAZDYM tescie, co wyglada jak awaria bazy,
       # a jest zwykla niezgodnoscia konfiguracji.
+      # Tylko na PR-ze: po mergu testy juz przeszly na tym samym kodzie, a runner F1 i tak czeka.
       - name: Role RLS w bazie testowej
+        if: github.event_name == 'pull_request'
         run: >-
           psql "postgresql://budget:budget_dev_only@localhost:5432/postgres"
           -v ON_ERROR_STOP=1
@@ -49,13 +51,17 @@ jobs:
       #
       # Czyste HTTP, bez certyfikatu: lokalnie Azurite stoi po HTTPS na certyfikacie deweloperskim .NET,
       # ktorego na runnerze nie ma. Adres podajemy testom przez AZURITE_BLOB_ENDPOINT.
+      # Tylko na PR-ze: po mergu testy juz przeszly na tym samym kodzie, a runner F1 i tak czeka.
       - name: Azurite
+        if: github.event_name == 'pull_request'
         run: >-
           docker run -d --name azurite -p 10000:10000
           mcr.microsoft.com/azure-storage/azurite:3.35.0
           azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
 
+      # Tylko na PR-ze: po mergu testy juz przeszly na tym samym kodzie, a runner F1 i tak czeka.
       - run: dotnet test api/tests/BudgetTracker.Api.Tests --configuration Release
+        if: github.event_name == 'pull_request'
         env:
           AZURITE_BLOB_ENDPOINT: http://127.0.0.1:10000/devstoreaccount1
 
@@ -74,6 +80,13 @@ jobs:
             --output migracja.sql
 
       # ⚠️ Connection string WLASCICIELA bazy, nie ten, ktorym chodzi aplikacja. budget_app nie zrobi DDL.
+      #
+      # ⚠️ Sekret POSTGRES_CONNECTION_OWNER musi byc w formacie libpq (URI), NIE w formacie .NET.
+      # psql nie rozumie "Host=...;Database=...;Username=..." i konczy sie bledem
+      # `invalid connection option "Host"`. Poprawnie:
+      #   postgresql://uzytkownik:haslo@host/baza?sslmode=verify-full
+      # Neon podaje taka postac w konsoli jako "connection string" dla psql.
+      #
       # Na pull requescie zatrzymujemy sie po testach i buildzie - wdrazamy dopiero po mergu.
       - name: Migracja bazy
         if: github.event_name != 'pull_request'

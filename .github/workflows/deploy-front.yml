@@ -40,7 +40,9 @@ jobs:
         working-directory: web
 
       # Testy przed wdrozeniem, nie po. Bramka jakosci z CLAUDE.md.
+      # Tylko na PR-ze: po mergu testy juz przeszly na tym samym kodzie, a runner F1 i tak czeka.
       - run: npx ng test web --watch=false
+        if: github.event_name == 'pull_request'
         working-directory: web
 
       - run: npx ng build web --configuration production
