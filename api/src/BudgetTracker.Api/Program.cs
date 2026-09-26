@@ -55,6 +55,7 @@ builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddScoped<SoftDeleteInterceptor>();
 builder.Services.AddScoped<RlsSessionInterceptor>();
+builder.Services.AddScoped<RlsTransactionInterceptor>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
@@ -64,7 +65,8 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
         .UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
         .AddInterceptors(
             sp.GetRequiredService<SoftDeleteInterceptor>(),
-            sp.GetRequiredService<RlsSessionInterceptor>()));
+            sp.GetRequiredService<RlsSessionInterceptor>(),
+            sp.GetRequiredService<RlsTransactionInterceptor>()));
 
 // Resource server: waliduje JWT wystawione przez BudgetTracker.Identity przez jego JWKS
 // (SetIssuer + UseSystemNetHttp), bez wspólnej bazy z serwerem tożsamości.
@@ -228,17 +230,27 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken ct) =>
             : Results.Problem("Brak połączenia z Postgresem — czy `docker compose up -d db` działa?"))
     .AllowAnonymous();
 
+// Wszystkie endpointy danych idą przez grupę z filtrem transakcji RLS: uwierzytelnione żądanie dostaje jedną
+// transakcję, w której SET LOCAL app.current_user_id dojeżdża do zapytań (naprawa pod poolerem — patrz
+// RlsTransactionEndpointFilter). /health i /health/db zostają poza grupą (anonimowe, nie dotykają danych właściciela).
+var api = app.MapGroup("").AddEndpointFilter<RlsTransactionEndpointFilter>();
+
+// ⚠️ Admin POZA filtrem: `OwnerDataService` sam zarządza transakcją i przełącza rolę na `budget_jobs`
+// (BYPASSRLS) przez `SET LOCAL ROLE`. Reużycie transakcji żądania zostawiłoby resztę żądania z tą rolą,
+// a jego własne `BeginTransactionAsync` wywaliłoby się na zagnieżdżeniu. Admin nie potrzebuje
+// `app.current_user_id` — czyta z jawnym `.Where(UserId == ownerId)` i tak omija RLS.
 app.MapAdmin();
-app.MapDashboard();
-app.MapCategorization();
-app.MapSavings();
-app.MapLimits();
-app.MapStandingOrders();
-app.MapEpisodicOrders();
-app.MapSearch();
-app.MapImport();
-app.MapBudgets();
-app.MapTransactions();
+
+api.MapDashboard();
+api.MapCategorization();
+api.MapSavings();
+api.MapLimits();
+api.MapStandingOrders();
+api.MapEpisodicOrders();
+api.MapSearch();
+api.MapImport();
+api.MapBudgets();
+api.MapTransactions();
 
 // Wydatki CLI (issue #25) — każdy Map<Feature>Cli() dopisuje swoje komendy do wspólnego rejestru,
 // dokładnie tak jak lista app.Map<Feature>() wyżej dopisuje endpointy REST.
@@ -253,7 +265,7 @@ var cli = new CliCommandRegistry()
     .MapBudgetsCli()
     .MapTransactionsCli()
     .MapSearchCli();
-app.MapCli(cli);
+api.MapCli(cli);
 
 app.Run();
 

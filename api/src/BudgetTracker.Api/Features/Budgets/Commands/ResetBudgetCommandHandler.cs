@@ -19,9 +19,7 @@ public sealed class ResetBudgetCommandHandler(
     {
         var budget = await lookup.FindIncludingDeletedAsync(businessId, ct);
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await children.SoftDeleteAsync(budget, clock.GetUtcNow(), ct);
-        await transaction.CommitAsync(ct);
 
         return await reader.ReadOneAsync(businessId, ct);
     }

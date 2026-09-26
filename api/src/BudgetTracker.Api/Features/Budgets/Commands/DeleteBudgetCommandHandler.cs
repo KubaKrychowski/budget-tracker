@@ -25,8 +25,6 @@ public sealed class DeleteBudgetCommandHandler(
         var budget = await lookup.FindIncludingDeletedAsync(businessId, ct);
         var now = clock.GetUtcNow();
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
-
         var linkers = await db.Budgets
             .Where(b => b.LinkedSavingsBudgetBusinessId == businessId)
             .ToListAsync(ct);
@@ -46,6 +44,5 @@ public sealed class DeleteBudgetCommandHandler(
 
         budget.MarkDeleted(now);
         await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
     }
 }

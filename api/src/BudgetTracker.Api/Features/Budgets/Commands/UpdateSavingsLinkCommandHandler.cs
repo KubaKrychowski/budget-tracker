@@ -14,7 +14,7 @@ public sealed class UpdateSavingsLinkCommandHandler(AppDbContext db, BudgetLooku
     /// <item>Zdjęcie powiązania (<c>LinkedSavingsBudgetId = null</c>) czyści reguły i zapomina o ręcznych
     /// odpięciach (<see cref="SavingsTransferMatcher.ForgetAsync"/>) — inaczej ponowne powiązanie z INNYM
     /// budżetem odziedziczyłoby odpięcia, które go nie dotyczą.</item>
-    /// <item>Zmiana i przeliczenie przypięć w jednej transakcji bazodanowej, wzorem zleceń stałych.</item>
+    /// <item>Zmiana i przeliczenie przypięć w jednej transakcji na żądanie (zakłada ją RlsTransactionEndpointFilter), wzorem zleceń stałych.</item>
     /// </list>
     /// </remarks>
     /// <exception cref="SavingsLinkTargetInvalidException">
@@ -44,7 +44,6 @@ public sealed class UpdateSavingsLinkCommandHandler(AppDbContext db, BudgetLooku
             budget.ReplaceSavingsTransferRules([]);
         }
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.SaveChangesAsync(ct);
 
         if (previousLink is { } old && previousLink != request.LinkedSavingsBudgetId)
@@ -53,7 +52,6 @@ public sealed class UpdateSavingsLinkCommandHandler(AppDbContext db, BudgetLooku
         }
 
         var linked = await matcher.RematchAsync(budget, ct);
-        await transaction.CommitAsync(ct);
 
         return new SavingsLinkSavedResponseDto(budget.LinkedSavingsBudgetBusinessId, linked);
     }

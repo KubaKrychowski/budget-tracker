@@ -20,11 +20,9 @@ public sealed class RestoreBudgetCommandHandler(
         var budget = await lookup.FindIncludingDeletedAsync(businessId, ct);
         if (budget.DeletedAt is not { } deletedAt) return await reader.ReadOneAsync(businessId, ct);
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await children.RestoreAsync(budget, deletedAt, ct);
         budget.Restore();
         await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
 
         return await reader.ReadOneAsync(businessId, ct);
     }
