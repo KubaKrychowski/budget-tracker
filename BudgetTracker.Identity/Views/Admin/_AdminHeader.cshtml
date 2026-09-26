@@ -2,7 +2,12 @@
 @inject BudgetTracker.Identity.Services.SpaOrigins Spa
 
 <div class="admin-header">
-    <span class="admin-brand">@L["Admin_Brand"]</span>
+    <span class="admin-brand">
+        @* Znak bez opisu: nazwa produktu stoi obok jako tekst, więc opisane logo kazałoby czytnikowi
+           ekranu przeczytać ją dwa razy. Ta sama zasada co na landingu. *@
+        <img class="admin-brand__logo" src="~/logo.svg" width="28" height="28" alt=""/>
+        @L["Admin_Brand"]
+    </span>
     @if (Spa.Default is { } spaUrl)
     {
         <a href="@spaUrl" class="auth-link">@L["Common_BackToApp"]</a>

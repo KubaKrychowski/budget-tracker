@@ -177,12 +177,29 @@ body.auth-page {
   word-break: break-all;
 }
 
+
+/* Znak nad kartą logowania. Karta jest wyśrodkowana w pionie, więc znak musi być jej rodzeństwem,
+   a nie elementem w środku - inaczej rozpycha kartę zamiast stać nad nią. */
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  text-decoration: none;
+  color: var(--ds-neutral-900);
+}
+.auth-brand:hover { color: var(--ds-primary-600); }
+.auth-brand__logo { display: block; }
+.auth-brand__name { font-size: 18px; font-weight: 600; }
+
+.admin-brand__logo { display: block; }
+
 /* ===== Administracja (lista użytkowników, dane bez właściciela, okna potwierdzenia) ===== */
 body.admin-page { align-items: flex-start; padding-top: 56px; }
 .auth-card.auth-card-wide { max-width: 1100px; gap: 24px; }
 
 .admin-header { display: flex; align-items: center; justify-content: space-between; }
-.admin-brand { font-size: 18px; font-weight: 600; color: var(--ds-primary-600); }
+.admin-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: var(--ds-primary-600); }
 .admin-titles h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
 .admin-titles p { font-size: 14px; color: var(--ds-neutral-500); margin: 0; }
 
