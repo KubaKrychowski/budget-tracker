@@ -1,4 +1,9 @@
 locals {
+  # Always On i proces 64-bitowy sa niedostepne w F1 i D1 - przy tych planach  odrzuca oba
+  # ustawienia. Wyprowadzamy je z SKU, zeby powrot na F1 byl zmiana JEDNEJ wartosci, a nie polowaniem
+  # na trzy miejsca w konfiguracji.
+  supports_always_on = !contains(["F1", "D1"], var.app_service_sku)
+
   location = coalesce(var.location, data.azurerm_resource_group.main.location)
 
   # ACS najczesciej stoi w tej samej grupie co reszta, ale nie musi - stad osobna zmienna z pustym
