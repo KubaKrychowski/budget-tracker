@@ -23,10 +23,20 @@ jobs:
           global-json-file: global.json
 
       # Testy API wymagaja prawdziwego Postgresa (patrz api/CLAUDE.md), stad uslugowy kontener.
-      # Bez niego wdrozenie szloby na slepo.
+      #
+      # ⚠️ Klasy testowe maja connection stringi WPISANE NA SZTYWNO: budget/budget_dev_only, a testy RLS
+      # dodatkowo budget_app/budget_app_dev_only. Zmienna ConnectionStrings__Postgres nie ma tu nic do
+      # rzeczy - kontener musi miec dokladnie te dane. Inne haslo konczy sie
+      # "password authentication failed for user budget" w KAZDYM tescie, co wyglada jak awaria bazy,
+      # a jest zwykla niezgodnoscia konfiguracji.
+      - name: Role RLS w bazie testowej
+        run: >-
+          psql "postgresql://budget:budget_dev_only@localhost:5432/postgres"
+          -v ON_ERROR_STOP=1
+          -v app_password=budget_app_dev_only
+          -f api/db/setup-rls-roles.sql
+
       - run: dotnet test api/tests/BudgetTracker.Api.Tests --configuration Release
-        env:
-          ConnectionStrings__Postgres: Host=localhost;Port=5432;Database=postgres;Username=budget;Password=ci_only
 
       - run: dotnet publish api/src/BudgetTracker.Api --configuration Release --output publish
 
@@ -57,7 +67,7 @@ jobs:
         image: postgres:18-alpine
         env:
           POSTGRES_USER: budget
-          POSTGRES_PASSWORD: ci_only
+          POSTGRES_PASSWORD: budget_dev_only
           POSTGRES_DB: postgres
         ports:
           - 5432:5432
