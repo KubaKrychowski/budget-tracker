@@ -38,6 +38,31 @@ public sealed partial class SecurityHardeningTests
     }
 
     [Fact]
+    public void The_authorization_endpoint_may_be_framed_by_the_spa_and_by_nobody_else()
+    {
+        // ⚠️ Ciche odnawianie sesji to ukryta ramka na /connect/authorize. Przy `frame-ancestors 'none'`
+        // przeglądarka blokuje ją BEZ SLADU w logach serwera, a jedynym objawem jest 401 po wygaśnięciu
+        // tokenu — tak było do 2026-09-26 i nie działało nawet lokalnie.
+        var csp = SecurityHeadersMiddleware.BuildContentSecurityPolicy(
+            ["https://localhost:4200"], frameableBy: ["https://localhost:4200"]);
+
+        Assert.Contains("frame-ancestors https://localhost:4200", csp);
+        Assert.DoesNotContain("frame-ancestors 'none'", csp);
+
+        // Gwiazdka zamiast listy adresów otworzyłaby punkt autoryzacji na osadzenie przez kogokolwiek.
+        Assert.DoesNotContain("frame-ancestors *", csp);
+    }
+
+    [Fact]
+    public void Without_a_frameable_origin_the_policy_still_forbids_framing()
+    {
+        // Pusta lista nie ma znaczyć „wszyscy". To jest ten rodzaj pomyłki, który nie daje żadnego objawu.
+        var csp = SecurityHeadersMiddleware.BuildContentSecurityPolicy(["https://localhost:4200"], frameableBy: []);
+
+        Assert.Contains("frame-ancestors 'none'", csp);
+    }
+
+    [Fact]
     public void Views_have_no_inline_styles_scripts_or_event_handlers_that_the_csp_would_block()
     {
         var viewsDir = Path.GetFullPath(Path.Combine(ThisDir(), "..", "BudgetTracker.Identity", "Views"));
