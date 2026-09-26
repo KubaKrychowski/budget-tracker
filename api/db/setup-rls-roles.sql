@@ -35,15 +35,16 @@
     \quit
 \endif
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'budget_app') THEN
-        EXECUTE format('CREATE ROLE budget_app WITH LOGIN PASSWORD %L', :'app_password');
-    ELSE
-        RAISE NOTICE 'budget_app juz istnieje - haslo NIE jest zmieniane. Zmiana: ALTER ROLE budget_app WITH PASSWORD ...';
-    END IF;
-END
-$$;
+-- ⚠️ Warunek jest po stronie psql, a nie w bloku DO $$ ... $$. Wewnatrz dolarowego cytowania psql NIE
+-- podstawia swoich zmiennych - traktuje caly blok jako literal i wysyla do serwera doslownie, razem
+-- z `:'app_password'`, co konczy sie bledem skladni. Sprawdzone: przebieg CI z 2026-09-26.
+SELECT NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'budget_app') AS trzeba_zalozyc \gset
+
+\if :trzeba_zalozyc
+    CREATE ROLE budget_app WITH LOGIN PASSWORD :'app_password';
+\else
+    \echo 'budget_app juz istnieje - haslo NIE jest zmieniane. Zmiana: ALTER ROLE budget_app WITH PASSWORD ...'
+\endif
 
 DO $$
 BEGIN
