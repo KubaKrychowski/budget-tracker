@@ -164,3 +164,19 @@ variable "location" {
   type        = string
   default     = null
 }
+
+variable "app_service_sku" {
+  description = <<-EOT
+    Plan App Service dla obu aplikacji .NET.
+
+    B1 zdejmuje trzy ograniczenia F1 naraz: limit 60 minut CPU na dobe, brak Always On (przez ktory
+    zadania Hangfire nie wykonywaly sie bez ruchu na stronie) oraz brak wlasnych domen i certyfikatu.
+    To ostatnie jest warunkiem postawienia Identity pod wlasna domena - bez tego ciasteczko sesji
+    zostaje ciasteczkiem trzeciej strony i ciche odnawianie nie dziala w Safari.
+
+    Naliczanie idzie od REZERWACJI, nie od zuzycia: plan kosztuje za kazda godzine swojego istnienia,
+    takze przy zerowym ruchu i przy zatrzymanych aplikacjach. Powrot na F1 to zmiana tej wartosci.
+  EOT
+  type        = string
+  default     = "B1"
+}
