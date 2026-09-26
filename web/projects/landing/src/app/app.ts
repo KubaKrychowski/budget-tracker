@@ -69,6 +69,13 @@ export class App {
    * (aplikacja ma — patrz `core/runtime-config.ts`). Od przejścia na własną domenę jest to jednak adres
    * STABILNY, a nie losowy host, który trzeba było podmieniać po każdym odtworzeniu środowiska.
    */
+  /**
+   * Profil autora. ⚠️ Nazwisko celowo NIE pada w treści strony, ale ten link i adres repozytorium
+   * i tak je ujawniają — to świadomy kompromis: sekcja „kto to napisał" bez możliwości sprawdzenia,
+   * kto to napisał, nie ma sensu.
+   */
+  protected readonly linkedInUrl = 'https://www.linkedin.com/in/kuba-krychowski/';
+
   protected readonly appUrl = 'https://app.wydatki.com';
 
   /**
