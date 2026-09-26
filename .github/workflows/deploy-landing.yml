@@ -1,11 +1,13 @@
 name: Landing
 
+# Filtr push NIE zawiera tego pliku, a filtr pull_request tak. Zmiana samej konfiguracji CI ma
+# uruchomic build na PR-ze (zeby bylo widac, czy dziala), ale NIE ma wdrazac uslugi po mergu -
+# inaczej jedna poprawka w workflow wypuszcza wszystkie cztery serwisy naraz.
 on:
   push:
     branches: [main]
     paths:
       - 'web/projects/landing/**'
-      - '.github/workflows/deploy-landing.yml'
   pull_request:
     branches: [main]
     paths:

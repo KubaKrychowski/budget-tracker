@@ -1,12 +1,14 @@
 name: Identity
 
+# Filtr push NIE zawiera tego pliku, a filtr pull_request tak. Zmiana samej konfiguracji CI ma
+# uruchomic build na PR-ze (zeby bylo widac, czy dziala), ale NIE ma wdrazac uslugi po mergu -
+# inaczej jedna poprawka w workflow wypuszcza wszystkie cztery serwisy naraz.
 on:
   push:
     branches: [main]
     paths:
       - 'BudgetTracker.Identity/**'
       - 'BudgetTracker.Identity.Tests/**'
-      - '.github/workflows/deploy-identity.yml'
   pull_request:
     branches: [main]
     paths:

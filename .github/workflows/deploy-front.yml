@@ -3,13 +3,15 @@ name: Front (aplikacja)
 # Static Web Apps w planie Free nie ma "linked backend", wiec front wola API miedzy originami przez CORS.
 # Adres frontu trafia do ustawien API w Terraformie (Cors__Origins__0) - po zmianie adresu SWA trzeba
 # puscic `terraform apply`, inaczej przegladarka odrzuci kazde zadanie.
+# Filtr push NIE zawiera tego pliku, a filtr pull_request tak. Zmiana samej konfiguracji CI ma
+# uruchomic build na PR-ze (zeby bylo widac, czy dziala), ale NIE ma wdrazac uslugi po mergu -
+# inaczej jedna poprawka w workflow wypuszcza wszystkie cztery serwisy naraz.
 on:
   push:
     branches: [main]
     paths:
       - 'web/**'
       - '!web/projects/landing/**'
-      - '.github/workflows/deploy-front.yml'
   pull_request:
     branches: [main]
     paths:
