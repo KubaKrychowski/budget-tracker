@@ -81,18 +81,19 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
-    // ⚠️ SameSite=None, bo ciche odnawianie sesji w SPA idzie UKRYTĄ RAMKĄ na /connect/authorize, a front
-    // stoi pod innym adresem niż Identity (Static Web Apps kontra App Service — różne witryny). Przy
-    // domyślnym Lax przeglądarka nie wysyła ciasteczka w takim żądaniu, odnowienie cicho pada i jedynym
-    // objawem jest 401 po wygaśnięciu tokenu. Lokalnie problem nie występował, bo oba adresy były na
-    // localhost, czyli tej samej witrynie.
+    // ⚠️ SameSite zostaje DOMYŚLNY (Lax) i ma taki zostać.
     //
-    // ⚠️ None wymaga Secure — jest wyżej i ma tak zostać.
+    // Przez chwilę stało tu `SameSiteMode.None`, bo front siedział na Static Web Apps, a Identity na
+    // App Service — różne witryny, więc ciasteczko sesji było ciasteczkiem TRZECIEJ STRONY i przeglądarka
+    // nie wysyłała go w ukrytej ramce cichego odnawiania. Objawem był 401 po wygaśnięciu tokenu.
     //
-    // ⚠️ To NIE jest rozwiązanie docelowe: Safari blokuje ciasteczka trzeciej strony niezależnie od
-    // SameSite, więc tam odnawianie i tak nie zadziała. Trwale rozwiązuje to dopiero wspólna domena
-    // rejestrowalna dla frontu i Identity (np. app.* i auth.* tej samej domeny).
-    options.Cookie.SameSite = SameSiteMode.None;
+    // Od czasu przejścia na własną domenę (`app.*` i `auth.*` tej samej domeny rejestrowalnej) problem
+    // zniknął u źródła: to jedna witryna, więc Lax wystarcza. `None` byłoby teraz nie tylko zbędne, ale
+    // i słabsze — otwierałoby ciasteczko na wysyłkę z DOWOLNEJ obcej strony, a właśnie przed tym Lax
+    // chroni. Safari, które ciasteczka trzeciej strony blokuje niezależnie od SameSite, też przez to działa.
+    //
+    // ⚠️ To NIE znosi poluzowania `frame-ancestors` w SecurityHeadersMiddleware — tamto dotyczy osadzania
+    // ramki, nie ciasteczek, i dalej jest potrzebne, żeby ciche odnawianie w ogóle mogło się wykonać.
 });
 
 var identityIssuer = builder.Configuration[OAuthDefaults.IssuerConfigKey]
