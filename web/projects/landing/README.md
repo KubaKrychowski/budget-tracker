@@ -8,14 +8,16 @@ odnoszą się do zakładki „Issues" tego repozytorium. Plan i uzasadnienia: `p
 To jest **prezentacja projektu**, nie landing produktu — aplikacja jest single-user, bez
 rejestracji i bez hostingu, więc „Wypróbuj za darmo" nie miałoby dokąd prowadzić.
 
-**REWIZJA 2026-09-25 (wieczór):** obok CTA do repozytorium jest przycisk „Przejdź do aplikacji".
-Wskazywał `https://localhost:4200` — dopuszczalne, dopóki strona chodziła tylko lokalnie. Aplikacja
-stoi już na Static Web Apps, więc przycisk dostał prawdziwy adres, a test w `app.spec.ts` ma go
-na zamkniętej liście dozwolonych.
+**REWIZJA 2026-09-26:** przycisk „Przejdź do aplikacji" prowadzi na `https://app.wydatki.com`.
+Wcześniej wskazywał kolejno `https://localhost:4200`, a potem losowy host Static Web Apps.
 
-⚠️ Adres jest wpisany na sztywno (landing nie ma konfiguracji wczytywanej w czasie działania).
-Host Static Web Apps dostaje losowy człon przy tworzeniu zasobu, więc po odtworzeniu środowiska
-od zera trzeba go podmienić w `app.ts` i w `app.spec.ts`.
+⚠️ Ten drugi wariant **działał, ale psuł logowanie**: klient SPA buduje `redirect_uri`
+z `window.location.origin`, więc wejście przez stary host kończyło się powrotem na stary host —
+mimo że serwer tożsamości zna wyłącznie `app.wydatki.com`.
+
+Adres jest wpisany na sztywno (landing nie ma konfiguracji wczytywanej w czasie działania), ale od
+przejścia na własną domenę jest **stabilny** i nie wymaga podmiany po odtworzeniu środowiska.
+Pilnuje go zamknięta lista dozwolonych adresów w `app.spec.ts`.
 
 ```bash
 cd web && npx ng serve landing --port 4300

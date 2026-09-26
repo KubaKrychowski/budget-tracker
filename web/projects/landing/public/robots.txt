@@ -3,4 +3,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://victorious-coast-0553a8e03.4.azurestaticapps.net/sitemap.xml
+Sitemap: https://wydatki.com/sitemap.xml
