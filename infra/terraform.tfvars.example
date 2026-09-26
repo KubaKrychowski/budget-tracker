@@ -37,3 +37,9 @@ communication_service_name = "acs-wydatki-prod"
 
 # Musi nalezec do domeny podpietej do tego ACS. Guid odczytasz w Email Service jako mailFromSenderDomain.
 email_sender_address = "DoNotReply@<guid>.azurecomm.net"
+
+# Wlasna domena. Puste = zostajemy na adresach Azure.
+# UWAGA: wymaga app_service_sku = "B1" lub wyzszego, a rekordy DNS musza istniec PRZED apply.
+# Patrz sekcja "Wlasna domena" w README.
+# custom_domain = "wydatki.com"
+# subdomains = { front = "app", identity = "auth", api = "api" }

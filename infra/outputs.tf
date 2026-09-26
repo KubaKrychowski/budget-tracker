@@ -37,3 +37,16 @@ output "models_storage_account" {
   description = "Konto magazynu na modele kategoryzacji."
   value       = azurerm_storage_account.models.name
 }
+
+# Rekordy, ktore trzeba zalozyc w Cloudflare ZANIM apply zwiaze domeny - Azure sprawdza wlasnosc
+# odpytujac DNS. Proxy ma byc wylaczone (szara chmurka): przy wlaczonym Azure widzi adresy
+# Cloudflare'a zamiast swoich i weryfikacja nie przechodzi.
+output "dns_do_zalozenia" {
+  description = "Rekordy DNS wymagane przez wiazania wlasnej domeny."
+  value = local.custom ? {
+    "${var.subdomains.front} (CNAME)"    = azurerm_static_web_app.front.default_host_name
+    "${var.subdomains.identity} (CNAME)" = azurerm_linux_web_app.identity.default_hostname
+    "${var.subdomains.api} (CNAME)"      = azurerm_linux_web_app.api.default_hostname
+    "@ (CNAME, splaszczony)"             = azurerm_static_web_app.landing.default_host_name
+  } : {}
+}

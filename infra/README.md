@@ -100,6 +100,33 @@ Dwie konsekwencje, o których trzeba wiedzieć **zanim**, a nie po fakcie:
   niepowiązanego `apply`. Po wygaśnięciu serwer tożsamości **nie wstanie** — loader odrzuca przeterminowany
   certyfikat, zamiast wystawiać tokeny podpisane byle czym. Wymiana jest więc zadaniem do zaplanowania.
 
+## Własna domena
+
+Ustawia się ją zmienną `custom_domain` (np. `"wydatki.com"`). Puste = zostajemy na adresach nadanych
+przez Azure i nic się nie wiąże.
+
+⚠️ **To nie jest kosmetyka.** Dopóki front i serwer tożsamości stoją pod różnymi domenami, ciasteczko
+sesji Identity jest ciasteczkiem **trzeciej strony**: ciche odnawianie sesji działa najwyżej w Chrome,
+a w Safari nie działa wcale. Wspólna domena rejestrowalna rozwiązuje to u źródła.
+
+⚠️ **Wymaga planu B1 lub wyższego.** F1 i D1 nie obsługują własnych domen ani certyfikatów.
+
+**Kolejność jest wymuszona i nie da się jej skrócić:**
+
+1. `terraform apply` **bez** `custom_domain` — zasoby muszą istnieć, żeby było na co kierować DNS,
+2. `terraform output dns_do_zalozenia` — wypisze rekordy do założenia,
+3. rekordy w Cloudflare, **proxy wyłączone** (szara chmurka). Przy włączonym Azure widzi adresy
+   Cloudflare'a zamiast swoich i weryfikacja własności nie przechodzi,
+4. `terraform apply` **z** `custom_domain` — wiązania nazw, certyfikaty zarządzane i podpięcie ich
+   do wiązań. Terraform wyprowadza tę kolejność z zależności, więc pilnuje jej sam.
+
+Landing siedzi na samej domenie (bez członu), więc jego własność potwierdza się rekordem **TXT**, a nie
+CNAME — na szczycie domeny nie wolno postawić CNAME-a obok innych rekordów. Cloudflare spłaszcza CNAME
+na szczycie, więc sam ruch zadziała.
+
+Po związaniu domen trzeba jeszcze przestawić zmienne repozytorium `IDENTITY_URL` i `API_URL`
+w GitHubie — front czyta je do `config.json` przy budowaniu.
+
 ## Kolejność uruchomienia
 
 ### Krok 1 — bootstrap (raz na życie projektu)
