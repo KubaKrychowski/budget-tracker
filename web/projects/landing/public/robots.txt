@@ -1,0 +1,6 @@
+# Landing to jedna strona - nie ma czego wykluczac. Plik istnieje, zeby boty nie dostawaly 404
+# i zeby bylo gdzie wskazac mape strony.
+User-agent: *
+Allow: /
+
+Sitemap: https://victorious-coast-0553a8e03.4.azurestaticapps.net/sitemap.xml

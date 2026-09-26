@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Jeden adres, bo landing to jedna strona bez podstron. Mapa i tak ma sens: mowi robotowi,
+  ktory adres jest tym wlasciwym, gdy strona jest osiagalna pod kilkoma.
+
+  UWAGA: adres jest tymczasowy. Po podpieciu wlasnej domeny trzeba go podmienic tutaj,
+  w robots.txt i w znacznikach og:url oraz canonical w index.html.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://victorious-coast-0553a8e03.4.azurestaticapps.net/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
