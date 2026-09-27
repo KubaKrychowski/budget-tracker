@@ -256,6 +256,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
 
             e.HasIndex(x => x.UserId);
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
+
+            // Optymistyczna współbieżność na systemowej kolumnie xmin (bez własnej kolumny): równoległe
+            // wpłaty na ten sam cel nie mogą obie przejść walidacji salda i zapisać się na raz — druga
+            // dostanie DbUpdateConcurrencyException → 409 (patrz DomainExceptionHandler). `UseXminAsConcurrencyToken`
+            // zniknęło w Npgsql 10, więc mapujemy xmin ręcznie: shadow property na kolumnie systemowej.
+            e.Property<uint>("xmin").HasColumnName("xmin").HasColumnType("xid").IsRowVersion();
         });
 
         b.Entity<SavingsReservation>(e =>
@@ -273,6 +279,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
 
             e.HasIndex(x => x.UserId);
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
+
+            // Jak przy SavingsGoal: xmin chroni przed wyścigiem równoległych wpłat na tę samą rezerwację.
+            e.Property<uint>("xmin").HasColumnName("xmin").HasColumnType("xid").IsRowVersion();
         });
 
         b.Entity<ModelVersion>(e =>

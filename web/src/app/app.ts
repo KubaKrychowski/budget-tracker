@@ -59,6 +59,37 @@ export class App {
     }
   }
 
+  /** Zalogowany użytkownik z id_tokenu (`userData$`) — z niego bierzemy `sub` do rozpoznania zmiany konta. */
+  private readonly userData = toSignal(this.oidcSecurityService.userData$, { initialValue: null });
+
+  /**
+   * Klucz właściciela zapamiętanego stanu. ⚠️ POZA prefiksami czyszczonymi przez `clearLocalAppState()`
+   * (`bt-`, nie `bt.`), żeby przetrwał koniec sesji, który nie przeszedł przez przycisk wylogowania.
+   */
+  private static readonly OwnerKey = 'bt-owner';
+
+  /**
+   * Czyści ślady poprzedniego konta, gdy `sub` z tokenu różni się od zapamiętanego właściciela.
+   *
+   * ⚠️ `logout()` czyści stan tylko przy wylogowaniu PRZYCISKIEM. Gdy sesja skończy się inaczej
+   * (wylogowanie bezpośrednio w Identity, w innej karcie, po wygaśnięciu) i na tym samym urządzeniu
+   * zaloguje się inne konto, tamto czyszczenie się nie wykonało — tu domykamy tę lukę na starcie.
+   * Klucze aplikacji nie mają prefiksu konta, więc bez tego nowy użytkownik zobaczyłby historię
+   * wyszukiwań/komend i aktywny budżet poprzednika.
+   */
+  private readonly clearTracesOnAccountChange = effect(() => {
+    const sub = (this.userData()?.userData as { sub?: string } | undefined)?.sub;
+    if (!sub) return;
+    try {
+      if (localStorage.getItem(App.OwnerKey) !== sub) {
+        this.clearLocalAppState();
+        localStorage.setItem(App.OwnerKey, sub);
+      }
+    } catch {
+      // localStorage niedostępny — nic nie czyścimy, ale też nic nie blokujemy.
+    }
+  });
+
   /**
    * Temat podręcznika dopasowany do bieżącej trasy (issue #19) — ikona w nagłówku otwiera
    * podręcznik OD RAZU na temacie ekranu, z którego wychodzisz, zamiast zawsze od pierwszego
