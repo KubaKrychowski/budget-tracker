@@ -11,6 +11,7 @@ using BudgetTracker.Api.Features.Transactions.Exceptions;
 using BudgetTracker.Api.Infrastructure.Exceptions;
 using BudgetTracker.Api.Resources;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
 namespace BudgetTracker.Api.Infrastructure;
@@ -114,6 +115,11 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
 
         UserNotAuthenticatedException => (StatusCodes.Status401Unauthorized, "Auth_NotAuthenticated"),
         OwnerReassignInvalidException => (StatusCodes.Status400BadRequest, "Admin_ReassignInvalid"),
+
+        // Optymistyczna współbieżność (xmin na rezerwacjach/celach): równoległa zmiana TEGO SAMEGO wiersza.
+        // Żądanie było poprawne, ale stan zmienił się w międzyczasie — 409, klient ponawia na świeżych danych.
+        // Chroni przed wyścigiem, w którym dwie równoległe wpłaty przekroczyłyby dostępne saldo.
+        DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Concurrency_Retry"),
 
         // ⚠️ To NIE jest wyjątek domenowy i nie ma go tu przez przypadek.
         // ASP.NET rzuca go przy zepsutym ciele żądania i sam niesie właściwy kod (400).

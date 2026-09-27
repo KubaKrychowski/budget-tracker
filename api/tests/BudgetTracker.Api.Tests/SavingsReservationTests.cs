@@ -145,6 +145,35 @@ public sealed class SavingsReservationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Rownolegla_zmiana_tej_samej_rezerwacji_jest_odrzucana_przez_token_wspolbieznosci()
+    {
+        // Wyścig: dwie wpłaty czytają rezerwację w TYM SAMYM stanie i próbują zapisać. Bez tokenu współbieżności
+        // (xmin) obie by przeszły i przekroczyły dostępne saldo. Druga musi dostać DbUpdateConcurrencyException,
+        // które warstwa HTTP mapuje na 409 (patrz DomainExceptionHandler). Bez xmin ten test przechodzi „na sucho"
+        // (żadnego wyjątku) — dlatego pada bez poprawki.
+        Deposit(2026, 10, 2000m);
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Rower", 2000m, null);
+
+        // Drugi kontekst na tej samej bazie — symuluje równoległe żądanie.
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(TestConnection)
+            .AddInterceptors(new SoftDeleteInterceptor(_clock))
+            .Options;
+        await using var db2 = new AppDbContext(options);
+
+        // Oba konteksty czytają rezerwację w tym samym stanie (ten sam xmin).
+        var inFirst = await _db.SavingsReservations.SingleAsync(r => r.BusinessId == reservation.Id);
+        var inSecond = await db2.SavingsReservations.SingleAsync(r => r.BusinessId == reservation.Id);
+
+        inFirst.Contribute(new DateOnly(2026, 11, 15), 400m);
+        await _db.SaveChangesAsync(); // xmin wiersza się zmienia
+
+        inSecond.Contribute(new DateOnly(2026, 11, 15), 600m);
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => db2.SaveChangesAsync());
+    }
+
+    [Fact]
     public async Task Nie_da_sie_wplacic_wiecej_niz_brakuje_do_celu_ani_wiecej_niz_zostalo_na_koncie()
     {
         Deposit(2026, 10, 1000m);

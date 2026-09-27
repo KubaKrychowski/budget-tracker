@@ -2,13 +2,19 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
-import { of } from 'rxjs';
+import { of, ReplaySubject } from 'rxjs';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { APP_ICONS } from './core/icons';
 import { App } from './app';
 
 describe('App', () => {
+  // Sterowalny strumień userData$ — testy Fix 1 (czyszczenie śladów) emitują konkretny sub.
+  let userData$: ReplaySubject<unknown>;
+
   beforeEach(async () => {
+    userData$ = new ReplaySubject<unknown>(1);
+    userData$.next(null);
+
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -20,9 +26,13 @@ describe('App', () => {
         provideTranslateService(),
         // Zaślepka zamiast pełnego provideAuth() — test sprawdza strukturę shella,
         // nie prawdziwe logowanie, więc nie ma po co ciągnąć całej konfiguracji OIDC.
-        { provide: OidcSecurityService, useValue: { logoff: () => of(undefined) } },
+        { provide: OidcSecurityService, useValue: { logoff: () => of(undefined), userData$ } },
       ],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it('should create the app', () => {
@@ -51,5 +61,40 @@ describe('App', () => {
     const settingsIndex = links.findIndex((el) => el.getAttribute('href') === '/settings');
     expect(handbookIndex).toBeGreaterThanOrEqual(0);
     expect(settingsIndex).toBeGreaterThan(handbookIndex);
+  });
+
+  it('czyści ślady poprzedniego konta, gdy na starcie sub z tokenu różni się od zapamiętanego (pentest)', async () => {
+    // Luka: gdy sesja skończy się poza przyciskiem (Identity/inna karta/wygaśnięcie), clearLocalAppState
+    // z logout() się nie wykona. Tu na starcie porównujemy sub z zapamiętanym właścicielem i czyścimy.
+    // Bez tej poprawki ślady zostają — wtedy ten test pada (klucze nadal obecne).
+    localStorage.setItem('bt-owner', 'konto-A');
+    localStorage.setItem('bt.search.history', '["czego szukał A"]');
+    localStorage.setItem('budget-tracker:active-budget', '["budzet-A"]');
+
+    userData$.next({ userData: { sub: 'konto-B' } });
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(localStorage.getItem('bt.search.history')).toBeNull();
+    expect(localStorage.getItem('budget-tracker:active-budget')).toBeNull();
+    // Nowy właściciel zapamiętany, żeby jego własna sesja nie czyściła się w kółko.
+    expect(localStorage.getItem('bt-owner')).toBe('konto-B');
+  });
+
+  it('nie czyści niczego, gdy sub się nie zmienił (ta sama sesja)', async () => {
+    localStorage.setItem('bt-owner', 'konto-A');
+    localStorage.setItem('bt.search.history', '["moje"]');
+
+    userData$.next({ userData: { sub: 'konto-A' } });
+
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(localStorage.getItem('bt.search.history')).toBe('["moje"]');
   });
 });
