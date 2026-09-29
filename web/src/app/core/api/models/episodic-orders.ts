@@ -34,6 +34,8 @@ export interface EpisodicOrdersResponse {
   readonly realizedThisYear: number;
   readonly withoutSavingsCount: number;
   readonly currentMonth: string;
+  /** Dzień początku okresu rozliczeniowego budżetu (1–28); `currentMonth` to klucz jego bieżącego okresu. */
+  readonly periodStartDay: number;
   readonly selectedBudgetIds: string[];
   readonly budgets: BudgetOption[];
 }

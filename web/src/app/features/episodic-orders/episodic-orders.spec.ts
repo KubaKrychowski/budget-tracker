@@ -86,6 +86,7 @@ describe('EpisodicOrders', () => {
     realizedThisYear: 1200,
     withoutSavingsCount: 1,
     currentMonth: '2026-09-01',
+    periodStartDay: 1,
     selectedBudgetIds: ['b1'],
     budgets: [{ id: 'b1', name: 'Domowy', month: '2026-09-01', disabled: false }],
     ...over,

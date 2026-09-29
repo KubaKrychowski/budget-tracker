@@ -22,12 +22,11 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
     /// ⚠️ Miesięczny limit to suma limitów obowiązujących w BIEŻĄCYM miesiącu. Limit ma historię
     /// (<see cref="BudgetItem.ValidFrom"/>), więc suma wszystkich wierszy liczyłaby każdą zmianę kwoty
     /// jako osobny limit — po jednej podwyżce „miesięczny limit" wyszedłby prawie dwa razy za duży.
+    /// „Bieżący miesiąc" to okres rozliczeniowy TEGO budżetu (<see cref="Budget.PeriodStartDay"/>), a nie kalendarzowy.
     /// </remarks>
     public async Task<IReadOnlyList<BudgetListItemResponseDto>> ReadAllAsync(CancellationToken ct)
     {
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime.Date);
-        var currentMonth = new DateOnly(today.Year, today.Month, 1);
-
         var budgets = await db.Budgets
             .IgnoreQueryFilters([QueryFilterNames.SoftDelete])
             .OrderByDescending(b => b.CreatedAt)
@@ -42,12 +41,16 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             .Select(g => new { BudgetBusinessId = g.Key, Total = g.Sum(t => t.Amount), Count = g.Count() })
             .ToDictionaryAsync(x => x.BudgetBusinessId, ct);
 
-        var limits = await db.BudgetItems
+        var calendarMonth = new DateOnly(today.Year, today.Month, 1);
+        var keys = budgets.ToDictionary(b => b.BusinessId, b => BillingPeriod.KeyOf(today, b.PeriodStartDay));
+        var items = await db.BudgetItems
             .Where(i => budgetIds.Contains(i.BudgetBusinessId)
-                        && i.ValidFrom <= currentMonth && (i.ValidTo == null || i.ValidTo >= currentMonth))
+                        && i.ValidFrom <= calendarMonth.AddMonths(1) && (i.ValidTo == null || i.ValidTo >= calendarMonth))
+            .ToListAsync(ct);
+        var limits = items
+            .Where(i => i.AppliesTo(keys[i.BudgetBusinessId]))
             .GroupBy(i => i.BudgetBusinessId)
-            .Select(g => new { BudgetBusinessId = g.Key, Total = g.Sum(i => i.Limit) })
-            .ToDictionaryAsync(x => x.BudgetBusinessId, x => x.Total, ct);
+            .ToDictionary(g => g.Key, g => g.Sum(i => i.Limit));
 
         return budgets.Select(b => new BudgetListItemResponseDto(
             Id: b.BusinessId,
@@ -64,7 +67,8 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             DeletedAt: b.DeletedAt,
             LinkedSavingsBudgetId: b.LinkedSavingsBudgetBusinessId,
             SavingsTransferRules: [.. b.SavingsTransferRules.Select(r =>
-                new TitleAmountRuleResponseDto(r.TitlePattern, r.AmountFrom, r.AmountTo))])).ToList();
+                new TitleAmountRuleResponseDto(r.TitlePattern, r.AmountFrom, r.AmountTo))],
+            PeriodStartDay: b.PeriodStartDay)).ToList();
     }
 
     /// <summary>Jeden wiersz — ten sam kształt co na liście, więc front może podmienić go w miejscu.</summary>

@@ -423,7 +423,11 @@
         "recalculationTitle": "Zmiana balansu początkowego przeliczy cały budżet",
         "recalculation": "Balans na każdy dzień liczy się od tej wartości, więc przesunie się cały wykres, a nie jedna liczba.",
         "save": "Zapisz",
-        "cancel": "Anuluj"
+        "cancel": "Anuluj",
+        "periodStartDay": "Okres rozliczeniowy zaczyna się w dniu miesiąca",
+        "periodStartDayHint": "Dozwolone dni 1–28. Przy dniu 28 okres 28.09–27.10 nazywa się „Październik”; 1 to zwykły miesiąc kalendarzowy. Dotyczy limitów oraz zleceń stałych i epizodycznych.",
+        "periodShiftTitle": "Zmiana dnia przesunie granice okresów",
+        "periodShift": "Granice zmienią się też wstecz: te same transakcje mogą wpaść do innych okresów w historii limitów i zleceń."
       },
       "reset": {
         "title": "Reset budżetu",
@@ -771,9 +775,9 @@
     "remove": "Usuń",
     "saved": "Limit zapisany.",
     "removed": "Limit usunięty. Kategoria nie ma już limitu od bieżącego miesiąca.",
-    "prevMonth": "Poprzedni miesiąc",
-    "nextMonth": "Następny miesiąc",
-    "currentMonth": "Bieżący miesiąc",
+    "prevMonth": "Poprzedni okres",
+    "nextMonth": "Następny okres",
+    "currentMonth": "Bieżący okres",
     "banner": {
       "noLimits": "Ten budżet nie ma jeszcze limitów.",
       "noLimitsClosed": "{{month}} — w tym miesiącu budżet nie miał żadnych limitów.",
@@ -788,13 +792,13 @@
     },
     "metrics": {
       "spentInLimited": "Wydane w kategoriach z limitem",
-      "limitTotal": "Miesięczny limit budżetu",
+      "limitTotal": "Limit budżetu w okresie",
       "overLimit": "Kategorie ponad limitem",
       "spentOutside": "Wydane poza limitami"
     },
     "table": {
       "title": "Limity kategorii",
-      "hint": "Limit obowiązuje co miesiąc w tym budżecie · wydane = wydatki z kategorią w wybranym miesiącu, także oznaczone jako duże",
+      "hint": "Limit obowiązuje co okres rozliczeniowy w tym budżecie · wydane = wydatki z kategorią w wybranym okresie, także oznaczone jako duże",
       "empty": "Brak limitów w tym miesiącu",
       "emptyBudget": "Brak limitów w tym budżecie",
       "category": "Kategoria",
@@ -808,11 +812,11 @@
     },
     "unlimited": {
       "title": "Wydatki bez limitu",
-      "hint": "Kategorie z wydatkami w tym miesiącu, które nie mają limitu",
+      "hint": "Kategorie z wydatkami w tym okresie, które nie mają limitu",
       "empty": "Każda kategoria z wydatkami w tym miesiącu ma już limit.",
       "noSpending": "W tym miesiącu nie ma jeszcze wydatków z kategorią.",
       "set": "Ustaw limit",
-      "note": "Te {{amount}} zł nie wchodzi do miesięcznego limitu budżetu — limit budżetu to suma limitów kategorii, nic więcej.",
+      "note": "Te {{amount}} zł nie wchodzi do limitu okresu — limit budżetu to suma limitów kategorii, nic więcej.",
       "contextNote": "Kwoty z tego miesiąca, tylko jako kontekst — nie podpowiadam limitu."
     },
     "editor": {

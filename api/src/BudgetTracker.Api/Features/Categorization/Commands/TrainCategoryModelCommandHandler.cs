@@ -2,6 +2,7 @@ using BudgetTracker.Api.Features.Categorization.Contracts;
 using BudgetTracker.Api.Features.Categorization.Jobs;
 using BudgetTracker.Api.Infrastructure;
 using Hangfire;
+using Microsoft.Extensions.Logging;
 
 namespace BudgetTracker.Api.Features.Categorization.Commands;
 
@@ -19,13 +20,16 @@ namespace BudgetTracker.Api.Features.Categorization.Commands;
 /// nie pokazałyby zadaniu ani jednego wiersza.</item>
 /// </list>
 /// </remarks>
-public sealed class TrainCategoryModelCommandHandler(IBackgroundJobClient jobs, ICurrentUserAccessor currentUser)
+public sealed class TrainCategoryModelCommandHandler(
+    IBackgroundJobClient jobs, ICurrentUserAccessor currentUser, ILogger<TrainCategoryModelCommandHandler>? logger = null)
 {
     public TrainingQueuedResponseDto Handle()
     {
         var userId = currentUser.UserId;
         // PerformContext i token uzupełnia Hangfire przy wykonaniu — w wyrażeniu idą jako null/None.
         var jobId = jobs.Enqueue<TrainCategoryModelJob>(job => job.RunAsync(userId, null!, CancellationToken.None));
+
+        logger?.LogInformation("Trening modelu zgłoszony: konto {UserId}, zgłoszenie {JobId}.", userId, jobId);
 
         return new TrainingQueuedResponseDto(jobId);
     }

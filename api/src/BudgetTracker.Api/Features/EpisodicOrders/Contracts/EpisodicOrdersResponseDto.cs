@@ -8,6 +8,8 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Contracts;
 /// <param name="ReservedTotal">Kwoty tych rezerwacji — „1 800 z 4 000”.</param>
 /// <param name="RealizedThisYear">Suma zrealizowanych z datą w bieżącym roku.</param>
 /// <param name="WithoutSavingsCount">Ile zaplanowanych nie ma rezerwacji.</param>
+/// <param name="CurrentMonth">Klucz bieżącego okresu rozliczeniowego budżetu (miesiąc, w którym się kończy) — do porównania z terminami.</param>
+/// <param name="PeriodStartDay">Dzień początku okresu rozliczeniowego budżetu (1–28).</param>
 public sealed record EpisodicOrdersResponseDto(
     IReadOnlyList<EpisodicOrderRowResponseDto> Planned,
     IReadOnlyList<EpisodicOrderRowResponseDto> Realized,
@@ -18,4 +20,5 @@ public sealed record EpisodicOrdersResponseDto(
     int WithoutSavingsCount,
     DateOnly CurrentMonth,
     IReadOnlyList<Guid> SelectedBudgetIds,
-    IReadOnlyList<EpisodicOrdersBudgetOptionResponseDto> Budgets);
+    IReadOnlyList<EpisodicOrdersBudgetOptionResponseDto> Budgets,
+    int PeriodStartDay = 1);

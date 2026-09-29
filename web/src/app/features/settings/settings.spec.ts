@@ -77,6 +77,10 @@ describe('Settings', () => {
     disableBudget(): Promise<void>;
     draftInitialBalance: { set(v: number): void };
     initialBalanceChanged(): boolean;
+    draftPeriodStartDay: { set(v: number): void };
+    periodStartDayChanged(): boolean;
+    canSaveEdit(): boolean;
+    saveEdit(): Promise<void>;
     previewBalance(): number;
     retentionDays(): number;
     openEdit(): void;
@@ -111,6 +115,7 @@ describe('Settings', () => {
     deletedAt: null,
     linkedSavingsBudgetId: null,
     savingsTransferRules: [],
+    periodStartDay: 1,
     ...over,
   });
 
@@ -377,6 +382,43 @@ describe('Settings', () => {
 
     api().draftInitialBalance.set(2000);
     expect(api().initialBalanceChanged()).toBe(true);
+  });
+
+  it('ostrzega o przesunięciu granic okresów dopiero po zmianie dnia okresu', () => {
+    api().menuRow.set(budget({ periodStartDay: 1 }));
+    api().openEdit();
+
+    expect(api().periodStartDayChanged()).toBe(false);
+
+    api().draftPeriodStartDay.set(28);
+    expect(api().periodStartDayChanged()).toBe(true);
+  });
+
+  it('nie pozwala zapisać dnia okresu poza zakresem 1–28', () => {
+    api().menuRow.set(budget());
+    api().openEdit();
+
+    for (const bad of [0, 29, 12.5]) {
+      api().draftPeriodStartDay.set(bad);
+      expect(api().canSaveEdit()).toBe(false);
+    }
+    api().draftPeriodStartDay.set(28);
+    expect(api().canSaveEdit()).toBe(true);
+  });
+
+  it('wysyła dzień okresu razem z nazwą i bilansem', async () => {
+    const row = budget();
+    api().menuRow.set(row);
+    api().openEdit();
+    api().draftPeriodStartDay.set(28);
+
+    const done = api().saveEdit();
+    await Promise.resolve();
+
+    const request = http.expectOne({ method: 'PUT', url: `/api/budgets/${row.id}` });
+    expect(request.request.body.periodStartDay).toBe(28);
+    request.flush({ ...row, periodStartDay: 28 });
+    await done;
   });
 
   it('przesuwa podgląd bilansu razem z bilansem początkowym', () => {

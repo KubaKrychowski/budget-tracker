@@ -54,6 +54,7 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         TrainingDataMissingException => (StatusCodes.Status400BadRequest, "Training_NoData"),
         ModelVersionNotFoundException => (StatusCodes.Status404NotFound, "Training_UnknownModel"),
         BudgetNameRequiredException => (StatusCodes.Status400BadRequest, "Budget_NameRequired"),
+        BudgetPeriodStartDayInvalidException => (StatusCodes.Status400BadRequest, "Budget_PeriodStartDayInvalid"),
         SavingsLinkTargetInvalidException => (StatusCodes.Status400BadRequest, "SavingsTransfer_LinkTargetInvalid"),
         SavingsTransferRulesInvalidException => (StatusCodes.Status400BadRequest, "SavingsTransfer_RulesInvalid"),
         SavingsTransferPatternInvalidException => (StatusCodes.Status400BadRequest, "SavingsTransfer_PatternInvalid"),

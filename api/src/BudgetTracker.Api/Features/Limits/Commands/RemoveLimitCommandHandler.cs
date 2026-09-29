@@ -26,7 +26,7 @@ public sealed class RemoveLimitCommandHandler(AppDbContext db, LimitsBudgetScope
         var item = await db.BudgetItems.FirstOrDefaultAsync(i => i.BusinessId == id, ct)
             ?? throw new LimitNotFoundException(id);
 
-        var currentMonth = scope.CurrentMonth();
+        var currentMonth = (await scope.PeriodAsync(item.BudgetBusinessId, ct)).CurrentKey;
         if (item.ValidTo is { } to && to < currentMonth) throw new LimitHistoryLockedException();
 
         var later = await db.BudgetItems

@@ -13,7 +13,7 @@ public sealed class SetLimitCommandHandler(
     AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories, ICurrentUserAccessor currentUser)
 {
     /// <summary>
-    /// Ustawia limit od wskazanego miesiąca. Zmiana KOŃCZY poprzedni limit miesiąc wcześniej i zakłada nowy — nie nadpisuje.
+    /// Ustawia limit od wskazanego okresu (klucz = miesiąc, w którym okres się kończy; „bieżący" wg <see cref="Budget.PeriodStartDay"/> budżetu). Zmiana KOŃCZY poprzedni limit miesiąc wcześniej i zakłada nowy — nie nadpisuje.
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
@@ -41,7 +41,7 @@ public sealed class SetLimitCommandHandler(
         var category = (await limitCategories.AllowedAsync(ct)).FirstOrDefault(c => c.BusinessId == request.CategoryId)
             ?? throw new LimitCategoryInvalidException();
 
-        var currentMonth = scope.CurrentMonth();
+        var currentMonth = (await scope.PeriodAsync(budget, ct)).CurrentKey;
         var validFrom = new DateOnly(request.ValidFrom.Year, request.ValidFrom.Month, 1);
 
         var history = await db.BudgetItems

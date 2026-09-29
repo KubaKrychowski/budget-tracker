@@ -222,6 +222,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
             e.Property(x => x.DisabledAt).HasColumnType("timestamptz");
             e.Property(x => x.InitialBalance).HasColumnType("numeric(18,2)");
+            e.Property(x => x.PeriodStartDay).HasDefaultValue(BillingPeriod.MinStartDay);
+            e.ToTable(t => t.HasCheckConstraint("CK_Budgets_PeriodStartDay", "\"PeriodStartDay\" BETWEEN 1 AND 28"));
             e.HasOne<Currency>().WithMany()
                 .HasForeignKey(x => x.Currency).OnDelete(DeleteBehavior.Restrict);
             // Reguły transferu jako jsonb: część zasad TEGO budżetu, bez własnego cyklu życia —

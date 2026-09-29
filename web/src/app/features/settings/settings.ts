@@ -362,6 +362,7 @@ export class Settings {
 
   protected readonly draftName = signal('');
   protected readonly draftInitialBalance = signal(0);
+  protected readonly draftPeriodStartDay = signal(1);
 
   /**
    * Alert „to przeliczy cały budżet" pokazujemy dopiero, gdy bilans początkowy FAKTYCZNIE
@@ -372,6 +373,14 @@ export class Settings {
     this.target() !== null && this.draftInitialBalance() !== this.target()!.initialBalance,
   );
 
+  /**
+   * Alert „zmiana dnia przesuwa granice okresów" — z tego samego powodu co alert o bilansie: dopiero po FAKTYCZNEJ
+   * zmianie. Zmiana działa wstecz (te same transakcje wpadną do innych okresów także w historii).
+   */
+  protected readonly periodStartDayChanged = computed(() =>
+    this.target() !== null && this.draftPeriodStartDay() !== this.target()!.periodStartDay,
+  );
+
   /** Bilans bieżący w modalu jest tylko do odczytu — liczymy go, więc nie da się go „ustawić". */
   protected readonly previewBalance = computed(() => {
     const row = this.target();
@@ -379,7 +388,10 @@ export class Settings {
     return this.draftInitialBalance() + (row.balance - row.initialBalance);
   });
 
-  protected readonly canSaveEdit = computed(() => this.draftName().trim().length > 0);
+  protected readonly canSaveEdit = computed(() => {
+    const day = this.draftPeriodStartDay();
+    return this.draftName().trim().length > 0 && Number.isInteger(day) && day >= 1 && day <= 28;
+  });
 
   protected openEdit(): void {
     const row = this.menuRow();
@@ -387,6 +399,7 @@ export class Settings {
 
     this.draftName.set(row.name);
     this.draftInitialBalance.set(row.initialBalance);
+    this.draftPeriodStartDay.set(row.periodStartDay);
     this.target.set(row);
     this.dialog.set('edit');
   }
@@ -483,6 +496,7 @@ export class Settings {
       () => firstValueFrom(this.http.put<BudgetListItem>(`/api/budgets/${row.id}`, {
         name: this.draftName().trim(),
         initialBalance: this.draftInitialBalance(),
+        periodStartDay: this.draftPeriodStartDay(),
       })),
       'settings.budgets.toast.updated',
     );

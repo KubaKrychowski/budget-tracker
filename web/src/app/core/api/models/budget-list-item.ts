@@ -36,6 +36,11 @@ export interface BudgetListItem {
   linkedSavingsBudgetId: string | null;
   /** Reguły rozpoznające własne transakcje jako transfer do/z powiązanego budżetu. */
   savingsTransferRules: TitleAmountRule[];
+  /**
+   * Dzień miesiąca (1–28), od którego liczy się okres rozliczeniowy — dzień wypłaty. 1 = miesiąc kalendarzowy.
+   * Dotyczy limitów oraz zleceń stałych i epizodycznych.
+   */
+  periodStartDay: number;
 }
 
 export interface BudgetListResponse {

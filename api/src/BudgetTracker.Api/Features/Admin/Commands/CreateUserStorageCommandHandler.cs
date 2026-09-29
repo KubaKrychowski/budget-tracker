@@ -10,8 +10,9 @@ namespace BudgetTracker.Api.Features.Admin.Commands;
 /// API nie ma listy użytkowników i nie ma jak tego zauważyć samo.</item>
 /// <item>Powtórzenie jest bezpieczne (<c>CreateIfNotExists</c>) — ponowione żądanie po nieudanej próbie
 /// ma dokończyć robotę, a nie wywrócić się na tym, że kontener już jest.</item>
-/// <item>Kontener zakłada się RAZ, przy koncie, zamiast w locie przy pierwszym zapisie: dzięki temu brak
-/// kontenera w trakcie pracy jest błędem, który widać, a nie stanem, który kod po cichu naprawia.</item>
+/// <item>Kontener zakłada się przy koncie, ale to NIE jedyna droga: publikacja modelu (<c>ModelStore</c>) zakłada go
+/// w locie, gdy go brakuje, i loguje ostrzeżenie — konto bez kontenera (rejestracja nie dotarła do API) nie może
+/// kosztować użytkownika już policzonego treningu.</item>
 /// </list>
 /// </remarks>
 public sealed class CreateUserStorageCommandHandler(BlobServiceClient blobServiceClient)

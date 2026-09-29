@@ -7,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetTracker.Api.Features.Limits.Queries;
 
-/// <summary>Limity kategorii budżetu w jednym miesiącu i to, ile w tym miesiącu wydano.</summary>
+/// <summary>Limity kategorii budżetu w jednym okresie rozliczeniowym i to, ile w tym okresie wydano.</summary>
 public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories)
 {
-    /// <summary>Ekran limitów dla budżetu (wskazanego albo domyślnego) i miesiąca (wskazanego albo bieżącego).</summary>
+    /// <summary>Ekran limitów dla budżetu (wskazanego albo domyślnego) i okresu (wskazanego kluczem albo bieżącego).</summary>
     /// <remarks>
     /// <para>
     /// ⚠️ Każdy miesiąc liczy się z limitem, który obowiązywał W NIM (<see cref="BudgetItem.AppliesTo"/>),
@@ -18,27 +18,35 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
     /// nie było — ta sama pułapka co płaska linia celu oszczędnościowego zamiast schodka.
     /// </para>
     /// <para>
-    /// Wydane = suma wydatków (kwoty ujemne) z kategorią, z datą w miesiącu. Liczą się WSZYSTKIE, także
+    /// <b>Okres, nie miesiąc kalendarzowy:</b> przy dniu początku 28 okres „październik" to 28.09–27.10 — patrz
+    /// <see cref="BillingPeriod"/>. Klucz okresu (<c>month</c> w żądaniu) to nadal pierwszy dzień miesiąca końcowego.
+    /// </para>
+    /// <para>
+    /// Wydane = suma wydatków (kwoty ujemne) z kategorią, z datą w okresie. Liczą się WSZYSTKIE, także
     /// oznaczone jako duże — to realnie wydane pieniądze (decyzja użytkownika). Wydatki bez kategorii
     /// nie trafiają do żadnego limitu i jadą osobno (<see cref="LimitsResponseDto.UncategorizedCount"/>).
     /// </para>
     /// </remarks>
     public async Task<LimitsResponseDto> HandleAsync(Guid? budgetId, DateOnly? month, CancellationToken ct)
     {
-        var currentMonth = scope.CurrentMonth();
-        var viewed = month is { } m ? new DateOnly(m.Year, m.Month, 1) : currentMonth;
+        var calendarMonth = scope.CurrentMonth();
 
         var budgets = await scope.OptionsAsync(ct);
-        var selected = LimitsBudgetScope.Resolve(budgets, budgetId, currentMonth);
+        var selected = LimitsBudgetScope.Resolve(budgets, budgetId, calendarMonth);
         var allowed = await limitCategories.AllowedAsync(ct);
 
         if (selected is not { } budget)
         {
+            var emptyViewed = month is { } em ? new DateOnly(em.Year, em.Month, 1) : calendarMonth;
             return new LimitsResponseDto(
-                viewed, currentMonth, viewed < currentMonth, [], [],
+                emptyViewed, calendarMonth, emptyViewed < calendarMonth, [], [],
                 [.. allowed.Select(c => new LimitCategoryOptionResponseDto(c.BusinessId, c.Name, false))],
                 0m, 0m, 0m, 0, 0, 0m, [], budgets, HasAnyLimit: false);
         }
+
+        var period = await scope.PeriodAsync(budget, ct);
+        var currentMonth = period.CurrentKey;
+        var viewed = month is { } m ? new DateOnly(m.Year, m.Month, 1) : currentMonth;
 
         var history = await db.BudgetItems
             .Where(i => i.BudgetBusinessId == budget)
@@ -51,7 +59,7 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             .Where(c => categoryIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => (c.BusinessId, c.Name), ct);
 
-        var spent = await SpentByCategoryAsync(budget, viewed, ct);
+        var spent = await SpentByCategoryAsync(budget, period.From(viewed), period.ToExclusive(viewed), ct);
 
         var rows = applying
             .Select(item => Row(item, spent.GetValueOrDefault(item.CategoryId)?.Spent ?? 0m, names[item.CategoryId], history))
@@ -83,7 +91,10 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             SelectedBudgetIds: [budget],
             Budgets: budgets,
             // Cała historia limitów budżetu jest już wczytana wyżej — nie ma po co pytać bazy drugi raz.
-            HasAnyLimit: history.Count > 0);
+            HasAnyLimit: history.Count > 0,
+            PeriodStartDay: period.StartDay,
+            PeriodFrom: period.From(viewed),
+            PeriodTo: period.To(viewed));
     }
 
     /// <summary>Klucz słownika wydatków dla transakcji bez kategorii — kategorie w bazie mają klucze dodatnie.</summary>
@@ -118,18 +129,16 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             NextValidFrom: next?.ValidFrom);
     }
 
-    /// <summary>Wydatki miesiąca per kategoria jednym zapytaniem — dodatnie, liczba transakcji obok.</summary>
+    /// <summary>Wydatki okresu per kategoria jednym zapytaniem — dodatnie, liczba transakcji obok.</summary>
     /// <remarks>
     /// Negacja POZA zapytaniem — EF nie tłumaczy <c>-g.Sum(...)</c> w projekcji (ta sama pułapka co w
     /// <c>GetDashboardQueryHandler</c>). Transakcje bez kategorii lądują pod <see cref="UncategorizedKey"/>.
     /// </remarks>
     private async Task<Dictionary<int, CategorySpend>> SpentByCategoryAsync(
-        Guid budget, DateOnly month, CancellationToken ct)
+        Guid budget, DateOnly from, DateOnly end, CancellationToken ct)
     {
-        var end = month.AddMonths(1);
-
         var rows = await db.Transactions
-            .Where(t => t.BudgetBusinessId == budget && t.Date >= month && t.Date < end && t.Amount < 0)
+            .Where(t => t.BudgetBusinessId == budget && t.Date >= from && t.Date < end && t.Amount < 0)
             .GroupBy(t => t.CategoryId)
             .Select(g => new { g.Key, Total = g.Sum(t => t.Amount), Count = g.Count() })
             .ToListAsync(ct);
@@ -137,6 +146,6 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
         return rows.ToDictionary(r => r.Key ?? UncategorizedKey, r => new CategorySpend(-r.Total, r.Count));
     }
 
-    /// <summary>Wydane w kategorii w miesiącu, jako wartość dodatnia.</summary>
+    /// <summary>Wydane w kategorii w okresie, jako wartość dodatnia.</summary>
     private sealed record CategorySpend(decimal Spent, int Count);
 }

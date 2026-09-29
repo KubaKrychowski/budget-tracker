@@ -9,6 +9,7 @@ namespace BudgetTracker.Api.Features.Budgets.Contracts;
 /// Suma limitów per kategoria (<c>BudgetItem</c>). Dziś zawsze wyliczana, nigdy edytowana —
 /// czy to ma być osobne pole na budżecie, rozstrzyga issue #5.
 /// </param>
+/// <param name="PeriodStartDay">Dzień początku okresu rozliczeniowego (1–28); 1 = miesiąc kalendarzowy.</param>
 /// <param name="Balance">
 /// Bilans bieżący: <c>InitialBalance</c> plus suma transakcji budżetu. Ta sama formuła co na
 /// dashboardzie — dwa ekrany nie mogą pokazywać dla tego samego budżetu dwóch różnych kwot.
@@ -31,4 +32,5 @@ public sealed record BudgetListItemResponseDto(
     DateTimeOffset? DisabledAt,
     DateTimeOffset? DeletedAt,
     Guid? LinkedSavingsBudgetId,
-    IReadOnlyList<TitleAmountRuleResponseDto> SavingsTransferRules);
+    IReadOnlyList<TitleAmountRuleResponseDto> SavingsTransferRules,
+    int PeriodStartDay = 1);
