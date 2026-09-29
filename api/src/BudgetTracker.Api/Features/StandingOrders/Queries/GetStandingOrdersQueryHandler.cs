@@ -1,5 +1,6 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Features.StandingOrders.Consts;
 using BudgetTracker.Api.Features.StandingOrders.Contracts;
 using BudgetTracker.Api.Features.StandingOrders.Services;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetTracker.Api.Features.StandingOrders.Queries;
 
-/// <summary>Zlecenia stałe budżetu ze stanem w oglądanym miesiącu i ostatnio przypiętymi transakcjami.</summary>
+/// <summary>Zlecenia stałe budżetu ze stanem w oglądanym okresie rozliczeniowym i ostatnio przypiętymi transakcjami.</summary>
 public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrdersBudgetScope scope)
 {
     /// <summary>Ile ostatnich przypięć pokazuje karta po prawej.</summary>
@@ -17,17 +18,22 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
     /// <summary>Tolerancja porównania kwot — grosz. Mniejsza różnica to zaokrąglenie, nie „inna kwota”.</summary>
     private const decimal AmountTolerance = 0.01m;
 
-    /// <summary>Ekran zleceń stałych dla budżetu (wskazanego albo domyślnego) i miesiąca (wskazanego albo bieżącego).</summary>
+    /// <summary>Ekran zleceń stałych dla budżetu (wskazanego albo domyślnego) i okresu (wskazanego kluczem albo bieżącego).</summary>
+    /// <remarks>Przypięta transakcja należy do okresu po DACIE (<see cref="BillingPeriod"/>), nie po miesiącu kalendarzowym.</remarks>
     public async Task<StandingOrdersResponseDto> HandleAsync(Guid? budgetId, DateOnly? month, CancellationToken ct)
     {
-        var currentMonth = scope.CurrentMonth();
-        var viewed = month is { } m ? new DateOnly(m.Year, m.Month, 1) : currentMonth;
+        var calendarMonth = scope.CurrentMonth();
 
         var budgets = await scope.OptionsAsync(ct);
-        if (StandingOrdersBudgetScope.Resolve(budgets, budgetId, currentMonth) is not { } budget)
+        if (StandingOrdersBudgetScope.Resolve(budgets, budgetId, calendarMonth) is not { } budget)
         {
-            return new StandingOrdersResponseDto(viewed, currentMonth, [], [], 0m, 0, 0, 0m, 0, [], budgets);
+            var emptyViewed = month is { } em ? new DateOnly(em.Year, em.Month, 1) : calendarMonth;
+            return new StandingOrdersResponseDto(emptyViewed, calendarMonth, [], [], 0m, 0, 0, 0m, 0, [], budgets);
         }
+
+        var period = await scope.PeriodAsync(budget, ct);
+        var currentMonth = period.CurrentKey;
+        var viewed = month is { } m ? new DateOnly(m.Year, m.Month, 1) : currentMonth;
 
         var orders = await db.StandingOrders
             .Where(o => o.BudgetBusinessId == budget)
@@ -47,7 +53,7 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
 
         var pinsByOrder = pins.ToLookup(p => p.OrderId);
         var rows = orders
-            .Select(o => Row(o, pinsByOrder[o.BusinessId].ToList(), viewed, currentMonth, categoryNames))
+            .Select(o => Row(o, pinsByOrder[o.BusinessId].ToList(), viewed, period, categoryNames))
             .ToList();
 
         var byId = orders.ToDictionary(o => o.BusinessId);
@@ -72,7 +78,10 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
             WaitingAmount: rows.Where(r => r.State == StandingOrderMonthState.Waiting).Sum(r => r.ExpectedAmount),
             DifferentAmountCount: rows.Count(r => r.State == StandingOrderMonthState.PaidDifferentAmount),
             SelectedBudgetIds: [budget],
-            Budgets: budgets);
+            Budgets: budgets,
+            PeriodStartDay: period.StartDay,
+            PeriodFrom: period.From(viewed),
+            PeriodTo: period.To(viewed));
     }
 
     /// <summary>Wiersz tabeli ze stanem w miesiącu.</summary>
@@ -87,11 +96,13 @@ public sealed class GetStandingOrdersQueryHandler(AppDbContext db, StandingOrder
     /// </list>
     /// </remarks>
     private static StandingOrderRowResponseDto Row(
-        StandingOrder order, List<Pin> pins, DateOnly month, DateOnly currentMonth, IReadOnlyDictionary<int, string> categoryNames)
+        StandingOrder order, List<Pin> pins, DateOnly month, PeriodContext period, IReadOnlyDictionary<int, string> categoryNames)
     {
-        var end = month.AddMonths(1);
+        var currentMonth = period.CurrentKey;
+        var from = period.From(month);
+        var end = period.ToExclusive(month);
         var ended = order.IsEndedBefore(month);
-        var inMonth = ended ? [] : pins.Where(p => p.Date >= month && p.Date < end).ToList();
+        var inMonth = ended ? [] : pins.Where(p => p.Date >= from && p.Date < end).ToList();
         var paid = inMonth.Sum(p => p.Amount);
 
         var state = ended ? StandingOrderMonthState.Ended

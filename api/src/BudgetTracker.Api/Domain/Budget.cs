@@ -31,6 +31,19 @@ public class Budget(
     public DateOnly Month { get; protected set; } = month;
 
     /// <summary>
+    /// Dzień miesiąca (1–28), od którego liczy się okres rozliczeniowy — dzień wypłaty. 1 = miesiąc kalendarzowy.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Zmiana przesuwa granice okresów WSTECZ, nie tylko naprzód: te same transakcje wpadną do innych okresów
+    /// także w historii. Dotyczy limitów oraz zleceń stałych i epizodycznych; dashboard (kroczące 30 dni)
+    /// i oszczędności zostają na miesiącu kalendarzowym. Reguły okresu: <see cref="BillingPeriod"/>.
+    /// </remarks>
+    public int PeriodStartDay { get; protected set; } = BillingPeriod.MinStartDay;
+
+    /// <summary>Ustawia dzień początku okresu rozliczeniowego; walidację zakresu robi handler.</summary>
+    public void ChangePeriodStartDay(int startDay) => PeriodStartDay = startDay;
+
+    /// <summary>
     /// Kod waluty ISO 4217 — klucz obcy do słownika <see cref="Domain.Currency"/>. W bazie stoi sam kod
     /// (<c>PLN</c>), a nie liczbowy identyfikator, żeby przeglądając tabelę nie trzeba było go sprawdzać.
     /// </summary>

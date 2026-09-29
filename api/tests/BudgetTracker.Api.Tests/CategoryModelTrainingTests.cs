@@ -270,6 +270,68 @@ public sealed class CategoryModelTrainingTests : IAsyncLifetime
             () => ActivateHandler().HandleAsync(Guid.CreateVersion7(), default));
     }
 
+    // ── Publikacja modelu ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Regresja z produkcji: konto bez kontenera (rejestracja nie dotarła do API) kończyło policzony już trening
+    /// wyjątkiem „kontener nie istnieje", a zadanie nie ma ponowień — przebieg przepadał.
+    /// </summary>
+    [Fact]
+    public async Task Publikacja_zaklada_brakujacy_kontener_zamiast_gubic_policzony_model()
+    {
+        var owner = Guid.CreateVersion7();
+        var container = TestBlobs.Client().GetBlobContainerClient(owner.ToString());
+        try
+        {
+            Assert.False(await container.ExistsAsync());
+            var store = new ModelStore(_clock, _db, TestBlobs.Client(), TestBlobs.Configuration(owner.ToString()));
+            var report = new TrainingReportResponseDto(10, 2, 0.9, 0.8);
+
+            var versionId = await store.Publish((report, new MemoryStream([1, 2, 3])), owner, "job-bez-kontenera", default);
+
+            Assert.True(await container.ExistsAsync());
+            var saved = await _db.Set<ModelVersion>().IgnoreQueryFilters().SingleAsync(v => v.BusinessId == versionId);
+            Assert.Equal(owner, saved.UserId);
+            Assert.True(await container.GetBlobClient($"modelVersions/{saved.Name}").ExistsAsync());
+        }
+        finally
+        {
+            await TestBlobs.DropContainerAsync(owner.ToString());
+        }
+    }
+
+    [Fact]
+    public async Task Publikacja_z_pustym_identyfikatorem_nie_zaklada_kontenera_wspolnego_dla_wszystkich()
+    {
+        // Od kiedy brakujący kontener zakładamy w locie, pusty Guid dałby kontener „00000000-…" bez właściciela.
+        var report = new TrainingReportResponseDto(10, 2, 0.9, 0.8);
+        var empty = TestBlobs.Client().GetBlobContainerClient(Guid.Empty.ToString());
+        Assert.False(await empty.ExistsAsync());
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _store.Publish((report, new MemoryStream([1])), Guid.Empty, "job-bez-konta", default));
+
+        Assert.False(await empty.ExistsAsync());
+        Assert.Empty(await _db.Set<ModelVersion>().IgnoreQueryFilters().ToListAsync());
+    }
+
+    [Fact]
+    public async Task Trening_z_pustym_identyfikatorem_konczy_sie_bledem_zanim_cokolwiek_policzy()
+    {
+        await Assert.ThrowsAsync<ArgumentException>(() => TrainJob().RunAsync(Guid.Empty, context: null, default));
+    }
+
+    [Fact]
+    public async Task Publikacja_do_istniejacego_kontenera_dziala_jak_dotad()
+    {
+        var report = new TrainingReportResponseDto(10, 2, 0.9, 0.8);
+
+        var versionId = await _store.Publish((report, new MemoryStream([1, 2, 3])), _user.UserId, "job-z-kontenerem", default);
+
+        var saved = await _db.Set<ModelVersion>().IgnoreQueryFilters().SingleAsync(v => v.BusinessId == versionId);
+        Assert.Equal("job-z-kontenerem", saved.JobId);
+    }
+
     // ── Przeliczanie kategorii wierszy, które są już w bazie ─────────────────────────────
 
     /// <summary>

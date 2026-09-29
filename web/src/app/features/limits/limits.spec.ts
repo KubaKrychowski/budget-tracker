@@ -71,6 +71,9 @@ describe('Limits', () => {
   const response = (over: Partial<LimitsResponse> = {}): LimitsResponse => ({
     month: '2026-09-01',
     currentMonth: '2026-09-01',
+    periodStartDay: 1,
+    periodFrom: '2026-09-01',
+    periodTo: '2026-09-30',
     readOnly: false,
     limits: [row()],
     unlimited: [{ categoryId: 'c-gift', categoryName: 'Prezenty', spent: 260 }],
@@ -196,6 +199,26 @@ describe('Limits', () => {
     api().goToCurrentMonth();
     await tick();
     expect(queryParam('month')).toBeNull();
+  });
+
+  // ── Okres rozliczeniowy ──────────────────────────────────────────────────────────────
+
+  it('przy własnym okresie rozliczeniowym pokazuje zakres dat obok nazwy okresu', async () => {
+    await settle(response({ month: '2026-10-01', currentMonth: '2026-10-01', periodStartDay: 28, periodFrom: '2026-09-28', periodTo: '2026-10-27' }));
+
+    expect(fixture.nativeElement.querySelector('.lim__config-range')?.textContent?.trim()).toBe('28.09 – 27.10.2026');
+  });
+
+  it('zakres obejmuje oba lata, gdy okres przechodzi przez Nowy Rok', async () => {
+    await settle(response({ month: '2027-01-01', currentMonth: '2027-01-01', periodStartDay: 28, periodFrom: '2026-12-28', periodTo: '2027-01-27' }));
+
+    expect(fixture.nativeElement.querySelector('.lim__config-range')?.textContent?.trim()).toBe('28.12.2026 – 27.01.2027');
+  });
+
+  it('przy miesiącu kalendarzowym (dzień 1) nie dokłada zakresu, który nic nie mówi', async () => {
+    await settle();
+
+    expect(fixture.nativeElement.querySelector('.lim__config-range')).toBeNull();
   });
 
   // ── Baner ────────────────────────────────────────────────────────────────────────────

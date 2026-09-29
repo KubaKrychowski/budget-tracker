@@ -37,9 +37,16 @@ export interface LimitCategoryOption {
 
 /** Odpowiednik LimitsResponseDto — cały ekran jednym żądaniem. */
 export interface LimitsResponse {
+  /** Klucz oglądanego okresu — pierwszy dzień miesiąca, w którym okres się kończy („Październik" = 28.09–27.10). */
   readonly month: string;
+  /** Klucz bieżącego okresu rozliczeniowego budżetu. */
   readonly currentMonth: string;
-  /** Miesiąc zamknięty — bez akcji zmieniających limity. */
+  /** Dzień początku okresu rozliczeniowego budżetu (1–28); 1 = miesiąc kalendarzowy. */
+  readonly periodStartDay: number;
+  /** Pierwszy i ostatni dzień oglądanego okresu (RRRR-MM-DD); `null` tylko, gdy nie ma budżetu. */
+  readonly periodFrom: string | null;
+  readonly periodTo: string | null;
+  /** Okres zamknięty — bez akcji zmieniających limity. */
   readonly readOnly: boolean;
   readonly limits: LimitRow[];
   readonly unlimited: UnlimitedCategory[];

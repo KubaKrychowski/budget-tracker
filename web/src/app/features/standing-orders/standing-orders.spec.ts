@@ -81,6 +81,9 @@ describe('StandingOrders', () => {
   const response = (over: Partial<StandingOrdersResponse> = {}): StandingOrdersResponse => ({
     month: '2026-09-01',
     currentMonth: '2026-09-01',
+    periodStartDay: 1,
+    periodFrom: '2026-09-01',
+    periodTo: '2026-09-30',
     orders: [row()],
     recent: [{ transactionId: 't1', standingOrderId: 'o1', standingOrderName: 'Czynsz', date: '2026-09-05', amount: 2200, differentAmount: false }],
     monthlyTotal: 2200,

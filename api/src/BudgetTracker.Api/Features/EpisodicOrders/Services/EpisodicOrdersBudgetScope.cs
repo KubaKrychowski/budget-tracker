@@ -1,4 +1,6 @@
+using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Budgets.Exceptions;
+using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Features.EpisodicOrders.Contracts;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,15 @@ namespace BudgetTracker.Api.Features.EpisodicOrders.Services;
 /// </summary>
 public sealed class EpisodicOrdersBudgetScope(AppDbContext db, TimeProvider clock)
 {
-    /// <summary>Pierwszy dzień bieżącego miesiąca — z <see cref="TimeProvider"/>, żeby test mógł go podmienić.</summary>
+    /// <summary>Okres rozliczeniowy budżetu „dziś" — z <see cref="TimeProvider"/>, żeby test mógł go podmienić.</summary>
+    /// <remarks>Okres jest ustawieniem budżetu (<see cref="Budget.PeriodStartDay"/>), więc wymaga rozstrzygniętego budżetu.</remarks>
+    public async Task<PeriodContext> PeriodAsync(Guid budget, CancellationToken ct)
+    {
+        var startDay = await db.Budgets.Where(b => b.BusinessId == budget).Select(b => b.PeriodStartDay).SingleAsync(ct);
+        return PeriodContext.At(startDay, DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime.Date));
+    }
+
+    /// <summary>Pierwszy dzień bieżącego miesiąca KALENDARZOWEGO — punkt odniesienia wyboru budżetu domyślnego, nie okresu.</summary>
     public DateOnly CurrentMonth()
     {
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime.Date);

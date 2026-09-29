@@ -1,8 +1,8 @@
 namespace BudgetTracker.Api.Features.Limits.Contracts;
 
 /// <summary>Ekran „Limity wydatków" dla jednego budżetu i jednego miesiąca — wszystko jednym żądaniem.</summary>
-/// <param name="Month">Oglądany miesiąc (pierwszy dzień).</param>
-/// <param name="CurrentMonth">Bieżący miesiąc — do przycisku „Bieżący miesiąc" i do rozstrzygnięcia <paramref name="ReadOnly"/>.</param>
+/// <param name="Month">Klucz oglądanego okresu — pierwszy dzień miesiąca, w którym okres się kończy.</param>
+/// <param name="CurrentMonth">Klucz bieżącego okresu — do przycisku „Bieżący okres" i do rozstrzygnięcia <paramref name="ReadOnly"/>.</param>
 /// <param name="ReadOnly">
 /// Miesiąc zamknięty. Limity zmienia się od bieżącego miesiąca w przód — zmiana wstecz przepisałaby
 /// historię, na której ktoś już podjął decyzje.
@@ -15,6 +15,9 @@ namespace BudgetTracker.Api.Features.Limits.Contracts;
 /// Wydatki bez kategorii w miesiącu. ⚠️ Nie liczą się do ŻADNEGO limitu (nie ma do czego ich przypisać),
 /// więc ekran musi to powiedzieć — inaczej limit wygląda bezpieczniej, niż jest.
 /// </param>
+/// <param name="PeriodStartDay">Dzień początku okresu rozliczeniowego budżetu (1–28); 1 = miesiąc kalendarzowy.</param>
+/// <param name="PeriodFrom">Pierwszy dzień oglądanego okresu; <c>null</c> tylko, gdy nie ma budżetu.</param>
+/// <param name="PeriodTo">Ostatni dzień oglądanego okresu (włącznie); <c>null</c> tylko, gdy nie ma budżetu.</param>
 /// <param name="HasAnyLimit">
 /// Czy budżet ma limit w JAKIMKOLWIEK miesiącu — nie tylko w oglądanym.
 ///
@@ -37,4 +40,7 @@ public sealed record LimitsResponseDto(
     decimal UncategorizedAmount,
     IReadOnlyList<Guid> SelectedBudgetIds,
     IReadOnlyList<LimitsBudgetOptionResponseDto> Budgets,
-    bool HasAnyLimit);
+    bool HasAnyLimit,
+    int PeriodStartDay = 1,
+    DateOnly? PeriodFrom = null,
+    DateOnly? PeriodTo = null);

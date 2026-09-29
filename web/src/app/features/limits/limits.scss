@@ -35,6 +35,13 @@
   }
 
   /* Strzałki to jedna para, nie dwa osobne przyciski — stąd ciaśniejszy odstęp niż między polami. */
+  /* Zakres dat okresu rozliczeniowego obok strzałek — pomocniczy, więc przygaszony. */
+  &__config-range {
+    color: #595959;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
   &__config-steps {
     display: flex;
     gap: 4px;

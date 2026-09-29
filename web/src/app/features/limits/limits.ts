@@ -116,6 +116,19 @@ export class Limits {
     return d !== null && d.month === d.currentMonth;
   });
 
+  /**
+   * Zakres dat okresu („28.09 – 27.10.2026"), tylko gdy budżet ma własny okres rozliczeniowy. Przy dniu 1 okres jest
+   * miesiącem kalendarzowym, więc zakres nic by nie dodał do nazwy miesiąca.
+   */
+  protected readonly periodRange = computed(() => {
+    const d = this.lastData();
+    if (!d || d.periodStartDay <= 1 || !d.periodFrom || !d.periodTo) return null;
+    const [fy, fm, fd] = d.periodFrom.split('-');
+    const [ty, tm, td] = d.periodTo.split('-');
+    const from = fy === ty ? `${fd}.${fm}` : `${fd}.${fm}.${fy}`;
+    return `${from} – ${td}.${tm}.${ty}`;
+  });
+
   protected readonly overRows = computed(() => this.rows().filter((r) => r.state === 'Over'));
 
   // ── Nawigacja ────────────────────────────────────────────────────────────────────────

@@ -49,6 +49,11 @@ export interface StandingOrderPin {
 export interface StandingOrdersResponse {
   readonly month: string;
   readonly currentMonth: string;
+  /** Dzień początku okresu rozliczeniowego budżetu (1–28); 1 = miesiąc kalendarzowy. */
+  readonly periodStartDay: number;
+  /** Pierwszy i ostatni dzień oglądanego okresu (RRRR-MM-DD); `null` tylko, gdy nie ma budżetu. */
+  readonly periodFrom: string | null;
+  readonly periodTo: string | null;
   readonly orders: StandingOrderRow[];
   readonly recent: StandingOrderPin[];
   /** Stałe w przeliczeniu na miesiąc: kwartalne ÷ 3, roczne ÷ 12. Zakończone się nie liczą. */

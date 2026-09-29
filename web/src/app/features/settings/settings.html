@@ -310,6 +310,15 @@
       ></nz-alert>
     }
 
+    @if (periodStartDayChanged()) {
+      <nz-alert
+        nzType="warning"
+        nzShowIcon
+        [nzMessage]="'settings.budgets.edit.periodShiftTitle' | translate"
+        [nzDescription]="'settings.budgets.edit.periodShift' | translate"
+      ></nz-alert>
+    }
+
     <label class="set__form-field" for="budget-name">
       <span class="set__label">{{ 'settings.budgets.edit.name' | translate }}</span>
       <input
@@ -332,6 +341,20 @@
         [nzPrecision]="2"
         [nzStep]="100"
       ></nz-input-number>
+    </label>
+
+    <label class="set__form-field" for="budget-period-start-day">
+      <span class="set__label">{{ 'settings.budgets.edit.periodStartDay' | translate }}</span>
+      <nz-input-number
+        nzId="budget-period-start-day"
+        [ngModel]="draftPeriodStartDay()"
+        (ngModelChange)="draftPeriodStartDay.set($event ?? 1)"
+        [nzMin]="1"
+        [nzMax]="28"
+        [nzPrecision]="0"
+        [nzStep]="1"
+      ></nz-input-number>
+      <span class="set__hint">{{ 'settings.budgets.edit.periodStartDayHint' | translate }}</span>
     </label>
 
     <!-- Bilans bieżący jest WYLICZANY (bilans początkowy + suma transakcji), więc nie da się

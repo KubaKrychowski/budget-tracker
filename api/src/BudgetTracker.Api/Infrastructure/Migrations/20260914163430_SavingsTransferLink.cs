@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BudgetTracker.Api.Infrastructure.Migrations
 {
     /// <summary>
-    /// Budżet może wskazywać powiązany budżet oszczędnościowy (<c>LinkedSavingsBudgetBusinessId</c>,
+    /// Budżet może wskazywać powiązany budżet oszczędnościowy (<c>LinkedSavingsBudgetBusinessId</c>, 
     /// jednokierunkowo, bez FK) i nieść reguły rozpoznające własne transakcje będące transferem do/z
     /// niego (<c>SavingsTransferRules</c>, jsonb, wzorem <c>StandingOrder.Rules</c>). Transakcja dostaje
     /// pole przypięcia (<c>SavingsTransferBudgetBusinessId</c>) i pamięć ręcznego odpięcia

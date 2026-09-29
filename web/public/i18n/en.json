@@ -421,7 +421,11 @@
         "recalculationTitle": "Changing the opening balance recalculates the whole budget",
         "recalculation": "The balance for every day is counted from this value, so the entire chart shifts, not a single number.",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "periodStartDay": "Billing period starts on day of month",
+        "periodStartDayHint": "Days 1–28 are allowed. With day 28 the period 28 Sep–27 Oct is called “October”; 1 is a plain calendar month. Applies to limits and to standing and one-off orders.",
+        "periodShiftTitle": "Changing the day moves period boundaries",
+        "periodShift": "Boundaries change retroactively too: the same transactions may fall into different periods in the history of limits and orders."
       },
       "reset": {
         "title": "Reset budget",
@@ -705,9 +709,9 @@
     "remove": "Remove",
     "saved": "Limit saved.",
     "removed": "Limit removed. The category has no limit from the current month on.",
-    "prevMonth": "Previous month",
-    "nextMonth": "Next month",
-    "currentMonth": "Current month",
+    "prevMonth": "Previous period",
+    "nextMonth": "Next period",
+    "currentMonth": "Current period",
     "banner": {
       "noLimits": "This budget has no limits yet.",
       "noLimitsClosed": "{{month}} — the budget had no limits in this month.",
@@ -722,13 +726,13 @@
     },
     "metrics": {
       "spentInLimited": "Spent in limited categories",
-      "limitTotal": "Monthly budget limit",
+      "limitTotal": "Budget limit for the period",
       "overLimit": "Categories over limit",
       "spentOutside": "Spent outside limits"
     },
     "table": {
       "title": "Category limits",
-      "hint": "The limit applies every month in this budget · spent = categorised expenses in the selected month, including large ones",
+      "hint": "The limit applies every billing period in this budget · spent = categorised expenses in the selected period, including large ones",
       "empty": "No limits in this month",
       "emptyBudget": "No limits in this budget",
       "category": "Category",
@@ -742,11 +746,11 @@
     },
     "unlimited": {
       "title": "Spending without a limit",
-      "hint": "Categories with expenses this month that have no limit",
+      "hint": "Categories with expenses in this period that have no limit",
       "empty": "Every category with expenses this month already has a limit.",
       "noSpending": "No categorised expenses this month yet.",
       "set": "Set limit",
-      "note": "These {{amount}} are not part of the monthly budget limit — the budget limit is the sum of category limits, nothing more.",
+      "note": "These {{amount}} are not part of the period limit — the budget limit is the sum of category limits, nothing more.",
       "contextNote": "This month's amounts, for context only — no limit is suggested."
     },
     "editor": {

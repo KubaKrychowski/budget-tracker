@@ -23,12 +23,15 @@ public sealed class GetEpisodicOrdersQueryHandler(
 {
     public async Task<EpisodicOrdersResponseDto> HandleAsync(Guid? budgetId, CancellationToken ct)
     {
-        var currentMonth = scope.CurrentMonth();
+        var calendarMonth = scope.CurrentMonth();
         var budgets = await scope.OptionsAsync(ct);
-        if (EpisodicOrdersBudgetScope.Resolve(budgets, budgetId, currentMonth) is not { } budget)
+        if (EpisodicOrdersBudgetScope.Resolve(budgets, budgetId, calendarMonth) is not { } budget)
         {
-            return new EpisodicOrdersResponseDto([], [], 0m, 0m, 0m, 0m, 0, currentMonth, [], budgets);
+            return new EpisodicOrdersResponseDto([], [], 0m, 0m, 0m, 0m, 0, calendarMonth, [], budgets);
         }
+
+        var period = await scope.PeriodAsync(budget, ct);
+        var currentMonth = period.CurrentKey;
 
         var orders = await db.EpisodicOrders
             .Where(o => o.BudgetBusinessId == budget)
@@ -81,10 +84,11 @@ public sealed class GetEpisodicOrdersQueryHandler(
             PlannedTotal: planned.Sum(r => r.Amount),
             CollectedTotal: withReservation.Sum(r => r.Collected ?? 0m),
             ReservedTotal: withReservation.Sum(r => r.Amount),
-            RealizedThisYear: realized.Where(r => r.Date?.Year == currentMonth.Year).Sum(r => r.Amount),
+            RealizedThisYear: realized.Where(r => r.Date?.Year == calendarMonth.Year).Sum(r => r.Amount),
             WithoutSavingsCount: planned.Count - withReservation.Count,
             CurrentMonth: currentMonth,
             SelectedBudgetIds: [budget],
-            Budgets: budgets);
+            Budgets: budgets,
+            PeriodStartDay: period.StartDay);
     }
 }

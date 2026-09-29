@@ -595,6 +595,27 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > Poza zakresem: integracja z celem oszczędnościowym (#7) — `MonthlyTotalsAsync` w `GetSavingsQueryHandler`
 > dalej czyta „odłożone"/„wypłacone" z kategorii, nie z powiązanego budżetu; to osobne zadanie.
 
+> **REWIZJA — 2026-09-29: okres rozliczeniowy zamiast miesiąca kalendarzowego (limity i zlecenia).**
+> Wypłata przychodzi np. 28., więc limity ustawiane „na miesiąc" pokazywały poprzedni okres, a nie ten, w którym
+> użytkownik faktycznie wydaje. Makiety: Figma `335:2772` (Ustawienia, edycja budżetu) i `335:3323` (Limity).
+>
+> - **Dzień początku okresu (1–28) jest ustawieniem BUDŻETU** (`Budget.PeriodStartDay`, domyślnie 1, check constraint
+>   w bazie), edytowanym w Ustawieniach obok nazwy i bilansu. Limity, zlecenia i cele już działały w zakresie jednego
+>   budżetu, więc jedno ustawienie na konto rozjeżdżałoby się przy dwóch budżetach. Dni 29–31 odpadają: nie istnieją w każdym
+>   miesiącu, a reguła dla krótkich miesięcy byłaby źródłem błędów granicznych.
+> - **Okres nosi nazwę miesiąca, w którym się KOŃCZY** (28.09–27.10 = „październik"): pensja z 28.09 finansuje październik.
+>   Kluczem okresu jest nadal pierwszy dzień tego miesiąca — ten sam typ co `BudgetItem.ValidFrom` i `DueMonth`, więc
+>   historia limitów i zleceń NIE wymaga przeliczania, a budżety z dniem 1 zachowują się dokładnie jak dotąd.
+>   Reguły w jednym miejscu: `Domain/BillingPeriod.cs`.
+> - **Zakres:** limity oraz zlecenia stałe i epizodyczne (ekrany z „bieżącym miesiącem"). Dashboard zostaje na
+>   kroczących 30 dniach (§7), oszczędności i rezerwacje na miesiącu kalendarzowym — dotykałyby danych, których zmiana nie była
+>   potrzebna do zgłoszonego problemu. Wybór budżetu domyślnego dalej rozstrzyga miesiąc kalendarzowy.
+> - ⚠️ **Zmiana dnia działa WSTECZ:** granice okresów przesuwają się także w historii, więc te same transakcje wpadną do innych
+>   okresów. Modal edycji ostrzega o tym alertem na górze, po faktycznej zmianie wartości (jak alert o bilansie).
+> - `PUT /api/budgets/{id}`: brak `periodStartDay` w żądaniu = bez zmiany (CLI i stare klienty nie mogą po cichu zresetować okresu do 1).
+> - Odstępstwo od makiety: zakres dat („28.09 – 27.10.2026") pokazujemy tylko przy dniu > 1, bo dla miesiąca kalendarzowego
+>   nic nie dodaje do nazwy miesiąca. Wybór okresu zostaje w „Konfiguracji" (jak przed zmianą), a nie na pasku nad tabelą.
+
 ---
 
 ## 6. Przepływ importu + mapowanie

@@ -56,6 +56,9 @@
               <button nz-button (click)="shiftMonth(-1)" [attr.aria-label]="'limits.prevMonth' | translate">‹</button>
               <button nz-button (click)="shiftMonth(1)" [attr.aria-label]="'limits.nextMonth' | translate">›</button>
             </span>
+            @if (periodRange(); as range) {
+              <span class="lim__config-range">{{ range }}</span>
+            }
             <!-- Link, nie przycisk z ramką — makieta 203:3 / 206:182. -->
             <button nz-button nzType="link" [disabled]="isCurrentMonth()" (click)="goToCurrentMonth()">
               {{ 'limits.currentMonth' | translate }}
