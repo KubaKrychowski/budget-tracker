@@ -22,10 +22,23 @@ suma samych wpłat. Rośnie i maleje razem z transakcjami zaimportowanymi na ten
   z etykietą celu.
 - **Uzbierane** w rezerwacji to suma RĘCZNYCH wpłat, które zarejestrujesz na ekranie — nie
   automatyczne rozłożenie stanu konta wg terminów.
-- Wpłata ma dwa ograniczenia: nie więcej, niż brakuje do kwoty rezerwacji, i nie więcej, niż
-  faktycznie zostało wolnych środków po wpłatach na inne, wciąż otwarte rezerwacje.
-- **Wolne środki = stan konta minus pełne kwoty nierozliczonych rezerwacji.** Same wpłaty na cel
-  nie zmieniają wolnych środków — dopiero rozliczenie (albo usunięcie) rezerwacji je zwalnia.
+- W oknie „Wpłać" wybierasz, **skąd wpłacasz**: z konta oszczędnościowego albo ze zwykłego.
+- Wpłata z **konta oszczędnościowego** ma dwa ograniczenia: nie więcej, niż brakuje do kwoty
+  rezerwacji, i nie więcej, niż faktycznie zostało na koncie po wpłatach z oszczędności na inne,
+  wciąż otwarte rezerwacje.
+- Wpłata ze **zwykłego konta** wymaga wybrania **kategorii limitu**. Pieniądze zostają na koncie,
+  ale są na nim zarezerwowane na cel, a kwota wlicza się do limitu tej kategorii w miesiącu
+  wpłaty (o ile kategoria ma limit). Okno pokazuje, ile będzie po wpłacie — przekroczenie limitu
+  tylko ostrzega, nie blokuje. Takie wpłaty nie tworzą transakcji: wydatek i tak pojawi się
+  z wyciągu banku. Ze zwykłego konta ogranicza cię tylko kwota brakująca do celu, bo aplikacja nie
+  zna jego stanu.
+- Rozliczona rezerwacja przestaje wliczać swoje wpłaty ze zwykłego konta do limitu — zakup, którym
+  ją rozliczasz, jest już prawdziwą transakcją w swojej kategorii.
+- **Wolne środki = stan konta minus nierozliczona część rezerwacji**, czyli jej pełna kwota bez
+  tego, co pokryły wpłaty ze zwykłego konta. Wpłaty z oszczędności nie zmieniają wolnych środków —
+  dopiero rozliczenie (albo usunięcie) rezerwacji je zwalnia.
+- Ile jest **zarezerwowane na zwykłym koncie**, widać w nagłówku ekranu rezerwacji i na pulpicie
+  w podsumowaniu (kafelek pojawia się tylko wtedy, gdy coś jest zarezerwowane).
 
 ### Rezerwacje z zleceń epizodycznych
 

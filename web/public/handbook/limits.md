@@ -9,6 +9,9 @@ wszystkich kategorii — nie osobne pole do wypełnienia.
 
 - Do limitu liczą się wszystkie wydatki z daną kategorią, także te oznaczone jako zlecenie
   epizodyczne (jednorazowe).
+- Do limitu wliczają się też **wpłaty na cele ze zwykłego konta**, jeśli wskazałeś przy nich tę
+  kategorię — w miesiącu wpłaty, dopóki rezerwacja nie jest rozliczona (patrz „Cele oszczędzania
+  i rezerwacje").
 - Transakcje **bez kategorii** nie wliczają się do żadnego limitu — ekran mówi o nich osobno, jako
   o wydatkach „poza limitami".
 - Kategorie przychodowe i kategoria „Oszczędności" nie dostają limitu w ogóle.
