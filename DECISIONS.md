@@ -1121,6 +1121,18 @@ konta**, które na nim powstało, i ekran nie może sugerować inaczej. Dopisani
 **Czego to nie zamyka.** Zaproszenie nie wysyła maila (dostajesz adres kanałem, którym i tak się umawiasz), nie ma
 wygasania ani limitu użyć, nie ma importu listy hurtem, a rejestracja nie jest ograniczona co do liczby kont na adres IP.
 
+> **REWIZJA — 2026-09-30: 401 z API odnawia sesję albo odsyła na logowanie (`unauthorizedInterceptor`).** Po długiej przerwie
+> (uśpiony komputer, karta odtworzona z poprzedniej sesji) storage trzymał wygasły token, a odnowienie w tle (cichy iframe) nie miało
+> czym się udać, gdy sesja na Identity też wygasła. Biblioteka OIDC nie dawała wtedy sygnału aplikacji: każdy ekran kończył się
+> 401 (`token was expired` / `missing_token` w logach API) zamiast odświeżeniem albo wylogowaniem.
+> - Interceptor na `/api/`: 401 → `forceRefreshSession()` → ponowienie żądania RAZ; nieudane odświeżenie albo drugi 401 → `logoffLocal()` +
+>   `authorize()` (przekierowanie na logowanie). Stan (trwające odświeżenie, przekierowanie) w `SessionRecovery` — równoległe 401 dzielą
+>   jedno odświeżenie i jedno przekierowanie.
+> - ⚠️ Stoi PRZED `authInterceptor()`, żeby ponowione żądanie dostało świeży token. Nie zmieniamy `useRefreshToken: false` (patrz
+>   komentarz w `app.config.ts`).
+> - Ograniczenie: po ponownym zalogowaniu aplikacja ląduje na `/`, nie na ekranie, na którym była (zapamiętywanie trasy robi tylko
+>   guard biblioteki).
+
 ## 13. Wdrożenie na Azure (Terraform)
 
 Kod infrastruktury: `infra/`. Instrukcja uruchomienia i kroki ręczne: `infra/README.md`. Tu są same decyzje.
