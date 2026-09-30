@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Cli;
 using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.Savings.Commands;
@@ -30,6 +31,7 @@ public static class SavingsModule
         services.AddScoped<ReservationLookup>();
         services.AddScoped<SavingsAccount>();
         services.AddScoped<ContributeToReservationCommandHandler>();
+        services.AddScoped<GetContributionCategoriesQueryHandler>();
 
         services.AddScoped<SetSavingsGoalCommandHandler>();
         services.AddScoped<EndSavingsGoalCommandHandler>();
@@ -130,6 +132,13 @@ public static class SavingsModule
             .Produces<SavingsReservationResponseDto>()
             .Produces(StatusCodes.Status404NotFound);
 
+        app.MapGet("/api/savings/reservations/{id:guid}/contribution-categories", async (
+            Guid id, GetContributionCategoriesQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, ct)))
+            .WithName("GetContributionCategories")
+            .Produces<IReadOnlyList<ContributionCategoryResponseDto>>()
+            .Produces(StatusCodes.Status404NotFound);
+
         app.MapPost("/api/savings/reservations/{id:guid}/contributions", async (
             Guid id, ContributeRequestDto request, ContributeToReservationCommandHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.ContributeAsync(id, request, ct)))
@@ -227,12 +236,19 @@ public static class SavingsModule
             async (sp, args, ct) =>
                 await sp.GetRequiredService<UnsettleSavingsReservationCommandHandler>().HandleAsync(args.GetGuid(0), ct));
 
-        registry.Register("reservation", "contribute", "Wpłaca na cel — kwota umownie odłożona z oszczędności.",
-            "reservation contribute <id> --amount <kwota>",
-            [CliFlag.Required("amount", "Kwota wpłaty.")],
+        registry.Register("reservation", "contribute", "Wpłaca na cel — kwota umownie odłożona z oszczędności albo ze zwykłego konta.",
+            "reservation contribute <id> --amount <kwota> [--source Savings|Regular] [--category-id <guid>]",
+            [
+                CliFlag.Required("amount", "Kwota wpłaty."),
+                CliFlag.Optional("source", "Konto: Savings (domyślnie) albo Regular."),
+                CliFlag.Optional("category-id", "Kategoria limitu — wymagana przy --source Regular."),
+            ],
             async (sp, args, ct) =>
             {
-                var request = new ContributeRequestDto(args.GetRequiredDecimalFlag("amount"));
+                var request = new ContributeRequestDto(
+                    args.GetRequiredDecimalFlag("amount"),
+                    args.GetEnumFlag("source", ContributionSource.Savings),
+                    args.GetGuidFlag("category-id"));
                 return await sp.GetRequiredService<ContributeToReservationCommandHandler>()
                     .ContributeAsync(args.GetGuid(0), request, ct);
             });

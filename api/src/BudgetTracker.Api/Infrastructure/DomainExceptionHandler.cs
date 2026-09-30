@@ -81,6 +81,7 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         ReservationAlreadySettledException =>
             (StatusCodes.Status409Conflict, "Reservation_AlreadySettled"),
         ContributionAmountInvalidException => (StatusCodes.Status400BadRequest, "Contribution_AmountInvalid"),
+        ContributionCategoryInvalidException => (StatusCodes.Status400BadRequest, "Contribution_CategoryInvalid"),
         ContributionExceedsBalanceException => (StatusCodes.Status400BadRequest, "Contribution_ExceedsBalance"),
         ReservationAmountBelowContributedException => (StatusCodes.Status400BadRequest, "Reservation_AmountBelowContributed"),
 

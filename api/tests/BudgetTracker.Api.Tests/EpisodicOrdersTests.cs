@@ -88,7 +88,8 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
         new(_db, Scope(), new GetSavingsReservationsQueryHandler(_db, new SavingsBudgetScope(_db, _clock), new SavingsAccount(_db, new SavingsCategory(_db))));
 
     private ContributeToReservationCommandHandler Contribute() =>
-        new(_db, new ReservationLookup(_db), new SavingsAccount(_db, new SavingsCategory(_db)), new SavingsBudgetScope(_db, _clock));
+        new(_db, new ReservationLookup(_db), new SavingsAccount(_db, new SavingsCategory(_db)), new SavingsBudgetScope(_db, _clock),
+            new BudgetTracker.Api.Features.Limits.Services.LimitCategories(_db));
 
     private GetEpisodicOrderCandidatesQueryHandler Candidates() => new(_db, Scope(), Lookup(), Transactions());
 

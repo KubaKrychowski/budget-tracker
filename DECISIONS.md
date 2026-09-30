@@ -502,6 +502,26 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   przy logowaniu. Osobny plik, nie skrypt inline — CSP nie zezwala na inline. Teksty statusu tylko w `pl.json`/`en.json`;
 >   statyczna kopia ma puste miejsca na wersję i status o tej samej wysokości, żeby przejście do wersji Angulara nie skakało.
 
+> **REWIZJA — 2026-09-30: wpłata na cel ze zwykłego konta** (makiety Figma — strona „Cele oszczędzania”, `343:2049`,
+> `343:2069`, `343:2143`; strona „Dashboard”, `343:4724`):
+> - Wpłata ma **źródło** (`ContributionSource`: `Savings` domyślnie, `Regular`) i — dla `Regular` — **kategorię limitu**
+>   wybieraną przy wpłacie (`SavingsContribution.CategoryBusinessId`). Kategorię ograniczają te same reguły co limity
+>   (`LimitCategories`), więc „Oszczędności” odpadają.
+> - ⚠️ **Wpłata ze zwykłego konta nie jest transakcją.** Bank i tak wyśle wyciąg, więc druga transakcja zdublowałaby ruch.
+>   Do limitu wlicza ją `LimitSpending` z listy wpłat, po dacie wpłaty, i tylko dla rezerwacji NIEROZLICZONYCH —
+>   rozliczenie zakupem tworzy prawdziwą transakcję w swojej kategorii, więc wpłata liczona dalej byłaby podwójna.
+>   `LimitSpending` jest jedynym miejscem liczenia „wydane”: ekran limitów i podgląd w oknie wpłaty czytają tę samą liczbę.
+> - **Limity wpłaty:** z oszczędności jak dotąd (brakująca kwota i stan konta po wpłatach na inne cele); ze zwykłego konta
+>   tylko brakująca kwota — stanu zwykłego konta aplikacja nie zna, wydatki wchodzą z wyciągów. Przekroczenie limitu
+>   kategorii **ostrzega, nie blokuje**.
+> - `AvailableToContribute` liczy wyłącznie wpłaty z oszczędności. **Wolne środki = stan konta − (kwoty rezerwacji − wpłaty
+>   ze zwykłego konta)** — część pokryta ze zwykłego konta nie obciąża oszczędności. To rozszerza decyzję z #23 („wpłaty
+>   nie zmieniają wolnych środków”), która dotyczyła wpłat z oszczędności.
+> - „Zarezerwowane na zwykłym koncie” (`ReservedOnRegular`) to suma wpłat `Regular` na rezerwacje nierozliczone: nagłówek
+>   ekranu rezerwacji i kafel dashboardu (tylko gdy większe od zera; nie zależy od okna dat, to stan na dziś).
+> - Migracja `ContributionSource` to wyłącznie dane (wpłaty siedzą w `jsonb`): istniejące wpłaty dostają `Source = 1`
+>   i brak kategorii.
+
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
 > i pomylenie ich daje błąd, którego nie widać na ekranie.

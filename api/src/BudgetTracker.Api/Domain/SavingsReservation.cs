@@ -1,3 +1,5 @@
+using BudgetTracker.Api.Domain.Consts;
+
 namespace BudgetTracker.Api.Domain;
 
 /// <summary>
@@ -85,14 +87,19 @@ public class SavingsReservation(
     /// <summary>Umowne wpłaty na tę rezerwację, od najstarszej. Ich suma to „uzbierane”.</summary>
     public List<SavingsContribution> Contributions { get; protected set; } = [];
 
-    /// <summary>Suma wpłat.</summary>
+    /// <summary>Suma wpłat z obu kont.</summary>
     public decimal Contributed => Contributions.Sum(c => c.Amount);
+
+    /// <summary>Suma wpłat z jednego konta — oszczędnościowe pomniejszają stan do odłożenia, zwykłe wliczają się do limitów.</summary>
+    public decimal ContributedFrom(ContributionSource source) =>
+        Contributions.Where(c => c.Source == source).Sum(c => c.Amount);
 
     /// <summary>Wpłata na rezerwację. Czy kwota się mieści (brakująca kwota, stan konta), sprawdza handler.</summary>
     /// <remarks>Nowa lista, nie dopisanie w miejscu: EF porównuje kolumnę JSON jako całość.</remarks>
-    public SavingsContribution Contribute(DateOnly date, decimal amount)
+    public SavingsContribution Contribute(
+        DateOnly date, decimal amount, ContributionSource source = ContributionSource.Savings, Guid? categoryBusinessId = null)
     {
-        var contribution = new SavingsContribution(Guid.CreateVersion7(), date, amount);
+        var contribution = new SavingsContribution(Guid.CreateVersion7(), date, amount, source, categoryBusinessId);
         Contributions = [.. Contributions, contribution];
         return contribution;
     }

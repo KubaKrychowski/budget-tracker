@@ -86,6 +86,7 @@ describe('Savings', () => {
     collectedTotal: 0,
     availableToContribute: 0,
     freeFunds: 0,
+    reservedOnRegular: 0,
     coveredBy: null,
     selectedBudgetIds: ['b1'],
     budgets: [],

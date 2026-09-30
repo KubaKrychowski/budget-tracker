@@ -171,6 +171,15 @@
             [nzValue]="money(data()?.metrics?.largestExpenseAmount)"
             [nzSuffix]="'dashboard.currency' | translate"
             [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+
+          <!-- Tylko gdy coś jest zarezerwowane na zwykłym koncie — inaczej to kolejne zero na kafelkach. -->
+          @if (data()?.metrics?.reservedOnRegular) {
+            <nz-statistic
+              [nzTitle]="'dashboard.metrics.reservedOnRegular' | translate"
+              [nzValue]="money(data()?.metrics?.reservedOnRegular)"
+              [nzSuffix]="'dashboard.currency' | translate"
+              [nzValueStyle]="{ 'font-variant-numeric': 'tabular-nums' }" />
+          }
         </div>
       }
     </section>

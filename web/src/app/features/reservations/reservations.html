@@ -51,6 +51,9 @@
                  contributed: money(data()?.collectedTotal),
                  free: money(data()?.freeFunds)
                } }}
+            @if (data()?.reservedOnRegular) {
+              · {{ 'reservations.summaryRegular' | translate: { amount: money(data()?.reservedOnRegular) } }}
+            }
           </p>
         </div>
         <button nz-button nzType="primary" (click)="openEditor(null)">
@@ -261,8 +264,44 @@
       <nz-alert
         nzType="info"
         nzShowIcon
-        [nzMessage]="'reservations.contribute.alert' | translate: { available: money(data()?.availableToContribute) }"
+        [nzMessage]="(source() === 'Regular'
+            ? (data()?.reservedOnRegular ? 'reservations.contribute.alertRegular' : 'reservations.contribute.alertRegularEmpty')
+            : 'reservations.contribute.alert')
+          | translate: { available: money(data()?.availableToContribute), reserved: money(data()?.reservedOnRegular) }"
       />
+
+      <label class="res__label" for="res-source">{{ 'reservations.contribute.source' | translate }}</label>
+      <nz-segmented
+        id="res-source"
+        class="res__source"
+        [nzOptions]="sourceOptions()"
+        [ngModel]="source()"
+        (ngModelChange)="switchSource($event)" />
+
+      @if (source() === 'Regular') {
+        <label class="res__label" for="res-category">{{ 'reservations.contribute.category' | translate }}</label>
+        <nz-select
+          nzId="res-category"
+          class="res__field"
+          nzShowSearch
+          [nzPlaceHolder]="'reservations.contribute.categoryPlaceholder' | translate"
+          [ngModel]="draftCategoryId()"
+          (ngModelChange)="draftCategoryId.set($event)"
+        >
+          @for (c of categories(); track c.id) {
+            <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+          }
+        </nz-select>
+        @if (limitPreview(); as preview) {
+          <p class="res__hint res__hint--under" [class.res__hint--over]="preview.over > 0">
+            {{ (preview.over > 0 ? 'reservations.contribute.limitOver' : 'reservations.contribute.limitFits')
+              | translate: {
+                  limit: money(preview.limit), spent: money(preview.spent),
+                  after: money(preview.after), over: money(preview.over)
+                } }}
+          </p>
+        }
+      }
 
       <label class="res__label" for="res-contribution">{{ 'reservations.contribute.amount' | translate }}</label>
       <nz-input-number
@@ -287,7 +326,14 @@
         <ul class="res__contributions">
           @for (c of contributing()!.contributions; track c.id) {
             <li class="res__contribution">
-              <span class="res__contribution-date">{{ dateLabel(c.date) }}</span>
+              <span class="res__contribution-date">
+                {{ dateLabel(c.date) }}
+                @if (c.source === 'Regular') {
+                  <span class="res__contribution-source">
+                    · {{ 'reservations.contribute.sourceRegular' | translate }}@if (categoryName(c.categoryId); as name) {, {{ name }}}
+                  </span>
+                }
+              </span>
               <strong class="amount">{{ money(c.amount) }} zł</strong>
               <button nz-button nzType="link" nzSize="small" (click)="withdraw(c)">
                 {{ 'reservations.contribute.withdraw' | translate }}

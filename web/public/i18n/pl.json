@@ -57,6 +57,7 @@
       "budgetBalance": "Aktualny stan budżetu",
       "topCategory": "Najdroższa kategoria: {{name}}",
       "largestExpense": "Największy wydatek w okresie",
+      "reservedOnRegular": "Zarezerwowane na celach (zwykłe konto)",
       "none": "—"
     },
     "charts": {
@@ -758,8 +759,18 @@
     "freeFundsBody": "Stan konta oszczędnościowego {{balance}} zł − {{reserved}} zł rezerwacji.",
     "balanceCaveat": "Stan konta liczę jako wpłaty minus wypłaty w kategorii „Oszczędności\" — to nie jest saldo konta, więc nie obejmuje salda otwarcia ani odsetek.",
     "noDue": "przy okazji",
+    "summaryRegular": "na zwykłym koncie zarezerwowane {{amount}} zł",
     "contribute": {
       "action": "Wpłać",
+      "source": "Skąd wpłacasz",
+      "sourceSavings": "Konto oszczędnościowe",
+      "sourceRegular": "Konto zwykłe",
+      "alertRegular": "Wpłata jest umowna — pieniądze zostają na zwykłym koncie, ale {{reserved}} zł jest już na nim zarezerwowane na cele. Ta wpłata wlicza się do limitu wybranej kategorii.",
+      "alertRegularEmpty": "Wpłata jest umowna — pieniądze zostają na zwykłym koncie, ale będą na nim zarezerwowane na cel. Ta wpłata wlicza się do limitu wybranej kategorii.",
+      "category": "Kategoria limitu",
+      "categoryPlaceholder": "Wybierz kategorię",
+      "limitFits": "Limit kategorii: {{limit}} zł · wydane {{spent}} zł · po wpłacie {{after}} zł.",
+      "limitOver": "Limit kategorii: {{limit}} zł · wydane {{spent}} zł · po wpłacie {{after}} zł (o {{over}} zł ponad limit).",
       "title": "Wpłać na cel „{{name}}”",
       "alert": "Wpłata jest umowna — pieniądze zostają na koncie oszczędnościowym. Do wpłaty masz {{available}} zł (stan konta minus wpłaty na inne cele).",
       "amount": "Kwota wpłaty",

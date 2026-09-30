@@ -1,3 +1,5 @@
+using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -71,11 +73,21 @@ public sealed class SavingsAccount(AppDbContext db, SavingsCategory savingsCateg
         return -signed;
     }
 
-    /// <summary>Wpłaty na rezerwacje nierozliczone — rozliczonych już nie liczymy, te pieniądze wyszły z konta.</summary>
-    /// <remarks>Suma w pamięci: wpłaty siedzą w kolumnie jsonb, a rezerwacji w budżecie jest z natury kilka.</remarks>
+    /// <summary>Wpłaty z oszczędności na rezerwacje nierozliczone — rozliczonych już nie liczymy, te pieniądze wyszły z konta.</summary>
+    /// <remarks>
+    /// Tylko wpłaty z konta oszczędnościowego: te ze zwykłego konta nie ruszają stanu do odłożenia
+    /// (<see cref="RegularReservedAsync"/>). Suma w pamięci: wpłaty siedzą w kolumnie jsonb, a rezerwacji w budżecie jest
+    /// z natury kilka.
+    /// </remarks>
     public async Task<decimal> ContributedAsync(IReadOnlyList<Guid> budgetIds, CancellationToken ct) =>
-        (await db.SavingsReservations
+        (await OpenReservationsAsync(budgetIds, ct)).Sum(r => r.ContributedFrom(ContributionSource.Savings));
+
+    /// <summary>Wpłaty ze zwykłego konta na rezerwacje nierozliczone — ile na zwykłym koncie jest zarezerwowane na cele.</summary>
+    public async Task<decimal> RegularReservedAsync(IReadOnlyList<Guid> budgetIds, CancellationToken ct) =>
+        (await OpenReservationsAsync(budgetIds, ct)).Sum(r => r.ContributedFrom(ContributionSource.Regular));
+
+    private async Task<List<SavingsReservation>> OpenReservationsAsync(IReadOnlyList<Guid> budgetIds, CancellationToken ct) =>
+        await db.SavingsReservations
             .Where(r => budgetIds.Contains(r.BudgetBusinessId) && r.SettledAt == null)
-            .ToListAsync(ct))
-        .Sum(r => r.Contributed);
+            .ToListAsync(ct);
 }

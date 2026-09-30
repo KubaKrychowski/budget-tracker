@@ -22,5 +22,5 @@ public static class ReservationViews
             r.SettledTransactionBusinessId,
             [.. r.Contributions
                 .OrderByDescending(c => c.Date)
-                .Select(c => new SavingsContributionResponseDto(c.Id, c.Date, c.Amount))]);
+                .Select(c => new SavingsContributionResponseDto(c.Id, c.Date, c.Amount, c.Source, c.CategoryBusinessId))]);
 }
