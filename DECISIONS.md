@@ -522,6 +522,22 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Migracja `ContributionSource` to wyłącznie dane (wpłaty siedzą w `jsonb`): istniejące wpłaty dostają `Source = 1`
 >   i brak kategorii.
 
+> **REWIZJA — 2026-09-30: landing dla zwykłego użytkownika** (makieta Figma — strona „Landing — beta i dokumenty”,
+> ramka „Landing — strona główna v3, od produktu”; zastępuje decyzję z #12 „prezentacja projektu, nie landing produktu”):
+> - Ktoś z zewnątrz uznał stronę za „bardzo techniczną”. Adresatem jest teraz człowiek, który chce zobaczyć, na co idą jego
+>   pieniądze: prosty język, prawdziwe zrzuty ekranu, jedno wezwanie do działania (prośba o dostęp do bety). Żargon
+>   (ADR-y, izolacja w bazie, ML.NET, roadmapa) wyleciał ze strony; został w repozytorium, a stronie służy jedno zdanie
+>   „Programujesz? Kod jest otwarty”. Test pilnuje braku żargonu.
+> - Układ: tekst do lewej, tytuł sekcji w lewej kolumnie i lista w prawej (zamiast wyśrodkowanych nagłówków i rzędu kart),
+>   zero emoji i gradientów, jeden kolor akcentu (Primary). Złoty (Warn-300) tylko jako akcent TEKSTU na ciemnej zieleni.
+>   Kolory wyłącznie z tokenów (`--ds-*`; do mostu dopisane `warn-300`, `neutral-300`, `error-600`).
+> - ⚠️ Logo tylko w górnym pasku (decyzja właściciela) — stopka go nie ma; test pilnuje, że jest dokładnie jedno.
+> - Czcionka IBM Plex Sans na całej stronie, także na statycznych stronach dokumentów (`public/fonts` + `@font-face`
+>   w `legal.css`; poza bundlem Angulara nie ma skąd wziąć fontu). Przycisk: biały tekst na Primary-700 (kontrast > 5:1),
+>   zaokrąglenie 8px, waga 600; NG-ZORRO wypadł z landingu (strona nie używa jego komponentów).
+> - ⚠️ Zrzuty ekranu mają obcięty górny pasek, bo pochodziły sprzed zmiany nazwy na „Wydatki.com” i pokazywały
+>   „BudgetTracker”. To rozwiązanie tymczasowe — trzeba zrobić nowe zrzuty z działającej aplikacji.
+
 > **REWIZJA — 2026-09-30: prośby o dostęp do bety z landingu** (makiety Figma — strona „Landing — beta i dokumenty”
 > oraz „Logowanie (Identity)”, ramka „Admin — prośby o dostęp”; `BetaAccessRequest`, `BetaRequestsController`):
 > - Formularz na landingu (adres + zgoda) wysyła `POST /api/beta-requests` do **serwera tożsamości**, nie do API budżetu:
