@@ -23,4 +23,10 @@ public enum AdminAuditAction
     /// zarejestrować, konto zostaje i dalej się loguje. Skasowanie konta ma własny wpis (<see cref="UserDeleted"/>).
     /// </summary>
     BetaInviteRemoved = 6,
+
+    /// <summary>Administrator zaprosił adres z prośby o dostęp zostawionej na landingu.</summary>
+    BetaRequestInvited = 7,
+
+    /// <summary>Administrator usunął prośbę o dostęp (cofnięcie zgody, koniec bety). Nie rusza zaproszenia ani konta.</summary>
+    BetaRequestRemoved = 8,
 }

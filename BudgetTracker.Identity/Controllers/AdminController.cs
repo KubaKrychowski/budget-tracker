@@ -8,6 +8,7 @@ using BudgetTracker.Identity.Services.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 
@@ -28,6 +29,7 @@ public sealed class AdminController(
     IUserDataClient data,
     UserDeletionService deletion,
     BetaInviteService invites,
+    BetaAccessRequestService requests,
     IAdminAuditLog audit,
     IAdminAuditReader auditReader,
     IStringLocalizer<SharedResource> localizer,
@@ -40,6 +42,20 @@ public sealed class AdminController(
 
     /// <summary>Ile znaków identyfikatora właściciela trzeba wpisać, żeby potwierdzić usunięcie jego danych.</summary>
     private const int ConfirmationLength = 8;
+
+    /// <summary>
+    /// Liczba próśb o dostęp na zakładce widocznej na KAŻDYM ekranie administratora. Jedno miejsce zamiast
+    /// dopisywania jej do czterech modeli widoków i czterech konstruktorów nagłówka.
+    /// </summary>
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    {
+        if (context.HttpContext.User.IsInRole(IdentityRoles.Admin))
+        {
+            ViewData[ViewDataKeys.RequestsCount] = await requests.CountAsync(context.HttpContext.RequestAborted);
+        }
+
+        await next();
+    }
 
     [HttpGet]
     public IActionResult Index() => RedirectToAction(nameof(Users));
@@ -171,6 +187,69 @@ public sealed class AdminController(
             id, SubjectEmail: invite!.Email), ct);
 
         return FlashAndRedirect(nameof(Invites), "Admin_Flash_InviteRemoved", isError: false, invite.Email);
+    }
+
+    /// <summary>Prośby o dostęp do bety zostawione na landingu, z akcją „Zaproś".</summary>
+    [HttpGet]
+    public async Task<IActionResult> Requests(int page = 1, CancellationToken ct = default)
+    {
+        var total = await requests.CountAsync(ct);
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(total / (double)PageSize)));
+
+        var rows = await requests.PageAsync(page, PageSize, ct);
+
+        return View(new AdminRequestsViewModel
+        {
+            Requests = rows.Select(r => new AdminRequestRow(r.Id, r.Email, r.RequestedAt, r.ConsentVersion, r.InvitedAt)).ToList(),
+            Page = page,
+            PageSize = PageSize,
+            Total = total,
+            UsersCount = await userManager.Users.CountAsync(ct),
+            InvitesCount = await invites.CountAsync(ct),
+            HistoryCount = await auditReader.CountAsync(ct),
+            ClosedBeta = invites.ClosedBeta,
+            Flash = ReadFlash(),
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> InviteRequest(Guid id, CancellationToken ct)
+    {
+        var (outcome, request) = await requests.InviteAsync(id, CurrentUserId(), ct);
+        if (outcome == RequestOutcome.NotFound)
+        {
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.BetaRequestInvited, AdminAuditOutcome.NotFound, id), ct);
+            return FlashAndRedirect(nameof(Requests), "Admin_Flash_RequestNotFound", isError: true);
+        }
+
+        logger.LogInformation("Zaproszono adres z prośby o dostęp (prośba {RequestId}), wykonał {ActorId}.", id, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.BetaRequestInvited, AdminAuditOutcome.Succeeded,
+            id, SubjectEmail: request!.Email), ct);
+
+        return FlashAndRedirect(nameof(Requests), "Admin_Flash_RequestInvited", isError: false, request.Email);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveRequest(Guid id, CancellationToken ct)
+    {
+        var (outcome, request) = await requests.RemoveAsync(id, ct);
+        if (outcome == RequestOutcome.NotFound)
+        {
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.BetaRequestRemoved, AdminAuditOutcome.NotFound, id), ct);
+            return FlashAndRedirect(nameof(Requests), "Admin_Flash_RequestNotFound", isError: true);
+        }
+
+        logger.LogInformation("Usunięto prośbę o dostęp {RequestId}, wykonał {ActorId}.", id, CurrentUserId());
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.BetaRequestRemoved, AdminAuditOutcome.Succeeded,
+            id, SubjectEmail: request!.Email), ct);
+
+        return FlashAndRedirect(nameof(Requests), "Admin_Flash_RequestRemoved", isError: false, request.Email);
     }
 
     /// <summary>

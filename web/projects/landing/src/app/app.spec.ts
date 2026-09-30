@@ -197,4 +197,98 @@ describe('Landing', () => {
       .map((a: Element) => a.getAttribute('href'));
     expect(links).toContain('https://www.linkedin.com/in/kuba-krychowski/');
   });
+
+  // ── Prośba o dostęp do bety ────────────────────────────────────────────────────────────
+
+  describe('prośba o dostęp do bety', () => {
+    const query = <T extends Element>(selector: string): T => fixture.nativeElement.querySelector(selector) as T;
+
+    const type = (selector: string, value: string): void => {
+      const input = query<HTMLInputElement>(selector);
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+
+    const submit = async (): Promise<void> => {
+      query<HTMLFormElement>('.beta__form').dispatchEvent(new Event('submit'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+
+    const acceptConsent = (): void => {
+      const box = query<HTMLInputElement>('#beta-consent');
+      box.checked = true;
+      box.dispatchEvent(new Event('change'));
+    };
+
+    let fetchMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 202 });
+      vi.stubGlobal('fetch', fetchMock);
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('bez zgody i z błędnym adresem niczego nie wysyła i mówi, co poprawić', async () => {
+      // ⚠️ Zgoda to podstawa prawna zapisu adresu — formularz bez niej nie może wyjść z przeglądarki.
+      type('#beta-email', 'to-nie-jest-adres');
+      await submit();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(text()).toContain('Podaj poprawny adres e-mail.');
+      expect(text()).toContain('Zgoda jest wymagana, żeby zapisać adres.');
+    });
+
+    it('poprawny adres ze zgodą idzie na serwer tożsamości i pokazuje potwierdzenie', async () => {
+      type('#beta-email', '  jan@example.com ');
+      acceptConsent();
+      await submit();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toMatch(/\/api\/beta-requests$/);
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(init.body)).toEqual({ email: 'jan@example.com', consent: true, website: '' });
+      expect(text()).toContain('Zapisane. Dziękuję!');
+      expect(query('.beta__form')).toBeNull();
+    });
+
+    it('wypełnione pole-pułapka jedzie na serwer, który sam rozpozna automat', async () => {
+      type('#beta-email', 'bot@example.com');
+      type('#beta-website', 'http://spam');
+      acceptConsent();
+      await submit();
+
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body).website).toBe('http://spam');
+    });
+
+    it('przy limicie żądań (429) mówi o zbyt wielu próbach i zostawia formularz', async () => {
+      fetchMock.mockResolvedValue({ ok: false, status: 429 });
+      type('#beta-email', 'jan@example.com');
+      acceptConsent();
+      await submit();
+
+      expect(text()).toContain('Za dużo prób');
+      expect(query('.beta__form')).not.toBeNull();
+    });
+
+    it('przy braku połączenia pokazuje błąd zamiast udawać sukces', async () => {
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+      type('#beta-email', 'jan@example.com');
+      acceptConsent();
+      await submit();
+
+      expect(text()).toContain('Nie udało się zapisać adresu');
+      expect(text()).not.toContain('Zapisane. Dziękuję!');
+    });
+
+    it('zgoda linkuje do regulaminu i polityki prywatności, a stopka do wszystkich dokumentów', () => {
+      const links = [...fixture.nativeElement.querySelectorAll('a[href]')].map((a: Element) => a.getAttribute('href'));
+
+      for (const path of ['/regulamin', '/polityka-prywatnosci', '/usun-konto', '/kontakt']) {
+        expect(links).toContain(path);
+      }
+    });
+  });
 });

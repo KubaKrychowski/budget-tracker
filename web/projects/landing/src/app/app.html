@@ -395,6 +395,71 @@
     </div>
   </section>
 
+  <!-- ── Prośba o dostęp do bety ──────────────────────────────────────────────────────────
+       Makieta: Figma, strona „Landing — beta i dokumenty”. Adres trafia do serwera tożsamości (panel administratora,
+       zakładka „Prośby o dostęp”); zgoda i wersja dokumentów są zapisywane po stronie serwera. -->
+  <section class="wrap section beta" id="beta" aria-labelledby="beta-title">
+    <h2 id="beta-title">Zamknięta beta</h2>
+    <p class="section-lead">
+      Konto założysz tylko z zaproszeniem. Zostaw adres e-mail, a odezwę się, gdy będzie miejsce w becie —
+      zaproszenia wysyłam ręcznie, po kolei.
+    </p>
+
+    @if (requestState() === 'done') {
+      <div class="beta__done" role="status">
+        <strong>Zapisane. Dziękuję!</strong>
+        <span>Odezwę się na podany adres, gdy będzie miejsce w becie. Konta na nim jeszcze nie zakładam.</span>
+      </div>
+    } @else {
+      <form class="beta__form" (submit)="$event.preventDefault(); requestAccess()" novalidate>
+        <div class="beta__row">
+          <div class="beta__field">
+            <label class="beta__label" for="beta-email">Adres e-mail</label>
+            <input
+              id="beta-email" name="email" type="email" autocomplete="email" inputmode="email"
+              placeholder="np. jan.kowalski@poczta.pl"
+              [value]="email()" (input)="email.set($any($event.target).value)"
+              [class.beta__input--error]="emailError()"
+              [attr.aria-invalid]="emailError() ? 'true' : null"
+              [attr.aria-describedby]="emailError() ? 'beta-email-error' : null" />
+            @if (emailError()) {
+              <span class="beta__error" id="beta-email-error" role="alert">{{ emailError() }}</span>
+            }
+          </div>
+          <button nz-button nzType="primary" nzSize="large" type="submit" [nzLoading]="requestState() === 'sending'">
+            Poproś o dostęp
+          </button>
+        </div>
+
+        <!-- Pułapka na boty: człowiek jej nie widzi ani nie dotyka (aria-hidden, tabindex -1, poza ekranem). -->
+        <div class="beta__trap" aria-hidden="true">
+          <label for="beta-website">Strona internetowa</label>
+          <input id="beta-website" name="website" type="text" tabindex="-1" autocomplete="off"
+                 [value]="website()" (input)="website.set($any($event.target).value)" />
+        </div>
+
+        <div class="beta__consent">
+          <input id="beta-consent" name="consent" type="checkbox"
+                 [checked]="consent()" (change)="consent.set($any($event.target).checked)"
+                 [attr.aria-invalid]="consentError() ? 'true' : null" />
+          <label for="beta-consent">
+            Zgadzam się na przetwarzanie mojego adresu e-mail w celu odpowiedzi na prośbę o dostęp do bety.
+            Akceptuję <a href="/regulamin" target="_blank">Regulamin</a> i zapoznałem się z
+            <a href="/polityka-prywatnosci" target="_blank">Polityką prywatności</a>.
+          </label>
+        </div>
+        @if (consentError()) {
+          <span class="beta__error" role="alert">{{ consentError() }}</span>
+        }
+        @if (formError()) {
+          <span class="beta__error" role="alert">{{ formError() }}</span>
+        }
+
+        <p class="beta__note">Adres służy wyłącznie do zaproszenia do bety. Usunę go na Twoją prośbę.</p>
+      </form>
+    }
+  </section>
+
   <!-- ── CTA ───────────────────────────────────────────────────────────────────────────
        Nadal bez „Wypróbuj”: nie ma rejestracji otwartej dla każdego, jest zamknięta beta
        na zaproszenia. Przycisk prowadzi do wdrożonej aplikacji i mówi wprost, co zastanie. -->
@@ -426,5 +491,11 @@
         Zrzuty ekranu pochodzą z danych demonstracyjnych.
       </p>
     </div>
+    <nav class="foot__links" aria-label="Dokumenty">
+      <a href="/regulamin">Regulamin</a>
+      <a href="/polityka-prywatnosci">Polityka prywatności</a>
+      <a href="/usun-konto">Usuwanie konta</a>
+      <a href="/kontakt">Kontakt</a>
+    </nav>
   </div>
 </footer>

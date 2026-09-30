@@ -285,4 +285,19 @@
   <data name="Admin_History_Outcome_RefusedSelf" xml:space="preserve"><value>Refused: own account</value></data>
   <data name="Admin_History_Outcome_RefusedLastAdmin" xml:space="preserve"><value>Refused: last administrator</value></data>
   <data name="Admin_History_Outcome_DataServiceUnavailable" xml:space="preserve"><value>App data service unavailable</value></data>
+  <data name="Admin_Tab_Requests" xml:space="preserve"><value>Access requests ({0})</value></data>
+  <data name="Admin_Requests_Title" xml:space="preserve"><value>Access requests</value></data>
+  <data name="Admin_Requests_Subtitle" xml:space="preserve"><value>Addresses left on the project page. “Invite” adds the address to the invitations — only an invited person can create an account. Removing a request does not delete the invitation or the account.</value></data>
+  <data name="Admin_Requests_Empty" xml:space="preserve"><value>Nobody has requested access yet.</value></data>
+  <data name="Admin_Col_Requested" xml:space="preserve"><value>Requested · consent</value></data>
+  <data name="Admin_Request_Waiting" xml:space="preserve"><value>New</value></data>
+  <data name="Admin_Request_Invited" xml:space="preserve"><value>Invited</value></data>
+  <data name="Admin_Request_Invite" xml:space="preserve"><value>Invite</value></data>
+  <data name="Admin_Request_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Admin_Request_Consent" xml:space="preserve"><value>Terms {0}</value></data>
+  <data name="Admin_Flash_RequestInvited" xml:space="preserve"><value>Invited {0}. The address is on the invitation list.</value></data>
+  <data name="Admin_Flash_RequestRemoved" xml:space="preserve"><value>Removed the request from {0}.</value></data>
+  <data name="Admin_Flash_RequestNotFound" xml:space="preserve"><value>That request no longer exists.</value></data>
+  <data name="Admin_History_Action_BetaRequestInvited" xml:space="preserve"><value>Invited from access request</value></data>
+  <data name="Admin_History_Action_BetaRequestRemoved" xml:space="preserve"><value>Access request removed</value></data>
 </root>

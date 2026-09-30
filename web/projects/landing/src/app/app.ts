@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
@@ -91,4 +92,66 @@ export class App {
    * a z liczbą jest sprawdzalnym opisem mechanizmu.
    */
   protected readonly reviewThreshold = 0.7;
+
+  private readonly document = inject(DOCUMENT);
+
+  /**
+   * Adres serwera tożsamości, do którego idzie prośba o dostęp do bety.
+   *
+   * ⚠️ Na sztywno, z jednym wyjątkiem na lokalny dev — z tego samego powodu co `appUrl`: landing nie ma konfiguracji
+   * wczytywanej w czasie działania. Przy renderowaniu po stronie serwera (prerender) `location` bywa puste, więc
+   * pusty host to produkcja, a nie błąd.
+   */
+  private readonly identityUrl = computed(() =>
+    this.document.location?.hostname === 'localhost' ? 'https://localhost:7226' : 'https://auth.wydatki.com');
+
+  // ── Prośba o dostęp do bety ────────────────────────────────────────────────────────────
+
+  protected readonly email = signal('');
+  protected readonly consent = signal(false);
+
+  /** Pułapka na boty: pole ukryte przed człowiekiem. Serwer traktuje niepuste jako automat. */
+  protected readonly website = signal('');
+
+  protected readonly requestState = signal<'idle' | 'sending' | 'done'>('idle');
+  protected readonly emailError = signal<string | null>(null);
+  protected readonly consentError = signal<string | null>(null);
+  protected readonly formError = signal<string | null>(null);
+
+  protected async requestAccess(): Promise<void> {
+    if (this.requestState() === 'sending') return;
+
+    const email = this.email().trim();
+    this.emailError.set(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? null : 'Podaj poprawny adres e-mail.');
+    this.consentError.set(this.consent() ? null : 'Zgoda jest wymagana, żeby zapisać adres.');
+    this.formError.set(null);
+    if (this.emailError() || this.consentError()) return;
+
+    this.requestState.set('sending');
+    try {
+      const response = await fetch(`${this.identityUrl()}/api/beta-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, consent: true, website: this.website() }),
+      });
+
+      if (response.ok) {
+        this.requestState.set('done');
+        return;
+      }
+
+      this.requestState.set('idle');
+      if (response.status === 429) {
+        this.formError.set('Za dużo prób w krótkim czasie. Spróbuj za kilka minut.');
+      } else if (response.status === 400) {
+        // Serwer jest ostatecznym sędzią adresu — jego odmowa pokazuje się przy polu, nie jako „coś poszło nie tak".
+        this.emailError.set('Podaj poprawny adres e-mail.');
+      } else {
+        this.formError.set('Nie udało się zapisać adresu. Spróbuj ponownie za chwilę.');
+      }
+    } catch {
+      this.requestState.set('idle');
+      this.formError.set('Nie udało się zapisać adresu. Sprawdź połączenie i spróbuj ponownie.');
+    }
+  }
 }
