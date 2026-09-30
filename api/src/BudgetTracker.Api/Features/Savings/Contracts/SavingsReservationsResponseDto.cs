@@ -23,6 +23,11 @@ namespace BudgetTracker.Api.Features.Savings.Contracts;
 /// pełna kwota rezerwacji.
 /// </para>
 /// </param>
+/// <param name="ReservedOnRegular">
+/// Wpłaty ze zwykłego konta na rezerwacje nierozliczone — tyle na zwykłym koncie jest zarezerwowane na cele.
+/// Pomniejsza to, co oszczędności muszą jeszcze pokryć: <see cref="FreeFunds"/> to stan konta minus reszta
+/// rezerwacji, której nie pokryły wpłaty ze zwykłego konta.
+/// </param>
 /// <param name="CoveredBy">
 /// Miesiąc, w którym przy obecnym celu miesięcznym uzbiera się reszta rezerwacji
 /// („resztę uzbierasz do maja"). <c>null</c>, gdy wszystko już pokryte albo gdy nie ma celu —
@@ -37,6 +42,7 @@ public sealed record SavingsReservationsResponseDto(
     decimal CollectedTotal,
     decimal AvailableToContribute,
     decimal FreeFunds,
+    decimal ReservedOnRegular,
     DateOnly? CoveredBy,
     IReadOnlyList<Guid> SelectedBudgetIds,
     IReadOnlyList<SavingsBudgetOptionResponseDto> Budgets);

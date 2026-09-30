@@ -75,7 +75,7 @@ public sealed class LimitsTests : IAsyncLifetime
 
     private LimitsBudgetScope Scope() => new(_db, _clock);
 
-    private GetLimitsQueryHandler Query() => new(_db, Scope(), new LimitCategories(_db));
+    private GetLimitsQueryHandler Query() => new(_db, Scope(), new LimitCategories(_db), new LimitSpending(_db));
 
     private SetLimitCommandHandler Set() =>
         new(_db, Scope(), new LimitCategories(_db), new FakeCurrentUserAccessor(Guid.NewGuid()));

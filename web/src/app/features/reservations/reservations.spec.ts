@@ -9,7 +9,7 @@ import { pl_PL, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
 import { APP_ICONS } from '../../core/icons';
 import {
-  ReservationsResponse, SavingsReservation, SettleCandidate,
+  ContributionCategory, ReservationsResponse, SavingsReservation, SettleCandidate,
 } from '../../core/api/models/reservations';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogOptions } from '../../core/confirm-dialog/confirm-dialog-options';
@@ -67,6 +67,7 @@ describe('Reservations', () => {
     collectedTotal: 1800,
     availableToContribute: 7600,
     freeFunds: 4400,
+    reservedOnRegular: 0,
     coveredBy: null,
     selectedBudgetIds: ['b1'],
     budgets: [
@@ -75,6 +76,19 @@ describe('Reservations', () => {
     ],
     ...over,
   });
+
+  /**
+   * Dialog wpłaty dociąga kategorie dopiero po otwarciu — bez odpowiedzi `whenStable` wisi na oczekującym żądaniu.
+   * Żądanie rusza w efekcie, więc najpierw detectChanges i tick.
+   */
+  const flushCategories = async (categories: ContributionCategory[] = []): Promise<void> => {
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+    http.expectOne((r) => r.url === '/api/savings/reservations/r1/contribution-categories').flush(categories);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
 
   const text = (): string =>
     (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
@@ -177,7 +191,17 @@ describe('Reservations', () => {
           history: 'Dotychczasowe wpłaty',
           withdraw: 'Wycofaj',
           confirm: 'Wpłać',
+          source: 'Skąd wpłacasz',
+          sourceSavings: 'Konto oszczędnościowe',
+          sourceRegular: 'Konto zwykłe',
+          alertRegular: 'Na zwykłym koncie zarezerwowane już {{reserved}} zł. Wpłata wlicza się do limitu.',
+          alertRegularEmpty: 'Wpłata wlicza się do limitu kategorii.',
+          category: 'Kategoria limitu',
+          categoryPlaceholder: 'Wybierz kategorię',
+          limitFits: 'Limit {{limit}} zł · po wpłacie {{after}} zł.',
+          limitOver: 'Limit {{limit}} zł · po wpłacie {{after}} zł (o {{over}} zł ponad limit).',
         },
+        summaryRegular: 'na zwykłym koncie zarezerwowane {{amount}} zł',
         errors: { loadFailed: 'Nie udało się wczytać rezerwacji' },
       },
     });
@@ -322,9 +346,7 @@ describe('Reservations', () => {
     };
 
     component.openContribute(row({ amount: 2000, collected: 1000 }));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await flushCategories();
 
     // Brakuje 1000 zł, ale na koncie zostało 600 — podpowiedź i limit to 600.
     expect(component.draftContribution()).toBe(600);
@@ -335,16 +357,92 @@ describe('Reservations', () => {
 
     const saving = component.contribute();
     const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/savings/reservations/r1/contributions');
-    expect(request.request.body).toEqual({ amount: 600 });
+    expect(request.request.body).toEqual({ amount: 600, source: 'Savings', categoryId: null });
     request.flush(row());
     await saving;
+  });
+
+  it('wpłata ze zwykłego konta pokazuje zarezerwowane, wymaga kategorii, pomija stan oszczędności i ostrzega o limicie', async () => {
+    await start();
+    // Oszczędności puste (do wpłaty 0) — ze zwykłego konta wpłata mimo to przechodzi.
+    await settleList(response({
+      reservations: [row({ amount: 2000, collected: 1000 })],
+      availableToContribute: 0,
+      reservedOnRegular: 500,
+    }));
+    const component = fixture.componentInstance as unknown as {
+      openContribute(r: SavingsReservation): void;
+      switchSource(source: 'Savings' | 'Regular'): void;
+      draftContribution: { (): number | null; set(v: number | null): void };
+      draftCategoryId: { set(v: string | null): void };
+      canContribute(): boolean;
+      contribute(): Promise<void>;
+    };
+
+    component.openContribute(row({ amount: 2000, collected: 1000 }));
+    await flushCategories([
+      { id: 'cat-food', name: 'Jedzenie', limit: 1000, spent: 900 },
+      { id: 'cat-fun', name: 'Rozrywka', limit: null, spent: 0 },
+    ]);
+    component.switchSource('Regular');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(documentText()).toContain('Na zwykłym koncie zarezerwowane już 500,00 zł.');
+    // Podpowiedź to cała brakująca kwota — stan oszczędności jej nie ogranicza.
+    expect(component.draftContribution()).toBe(1000);
+    expect(component.canContribute()).toBe(false);
+
+    component.draftCategoryId.set('cat-food');
+    component.draftContribution.set(400);
+    fixture.detectChanges();
+    expect(component.canContribute()).toBe(true);
+    // pl-PL nie grupuje liczb 4-cyfrowych: 1000,00, nie 1 000,00.
+    expect(documentText()).toContain('Limit 1000,00 zł · po wpłacie 1300,00 zł (o 300,00 zł ponad limit).');
+
+    const saving = component.contribute();
+    const request = http.expectOne((r) => r.method === 'POST' && r.url === '/api/savings/reservations/r1/contributions');
+    expect(request.request.body).toEqual({ amount: 400, source: 'Regular', categoryId: 'cat-food' });
+    request.flush(row());
+    await saving;
+  });
+
+  it('kategoria bez limitu nie pokazuje podglądu limitu', async () => {
+    await start();
+    await settleList(response({ reservations: [row({ amount: 2000, collected: 1000 })] }));
+    const component = fixture.componentInstance as unknown as {
+      openContribute(r: SavingsReservation): void;
+      switchSource(source: 'Savings' | 'Regular'): void;
+      draftCategoryId: { set(v: string | null): void };
+    };
+
+    component.openContribute(row({ amount: 2000, collected: 1000 }));
+    await flushCategories([{ id: 'cat-fun', name: 'Rozrywka', limit: null, spent: 0 }]);
+    component.switchSource('Regular');
+    component.draftCategoryId.set('cat-fun');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(documentText()).not.toContain('po wpłacie');
+  });
+
+  it('podsumowanie mówi, ile na zwykłym koncie jest zarezerwowane na cele', async () => {
+    await start();
+    await settleList(response({ reservedOnRegular: 500 }));
+
+    expect(text()).toContain('na zwykłym koncie zarezerwowane 500,00 zł');
   });
 
   it('„Wycofaj” adresuje konkretną wpłatę', async () => {
     await start();
     const withHistory = row({
       amount: 2000, collected: 1000,
-      contributions: [{ id: 'c2', date: '2026-09-02', amount: 600 }, { id: 'c1', date: '2026-08-14', amount: 400 }],
+      contributions: [
+        { id: 'c2', date: '2026-09-02', amount: 600, source: 'Savings', categoryId: null },
+        { id: 'c1', date: '2026-08-14', amount: 400, source: 'Savings', categoryId: null },
+      ],
     });
     await settleList(response({ reservations: [withHistory] }));
     const component = fixture.componentInstance as unknown as {
@@ -353,9 +451,7 @@ describe('Reservations', () => {
     };
 
     component.openContribute(withHistory);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await flushCategories();
     expect(documentText()).toContain('Dotychczasowe wpłaty');
 
     const withdrawing = component.withdraw(withHistory.contributions[1]);

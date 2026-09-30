@@ -7,4 +7,6 @@ export interface DashboardMetrics {
   largestExpenseDescription: string | null;
   largestExpenseAmount: number;
   toReviewCount: number;
+  /** Wpłaty na cele ze zwykłego konta — tyle jest na nim zarezerwowane. */
+  reservedOnRegular: number;
 }

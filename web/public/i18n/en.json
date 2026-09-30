@@ -53,6 +53,7 @@
       "budgetBalance": "Current budget balance",
       "topCategory": "Most expensive category: {{name}}",
       "largestExpense": "Largest expense in period",
+      "reservedOnRegular": "Reserved for goals (regular account)",
       "none": "—"
     },
     "charts": {
@@ -688,8 +689,18 @@
     "freeFundsBody": "Savings account balance {{balance}} PLN − {{reserved}} PLN of reservations.",
     "balanceCaveat": "The balance is computed as deposits minus withdrawals in the “Savings” category — not an account balance, so it excludes the opening balance and interest.",
     "noDue": "when possible",
+    "summaryRegular": "{{amount}} PLN reserved on the regular account",
     "contribute": {
       "action": "Contribute",
+      "source": "Contribute from",
+      "sourceSavings": "Savings account",
+      "sourceRegular": "Regular account",
+      "alertRegular": "A contribution is notional — the money stays in the regular account, but {{reserved}} PLN is already reserved on it for goals. This contribution counts towards the limit of the chosen category.",
+      "alertRegularEmpty": "A contribution is notional — the money stays in the regular account, but it will be reserved on it for the goal. This contribution counts towards the limit of the chosen category.",
+      "category": "Limit category",
+      "categoryPlaceholder": "Choose a category",
+      "limitFits": "Category limit: {{limit}} PLN · spent {{spent}} PLN · after this contribution {{after}} PLN.",
+      "limitOver": "Category limit: {{limit}} PLN · spent {{spent}} PLN · after this contribution {{after}} PLN ({{over}} PLN over the limit).",
       "title": "Contribute to “{{name}}”",
       "alert": "A contribution is notional — the money stays in the savings account. You can contribute {{available}} PLN (balance minus contributions to other goals).",
       "amount": "Contribution amount",

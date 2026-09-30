@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Savings.Contracts;
 using BudgetTracker.Api.Features.Savings.Services;
 using BudgetTracker.Api.Infrastructure;
@@ -36,7 +37,7 @@ public sealed class GetSavingsReservationsQueryHandler(AppDbContext db, SavingsB
         var selected = SavingsBudgetScope.Resolve(budgets, budgetIds, today);
         if (selected.Count == 0)
         {
-            return new SavingsReservationsResponseDto([], 0m, 0m, 0m, 0m, 0m, 0m, null, [], budgets);
+            return new SavingsReservationsResponseDto([], 0m, 0m, 0m, 0m, 0m, 0m, 0m, null, [], budgets);
         }
 
         var reservations = await db.SavingsReservations
@@ -47,6 +48,8 @@ public sealed class GetSavingsReservationsQueryHandler(AppDbContext db, SavingsB
         var open = reservations.Where(r => r.SettledAt is null).ToList();
         var reservedTotal = open.Sum(r => r.Amount);
         var collectedTotal = open.Sum(r => r.Contributed);
+        var reservedOnRegular = open.Sum(r => r.ContributedFrom(ContributionSource.Regular));
+        var fromSavings = collectedTotal - reservedOnRegular;
 
         return new SavingsReservationsResponseDto(
             Reservations: [.. reservations
@@ -56,8 +59,9 @@ public sealed class GetSavingsReservationsQueryHandler(AppDbContext db, SavingsB
             ReservedTotal: reservedTotal,
             SettledTotal: reservations.Where(r => r.SettledAt is not null).Sum(r => r.Amount),
             CollectedTotal: collectedTotal,
-            AvailableToContribute: balance - collectedTotal,
-            FreeFunds: balance - reservedTotal,
+            AvailableToContribute: balance - fromSavings,
+            FreeFunds: balance - (reservedTotal - reservedOnRegular),
+            ReservedOnRegular: reservedOnRegular,
             CoveredBy: await CoveredByAsync(selected, reservedTotal - collectedTotal, currentMonth, ct),
             SelectedBudgetIds: selected,
             Budgets: budgets);

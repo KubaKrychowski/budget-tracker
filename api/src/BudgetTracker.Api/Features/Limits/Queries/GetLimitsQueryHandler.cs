@@ -1,6 +1,7 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Limits.Consts;
 using BudgetTracker.Api.Features.Limits.Contracts;
+using BudgetTracker.Api.Features.Limits.Models;
 using BudgetTracker.Api.Features.Limits.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace BudgetTracker.Api.Features.Limits.Queries;
 
 /// <summary>Limity kategorii budżetu w jednym okresie rozliczeniowym i to, ile w tym okresie wydano.</summary>
-public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories)
+public sealed class GetLimitsQueryHandler(
+    AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories, LimitSpending limitSpending)
 {
     /// <summary>Ekran limitów dla budżetu (wskazanego albo domyślnego) i okresu (wskazanego kluczem albo bieżącego).</summary>
     /// <remarks>
@@ -22,7 +24,8 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
     /// <see cref="BillingPeriod"/>. Klucz okresu (<c>month</c> w żądaniu) to nadal pierwszy dzień miesiąca końcowego.
     /// </para>
     /// <para>
-    /// Wydane = suma wydatków (kwoty ujemne) z kategorią, z datą w okresie. Liczą się WSZYSTKIE, także
+    /// Wydane = suma wydatków (kwoty ujemne) z kategorią, z datą w okresie, plus wpłaty na cele ze zwykłego konta
+    /// wskazujące tę kategorię (<see cref="LimitSpending"/>). Liczą się WSZYSTKIE wydatki, także
     /// oznaczone jako duże — to realnie wydane pieniądze (decyzja użytkownika). Wydatki bez kategorii
     /// nie trafiają do żadnego limitu i jadą osobno (<see cref="LimitsResponseDto.UncategorizedCount"/>).
     /// </para>
@@ -59,7 +62,7 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             .Where(c => categoryIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => (c.BusinessId, c.Name), ct);
 
-        var spent = await SpentByCategoryAsync(budget, period.From(viewed), period.ToExclusive(viewed), ct);
+        var spent = await limitSpending.ByCategoryAsync(budget, period.From(viewed), period.ToExclusive(viewed), ct);
 
         var rows = applying
             .Select(item => Row(item, spent.GetValueOrDefault(item.CategoryId)?.Spent ?? 0m, names[item.CategoryId], history))
@@ -73,7 +76,7 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             .OrderByDescending(u => u.Spent).ThenBy(u => u.CategoryName)
             .ToList();
 
-        var uncategorized = spent.GetValueOrDefault(UncategorizedKey);
+        var uncategorized = spent.GetValueOrDefault(LimitSpending.UncategorizedKey);
 
         return new LimitsResponseDto(
             Month: viewed,
@@ -96,9 +99,6 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             PeriodFrom: period.From(viewed),
             PeriodTo: period.To(viewed));
     }
-
-    /// <summary>Klucz słownika wydatków dla transakcji bez kategorii — kategorie w bazie mają klucze dodatnie.</summary>
-    private const int UncategorizedKey = 0;
 
     /// <summary>Wiersz tabeli: wykorzystanie, stan paska i następna zmiana kwoty, jeśli jest zaplanowana.</summary>
     /// <remarks>
@@ -128,24 +128,4 @@ public sealed class GetLimitsQueryHandler(AppDbContext db, LimitsBudgetScope sco
             NextLimit: next?.Limit,
             NextValidFrom: next?.ValidFrom);
     }
-
-    /// <summary>Wydatki okresu per kategoria jednym zapytaniem — dodatnie, liczba transakcji obok.</summary>
-    /// <remarks>
-    /// Negacja POZA zapytaniem — EF nie tłumaczy <c>-g.Sum(...)</c> w projekcji (ta sama pułapka co w
-    /// <c>GetDashboardQueryHandler</c>). Transakcje bez kategorii lądują pod <see cref="UncategorizedKey"/>.
-    /// </remarks>
-    private async Task<Dictionary<int, CategorySpend>> SpentByCategoryAsync(
-        Guid budget, DateOnly from, DateOnly end, CancellationToken ct)
-    {
-        var rows = await db.Transactions
-            .Where(t => t.BudgetBusinessId == budget && t.Date >= from && t.Date < end && t.Amount < 0)
-            .GroupBy(t => t.CategoryId)
-            .Select(g => new { g.Key, Total = g.Sum(t => t.Amount), Count = g.Count() })
-            .ToListAsync(ct);
-
-        return rows.ToDictionary(r => r.Key ?? UncategorizedKey, r => new CategorySpend(-r.Total, r.Count));
-    }
-
-    /// <summary>Wydane w kategorii w okresie, jako wartość dodatnia.</summary>
-    private sealed record CategorySpend(decimal Spent, int Count);
 }
