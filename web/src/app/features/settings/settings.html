@@ -363,7 +363,9 @@
     <div class="set__form-field">
       <span class="set__label">{{ 'settings.budgets.edit.balance' | translate }}</span>
       <input nz-input disabled [value]="money(previewBalance())" />
-      <span class="set__hint">{{ 'settings.budgets.edit.balanceHint' | translate }}</span>
+      <span class="set__hint">{{
+        (target()?.balanceFromBank ? 'settings.budgets.edit.balanceHintFromBank' : 'settings.budgets.edit.balanceHint') | translate
+      }}</span>
     </div>
   </div>
 </nz-modal>

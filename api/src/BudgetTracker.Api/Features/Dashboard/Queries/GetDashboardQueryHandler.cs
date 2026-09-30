@@ -1,5 +1,6 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Features.Dashboard.Contracts;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Resources;
@@ -78,12 +79,11 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
 
         var toReviewCount = await inRange.CountAsync(t => t.Status == TransactionStatus.PendingReview, ct);
 
-        var balanceBeforeRange = await ofBudget
-            .Where(t => t.Date < from)
-            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
-
-        var openingBalance = (selected?.InitialBalance ?? 0m) + balanceBeforeRange;
-        var budgetProgress = await BuildBudgetProgressAsync(from, to, openingBalance, selectedBudgetBusinessId, ct);
+        // ⚠️ Bilans z salda banku, nie „początkowy + suma" — patrz BalanceLedger. Ta sama księga zasila listę budżetów,
+        // podsumowanie importu i konto oszczędnościowe, więc wszystkie ekrany pokazują to samo.
+        var ledger = await BudgetLedgers.LoadAsync(db, selectedBudgetBusinessId, selected?.InitialBalance ?? 0m, ct);
+        var openingBalance = ledger.BalanceBefore(from);
+        var budgetProgress = BuildBudgetProgress(from, to, ledger);
 
         var recent = await inRange
             .OrderByDescending(t => t.Date).ThenByDescending(t => t.Id)
@@ -205,29 +205,26 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
     /// wykres nie urywał się w środku, gdy ostatnia transakcja jest przed końcem okna — kafel
     /// „Aktualny stan budżetu" i ostatni punkt tej serii muszą dalej pokazywać tę samą liczbę).
     ///
-    /// Kolejność Date, Id — ten sam tie-break co przy ostatnich transakcjach: <c>Id</c> nie wychodzi z API,
-    /// służy wyłącznie do stabilnego uporządkowania transakcji z tego samego dnia.
+    /// Kolejność w dniu ustala księga (<see cref="BalanceLedger"/>): wg ciągłości sald z banku, a gdy się nie da — wg <c>Id</c>.
+    /// <c>Id</c> nie wychodzi z API.
     /// </remarks>
-    private async Task<List<BudgetPointResponseDto>> BuildBudgetProgressAsync(
-        DateOnly from, DateOnly to, decimal openingBalance, Guid? budgetBusinessId, CancellationToken ct)
+    private static List<BudgetPointResponseDto> BuildBudgetProgress(DateOnly from, DateOnly to, BalanceLedger ledger)
     {
-        var transactions = await db.Transactions
-            .Where(t => t.BudgetBusinessId == budgetBusinessId && t.Date >= from && t.Date <= to)
-            .OrderBy(t => t.Date).ThenBy(t => t.Id)
-            .Select(t => new { t.Date, t.Amount })
-            .ToListAsync(ct);
+        var transactions = ledger.Entries.Where(e => e.Date >= from && e.Date <= to).ToList();
 
         var points = new List<BudgetPointResponseDto>();
-        var balance = openingBalance;
+        var balance = ledger.BalanceBefore(from);
 
         if (transactions.Count == 0 || transactions[0].Date != from)
         {
             points.Add(new BudgetPointResponseDto(from, balance));
         }
 
+        // Bilans po KAŻDEJ transakcji bierzemy z księgi (saldo z banku), nie kumulujemy kwot: kumulacja odtwarzałaby dokładnie
+        // ten rozjazd z bankiem, który księga ma usunąć.
         foreach (var t in transactions)
         {
-            balance += t.Amount;
+            balance = t.Balance;
             points.Add(new BudgetPointResponseDto(t.Date, balance));
         }
 

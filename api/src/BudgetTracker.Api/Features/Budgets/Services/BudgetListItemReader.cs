@@ -47,6 +47,8 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             .Where(i => budgetIds.Contains(i.BudgetBusinessId)
                         && i.ValidFrom <= calendarMonth.AddMonths(1) && (i.ValidTo == null || i.ValidTo >= calendarMonth))
             .ToListAsync(ct);
+        var ledgers = await BudgetLedgers.LoadAsync(db, [.. budgets.Select(b => (b.BusinessId, b.InitialBalance))], ct);
+
         var limits = items
             .Where(i => i.AppliesTo(keys[i.BudgetBusinessId]))
             .GroupBy(i => i.BudgetBusinessId)
@@ -58,7 +60,7 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             Month: b.Month,
             Currency: b.Currency,
             InitialBalance: b.InitialBalance,
-            Balance: b.InitialBalance + (sums.TryGetValue(b.BusinessId, out var s) ? s.Total : 0m),
+            Balance: ledgers[b.BusinessId].Closing,
             MonthlyLimit: limits.GetValueOrDefault(b.BusinessId, 0m),
             CreatedAt: b.CreatedAt,
             TransactionCount: sums.TryGetValue(b.BusinessId, out var c) ? c.Count : 0,
@@ -68,7 +70,8 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             LinkedSavingsBudgetId: b.LinkedSavingsBudgetBusinessId,
             SavingsTransferRules: [.. b.SavingsTransferRules.Select(r =>
                 new TitleAmountRuleResponseDto(r.TitlePattern, r.AmountFrom, r.AmountTo))],
-            PeriodStartDay: b.PeriodStartDay)).ToList();
+            PeriodStartDay: b.PeriodStartDay,
+            BalanceFromBank: ledgers[b.BusinessId].UsesBankBalances)).ToList();
     }
 
     /// <summary>Jeden wiersz — ten sam kształt co na liście, więc front może podmienić go w miejscu.</summary>

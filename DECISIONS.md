@@ -640,6 +640,26 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Lista transakcji: kolumna „Saldo po operacji" za kwotą, sortowalna (`sort=balance`, także w CLI); wiersze bez salda zawsze na końcu.
 > - Istniejące transakcje zostają bez salda (na dzień zmiany w bazie ich nie było); dedup pomija duplikaty, więc ponowny import ich nie uzupełni.
 
+> **REWIZJA — 2026-09-30 (później): bilans budżetu z SALDA BANKU (`BalanceLedger`) — odwrócenie decyzji powyżej „bilans dalej wyliczany".**
+> Na produkcji dashboard pokazywał 1031,23, a bank 2292,41 (różnica 1261,18 = różnica między bilansem początkowym 5011,70 a saldem banku
+> przed pierwszą transakcją, 6272,88; żadna transakcja nie zginęła). Wzór „bilans początkowy + suma kwot" jest poprawny tylko przy pełnej
+> historii i dokładnie znanym punkcie startu, więc właściciel zdecydował, że dashboard ma się zgadzać z bankiem.
+> - **Reguła (`Features/Budgets/Services/BalanceLedger.cs`):** transakcja z saldem USTAWIA bilans na to saldo; transakcja bez salda (ręczna)
+>   DOLICZA kwotę do bilansu z poprzedniej pozycji. Bilans początkowy budżetu jest punktem wyjścia TYLKO, gdy żadna transakcja nie ma
+>   salda — wtedy wynik jest identyczny jak dawniej. Przed pierwszą transakcją z saldem bilans to jej saldo sprzed operacji.
+> - ⚠️ **Kolejność w obrębie dnia** ustalana wg CIĄGŁOŚCI SAŁD (każde saldo = poprzednie + kwota), nie wg `Id`: kolejność zapisu nie zawsze
+>   zgadza się z bankiem (na produkcji rozjeżdżała się w 78 miejscach, zawsze parami znoszącymi się w obrębie dnia), więc „ostatnia wg `Id`"
+>   dawała saldo ze środka dnia. Start dnia wyznacza saldo zamykające poprzedni dzień; gdy łańcuch się nie składa (brak wiersza, niespójne
+>   saldo), zostaje kolejność zapisu, bez wyjątku. Poprawia to też wykres bilansu w ciągu dnia.
+> - Jedna księga zasila cztery miejsca (`BudgetLedgers`): dashboard, listę budżetów (Ustawienia), podsumowanie importu i konto
+>   oszczędnościowe (bilans powiązanych budżetów) — ten sam budżet nie może mieć dwóch kwot na dwóch ekranach.
+> - `BudgetListItemResponseDto.BalanceFromBank`: gdy bilans idzie z banku, edycja budżetu NIE ostrzega o „przeliczeniu całego budżetu"
+>   i nie podgląda zmiany (bilans początkowy niczego wtedy nie zmienia); podpowiedź pod polem mówi, skąd jest bilans. Bez makiety —
+>   zmieniły się tylko teksty istniejącego modalu i warunki ich pokazania.
+> - Sprawdzone na realnych danych produkcyjnych (1402 transakcje): bilans końcowy 2292,41 = saldo banku, zero przerwań łańcucha po ułożeniu dni.
+> - Koszt: księga wczytuje WSZYSTKIE transakcje budżetu (4 kolumny) przy każdym zapytaniu o dashboard, zamiast sumy w SQL. Dla tysięcy
+>   wierszy nieistotne; jeśli urośnie, można startować od ostatniej kotwicy sprzed zakresu.
+
 ---
 
 ## 6. Przepływ importu + mapowanie

@@ -129,17 +129,14 @@ public sealed class CommitImportCommandHandler(
 
     /// <summary>Liczby na ekran „Podsumowanie" (krok 4 makiety).</summary>
     /// <remarks>
-    /// „Aktualny stan budżetu" = bilans początkowy plus WSZYSTKIE transakcje tego budżetu.
-    /// Ta sama formuła co na dashboardzie (<c>GetDashboardQueryHandler</c>) — inaczej ten sam budżet
-    /// pokazywałby dwie różne kwoty na dwóch ekranach. Liczone z bazy, nie z samego
-    /// importu, bo budżet mógł mieć już wcześniejsze wpisy.
+    /// „Aktualny stan budżetu" = bilans z księgi (<see cref="BudgetLedgers"/>): saldo z banku, a bez salda bilans początkowy plus
+    /// kwoty. Ta sama księga co na dashboardzie — inaczej ten sam budżet pokazywałby dwie różne kwoty na dwóch ekranach.
+    /// Liczone z bazy, nie z samego importu, bo budżet mógł mieć już wcześniejsze wpisy.
     /// </remarks>
     private async Task<ImportSummaryResponseDto> BuildSummaryAsync(
         ImportBatch batch, List<Transaction> saved, Budget budget, CancellationToken ct)
     {
-        var booked = await db.Transactions
-            .Where(t => t.BudgetBusinessId == budget.BusinessId)
-            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        var ledger = await BudgetLedgers.LoadAsync(db, budget.BusinessId, budget.InitialBalance, ct);
 
         var withConfidence = saved.Where(t => t.Confidence is not null).ToList();
 
@@ -156,7 +153,7 @@ public sealed class CommitImportCommandHandler(
             AverageConfidence: withConfidence.Count == 0
                 ? null
                 : withConfidence.Average(t => t.Confidence!.Value),
-            BudgetBalance: budget.InitialBalance + booked);
+            BudgetBalance: ledger.Closing);
     }
 
     /// <summary>Publiczny identyfikator kategorii → klucz zapisu; nieznany albo pusty = brak kategorii.</summary>

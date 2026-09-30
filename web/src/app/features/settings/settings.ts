@@ -370,7 +370,9 @@ export class Settings {
    * a to jedyne miejsce, w którym jedna liczba przesuwa cały wykres bilansu.
    */
   protected readonly initialBalanceChanged = computed(() =>
-    this.target() !== null && this.draftInitialBalance() !== this.target()!.initialBalance,
+    this.target() !== null
+    && !this.target()!.balanceFromBank
+    && this.draftInitialBalance() !== this.target()!.initialBalance,
   );
 
   /**
@@ -385,6 +387,8 @@ export class Settings {
   protected readonly previewBalance = computed(() => {
     const row = this.target();
     if (!row) return 0;
+    // Bilans z sald banku nie zależy od bilansu początkowego — podgląd „po zmianie" pokazałby liczbę, której nie będzie.
+    if (row.balanceFromBank) return row.balance;
     return this.draftInitialBalance() + (row.balance - row.initialBalance);
   });
 
