@@ -110,8 +110,8 @@ public sealed class ImportFeatureTests : IAsyncLifetime
         ? _db.Categories.Single(c => c.BusinessId == id).Id
         : null;
 
-    private static ParsedRow Row(string desc, decimal amount, int day = 5, string? reference = null)
-        => new(new DateOnly(2026, 8, day), amount, desc, "Obciążenie", reference);
+    private static ParsedRow Row(string desc, decimal amount, int day = 5, string? reference = null, decimal? balanceAfter = null)
+        => new(new DateOnly(2026, 8, day), amount, desc, "Obciążenie", reference, balanceAfter);
 
     /// <summary>
     /// Przejście całą drogą steppera: podgląd → zatwierdzenie wszystkiego, co podgląd
@@ -129,7 +129,7 @@ public sealed class ImportFeatureTests : IAsyncLifetime
         .Where(r => !r.Duplicate)
         .Select(r => new CommitRowRequestDto(
             r.Date, r.Amount, r.Description, r.TransactionType, r.ExternalReference,
-            r.CategoryId, r.Confidence, Edited: false))
+            r.CategoryId, r.Confidence, Edited: false, BalanceAfter: r.BalanceAfter))
         .ToList();
 
     // ── Scalanie i deduplikacja ────────────────────────────────────────────────────────
@@ -144,6 +144,46 @@ public sealed class ImportFeatureTests : IAsyncLifetime
 
         Assert.Equal(1, preview.RowsInFile);
         Assert.Equal(-12.60m, Assert.Single(preview.Rows).Amount);
+    }
+
+    [Fact]
+    public async Task Saldo_po_operacji_wedruje_z_pliku_do_zapisanej_transakcji()
+    {
+        // Regresja: dwa pliki z różnych okresów rozjeżdżały bilans, a rekord nie niósł tego, co bank pokazał.
+        var rows = new[] { Row("CZYNSZ", -1500m, day: 2, balanceAfter: 8473.22m), Row("KAWA", -12m, day: 3) };
+
+        await ImportAll(Handler(), rows);
+
+        var saved = await _db.Transactions.OrderBy(t => t.Id).ToListAsync();
+        Assert.Equal(8473.22m, saved[0].BalanceAfter);
+        Assert.Null(saved[1].BalanceAfter);   // bank salda nie podał — null, nie zero
+    }
+
+    [Fact]
+    public async Task Scalona_pozycja_niesie_saldo_ostatniego_wiersza()
+    {
+        var rows = new[]
+        {
+            Row("BILET IKO", -4.20m, balanceAfter: 100.00m),
+            Row("BILET IKO", -4.20m, balanceAfter: 95.80m),
+            Row("BILET IKO", -4.20m, balanceAfter: 91.60m),
+        };
+
+        var preview = await Handler().Preview.HandleAsync(rows, _budgetId, default);
+
+        Assert.Equal(91.60m, Assert.Single(preview.Rows).BalanceAfter);
+    }
+
+    [Fact]
+    public async Task Saldo_nie_wchodzi_do_klucza_deduplikacji()
+    {
+        // Ten sam wiersz z saldem i bez salda to ta sama transakcja — inaczej ponowny import dublowałby dane.
+        await ImportAll(Handler(), [Row("CZYNSZ", -1500m, day: 2)]);
+
+        var again = await Handler().Preview.HandleAsync([Row("CZYNSZ", -1500m, day: 2, balanceAfter: 8473.22m)], _budgetId, default);
+
+        Assert.Equal(1, again.SkippedDuplicates);
+        Assert.Equal(1, await _db.Transactions.CountAsync());
     }
 
     [Fact]

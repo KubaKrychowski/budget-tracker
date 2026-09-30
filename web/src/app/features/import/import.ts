@@ -335,6 +335,7 @@ export class Import {
             categoryId: r.categoryId,
             confidence: r.confidence,
             edited: r.edited,
+            balanceAfter: r.balanceAfter,
           })),
         }),
       );

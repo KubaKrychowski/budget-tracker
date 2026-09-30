@@ -182,7 +182,10 @@ public sealed class MBankParser : IStatementParser
             description = type;
         }
 
-        return new ParsedRow(date, amount, description, type, null);
+        // Brak albo nieczytelne saldo nie odrzuca wiersza — to dodatek do transakcji, nie jej tożsamość.
+        decimal? balanceAfter = TryParseAmount(cells[7], out var balance) ? balance : null;
+
+        return new ParsedRow(date, amount, description, type, null, balanceAfter);
     }
 
     /// <summary>

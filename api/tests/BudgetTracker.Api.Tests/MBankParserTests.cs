@@ -55,6 +55,15 @@ public class MBankParserTests
     }
 
     [Fact]
+    public async Task Reads_balance_after_operation_including_the_space_thousands_separator()
+    {
+        var rows = await Parse();
+
+        Assert.Equal(8473.22m, rows.Single(r => r.Amount == -1500.00m).BalanceAfter);
+        Assert.Equal([13462.73m, 13452.24m], rows.Where(r => r.Amount == -10.49m).Select(r => r.BalanceAfter));
+    }
+
+    [Fact]
     public async Task Parses_amounts_with_a_space_as_the_thousands_separator()
     {
         var rows = await Parse();

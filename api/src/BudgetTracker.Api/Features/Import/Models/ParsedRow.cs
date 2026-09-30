@@ -14,12 +14,18 @@ namespace BudgetTracker.Api.Features.Import.Models;
 /// <param name="Description">Surowy opis złożony z pól banku, przed normalizacją.</param>
 /// <param name="TransactionType">Typ z wyciągu, np. „Płatność kartą". Cecha dla kategoryzacji.</param>
 /// <param name="ExternalReference">Numer referencyjny, jeśli bank go podaje. Null, gdy nie.</param>
+/// <param name="BalanceAfter">
+/// Saldo rachunku po operacji, jak podał je bank; null, gdy kolumny brak albo wartości nie da się odczytać.
+/// ⚠️ NIE wchodzi do <see cref="IdentityKey"/> — saldo nie identyfikuje operacji, a gdyby wchodziło, ten sam wiersz z pliku
+/// bez salda i z saldem byłby dla deduplikacji dwiema różnymi transakcjami.
+/// </param>
 public sealed record ParsedRow(
     DateOnly Date,
     decimal Amount,
     string Description,
     string TransactionType,
-    string? ExternalReference)
+    string? ExternalReference,
+    decimal? BalanceAfter = null)
 {
     /// <summary>
     /// Klucz tożsamości transakcji — ten sam, którego używamy do wykrywania duplikatów

@@ -257,7 +257,7 @@ export class Transactions {
    */
   protected readonly pageSizeOptions = [10, 20, 50, 100];
 
-  protected sortOrderFor(field: 'date' | 'amount'): 'ascend' | 'descend' | null {
+  protected sortOrderFor(field: 'date' | 'amount' | 'balance'): 'ascend' | 'descend' | null {
     return this.sort() === field ? (this.desc() ? 'descend' : 'ascend') : null;
   }
 

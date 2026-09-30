@@ -84,7 +84,8 @@ public sealed class GetImportPreviewQueryHandler(
                 CategoryName: categoryId is { } named ? categories[named].Name : null,
                 Confidence: confidence,
                 NeedsReview: needsReview,
-                Duplicate: duplicate));
+                Duplicate: duplicate,
+                BalanceAfter: row.BalanceAfter));
         }
 
         return new ImportPreviewResponseDto(
@@ -119,7 +120,8 @@ public sealed class GetImportPreviewQueryHandler(
             var key = row.IdentityKey();
             if (merged.TryGetValue(key, out var existing))
             {
-                merged[key] = existing with { Amount = existing.Amount + row.Amount };
+                // Saldo scalonej pozycji to saldo jej OSTATNIEGO wiersza (parsery oddają wiersze chronologicznie).
+                merged[key] = existing with { Amount = existing.Amount + row.Amount, BalanceAfter = row.BalanceAfter ?? existing.BalanceAfter };
             }
             else
             {
