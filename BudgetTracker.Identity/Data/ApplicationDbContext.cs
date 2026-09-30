@@ -19,6 +19,9 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     /// <summary>Adresy, którym wolno założyć konto w zamkniętej becie.</summary>
     public DbSet<BetaInvite> BetaInvites => Set<BetaInvite>();
 
+    /// <summary>Prośby o dostęp do bety zostawione na landingu — patrz <see cref="BetaAccessRequest"/>.</summary>
+    public DbSet<BetaAccessRequest> BetaAccessRequests => Set<BetaAccessRequest>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -47,6 +50,17 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             // ⚠️ Unikalności pilnuje BAZA, nie samo sprawdzenie w serwisie: dwa równoległe „dopisz ten sam adres"
             // zdążyłyby oba przeczytać pustkę, zanim którekolwiek zapisze. Duplikat nie wpuszcza nikogo obcego,
             // ale robi listę, z której ten sam adres trzeba usunąć dwa razy, żeby naprawdę przestał wpuszczać.
+            e.HasIndex(x => x.Email).IsUnique();
+        });
+
+        builder.Entity<BetaAccessRequest>(e =>
+        {
+            e.ToTable("BetaAccessRequests");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Email).HasMaxLength(256);
+            e.Property(x => x.ConsentVersion).HasMaxLength(32);
+            // ⚠️ Unikalność w BAZIE z tego samego powodu co przy BetaInvites: dwa równoległe zgłoszenia tego samego
+            // adresu zdążyłyby oba przeczytać pustkę.
             e.HasIndex(x => x.Email).IsUnique();
         });
     }

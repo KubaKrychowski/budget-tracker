@@ -146,6 +146,7 @@ resource "azurerm_linux_web_app" "identity" {
       Acs__Email__ConnectionString = data.azurerm_communication_service.email.primary_connection_string
       Acs__Email__SenderAddress    = var.email_sender_address
 
+      Clients__Landing__Origins__0            = local.landing_url
       Clients__Spa__RedirectUris__0           = "${local.front_url}/auth-callback"
       Clients__Spa__RedirectUris__1           = "${local.front_url}/silent-renew.html"
       Clients__Spa__PostLogoutRedirectUris__0 = "${local.front_url}/"

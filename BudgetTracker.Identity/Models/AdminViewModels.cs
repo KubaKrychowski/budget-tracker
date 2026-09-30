@@ -143,6 +143,7 @@ public enum AdminTab
 {
     Users,
     Invites,
+    Requests,
     Orphans,
     History,
 }
@@ -217,6 +218,36 @@ public sealed record AdminHistoryRow(
         entry.Action, entry.Outcome, entry.SubjectId, entry.SubjectEmailHash, entry.TargetId, entry.Rows);
 
     private static string ShortId(Guid id) => id.ToString()[..ShortIdLength] + "…";
+}
+
+/// <summary>Jedna prośba o dostęp na liście.</summary>
+public sealed record AdminRequestRow(Guid Id, string Email, DateTimeOffset RequestedAt, string ConsentVersion, DateTimeOffset? InvitedAt);
+
+public sealed class AdminRequestsViewModel
+{
+    public required IReadOnlyList<AdminRequestRow> Requests { get; init; }
+
+    public int Page { get; init; }
+
+    public int PageSize { get; init; }
+
+    public int Total { get; init; }
+
+    public int UsersCount { get; init; }
+
+    public int InvitesCount { get; init; }
+
+    public int HistoryCount { get; init; }
+
+    public bool ClosedBeta { get; init; }
+
+    public AdminFlash? Flash { get; init; }
+
+    public bool HasPrevious => Page > 1;
+
+    public bool HasNext => Page * PageSize < Total;
+
+    public int Shown => Requests.Count;
 }
 
 public sealed class AdminHistoryViewModel

@@ -285,4 +285,19 @@
   <data name="Admin_History_Outcome_RefusedSelf" xml:space="preserve"><value>Odmowa: własne konto</value></data>
   <data name="Admin_History_Outcome_RefusedLastAdmin" xml:space="preserve"><value>Odmowa: ostatni admin</value></data>
   <data name="Admin_History_Outcome_DataServiceUnavailable" xml:space="preserve"><value>Serwis danych niedostępny</value></data>
+  <data name="Admin_Tab_Requests" xml:space="preserve"><value>Prośby o dostęp ({0})</value></data>
+  <data name="Admin_Requests_Title" xml:space="preserve"><value>Prośby o dostęp</value></data>
+  <data name="Admin_Requests_Subtitle" xml:space="preserve"><value>Adresy zostawione na stronie projektu. „Zaproś” dopisuje adres do zaproszeń — konto założy tylko ktoś z zaproszenia. Usunięcie prośby nie kasuje zaproszenia ani konta.</value></data>
+  <data name="Admin_Requests_Empty" xml:space="preserve"><value>Nikt jeszcze nie poprosił o dostęp.</value></data>
+  <data name="Admin_Col_Requested" xml:space="preserve"><value>Zgłoszono · zgoda</value></data>
+  <data name="Admin_Request_Waiting" xml:space="preserve"><value>Nowa</value></data>
+  <data name="Admin_Request_Invited" xml:space="preserve"><value>Zaproszona</value></data>
+  <data name="Admin_Request_Invite" xml:space="preserve"><value>Zaproś</value></data>
+  <data name="Admin_Request_Remove" xml:space="preserve"><value>Usuń</value></data>
+  <data name="Admin_Request_Consent" xml:space="preserve"><value>Regulamin {0}</value></data>
+  <data name="Admin_Flash_RequestInvited" xml:space="preserve"><value>Zaproszono {0}. Adres jest na liście zaproszeń.</value></data>
+  <data name="Admin_Flash_RequestRemoved" xml:space="preserve"><value>Usunięto prośbę od {0}.</value></data>
+  <data name="Admin_Flash_RequestNotFound" xml:space="preserve"><value>Tej prośby już nie ma.</value></data>
+  <data name="Admin_History_Action_BetaRequestInvited" xml:space="preserve"><value>Zaproszenie z prośby o dostęp</value></data>
+  <data name="Admin_History_Action_BetaRequestRemoved" xml:space="preserve"><value>Usunięcie prośby o dostęp</value></data>
 </root>

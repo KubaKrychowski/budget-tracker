@@ -1,0 +1,62 @@
+@model AdminRequestsViewModel
+@{
+    ViewData["Title"] = L["Admin_Requests_Title"];
+}
+
+<partial name="_AdminHeader" model="@(new AdminHeaderModel("Admin_Requests_Title", "Admin_Requests_Subtitle", AdminTab.Requests, Model.UsersCount, Model.InvitesCount, null, Model.HistoryCount, Model.Flash))"/>
+
+@if (Model.Requests.Count == 0)
+{
+    <p class="admin-muted">@L["Admin_Requests_Empty"]</p>
+}
+else
+{
+    <table class="admin-table">
+        <thead>
+        <tr>
+            <th>@L["Admin_Col_Invited"]</th>
+            <th>@L["Admin_Col_Status"]</th>
+            <th>@L["Admin_Col_Requested"]</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var request in Model.Requests)
+        {
+            <tr>
+                <td>@request.Email</td>
+                <td>
+                    <div class="admin-chips">
+                        <span class="admin-chip @(request.InvitedAt is null ? "" : "ok")">
+                            @L[request.InvitedAt is null ? "Admin_Request_Waiting" : "Admin_Request_Invited"]
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <div>@request.RequestedAt.UtcDateTime.ToString("d")</div>
+                    <div class="admin-muted admin-small">@L["Admin_Request_Consent", request.ConsentVersion]</div>
+                </td>
+                <td class="admin-actions">
+                    @if (request.InvitedAt is null)
+                    {
+                        <form asp-action="InviteRequest" asp-route-id="@request.Id" method="post" class="admin-inline-form">
+                            <button type="submit" class="btn-primary">@L["Admin_Request_Invite"]</button>
+                        </form>
+                    }
+                    <form asp-action="RemoveRequest" asp-route-id="@request.Id" method="post" class="admin-inline-form">
+                        <button type="submit" class="btn-danger-outline">@L["Admin_Request_Remove"]</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="admin-pager">
+        <span class="admin-muted">@L["Admin_Paging_Shown", Model.Shown, Model.Total]</span>
+        <div class="admin-pager-buttons">
+            @if (Model.HasPrevious) { <a asp-action="Requests" asp-route-page="@(Model.Page - 1)" class="btn-secondary">@L["Admin_Paging_Prev"]</a> }
+            @if (Model.HasNext) { <a asp-action="Requests" asp-route-page="@(Model.Page + 1)" class="btn-secondary">@L["Admin_Paging_Next"]</a> }
+        </div>
+    </div>
+}

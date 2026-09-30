@@ -522,6 +522,26 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Migracja `ContributionSource` to wyłącznie dane (wpłaty siedzą w `jsonb`): istniejące wpłaty dostają `Source = 1`
 >   i brak kategorii.
 
+> **REWIZJA — 2026-09-30: prośby o dostęp do bety z landingu** (makiety Figma — strona „Landing — beta i dokumenty”
+> oraz „Logowanie (Identity)”, ramka „Admin — prośby o dostęp”; `BetaAccessRequest`, `BetaRequestsController`):
+> - Formularz na landingu (adres + zgoda) wysyła `POST /api/beta-requests` do **serwera tożsamości**, nie do API budżetu:
+>   adres należy do osoby bez konta, a zaproszenia (`BetaInvite`) już tam żyją. Nowa tabela `BetaAccessRequests`
+>   (unikalny znormalizowany adres, data, **wersja dokumentów zaakceptowana przy zapisie**).
+> - ⚠️ Endpoint jest publiczny: CORS tylko dla originów `Clients:Landing:Origins` (pusta lista = formularz nie działa, nie
+>   „działa dla wszystkich”), limit 5 żądań / 10 min na IP, pole-pułapka `website`. Odpowiedź `202` jest taka sama dla nowego
+>   adresu, powtórki i wykrytego bota — formularz nie ma służyć do sprawdzania, kto jest na liście. Adresów nie logujemy.
+> - Zgoda jest warunkiem zapisu (serwer odrzuca `consent=false`), a jej wersja to `BetaAccessRequestService.ConsentVersion`.
+>   ⚠️ **Podbij ją razem ze zmianą treści** `regulamin.html` / `polityka-prywatnosci.html` — zgoda pod starą wersją dotyczy
+>   starego tekstu.
+> - Panel administratora: zakładka „Prośby o dostęp” (Zaproś = dopisanie do `BetaInvite` + oznaczenie prośby; Usuń nie rusza
+>   zaproszenia ani konta). Oba działania idą do dziennika audytu (`BetaRequestInvited`, `BetaRequestRemoved`). Liczba na
+>   zakładce jest w `ViewData` ustawianym w `OnActionExecutionAsync`, żeby nie dopisywać jej do czterech modeli widoków.
+> - Dokumenty (regulamin, polityka prywatności, usuwanie konta, kontakt) to **statyczny HTML w `public/` landingu** — landing
+>   celowo nie ma routera. Adresy bez `.html` daje `routes` w `staticwebapp.config.json` (lokalnie działają tylko z `.html`).
+>   Wzorem struktury był serwis o podobnym profilu, treść dopasowana do faktów tej aplikacji.
+> - Retencja adresu z prośby: czas aktywności konta + 30 dni po jego usunięciu (decyzja właściciela). ⚠️ **Nie ma jeszcze
+>   automatycznego kasowania** — usuwa się ręcznie w panelu; polityka obiecuje termin, którego nic samo nie pilnuje.
+
 > **REWIZJA — 2026-09-03: cykl życia budżetu.** Ekran „Ustawienia → Budżety" (issue #3)
 > wprowadza cztery operacje, których wcześniej nie było. Różnice między nimi są subtelne
 > i pomylenie ich daje błąd, którego nie widać na ekranie.

@@ -1,8 +1,27 @@
 {
+  "routes": [
+    {
+      "route": "/regulamin",
+      "rewrite": "/regulamin.html"
+    },
+    {
+      "route": "/polityka-prywatnosci",
+      "rewrite": "/polityka-prywatnosci.html"
+    },
+    {
+      "route": "/usun-konto",
+      "rewrite": "/usun-konto.html"
+    },
+    {
+      "route": "/kontakt",
+      "rewrite": "/kontakt.html"
+    }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
-      "/*.{js,css,map,json,ico,png,jpg,svg,webmanifest,txt,woff,woff2,ttf}"
+      "/*.{js,css,map,json,ico,png,jpg,svg,webmanifest,txt,woff,woff2,ttf}",
+      "/legal.css"
     ]
   },
   "globalHeaders": {

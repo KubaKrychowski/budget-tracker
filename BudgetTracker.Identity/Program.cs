@@ -1,3 +1,4 @@
+using BudgetTracker.Identity.Controllers;
 using BudgetTracker.Identity.Data;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
@@ -64,6 +65,18 @@ builder.Services.AddRateLimiter(options =>
             PermitLimit = 5,
             Window = TimeSpan.FromMinutes(1),
             SegmentsPerWindow = 6,
+            QueueLimit = 0,
+        }));
+
+    // Publiczny formularz prośby o dostęp: człowiek wysyła go raz, więc limit jest ciasny — chroni listę oczekujących
+    // przed zalaniem adresami (każdy zapis to dane osobowe, które ktoś musi potem przejrzeć i usunąć).
+    options.AddPolicy("beta-request", http => RateLimitPartition.GetSlidingWindowLimiter(
+        ClientKey(http),
+        _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(10),
+            SegmentsPerWindow = 5,
             QueueLimit = 0,
         }));
 });
@@ -230,6 +243,7 @@ builder.Services.AddScoped<IAdminAuditReader, DbAdminAuditReader>();
 builder.Services.AddScoped<UserDeletionService>();
 builder.Services.AddScoped<AdminRoleService>();
 builder.Services.AddScoped<BetaInviteService>();
+builder.Services.AddScoped<BetaAccessRequestService>();
 
 // Dwie drogi wysyłki, wybór należy do KONFIGURACJI, nie do kodu: wypełniona sekcja Acs:Email wygrywa,
 // pusta zostawia SMTP (Development i MailHog). Na Azure idzie ACS, bo klucz dostępu z portalu działa
@@ -267,12 +281,21 @@ builder.Services.AddSingleton<SpaOrigins>();
 // SPA odpytuje discovery/JWKS i wymienia kod na token przez fetch() z INNEGO originu
 // (localhost:4200/4310) — to podlega CORS, w przeciwieństwie do przekierowania na /connect/authorize
 // (pełna nawigacja, CORS jej nie dotyczy). Te same originy co zarejestrowane redirect_uris klienta SPA.
-const string spaCors = "spa-client";
+const string spaCors = CorsPolicies.Spa;
 builder.Services.AddOptions<CorsOptions>().Configure<SpaOrigins>((cors, spa) =>
     cors.AddPolicy(spaCors, policy => policy
         .WithOrigins([.. spa.All])
         .AllowAnyHeader()
         .AllowAnyMethod()));
+
+// Formularz prośby o dostęp na landingu (inny origin niż SPA). Tylko POST z nagłówkiem Content-Type i tylko
+// z originów z konfiguracji — pusta lista oznacza brak CORS, czyli formularz nie działa, a nie że działa dla każdego.
+builder.Services.AddOptions<LandingClientOptions>().Bind(builder.Configuration.GetSection(LandingClientOptions.SectionName));
+builder.Services.AddOptions<CorsOptions>().Configure<Microsoft.Extensions.Options.IOptions<LandingClientOptions>>((cors, landing) =>
+    cors.AddPolicy(CorsPolicies.Landing, policy => policy
+        .WithOrigins([.. landing.Value.Origins])
+        .WithMethods("POST")
+        .WithHeaders("Content-Type")));
 
 var app = builder.Build();
 
