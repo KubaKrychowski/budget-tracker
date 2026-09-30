@@ -16,7 +16,8 @@ public class Transaction(
     Guid? budgetBusinessId = null,
     int? accountId = null,
     int? importBatchId = null,
-    Guid userId = default) : Entity
+    Guid userId = default,
+    decimal? balanceAfter = null) : Entity
 {
     /// <summary>
     /// Właściciel transakcji — powielony z <see cref="Budget.UserId"/> budżetu, na który zaksięgowano
@@ -43,6 +44,18 @@ public class Transaction(
     public decimal Amount { get; protected set; } = amount;
 
     public string Description { get; protected set; } = description;
+
+    /// <summary>
+    /// Saldo rachunku PO tej operacji — wprost z wyciągu banku („Saldo po transakcji" / „Saldo po operacji").
+    /// <c>null</c> dla transakcji dodanych ręcznie i dla tych z importu, w których bank saldo pominął albo nie dało się go odczytać.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ To DANA Z WYCIĄGU, nie wynik naszego liczenia: bilans budżetu nadal jest wyliczany
+    /// (<see cref="Budget.InitialBalance"/> + suma kwot) i nic tego pola nie czyta. Pole istnieje po to, żeby rekord niósł to, co
+    /// bank naprawdę pokazał — punkt odniesienia, gdy wyliczony bilans rozjedzie się z bankiem (np. po imporcie plików z różnych okresów).
+    /// Przy transakcjach scalonych z kilku wierszy tego samego klucza (<c>MergeDuplicates</c>) jest to saldo OSTATNIEGO z nich.
+    /// </remarks>
+    public decimal? BalanceAfter { get; protected set; } = balanceAfter;
 
     /// <summary>
     /// Klucz obcy do <see cref="Domain.Category"/> — bez nawigacji (CLAUDE.md §5). Nazwę kategorii

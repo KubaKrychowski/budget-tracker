@@ -223,7 +223,7 @@
         [nzShowSizeChanger]="true"
         [nzPageSizeOptions]="pageSizeOptions"
         (nzQueryParams)="onQueryParamsChange($event, txTable)"
-        [nzScroll]="{ x: '1100px' }"
+        [nzScroll]="{ x: '1280px' }"
         nzSize="small"
       >
         <thead>
@@ -314,6 +314,15 @@
                 </div>
               </nz-dropdown-menu>
             </th>
+            <th
+              nzWidth="180px"
+              class="tx__right"
+              nzColumnKey="balance"
+              [nzSortFn]="true"
+              [nzSortOrder]="sortOrderFor('balance')"
+            >
+              {{ 'transactions.columns.balance' | translate }}
+            </th>
             <th nzWidth="72px" class="tx__center">{{ 'transactions.columns.actions' | translate }}</th>
           </tr>
         </thead>
@@ -391,6 +400,7 @@
                     [nzStep]="10"
                   />
                 </td>
+                <td class="tx__right">{{ item.balanceAfter === null ? '—' : money(item.balanceAfter) + ' PLN' }}</td>
                 <td class="tx__center">—</td>
               } @else {
                 <td>{{ day(item.date) }}</td>
@@ -410,6 +420,7 @@
                 <td class="tx__right amount" [style.color]="amountColor(item.amount)">
                   {{ money(item.amount) }} PLN
                 </td>
+                <td class="tx__right">{{ item.balanceAfter === null ? '—' : money(item.balanceAfter) + ' PLN' }}</td>
                 <td class="tx__center">
                   <button
                     nz-button

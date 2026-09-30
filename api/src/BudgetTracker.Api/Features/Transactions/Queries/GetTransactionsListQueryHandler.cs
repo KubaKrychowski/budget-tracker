@@ -107,8 +107,20 @@ public sealed class GetTransactionsListQueryHandler(
     /// Sortowanie MUSI mieć tie-break po <c>Id</c> — sama data przy powtarzalnych wartościach
     /// daje niestabilną kolejność między stronami (ten sam wiersz na dwóch stronach naraz).
     /// </summary>
+    /// <remarks>
+    /// Sortowanie po saldzie stawia wiersze BEZ salda (ręczne, bank go nie podał) zawsze na końcu, w obu kierunkach —
+    /// domyślnie Postgres wstawia NULL-e na początek przy malejącym, a taka strona nic by nie mówiła.
+    /// </remarks>
     private static IQueryable<Transaction> ApplySort(IQueryable<Transaction> query, string? sort, bool desc)
     {
+        if (string.Equals(sort, "balance", StringComparison.OrdinalIgnoreCase))
+        {
+            var withoutBalanceLast = query.OrderBy(t => t.BalanceAfter == null);
+            return desc
+                ? withoutBalanceLast.ThenByDescending(t => t.BalanceAfter).ThenByDescending(t => t.Id)
+                : withoutBalanceLast.ThenBy(t => t.BalanceAfter).ThenBy(t => t.Id);
+        }
+
         var byAmount = string.Equals(sort, "amount", StringComparison.OrdinalIgnoreCase);
         return (byAmount, desc) switch
         {

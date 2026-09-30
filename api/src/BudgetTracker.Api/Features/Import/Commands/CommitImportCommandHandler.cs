@@ -91,7 +91,8 @@ public sealed class CommitImportCommandHandler(
                 externalReference: row.ExternalReference,
                 budgetBusinessId: budget.BusinessId,
                 importBatchId: batch.Id,
-                userId: budget.UserId);
+                userId: budget.UserId,
+                balanceAfter: row.BalanceAfter);
 
             db.Transactions.Add(transaction);
             saved.Add(transaction);

@@ -616,6 +616,30 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Odstępstwo od makiety: zakres dat („28.09 – 27.10.2026") pokazujemy tylko przy dniu > 1, bo dla miesiąca kalendarzowego
 >   nic nie dodaje do nazwy miesiąca. Wybór okresu zostaje w „Konfiguracji" (jak przed zmianą), a nie na pasku nad tabelą.
 
+> **REWIZJA — 2026-09-29: publikacja modelu zakłada brakujący kontener użytkownika.** Kontener na modele (nazwa = id konta,
+> `UserBlobContainer`) miał powstawać RAZ przy rejestracji, a jego brak w trakcie pracy miał być twardym błędem. Na produkcji
+> zamieniło to trening, który się już policzył, w stracony przebieg (`ContainerNotFoundException`, zadanie bez ponowień).
+> `ModelStore.Publish` robi teraz `CreateIfNotExists` i loguje ostrzeżenie — widoczność przeniesiona z przerwanego treningu do logu.
+> - ⚠️ **Pusty identyfikator** (`Guid.Empty`) odrzucają i zadanie, i `Publish`: bez tego zakładanie w locie stworzyłoby kontener
+>   „00000000-…" bez właściciela.
+> - Logi: zgłoszenie, start, koniec (metryki) i niepowodzenie treningu niosą `UserId` i `JobId`. Ślad SUKCESU to wiersz `ModelVersion`
+>   (konto, zgłoszenie, metryki, ETag); niepowodzenia są tylko w logu i w panelu Hangfire (dev). Osobna tabela audytu nie powstała.
+> - Przyczyna potwierdzona na produkcji (2026-09-29): konto nie miało kontenera — `PUT` zwrócił `201 Created`, nie `409`, a autoryzacja
+>   tożsamością zarządzaną działała. Kontener `shared` z Terraforma to inny kontener niż użytkownika (nazwa = id konta). Rejestracja tego
+>   konta nie założyła kontenera (wywołanie `/container` nie doszło do skutku); od teraz naprawia to pierwszy trening.
+
+> **REWIZJA — 2026-09-30: saldo po operacji jest zapisywane przy transakcji (`Transaction.BalanceAfter`).** Po imporcie dwóch plików
+> z różnych okresów wyliczony bilans rozjeżdżał się z bankiem, a rekord nie niósł tego, co bank pokazał. Makieta: Figma `342:5571`.
+> - **Tylko dana z wyciągu.** Bilans budżetu nadal jest WYLICZANY (`InitialBalance` + suma kwot) i nic nie czyta nowego pola — świadoma
+>   decyzja właściciela; pole ma być punktem odniesienia, gdy wyliczenie rozjedzie się z bankiem.
+> - `decimal?`: puste dla transakcji ręcznych i gdy bank salda nie podał albo nie da się go odczytać (brak salda NIE odrzuca wiersza).
+>   Parsery: PKO „Saldo po transakcji", mBank „#Saldo po operacji".
+> - ⚠️ Saldo NIE wchodzi do klucza deduplikacji (`ParsedRow.IdentityKey`) — ten sam wiersz z saldem i bez salda to jedna transakcja.
+>   Scalona pozycja (kilka wierszy o tym samym kluczu) niesie saldo OSTATNIEGO z nich.
+> - Saldo jedzie przez podgląd i wraca z frontu przy zatwierdzeniu (serwer nie trzyma podglądu).
+> - Lista transakcji: kolumna „Saldo po operacji" za kwotą, sortowalna (`sort=balance`, także w CLI); wiersze bez salda zawsze na końcu.
+> - Istniejące transakcje zostają bez salda (na dzień zmiany w bazie ich nie było); dedup pomija duplikaty, więc ponowny import ich nie uzupełni.
+
 ---
 
 ## 6. Przepływ importu + mapowanie

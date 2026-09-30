@@ -96,7 +96,7 @@ public static class TransactionsModule
         registry.Register("transaction", "list", "Lista transakcji z filtrami, sortowaniem i stronicowaniem.",
             "transaction list [--budget-id <guid,...>] [--from <data>] [--to <data>] [--category-id <guid>] "
             + "[--uncategorized] [--direction All|Expense|Income] [--status Imported,...] [--amount-from <kwota>] "
-            + "[--amount-to <kwota>] [--search <fraza>] [--standing-order-id <guid>] [--sort date|amount] "
+            + "[--amount-to <kwota>] [--search <fraza>] [--standing-order-id <guid>] [--sort date|amount|balance] "
             + "[--desc] [--page <n>] [--page-size <n>]",
             [
                 CliFlag.Optional("budget-id", "Lista BusinessId budżetów po przecinku; puste = budżet domyślny."),
@@ -110,7 +110,7 @@ public static class TransactionsModule
                 CliFlag.Optional("amount-to", "Górna granica kwoty bezwzględnej."),
                 CliFlag.Optional("search", "Fraza w opisie."),
                 CliFlag.Optional("standing-order-id", "Tylko transakcje przypięte do tego zlecenia stałego."),
-                CliFlag.Optional("sort", "„date” (domyślnie) albo „amount”."),
+                CliFlag.Optional("sort", "„date” (domyślnie), „amount” albo „balance” (saldo po operacji, wiersze bez salda na końcu)."),
                 CliFlag.Optional("desc", "Malejąco (domyślnie true)."),
                 CliFlag.Optional("page", "Numer strony, domyślnie 1."),
                 CliFlag.Optional("page-size", "Wierszy na stronę, domyślnie 10, maks. 200."),

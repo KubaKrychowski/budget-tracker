@@ -19,4 +19,6 @@ export interface TransactionListItem {
    * gdy to pole nie jest `null`.
    */
   savingsTransferBudgetId: string | null;
+  /** Saldo rachunku po operacji z wyciągu banku; `null`, gdy transakcja ręczna albo bank salda nie podał. */
+  balanceAfter: number | null;
 }

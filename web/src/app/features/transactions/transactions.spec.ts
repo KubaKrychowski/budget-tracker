@@ -106,6 +106,7 @@ describe('Transactions', () => {
     episodicOrderName: null,
     confidence: null,
     savingsTransferBudgetId: null,
+    balanceAfter: null,
     ...over,
   });
 
@@ -344,6 +345,24 @@ describe('Transactions', () => {
     expect(selection.filter).not.toBeNull();
     request.flush({ affected: 50 });
     await settle();
+  });
+
+  it('kolumna „Saldo po operacji” pokazuje saldo z wyciągu, a przy braku salda kreskę', async () => {
+    // Świeża odpowiedź wymaga zmiany parametrów — `httpResource` nie pyta serwera drugi raz o to samo.
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', search: 'saldo' },
+    });
+    await settle(response({ items: [row({ id: 'a', balanceAfter: 1234.5 }), row({ id: 'b', balanceAfter: null })], total: 2 }));
+
+    const rows = Array.from(fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>)
+      .map((tr) => Array.from(tr.querySelectorAll('td')).map((td) => (td.textContent ?? '').replace(/s+/g, ' ').trim()));
+    const dataRows = rows.filter((cells) => cells.some((c) => c.endsWith('PLN') || c === '—'));
+
+    // Kolumna salda stoi tuż za kwotą i przed „Akcjami” (przedostatnia komórka wiersza).
+    const balances = dataRows.map((cells) => cells[cells.length - 2]);
+    expect(balances.length, JSON.stringify(rows)).toBe(2);
+    expect(balances[0]).toMatch(/^1\D?234,50 PLN$/);
+    expect(balances[1]).toBe('—');
   });
 
   it('nie usuwa niczego, gdy użytkownik odrzuci potwierdzenie', async () => {

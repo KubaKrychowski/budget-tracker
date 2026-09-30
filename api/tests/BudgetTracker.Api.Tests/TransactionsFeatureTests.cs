@@ -107,6 +107,39 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
         budgetIds.Length == 0 ? null : budgetIds,
         null, null, null, false, TransactionDirection.All, null, null, null, null);
 
+    [Theory]
+    [InlineData(false, new[] { 100.00, 250.50, 900.00 })]
+    [InlineData(true, new[] { 900.00, 250.50, 100.00 })]
+    public async Task Sortowanie_po_saldzie_stawia_wiersze_bez_salda_zawsze_na_koncu(bool desc, double[] expected)
+    {
+        // Regresja: domyślnie Postgres wstawia NULL-e na początek przy malejącym, więc pierwsza strona nic by nie mówiła.
+        foreach (var balance in new[] { 900.00m, 100.00m, 250.50m })
+        {
+            _db.Transactions.Add(new Transaction(
+                new DateOnly(2026, 8, 20), -1m, "Z SALDEM", _clock.GetUtcNow(), TransactionStatus.Confirmed,
+                budgetBusinessId: _budgetId, balanceAfter: balance));
+        }
+        await _db.SaveChangesAsync();
+
+        var r = await ListHandler().HandleAsync(EmptyFilter(_budgetId), 1, 50, "balance", desc, default);
+
+        Assert.Equal(expected.Select(v => (decimal?)(decimal)v), r.Items.Take(3).Select(i => i.BalanceAfter));
+        Assert.All(r.Items.Skip(3), i => Assert.Null(i.BalanceAfter));
+    }
+
+    [Fact]
+    public async Task Lista_zwraca_saldo_po_operacji_z_wyciagu()
+    {
+        _db.Transactions.Add(new Transaction(
+            new DateOnly(2026, 8, 21), -5m, "KAWA", _clock.GetUtcNow(), TransactionStatus.Confirmed,
+            budgetBusinessId: _budgetId, balanceAfter: 1234.56m));
+        await _db.SaveChangesAsync();
+
+        var r = await ListHandler().HandleAsync(EmptyFilter(_budgetId) with { Search = "KAWA" }, 1, 20, null, true, default);
+
+        Assert.Equal(1234.56m, Assert.Single(r.Items).BalanceAfter);
+    }
+
     [Fact]
     public async Task Filters_by_category()
     {

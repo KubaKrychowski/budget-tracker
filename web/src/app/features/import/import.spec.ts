@@ -23,6 +23,7 @@ describe('Import', () => {
 
   const api = () => component as unknown as {
     step: { set(v: number): void };
+    commit(): Promise<void>;
     rows: { set(v: EditableRow[]): void; (): EditableRow[] };
     summary: { set(v: ImportSummary): void };
     menuRow: { set(v: EditableRow): void };
@@ -52,7 +53,7 @@ describe('Import', () => {
     index: 0, date: '2026-08-31', amount: -123.45, description: 'SKLEP',
     transactionType: 'Obciążenie', externalReference: 'R1',
     categoryId: 'c1000000-0000-4000-8000-000000000001', categoryName: 'Jedzenie', confidence: 0.9,
-    duplicate: false, needsReview: false, edited: false, ...over,
+    duplicate: false, needsReview: false, edited: false, balanceAfter: null, ...over,
   });
 
   beforeEach(async () => {
@@ -111,6 +112,17 @@ describe('Import', () => {
   });
 
   // ── Krok 4: podsumowanie ───────────────────────────────────────────────────────────
+
+  it('zatwierdzenie odsyła saldo po operacji z podglądu, a wiersz bez salda z nullem', async () => {
+    // Serwer nie trzyma podglądu — saldo z pliku dociera do bazy tylko dlatego, że front odsyła je z wierszem.
+    api().rows.set([row({ index: 0, balanceAfter: 8473.22 }), row({ index: 1, description: 'KAWA', balanceAfter: null })]);
+
+    const done = api().commit();
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/import');
+    expect(request.request.body.rows.map((r: { balanceAfter: number | null }) => r.balanceAfter)).toEqual([8473.22, null]);
+    request.flush({});
+    await done;
+  });
 
   it('pokazuje pełny zakres dat, a nie samą pierwszą datę', async () => {
     // Regresja: `nz-statistic` z `nzValue` traktuje wartość jak liczbę i formatuje ją

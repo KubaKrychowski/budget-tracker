@@ -20,4 +20,9 @@ export interface PreviewRow {
   readonly needsReview: boolean;
   /** Już jest w bazie — nie zostanie zapisany po raz drugi. */
   readonly duplicate: boolean;
+  /**
+   * Saldo rachunku po operacji, jak podał je bank; `null`, gdy pliku brak tej kolumny. Front tylko je przenosi:
+   * serwer nie trzyma podglądu, więc zapis dostaje je z odesłanego wiersza.
+   */
+  readonly balanceAfter: number | null;
 }

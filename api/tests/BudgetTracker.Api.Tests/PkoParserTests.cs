@@ -34,6 +34,15 @@ public class PkoParserTests
     }
 
     [Fact]
+    public async Task Reads_balance_after_transaction_and_leaves_it_empty_when_the_bank_gave_none()
+    {
+        var rows = await Parse();
+
+        Assert.Equal(1123.45m, rows.Single(r => r.Amount == -2100.00m).BalanceAfter);
+        Assert.Equal(3604.56m, rows.Single(r => r.Amount == -10.49m).BalanceAfter);
+    }
+
+    [Fact]
     public async Task Reads_cp1250_so_polish_characters_survive()
     {
         var rows = await Parse();

@@ -21,6 +21,10 @@ namespace BudgetTracker.Api.Features.Import.Contracts;
 /// Czy wiersz wymaga decyzji człowieka. Liczy to SERWER, bo to on zna próg — front, który
 /// porównywałby pewność u siebie, rozjechałby się z zapisem przy pierwszej zmianie progu.
 /// </param>
+/// <param name="BalanceAfter">
+/// Saldo po operacji z wyciągu (null, gdy bank go nie podał). Front odsyła je bez zmian przy zatwierdzeniu — serwer nie
+/// przechowuje podglądu, więc jedyną drogą do zapisu jest odesłanie wiersza.
+/// </param>
 public sealed record PreviewRowResponseDto(
     int Index,
     DateOnly Date,
@@ -32,4 +36,5 @@ public sealed record PreviewRowResponseDto(
     string? CategoryName,
     decimal? Confidence,
     bool NeedsReview,
-    bool Duplicate);
+    bool Duplicate,
+    decimal? BalanceAfter = null);

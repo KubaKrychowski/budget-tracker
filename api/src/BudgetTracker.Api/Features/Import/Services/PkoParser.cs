@@ -44,6 +44,9 @@ public sealed class PkoParser : IStatementParser
     /// <summary>Od tej kolumny zaczynają się pola etykietowane.</summary>
     private const int FirstLabelledColumn = 6;
 
+    /// <summary>Kolumna „Saldo po transakcji".</summary>
+    private const int BalanceColumn = 5;
+
     /// <summary>
     /// Rejestruje strony kodowe: .NET zna domyślnie tylko Unicode, więc bez tego CP1250 rzuca wyjątkiem,
     /// a wyciąg PKO jest właśnie w CP1250.
@@ -153,7 +156,11 @@ public sealed class PkoParser : IStatementParser
             description = type;
         }
 
-        return new ParsedRow(date, amount, description, type, reference);
+        // Brak albo nieczytelne saldo nie odrzuca wiersza — to dodatek do transakcji, nie jej tożsamość.
+        decimal? balanceAfter = decimal.TryParse(cells[BalanceColumn].Trim(), NumberStyles.Number,
+            CultureInfo.InvariantCulture, out var balance) ? balance : null;
+
+        return new ParsedRow(date, amount, description, type, reference, balanceAfter);
     }
 
     /// <summary>
