@@ -1,4 +1,8 @@
-<header class="app-header">
+@if (splash.visible()) {
+  <app-auth-splash [status]="splash.status()" />
+}
+
+<header class="app-header" [attr.inert]="splash.visible() ? '' : null">
   <!-- Logo prowadzi na stronę główną. Jako <a routerLink>, nie <div (click)>: link jest
        natywnie fokusowalny i reaguje na Enter, więc nie trzeba dokładać tabindex, role
        ani obsługi klawiatury, żeby dało się tu wejść bez myszy. -->
@@ -60,7 +64,7 @@
   </div>
 </header>
 
-<main class="app-main">
+<main class="app-main" [attr.inert]="splash.visible() ? '' : null">
   <router-outlet />
 </main>
 

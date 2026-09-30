@@ -489,6 +489,19 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 >   ⚠️ Odwraca to decyzję z #11: rozliczona rezerwacja PRZESTAJE pomniejszać wolne środki.
 > - Istniejące rezerwacje dostały pustą listę wpłat — dawnego „uzbieranego” nie da się odtworzyć jako wpłat.
 
+> **REWIZJA — 2026-09-30: okładka logowania** (makieta Figma — strona „Dashboard”, „Splash — sprawdzanie logowania”
+> i „Splash — wczytywanie danych”; `core/auth-splash`, `public/boot-splash.js`):
+> - Podczas logowania było widać powłokę z samą górną belką, przekierowanie, znów powłokę i ładowanie. Teraz pełnoekranowa
+>   okładka z logo przykrywa powłokę (ta jest `inert`) aż do gotowości aplikacji.
+> - ⚠️ **Tylko przy autentykacji** (decyzja użytkownika): startuje widoczna po powrocie z Identity (`/auth-callback`),
+>   zapala się przy braku sesji i wylogowaniu. Odświeżenie strony z ważną sesją jej nie pokazuje.
+> - „Gotowa” = jest sesja, pierwsza nawigacja się skończyła i żadne żądanie HTTP nie leci przez 250 ms
+>   (`PendingRequests`, interceptor liczy wszystkie żądania). Ekran zaczyna żądania po własnym pierwszym renderze, więc sam
+>   koniec nawigacji byłby za wcześnie. Bezpiecznik 10 s odkrywa aplikację mimo trwających żądań, ale nigdy bez sesji.
+> - Na czas ładowania paczki stoi statyczna kopia w `index.html` (`#boot-splash`), zapalana przez `boot-splash.js` tylko
+>   przy logowaniu. Osobny plik, nie skrypt inline — CSP nie zezwala na inline. Teksty statusu tylko w `pl.json`/`en.json`;
+>   statyczna kopia ma puste miejsca na wersję i status o tej samej wysokości, żeby przejście do wersji Angulara nie skakało.
+
 > **REWIZJA — 2026-09-30: wpłata na cel ze zwykłego konta** (makiety Figma — strona „Cele oszczędzania”, `343:2049`,
 > `343:2069`, `343:2143`; strona „Dashboard”, `343:4724`):
 > - Wpłata ma **źródło** (`ContributionSource`: `Savings` domyślnie, `Regular`) i — dla `Regular` — **kategorię limitu**

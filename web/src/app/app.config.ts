@@ -18,6 +18,7 @@ import { GlobalErrorHandler } from './core/errors/global-error-handler';
 import { languageInterceptor } from './core/api/language.interceptor';
 import { unauthorizedInterceptor } from './core/api/unauthorized.interceptor';
 import { apiBaseUrlInterceptor } from './core/api/api-base-url.interceptor';
+import { pendingRequestsInterceptor } from './core/auth-splash/pending-requests';
 import { runtimeConfig } from './core/runtime-config';
 import { provideMarkdown } from 'ngx-markdown';
 
@@ -37,9 +38,11 @@ export const appConfig: ApplicationConfig = {
     // Interceptor jezyka: front startuje na sztywno z `pl`, a backend bez nagłówka slucha
     // przegladarki — bez tego polski ekran potrafil pokazac angielski komunikat z API.
     // authInterceptor dokleja token do zapytań pod `secureRoutes` (patrz provideAuth niżej).
+    // `pendingRequestsInterceptor` liczy żądania w locie dla okładki logowania (core/auth-splash) — pierwszy, żeby ponowione
+    // po odświeżeniu tokenu żądanie liczyło się jako jedno.
     // ⚠️ `unauthorizedInterceptor` MUSI stać PRZED `authInterceptor()` — ponowione po odświeżeniu żądanie ma przejść przez
     // niego jeszcze raz i dostać świeży token (patrz komentarz w samym interceptorze).
-    provideHttpClient(withFetch(), withInterceptors([unauthorizedInterceptor, authInterceptor(), languageInterceptor, apiBaseUrlInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([pendingRequestsInterceptor, unauthorizedInterceptor, authInterceptor(), languageInterceptor, apiBaseUrlInterceptor])),
 
     // Logowanie przez BudgetTracker.Identity (OpenIddict) — kod autoryzacyjny + PKCE,
     // bez własnego ekranu logowania: front tylko przekierowuje i odbiera token.

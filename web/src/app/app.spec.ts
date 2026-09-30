@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -26,7 +27,11 @@ describe('App', () => {
         provideTranslateService(),
         // Zaślepka zamiast pełnego provideAuth() — test sprawdza strukturę shella,
         // nie prawdziwe logowanie, więc nie ma po co ciągnąć całej konfiguracji OIDC.
-        { provide: OidcSecurityService, useValue: { logoff: () => of(undefined), userData$ } },
+        // `authenticated` zasila okładkę logowania (AuthSplash) — tu sesja jest, więc okładki nie ma.
+        {
+          provide: OidcSecurityService,
+          useValue: { logoff: () => of(undefined), userData$, authenticated: signal({ isAuthenticated: true }) },
+        },
       ],
     }).compileComponents();
   });

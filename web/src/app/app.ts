@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, afterNextRender, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { AuthSplash } from './core/auth-splash/auth-splash';
+import { AuthSplashScreen } from './core/auth-splash/auth-splash-screen';
 import { handbookTopicKeyForRoute } from './core/handbook-topics';
 import { RecentScreens } from './core/search/recent-screens';
 import { SearchMenu } from './core/search-menu/search-menu';
@@ -15,7 +17,7 @@ import { TerminalService } from './core/terminal/terminal.service';
 @Component({
   imports: [
     RouterLink, RouterOutlet, FormsModule,
-    NzIconModule, TranslatePipe, SearchMenu, Terminal,
+    NzIconModule, TranslatePipe, SearchMenu, Terminal, AuthSplashScreen,
   ],
   selector: 'app-root',
   styleUrl: './app.scss',
@@ -26,6 +28,12 @@ export class App {
   private readonly oidcSecurityService = inject(OidcSecurityService);
   private readonly recentScreens = inject(RecentScreens);
   protected readonly terminal = inject(TerminalService);
+
+  /** Okładka na czas logowania — patrz `AuthSplash`. Powłoka pod nią jest `inert`, więc fokus nie ucieka za okładkę. */
+  protected readonly splash = inject(AuthSplash);
+
+  /** Statyczna okładka z `index.html` służyła tylko do momentu, aż Angular narysuje własną (albo uzna ją za zbędną). */
+  private readonly removeBootSplash = afterNextRender(() => document.getElementById('boot-splash')?.remove());
 
   /**
    * Wylogowanie po stronie klienta — kończy sesję też na serwerze tożsamości (RP-initiated logout).

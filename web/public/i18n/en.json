@@ -6,7 +6,11 @@
     "dashboard": "Dashboard"
   },
   "auth": {
-    "logout": "Log out"
+    "logout": "Log out",
+    "splash": {
+      "signingIn": "Signing in…",
+      "loading": "Loading your data…"
+    }
   },
   "actions": {
     "addTransaction": "Add transaction",

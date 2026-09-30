@@ -8,8 +8,42 @@
   <!-- Adres callbacku niesie kod autoryzacyjny — nie wysyłamy go w Referer poza własny origin. -->
   <meta name="referrer" content="same-origin">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Okładka logowania na czas ładowania paczki. Ten sam układ co `core/auth-splash` (makieta Figma „Splash”) —
+       Angular przejmuje ją bez skoku i usuwa #boot-splash. Zapala ją boot-splash.js, tylko przy logowaniu. -->
+  <script src="boot-splash.js"></script>
+  <style>
+    #boot-splash {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      background: #f7faf8;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    html.boot-splash-on #boot-splash { display: flex; }
+    #boot-splash .names { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    #boot-splash .title { font-size: 24px; line-height: 32px; font-weight: 500; color: rgb(0 0 0 / 85%); }
+    #boot-splash .version, #boot-splash .message { min-height: 20px; font-size: 14px; line-height: 20px; color: rgb(0 0 0 / 45%); }
+    #boot-splash .spinner {
+      width: 32px; height: 32px; box-sizing: border-box; border-radius: 50%;
+      border: 3px solid rgb(65 159 95 / 20%); border-top-color: #419f5f;
+      animation: boot-splash-spin 0.9s linear infinite;
+    }
+    @keyframes boot-splash-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { #boot-splash .spinner { animation-duration: 3s; } }
+  </style>
 </head>
 <body>
+  <div id="boot-splash" aria-hidden="true">
+    <img src="icons/logo.svg" width="96" height="96" alt="">
+    <div class="names"><span class="title">Wydatki.com</span><span class="version"></span></div>
+    <span class="spinner"></span>
+    <span class="message"></span>
+  </div>
   <app-root></app-root>
 </body>
 </html>

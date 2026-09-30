@@ -1,0 +1,54 @@
+/* Makieta Figma: tło jak na ekranie logowania, logo 96, nazwa 24, wersja 14, spinner 32, status 14. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #f7faf8;
+
+  &__names {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  &__title {
+    font-size: 24px;
+    font-weight: 500;
+    color: rgb(0 0 0 / 85%);
+  }
+
+  &__version,
+  &__message {
+    font-size: 14px;
+    color: rgb(0 0 0 / 45%);
+  }
+
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    box-sizing: border-box;
+    border: 3px solid rgb(65 159 95 / 20%);
+    border-top-color: #419f5f;
+    border-radius: 50%;
+    animation: splash-spin 0.9s linear infinite;
+  }
+
+  /* Wolniejszy obrót zamiast wyłączenia: bez ruchu nie widać, że aplikacja pracuje. */
+  @media (prefers-reduced-motion: reduce) {
+    &__spinner {
+      animation-duration: 3s;
+    }
+  }
+}
+
+@keyframes splash-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
