@@ -68,21 +68,69 @@
     <li>Pojedynczy budżet usunięty z aplikacji można przywrócić przez 30 dni, potem jest kasowany.</li>
   </ul>
 
-  <h2>5. Komu przekazuję dane</h2>
+  <h2>5. Gdzie przechowuję dane i kto je przetwarza</h2>
+  <p>
+    Do działania serwisu korzystam z dwóch zewnętrznych dostawców. Działają jako podmioty przetwarzające na moje zlecenie
+    i mogą przetwarzać dane wyłącznie po to, żeby serwis działał.
+  </p>
   <ul>
-    <li>Nie sprzedaję danych, nie profiluję Cię i nie używam ich do reklam.</li>
-    <li>Aplikacja działa w usługach Microsoft Azure (hosting aplikacji, strony projektu oraz wysyłka wiadomości e-mail związanych z kontem, np. potwierdzenia adresu). Microsoft działa jako podmiot przetwarzający na moje zlecenie.</li>
+    <li>
+      <strong>Microsoft Azure</strong> (Microsoft Corporation) — hosting aplikacji, serwera logowania i strony projektu,
+      wysyłka wiadomości e-mail związanych z kontem (np. potwierdzenie adresu) oraz prywatny magazyn plików, w którym leży
+      Twój model kategoryzacji (opis w pkt 7). Aplikacja i serwer logowania działają w regionie Polska Środkowa, strona projektu w regionie Europa Zachodnia.
+    </li>
+    <li>
+      <strong>Neon</strong> (Neon, Inc.) — baza danych PostgreSQL, w której leżą dane kont oraz Twoje budżety, transakcje,
+      limity, cele oszczędzania, zlecenia i reguły.
+    </li>
+  </ul>
+  <p>
+    Jeśli dostawca przetwarza dane poza Europejskim Obszarem Gospodarczym, dzieje się to na podstawie zabezpieczeń przewidzianych
+    w RODO (art. 44–46). Więcej o swoich prawach — w pkt 9.
+  </p>
+
+  <h2>6. Czy dane trafiają do osób trzecich</h2>
+  <ul>
+    <li>Nie sprzedaję, nie wynajmuję i nie udostępniam Twoich danych nikomu, w szczególności firmom reklamowym ani marketingowym.</li>
+    <li>Nie profiluję Cię i nie używam danych do reklam. Strona projektu i aplikacja nie mają narzędzi analitycznych ani reklamowych.</li>
+    <li>
+      Nie wysyłam opisów Twoich transakcji ani żadnych innych danych finansowych do zewnętrznych usług — także do zewnętrznych
+      usług sztucznej inteligencji. Kategoryzacja działa na serwerze aplikacji.
+    </li>
+    <li>Twoje dane nie są widoczne dla innych użytkowników: w bazie każde konto widzi tylko własne dane, a nie kod aplikacji.</li>
+    <li>Dostęp do baz i serwerów mam wyłącznie ja, w zakresie potrzebnym do utrzymania serwisu i rozwiązania zgłoszonych problemów.</li>
     <li>Dane mogą zostać ujawnione wyłącznie organom, gdy wymaga tego prawo.</li>
   </ul>
 
-  <h2>6. Pliki cookies i pamięć przeglądarki</h2>
+  <h2>7. Co dzieje się z importowanymi plikami z banku</h2>
+  <ul>
+    <li>
+      Plik wyciągu (CSV z banku) wczytuję na serwerze tylko na czas jego przetworzenia. <strong>Oryginalnego pliku nie zapisuję</strong>
+      ani w bazie, ani w magazynie plików — po zakończeniu przetwarzania nie zostaje po nim nic.
+    </li>
+    <li>
+      Widzisz podgląd wierszy i sam/a decydujesz, które zapisać. Zapisuję wyłącznie zatwierdzone wiersze (data, kwota, opis,
+      kategoria) oraz informację o imporcie: nazwę pliku, bank i liczbę wierszy.
+    </li>
+    <li>
+      Zapisane transakcje widzisz tylko Ty. Możesz je usunąć w każdej chwili — pojedynczo, przez reset budżetu albo razem
+      z kontem (<a href="/usun-konto">Usuwanie konta</a>).
+    </li>
+    <li>
+      Model kategoryzacji uczy się na Twoich poprawkach kategorii. Trenuje się go na serwerze aplikacji, a gotowy model i zbiór uczący
+      leżą w prywatnym kontenerze przypisanym wyłącznie do Twojego konta w magazynie Azure. Kasują się razem z kontem.
+    </li>
+    <li>Opisy transakcji mogą zawierać dane wrażliwe — jeśli nie chcesz ich zapisywać, nie importuj tych wierszy.</li>
+  </ul>
+
+  <h2>8. Pliki cookies i pamięć przeglądarki</h2>
   <ul>
     <li>Strona projektu nie używa plików cookies ani narzędzi analitycznych ani reklamowych.</li>
     <li>Logowanie i aplikacja używają wyłącznie niezbędnych ciasteczek: utrzymania sesji i zabezpieczeń formularzy. Nie wymagają zgody.</li>
     <li>Aplikacja zapamiętuje w przeglądarce ustawienia wygody (np. wybrany budżet, historię wyszukiwań). Przy wylogowaniu te dane są czyszczone.</li>
   </ul>
 
-  <h2>7. Twoje prawa</h2>
+  <h2>9. Twoje prawa</h2>
   <p>Masz prawo do:</p>
   <ul>
     <li>dostępu do swoich danych i otrzymania ich kopii,</li>
@@ -96,14 +144,14 @@
   </ul>
   <p>Aby skorzystać z praw, napisz na <a href="mailto:kkrychowski@interia.pl">kkrychowski@interia.pl</a>. Odpowiem bez zbędnej zwłoki, najpóźniej w ciągu miesiąca.</p>
 
-  <h2>8. Bezpieczeństwo</h2>
+  <h2>10. Bezpieczeństwo</h2>
   <p>
     Połączenia są szyfrowane (HTTPS), hasła przechowuję jako skróty, a dane użytkowników są w bazie izolowane od siebie
     na poziomie samej bazy. Żaden system nie jest w pełni bezpieczny — w razie incydentu naruszającego Twoje prawa
     powiadomię Cię zgodnie z przepisami.
   </p>
 
-  <h2>9. Zmiany polityki</h2>
+  <h2>11. Zmiany polityki</h2>
   <p>
     Gdy zmienię treść polityki, podbijam jej wersję i datę u góry strony. O istotnych zmianach dotyczących kont w aplikacji
     poinformuję e-mailem z wyprzedzeniem.
