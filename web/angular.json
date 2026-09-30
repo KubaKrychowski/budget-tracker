@@ -132,6 +132,7 @@
             ],
             "styles": [
               "node_modules/@fontsource/ibm-plex-sans/400.css",
+              "node_modules/@fontsource/ibm-plex-sans/500.css",
               "node_modules/@fontsource/ibm-plex-sans/600.css",
               "projects/landing/src/theme.less",
               "projects/landing/src/styles.scss"

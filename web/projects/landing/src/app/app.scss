@@ -1,23 +1,93 @@
 /* =============================================================================
-   Układ landingu.
+   Układ landingu (makieta Figma: „Landing — strona główna v3, od produktu”).
 
-   Zero hexów — wszystkie kolory przez `--ds-*` (patrz `styles.scss`).
-   Strona jest jednym dokumentem liniowym, więc style też są jednym plikiem;
-   podział na siedem arkuszy po jednym użyciu byłby rusztowaniem na zapas.
+   Zero hexów poza białym — wszystkie kolory przez `--ds-*` (patrz `styles.scss` i most w
+   `src/styles/design-tokens.less`). Strona jest jednym dokumentem liniowym, więc style też są
+   jednym plikiem.
 
-   Budżet `anyComponentStyle` jest dla tego projektu podniesiony (12/16 kB zamiast
-   4/8 kB). Domyślna wartość pilnuje, żeby POJEDYNCZY komponent w dużej aplikacji nie
-   puchł — a tu jeden komponent JEST całą stroną, więc ten sam limit mierzyłby coś
-   innego, niż miał mierzyć. Alternatywą było przeniesienie układu do `styles.scss`,
-   czyli oderwanie stylów od szablonu, który opisują.
+   Czcionka: IBM Plex Sans w wagach 400 / 500 / 600 (ładowana w angular.json). Przyciski i pola
+   formularza dziedziczą ją jawnie (`font: inherit`) — bez tego przeglądarka podstawia własną.
    ============================================================================= */
 
-/* Wspólna szerokość treści. 1120px, bo przy szerszej kolumnie wiersz tekstu
-   robi się za długi do czytania, a ta strona jest głównie tekstem. */
 .wrap {
   max-width: 1120px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: var(--ds-heading-2);
+}
+
+h2 {
+  font-size: var(--ds-heading-3);
+  margin-bottom: 12px;
+}
+
+h3 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--ds-primary-700);
+}
+
+/* ── Przyciski ────────────────────────────────────────────────────────────────
+   Jeden wygląd dla wszystkich przycisków strony. Biały tekst na Primary-700 (kontrast > 5:1,
+   przechodzi WCAG AA; Primary-500 dawał 2,25:1), zaokrąglenie 8px, wysokość dopasowana do pola
+   formularza, żeby stały obok siebie na jednej linii. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 24px;
+  font: inherit;
+  font-size: var(--ds-body-2);
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--ds-primary-700);
+  border: 0;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background: var(--ds-primary-800);
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
+  &--small {
+    height: 40px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+}
+
+.link {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ── Nagłówek ─────────────────────────────────────────────────────────────── */
@@ -35,13 +105,15 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    min-height: 60px;
+    min-height: 68px;
   }
 
   &__brand {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    color: var(--ds-text-primary);
+    text-decoration: none;
   }
 
   &__logo {
@@ -55,47 +127,24 @@
     font-size: var(--ds-subtitle-2);
   }
 
-  &__link {
-    display: inline-flex;
+  &__nav {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    /* Primary-700, nie Primary-500: ten drugi daje na bieli 2,25:1 i nie
-       przechodzi AA. Patrz nota o kontraście w `styles.scss`. */
-    color: var(--ds-primary-700);
-    font-weight: 600;
+    gap: 28px;
+  }
+
+  &__link {
+    font-size: 15px;
+    color: var(--ds-neutral-600);
     text-decoration: none;
 
     &:hover {
-      text-decoration: underline;
+      color: var(--ds-text-primary);
     }
   }
 }
 
-/* ── Typografia sekcji ────────────────────────────────────────────────────── */
-
-h1 {
-  margin: 0 0 20px;
-  font-size: var(--ds-heading-2);
-  font-weight: 600;
-  line-height: 1.15;
-}
-
-h2 {
-  margin: 0 0 12px;
-  font-size: var(--ds-heading-3);
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-h3 {
-  margin: 0 0 8px;
-  font-size: var(--ds-subtitle-2);
-  font-weight: 600;
-}
-
-p {
-  margin: 0 0 16px;
-}
+/* ── Wspólne elementy sekcji ──────────────────────────────────────────────── */
 
 .lead {
   font-size: var(--ds-body-1);
@@ -106,390 +155,167 @@ p {
   max-width: 68ch;
   font-size: var(--ds-body-1);
   color: var(--ds-neutral-600);
-  margin-bottom: 32px;
 }
 
 .section {
-  padding: 72px 24px;
+  padding: 88px 24px;
 }
 
-/* Pasma na przemian — jedyny sygnał, gdzie kończy się jeden argument,
-   a zaczyna następny. Strona nie ma nawigacji po sekcjach. */
 .band {
-  padding: 72px 0;
+  padding: 88px 0;
   background: var(--ds-neutral-50);
-  border-top: 1px solid var(--ds-neutral-100);
-  border-bottom: 1px solid var(--ds-neutral-100);
 
-  &--accent {
-    background: var(--ds-primary-50);
-    border-color: var(--ds-primary-100);
+  &--dark {
+    color: #fff;
+    background: var(--ds-primary-800);
+
+    /* Nagłówki dziedziczą ciemny kolor tekstu — na ciemnej zieleni znikałyby. */
+    h2,
+    h3 {
+      color: #fff;
+    }
+
+    .section-lead,
+    .row p {
+      color: rgb(255 255 255 / 82%);
+    }
+
+    a:focus-visible {
+      outline-color: #fff;
+    }
+  }
+}
+
+.accent {
+  color: var(--ds-warn-300);
+}
+
+/* Tytuł po lewej, treść po prawej — zamiast wyśrodkowanych nagłówków nad rzędem kart. */
+.split {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 80px;
+  align-items: start;
+}
+
+.rows {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 32px;
+  padding: 24px 0;
+  border-top: 1px solid var(--ds-neutral-300);
+
+  &:last-child {
+    border-bottom: 1px solid var(--ds-neutral-300);
+  }
+
+  &--plain {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  &__label {
+    padding-top: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ds-primary-700);
+    text-transform: uppercase;
+  }
+
+  p {
+    color: var(--ds-neutral-600);
+  }
+}
+
+.band--dark .row {
+  border-color: rgb(255 255 255 / 20%);
+}
+
+.docs-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 24px;
+  font-weight: 600;
+
+  a {
+    color: var(--ds-warn-300);
   }
 }
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 
 .hero {
-  padding: 64px 0 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 56px;
+  align-items: center;
+  padding-top: 56px;
+  padding-bottom: 88px;
 
-  &__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    align-items: center;
-    gap: 48px;
-  }
-
-  &__meta {
-    font-size: var(--ds-body-2);
-    color: var(--ds-neutral-600);
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
   }
 
   &__cta {
-    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    align-items: center;
   }
 
-  &__shot {
-    margin: 0;
+  &__meta {
+    font-size: 14px;
+    color: var(--ds-neutral-600);
   }
 }
 
-/* ── Zrzuty ekranu ────────────────────────────────────────────────────────── */
-
 .shot {
-  margin: 32px 0 0;
+  margin: 0;
 
   img {
     display: block;
     width: 100%;
+    background: #fff;
     border: 1px solid var(--ds-neutral-200);
-    border-radius: 4px;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgb(37 43 39 / 12%);
   }
 
   figcaption {
-    margin-top: 10px;
+    margin-top: 12px;
     font-size: 14px;
     color: var(--ds-neutral-600);
   }
 }
 
-/* ── Trzy zarzuty ─────────────────────────────────────────────────────────── */
-
-.charges {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: none;
+.section .shot {
+  margin-top: 40px;
+  max-width: 880px;
 }
 
-.charge {
-  padding: 24px;
-  background: #fff;
-  border: 1px solid var(--ds-neutral-200);
-  border-radius: 4px;
+/* ── Prośba o dostęp do bety ──────────────────────────────────────────────── */
 
-  &__label {
-    margin: 0 0 8px;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ds-neutral-600);
-  }
-
-  /* Odpowiedź jest wizualnie oddzielona od zarzutu, bo to dwie różne rzeczy:
-     nad kreską stan poprzedni, pod kreską to, co robi produkt. */
-  &__answer {
-    display: flex;
-    gap: 10px;
-    margin: 16px 0 0;
-    padding-top: 16px;
-    border-top: 1px solid var(--ds-neutral-100);
-
-    nz-icon {
-      flex: none;
-      margin-top: 4px;
-      color: var(--ds-primary-700);
-    }
-  }
-}
-
-/* ── Kroki ────────────────────────────────────────────────────────────────── */
-
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 32px;
-  margin: 0 0 40px;
-  padding: 0;
-  list-style: none;
-}
-
-.step {
-  display: flex;
-  gap: 16px;
-
-  &__no {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--ds-primary-700);
-    color: #fff;
-    font-weight: 600;
-  }
-}
-
-/* ── Wyróżnik ─────────────────────────────────────────────────────────────── */
-
-.quote {
-  margin: 0 0 24px;
-  padding: 24px 28px;
-  background: #fff;
-  border-left: 4px solid var(--ds-primary-600);
-  border-radius: 0 4px 4px 0;
-
-  p {
-    margin: 0;
-    font-size: var(--ds-subtitle-1);
-    font-weight: 600;
-    line-height: 1.35;
-  }
-}
-
-/* ── Czego to nie robi ────────────────────────────────────────────────────── */
-
-.limits {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 40px;
-  margin: 0 0 40px;
-  padding: 0;
-  list-style: none;
-
-  li {
-    display: flex;
-    gap: 14px;
-  }
-
-  &__mark {
-    flex: none;
-    margin-top: 4px;
-    color: var(--ds-neutral-600);
-  }
-}
-
-/* ── Roadmapa ────────────────────────────────────────────────────────────────
-   Oś czasu, a nie lista punktowana: kolejność JEST tu treścią (każdy etap żywi się
-   danymi z poprzedniego), więc kształt ma to pokazywać. Kropka i pionowa linia
-   rysowane pseudoelementami — bez dodatkowego znacznika w szablonie. */
-
-.road {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.road__item {
-  position: relative;
-  padding: 0 0 32px 40px;
-
-  /* Kropka etapu. Domyślnie pusta — wypełniają ją tylko modyfikatory niżej,
-     więc „nie zrobione” jest stanem podstawowym, a nie wyjątkiem. */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 4px;
-    left: 0;
-    width: 15px;
-    height: 15px;
-    border: 2px solid var(--ds-neutral-300);
-    border-radius: 50%;
-    background: #fff;
-  }
-
-  /* Linia do następnego etapu — nie rysuje się pod ostatnim. */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 22px;
-    bottom: 0;
-    left: 7px;
-    width: 1px;
-    background: var(--ds-neutral-200);
-  }
-
-  &:last-child {
-    padding-bottom: 0;
-
-    &::after {
-      display: none;
-    }
-  }
-
-  &--done::before {
-    border-color: var(--ds-primary-700);
-    background: var(--ds-primary-700);
-  }
-
-  &--next::before {
-    border-color: var(--ds-primary-700);
-  }
-}
-
-.road__status {
-  margin: 0 0 4px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ds-neutral-600);
-
-  /* ⚠️ Status przy KAŻDYM punkcie jest tu tym, czym wcześniej była ramka „w planach”:
-     jedynym sygnałem, że dalsze etapy nie istnieją. Nie chować go i nie wygaszać. */
-  .road__item--done & {
-    color: var(--ds-primary-800);
-  }
-}
-
-.road__body p:last-child {
-  margin-bottom: 0;
-  max-width: 72ch;
-  color: var(--ds-neutral-600);
-}
-
-/* ── CTA i stopka ─────────────────────────────────────────────────────────── */
-
-/* Przyciski hero: obok siebie, zawijane na waskim ekranie. */
-.hero__cta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.cta {
-  text-align: center;
-
-  .section-lead {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  /* Dwa przyciski obok siebie, zawijane na waskim ekranie. */
-  &__buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-  }
-}
-
-.foot {
-  padding: 28px 0;
-  background: var(--ds-neutral-900);
-  color: #fff;
-
-  &__inner {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  &__logo {
-    flex: none;
-    width: 40px;
-    height: 40px;
-  }
-
-  p {
-    margin: 0;
-    font-size: 14px;
-  }
-}
-
-/* ── Wąskie ekrany ────────────────────────────────────────────────────────────
-   Kolumny wracają do jednego strumienia. Punkt 900px wynika z siatki trzech
-   kart w „zarzutach” — poniżej niej karty robią się węższe niż wiersz tekstu. */
-
-@media (max-width: 900px) {
-  .hero__inner,
-  .charges,
-  .steps,
-  .limits {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .hero__inner {
-    gap: 32px;
-  }
-
-  h1 {
-    font-size: var(--ds-subtitle-1);
-  }
-
-  h2 {
-    font-size: var(--ds-subtitle-1);
-  }
-
-  .band,
-  .section {
-    padding-top: 48px;
-    padding-bottom: 48px;
-  }
-
-}
-
-/* ── Kontrast przycisku CTA ───────────────────────────────────────────────────
-   ⚠️ ZNALEZIONE PRZY BUDOWIE, dotyczy też aplikacji.
-
-   Przycisk `primary` w NG-ZORRO to biały tekst na @primary-color, czyli na
-   Primary-500. Ten układ daje kontrast **2,25:1** — poniżej progu WCAG AA dla
-   zwykłego tekstu (4,5:1) i poniżej progu dla dużego (3:1). Kryterium akceptacji
-   #12 wymaga AA, więc landing nie może zostawić tego tak, jak jest.
-
-   Rozwiązanie: CTA stoi na Primary-800 (biały tekst = 8,1:1). To NADAL token
-   z design systemu — nie wymyślam koloru, tylko wybieram odcień, który przechodzi.
-
-   ⚠️ To NIE naprawia problemu w aplikacji: tam każdy przycisk `primary` ma ten
-   sam kontrast. Zmiana @primary-color dotknęłaby całego interfejsu, więc jest
-   decyzją do podjęcia osobno, a nie efektem ubocznym landingu.
-   --------------------------------------------------------------------------- */
-
-a[nz-button][nzType='primary'] {
-  background-color: var(--ds-primary-800);
-  border-color: var(--ds-primary-800);
-
-  &:hover,
-  &:focus {
-    background-color: var(--ds-primary-700);
-    border-color: var(--ds-primary-700);
-  }
-}
-
-/* ── Prośba o dostęp do bety (makieta Figma „Landing — beta i dokumenty”) ─────────────── */
 .beta {
-  text-align: center;
-
   &__form {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
     gap: 16px;
-    max-width: 560px;
-    margin: 24px auto 0;
-    text-align: left;
   }
 
   &__row {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
     gap: 12px;
-    width: 100%;
+    align-items: flex-end;
   }
 
   &__field {
@@ -499,14 +325,17 @@ a[nz-button][nzType='primary'] {
     gap: 6px;
 
     input {
-      height: 40px;
-      padding: 0 12px;
+      height: 44px;
+      padding: 0 14px;
       font: inherit;
-      border: 1px solid #c9d3cc;
-      border-radius: 2px;
+      font-size: var(--ds-body-2);
+      color: var(--ds-text-primary);
+      background: #fff;
+      border: 1px solid var(--ds-neutral-300);
+      border-radius: 8px;
 
       &:focus-visible {
-        outline: 2px solid #235e39;
+        outline: 3px solid var(--ds-primary-700);
         outline-offset: 1px;
       }
     }
@@ -518,18 +347,18 @@ a[nz-button][nzType='primary'] {
   }
 
   &__input--error {
-    border-color: #d93f38 !important;
+    border-color: var(--ds-error-600) !important;
   }
 
   &__error {
     font-size: 14px;
-    color: #c0362f;
+    color: var(--ds-error-600);
   }
 
   &__consent {
     display: flex;
-    align-items: flex-start;
     gap: 12px;
+    align-items: flex-start;
     font-size: 14px;
 
     input {
@@ -537,14 +366,13 @@ a[nz-button][nzType='primary'] {
       width: 18px;
       height: 18px;
       margin-top: 2px;
-      accent-color: #235e39;
+      accent-color: var(--ds-primary-700);
     }
   }
 
   &__note {
-    margin: 0;
     font-size: 13px;
-    color: #6b756e;
+    color: var(--ds-neutral-600);
   }
 
   /* Poza ekranem, nie `display: none`: część botów pomija pola, których nie widać. */
@@ -560,25 +388,74 @@ a[nz-button][nzType='primary'] {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-width: 560px;
-    margin: 24px auto 0;
     padding: 16px 20px;
-    text-align: left;
-    background: #eef9f0;
-    border: 1px solid #b8e6c4;
-    border-radius: 2px;
+    background: var(--ds-primary-50);
+    border: 1px solid var(--ds-primary-100);
+    border-radius: 8px;
   }
 }
 
-.foot__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  margin-top: 16px;
-  font-size: 14px;
+/* ── Autor ────────────────────────────────────────────────────────────────── */
 
-  a {
-    color: inherit;
-    text-decoration: underline;
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 60ch;
+
+  > p:first-child {
+    font-size: var(--ds-body-1);
+  }
+
+  &__dev {
+    color: var(--ds-neutral-600);
+  }
+}
+
+/* ── Stopka (bez logo — znak graficzny jest tylko w górnym pasku) ─────────── */
+
+.foot {
+  padding: 32px 0;
+  font-size: 14px;
+  color: var(--ds-neutral-100);
+  background: var(--ds-neutral-900);
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-top: 12px;
+
+    a {
+      color: var(--ds-primary-100);
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  h1,
+  h2 {
+    font-size: var(--ds-subtitle-1);
+  }
+
+  .band,
+  .section {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .bar__link {
+    display: none;
   }
 }

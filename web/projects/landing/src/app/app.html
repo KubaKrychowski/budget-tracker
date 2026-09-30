@@ -1,496 +1,277 @@
 <a class="skip" href="#tresc">Przejdź do treści</a>
 
+<!-- Jedyne miejsce ze znakiem graficznym (logo). Reszta strony to tekst i zrzuty ekranu. -->
 <header class="bar">
   <div class="wrap bar__inner">
-    <span class="bar__brand">
+    <a class="bar__brand" href="/">
       <img class="bar__logo" src="logo.svg" width="32" height="32" alt="" />
       <span class="bar__name">Wydatki.com</span>
-    </span>
-    <a class="bar__link" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
-      <nz-icon nzType="github" />
-      Kod na GitHubie
     </a>
+    <nav class="bar__nav" aria-label="Główna">
+      <a class="bar__link" href="#jak">Jak to działa</a>
+      <a class="bar__link" href="#dane">Twoje dane</a>
+      <a class="bar__link" href="#autor">Kto za tym stoi</a>
+      <a class="bar__link" [href]="appUrl">Zaloguj się</a>
+      <a class="btn btn--small" href="#beta">Poproś o dostęp</a>
+    </nav>
   </div>
 </header>
 
 <main id="tresc">
 
   <!-- ── Hero ──────────────────────────────────────────────────────────────────────────
-       Bez sloganu. Nagłówek ma nazwać PROBLEM, bo to jedyna rzecz na tej stronie, którą
-       czytelnik może rozpoznać jako własną. „Przejmij kontrolę nad finansami” pasuje do
-       dziesięciu innych aplikacji i nie mówi nic. -->
-  <section class="hero">
-    <div class="wrap hero__inner">
-      <div class="hero__text">
-        <h1>Śledzenie wydatków, które nie kończy się na jednorazowej analizie</h1>
-        <p class="lead">
-          Powstało, bo poprzedni sposób — wrzucanie wyciągu w Excelu do AI, kiedy akurat
-          przyjdzie ochota — działał, ale za każdym razem od zera. Tutaj wyciąg wchodzi jako
-          CSV, kategoryzacja dzieje się na miejscu, a historia zostaje.
-        </p>
-        <p class="hero__meta">
-          Projekt jednoosobowy, budowany po godzinach. Ta strona opisuje, co jest w kodzie —
-          i mówi wprost, czego w nim nie ma.
-        </p>
-        <div class="hero__cta">
-          <!-- Przejście do lokalnej instancji — patrz REWIZJA przy `App.appUrl`. -->
-          <a nz-button nzType="primary" nzSize="large" [href]="appUrl">
-            <nz-icon nzType="arrow-right" />
-            Przejdź do aplikacji
-          </a>
-          <a nz-button nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
-            <nz-icon nzType="github" />
-            Zobacz kod na GitHubie
-          </a>
-        </div>
+       Nagłówek nazywa to, co czytelnik chce wiedzieć, prostym językiem. Bez sloganu i bez żargonu:
+       strona ma być zrozumiała dla kogoś, kto nigdy nie widział kodu. Zrzut pokazuje prawdziwy ekran. -->
+  <section class="wrap hero">
+    <div class="hero__text">
+      <h1>Zobacz, na co idą Twoje pieniądze</h1>
+      <p class="lead">
+        Wgraj wyciąg z banku. Aplikacja sama sprawdzi, ile poszło na jedzenie, rachunki i przyjemności —
+        a Ty zobaczysz, czy uda się odłożyć na to, co planujesz.
+      </p>
+      <div class="hero__cta">
+        <a class="btn" href="#beta">Poproś o dostęp do bety</a>
+        <a class="link" href="#jak">Zobacz, jak to działa</a>
       </div>
-
-      <figure class="shot hero__shot">
-        <img
-          src="screens/dashboard.png"
-          width="1400"
-          height="1200"
-          alt="Dashboard aplikacji: kafle z sumą wydatków i przychodów, wykres podziału na kategorie oraz lista ostatnich transakcji."
-        />
-        <figcaption>
-          Dashboard. Wszystkie zrzuty na tej stronie pochodzą z danych demonstracyjnych —
-          nazwy sprzedawców i kwoty są wymyślone.
-        </figcaption>
-      </figure>
+      <p class="hero__meta">Zamknięta beta, na zaproszenie. Darmowa.</p>
     </div>
+
+    <figure class="shot hero__shot">
+      <img
+        src="screens/dashboard.png"
+        width="2800"
+        height="2240"
+        alt="Ekran podsumowania: suma wydatków i przychodów, wykres podziału na kategorie oraz wykres stanu budżetu."
+      />
+      <figcaption>Dane demonstracyjne — nazwy sprzedawców i kwoty są wymyślone.</figcaption>
+    </figure>
   </section>
 
-  <!-- ── Trzy zarzuty ──────────────────────────────────────────────────────────────────
-       Wprost z CLAUDE.md §1: dzisiejszy workaround kosztuje, jest ulotny i wyłącznie
-       retrospektywny. Trzy zarzuty, każdy z odpowiedzią — i to jest cała propozycja
-       wartości, sformułowana zanim powstała ta strona. -->
-  <section class="band">
-    <div class="wrap">
-      <h2>Co było nie tak z poprzednim sposobem</h2>
-      <p class="section-lead">
-        Konkurentem nie jest tu YNAB ani aplikacja banku, tylko własny nawyk: eksport do
-        Excela i doraźny prompt. Ten nawyk ma trzy konkretne wady i produkt odpowiada na każdą.
-      </p>
-
-      <ol class="charges">
-        <li class="charge">
-          <p class="charge__label">Kosztowało</p>
-          <h3>Każda analiza była nowym wydatkiem</h3>
-          <p>Nowy prompt, nowy koszt — i tak przy każdym pytaniu o te same dane.</p>
-          <p class="charge__answer">
-            <nz-icon nzType="arrow-right" />
-            <span>
-              Kategoryzacja działa <strong>wewnątrz aplikacji</strong>: reguły plus model ML.NET
-              uruchamiany w tym samym procesie co API. Nie ma zewnętrznej usługi, którą trzeba
-              odpytać, żeby zobaczyć własne wydatki.
-            </span>
-          </p>
+  <!-- ── Jak to działa ─────────────────────────────────────────────────────────────── -->
+  <section class="band" id="jak" aria-labelledby="jak-title">
+    <div class="wrap split">
+      <div class="split__head">
+        <h2 id="jak-title">Jak to działa</h2>
+        <p class="section-lead">Raz w miesiącu, kilka minut.</p>
+      </div>
+      <ol class="rows">
+        <li class="row">
+          <span class="row__label">Krok 1</span>
+          <div>
+            <h3>Wgrywasz wyciąg z banku</h3>
+            <p>
+              Pobierasz plik CSV z bankowości (mBank albo PKO BP) i wgrywasz go do aplikacji. Najpierw widzisz podgląd —
+              nic się nie zapisze, dopóki nie zatwierdzisz.
+            </p>
+          </div>
         </li>
-
-        <li class="charge">
-          <p class="charge__label">Było ulotne</p>
-          <h3>Między analizami nie zostawało nic</h3>
-          <p>
-            Odpowiedź przeczytana i zamknięta. Następnym razem trzeba było złożyć wszystko
-            od nowa, razem z poprawkami, które raz już się wprowadziło.
-          </p>
-          <p class="charge__answer">
-            <nz-icon nzType="arrow-right" />
-            <span>
-              Historia siedzi w bazie, a <strong>każda ręczna poprawka kategorii wraca jako
-              dane treningowe</strong>. Ta sama pomyłka nie wraca po raz trzeci.
-            </span>
-          </p>
+        <li class="row">
+          <span class="row__label">Krok 2</span>
+          <div>
+            <h3>Aplikacja przypisuje kategorie</h3>
+            <p>
+              Większość rozpoznaje sama. Co budzi wątpliwość, pokazuje Tobie, a Twoje poprawki zapamiętuje.
+            </p>
+          </div>
         </li>
-
-        <li class="charge">
-          <p class="charge__label">Patrzyło tylko wstecz</p>
-          <h3>Mówiło, co się stało — nie, co się stanie</h3>
-          <p>
-            Analiza opisywała zamknięty miesiąc. Pytanie „czy stać mnie na to w przyszłym”
-            zostawało bez odpowiedzi.
-          </p>
-          <p class="charge__answer">
-            <nz-icon nzType="arrow-right" />
-            <span>
-              Cel oszczędnościowy patrzy w przód i mówi, czy wytrzymuje zły miesiąc —
-              <strong>w zakresie opisanym niżej</strong>, razem z tym, czego jeszcze nie liczy.
-            </span>
-          </p>
+        <li class="row">
+          <span class="row__label">Krok 3</span>
+          <div>
+            <h3>Widzisz, gdzie idą pieniądze</h3>
+            <p>
+              Podsumowanie miesiąca, limity na kategorie i postęp odkładania. Co miesiąc dodajesz nowy wyciąg,
+              a historia rośnie.
+            </p>
+          </div>
         </li>
       </ol>
     </div>
   </section>
 
-  <!-- ── Jak to działa ─────────────────────────────────────────────────────────────────
-       Z prawdziwym progiem i z jawnym „model się myli”. Opis mechanizmu, który przyznaje
-       się do błędów, jest sprawdzalny; opis bez tego jest reklamą. -->
-  <section class="wrap section">
-    <h2>Jak to działa</h2>
-
-    <ol class="steps">
-      <li class="step">
-        <span class="step__no" aria-hidden="true">1</span>
-        <div>
-          <h3>Wgrywasz CSV z banku</h3>
-          <p>
-            Parser jest osobny dla każdego banku i zna jego format z góry, więc nie ma kroku
-            mapowania kolumn. Import jest dwufazowy: najpierw podgląd, który niczego nie
-            zapisuje, potem zapis — już z Twoimi poprawkami, nie z surowego pliku.
-          </p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step__no" aria-hidden="true">2</span>
-        <div>
-          <h3>Reguły łapią oczywiste, model resztę</h3>
-          <p>
-            Najpierw reguły — nazwa sklepu, typ operacji, próg kwoty. Czego nie złapią, dostaje
-            kategorię od modelu razem z jego pewnością. Poniżej progu
-            (domyślnie {{ reviewThreshold }}) transakcja nie dostaje kategorii po cichu,
-            tylko trafia do kolejki <strong>„do przeglądu”</strong>.
-          </p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step__no" aria-hidden="true">3</span>
-        <div>
-          <h3>Poprawiasz, co model pomylił</h3>
-          <p>
-            Korekta jest decyzją człowieka, więc zeruje pewność i nie wraca do kolejki, którą
-            właśnie rozbroiłeś. Trafia za to do zbioru treningowego.
-          </p>
-        </div>
-      </li>
-    </ol>
-
-    <!-- ⚠️ Ta uwaga NIE jest ozdobnikiem uczciwości. Bez niej „97%” czyta się jak obietnica
-         dla cudzego wyciągu, a jest pomiarem na tym samym zbiorze, z którego reguły powstały. -->
-    <nz-alert
-      nzType="info"
-      nzShowIcon
-      nzMessage="Model się myli — i dlatego jest kolejka do przeglądu"
-      nzDescription="Reguły powstały z realnego wyciągu (1340 transakcji, 20 miesięcy) i pokrywały na nim 97% pozycji. To pomiar na tych samych danych, z których je wyprowadzono, więc nie jest obietnicą dla dowolnego innego wyciągu. Model widzi wyłącznie wydatki: wpływy obsługują same reguły, bo klasyfikator zapytany o wypłatę i tak musiałby wskazać którąś z kategorii wydatkowych — z wysoką pewnością i błędnie."
-    />
+  <!-- ── Co jeszcze widzisz ────────────────────────────────────────────────────────── -->
+  <section class="wrap section" aria-labelledby="ekrany-title">
+    <h2 id="ekrany-title">Nie tylko „ile wydałem”</h2>
+    <p class="section-lead">
+      Ustaw limit na jedzenie i zobacz ostrzeżenie, zanim się skończy. Zaplanuj wakacje i sprawdź, ile już odłożyłeś.
+      Rachunki i subskrypcje trzymaj osobno od wydatków, które zdarzyły się raz.
+    </p>
+    <figure class="shot">
+      <img
+        src="screens/savings.png"
+        width="2800"
+        height="2240"
+        alt="Ekran celów oszczędzania: informacja o odłożonej kwocie, wykres miesięcznych wpłat oraz tabela miesięcy."
+      />
+      <figcaption>Ekran „Cele oszczędzania”, dane demonstracyjne.</figcaption>
+    </figure>
   </section>
 
-  <!-- ── Wyróżnik ──────────────────────────────────────────────────────────────────────
-       Jedyna sekcja, której zdania nie pasują do dziesięciu innych aplikacji. Stąd osobne
-       pasmo i cytat wyciągnięty na wierzch. -->
-  <section class="band band--accent">
-    <div class="wrap">
-      <h2>Zdanie, którego nie powie aplikacja banku</h2>
-      <p class="section-lead">
-        Większość narzędzi umie powiedzieć, ile odłożyłeś. To jest inne twierdzenie:
-        czy cel wytrzymuje <em>zły</em> miesiąc.
-      </p>
-
-      <blockquote class="quote">
-        <p>
-          Odłożyłeś 1500,00 zł także w maju 2026 — miesiącu, w którym doszło 2551,00 zł
-          jednorazowych wydatków. Ten cel jest bezpieczny.
+  <!-- ── Twoje dane ────────────────────────────────────────────────────────────────── -->
+  <section class="band band--dark" id="dane" aria-labelledby="dane-title">
+    <div class="wrap split">
+      <div class="split__head">
+        <h2 id="dane-title">Twoje dane <span class="accent">zostają</span> Twoje</h2>
+        <p class="section-lead">Wyciąg z banku to wrażliwa sprawa, więc zasady są proste.</p>
+      </div>
+      <div>
+        <ul class="rows">
+          <li class="row row--plain">
+            <div>
+              <h3>Pliku z banku nie zapisuję</h3>
+              <p>Aplikacja czyta go tylko na czas przetwarzania. Zapisują się wyłącznie wiersze, które sam zatwierdzisz.</p>
+            </div>
+          </li>
+          <li class="row row--plain">
+            <div>
+              <h3>Nikomu nie sprzedaję i nie udostępniam danych</h3>
+              <p>Bez reklam, bez analityki, bez wysyłania opisów transakcji do zewnętrznych usług.</p>
+            </div>
+          </li>
+          <li class="row row--plain">
+            <div>
+              <h3>Widzisz tylko swoje</h3>
+              <p>Konto jest osobiste, a dane innych użytkowników są od Twoich odizolowane.</p>
+            </div>
+          </li>
+          <li class="row row--plain">
+            <div>
+              <h3>Usuniesz je, kiedy zechcesz</h3>
+              <p>Jednym przyciskiem w ustawieniach, razem z kontem.</p>
+            </div>
+          </li>
+        </ul>
+        <p class="docs-links">
+          <a href="/polityka-prywatnosci">Polityka prywatności</a>
+          <a href="/regulamin">Regulamin</a>
         </p>
-      </blockquote>
-
-      <p>
-        Żeby takie zdanie mogło paść, aplikacja musi wiedzieć nie tylko, ile wpłynęło na
-        oszczędności, ale też które wydatki były jednorazowe — a to oznaczasz ręcznie.
-        Dopóki nie ma ani jednego oznaczonego wydatku, ekran mówi wprost, że dowodu nie ma
-        z czego zbudować, zamiast pokazywać „0 dowodów” jak fakt o Twojej dyscyplinie.
-      </p>
-
-      <figure class="shot">
-        <img
-          src="screens/savings.png"
-          width="1400"
-          height="1200"
-          alt="Ekran celów oszczędzania: baner z dowodem odporności celu, wykres miesięcznych wpłat oraz tabela miesięcy z werdyktami."
-        />
-        <figcaption>Ekran „Cele oszczędzania” na danych demonstracyjnych.</figcaption>
-      </figure>
-
-      <!-- ⚠️ Bez tego akapitu strona obiecywałaby, że aplikacja wie o pieniądzach, o których
-           nie ma skąd wiedzieć. Rozróżnienie jest subtelne i dlatego stoi tu wprost:
-           SALDO konta oszczędnościowego jest znane, ale tylko z importu; miesięczne WPŁATY
-           dalej liczy się z kategorii. -->
-      <nz-alert
-        nzType="warning"
-        nzShowIcon
-        nzMessage="Odłożone liczy się z kategorii, a saldo tylko z tego, co zaimportujesz"
-        nzDescription="Miesięczne „odłożone” to suma wpłat w kategorii „Oszczędności”, nie odczyt z konta. Stan samego konta oszczędnościowego aplikacja pokazuje dopiero wtedy, gdy podepniesz je jako drugi budżet i wgrasz jego wyciąg — do tego czasu widzi wyłącznie przelewy wychodzące z konta bieżącego. Aplikacja mówi to na własnym ekranie i ta strona tego nie zamiata."
-      />
+      </div>
     </div>
   </section>
 
-  <!-- ── Czego to nie robi ─────────────────────────────────────────────────────────────
-       Na prezentacji projektu ta sekcja buduje wiarygodność mocniej niż kolejna lista zalet:
-       pokazuje, że granice są znane i wybrane, a nie przemilczane. -->
-  <section class="wrap section">
-    <h2>Czego to nie robi</h2>
-    <p class="section-lead">
-      Część z tych rzeczy została świadomie odrzucona, część jeszcze nie powstała.
-      Rozróżnienie jest istotne, więc jest podane.
-    </p>
-
-    <ul class="limits">
-      <li>
-        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+  <!-- ── Czego jeszcze nie ma ──────────────────────────────────────────────────────────
+       Uczciwie i bez żargonu: to, czego aplikacja nie robi, ma być powiedziane wprost. -->
+  <section class="wrap section split" aria-labelledby="granice-title">
+    <div class="split__head">
+      <h2 id="granice-title">Czego jeszcze nie ma</h2>
+    </div>
+    <ul class="rows">
+      <li class="row row--plain">
         <div>
-          <h3>Nie łączy się z bankiem</h3>
-          <p>
-            Integracja przez API została <strong>odrzucona</strong>, nie odłożona. Rdzeniem jest
-            plik CSV eksportowany ręcznie z bankowości.
-          </p>
+          <h3>Sam nie łączy się z bankiem</h3>
+          <p>Wyciąg pobierasz i wgrywasz Ty. Dziś obsługuję mBank i PKO BP.</p>
         </div>
       </li>
-      <li>
-        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+      <li class="row row--plain">
         <div>
-          <h3>Nie zaprosisz do niej nikogo</h3>
-          <p>
-            Konta i logowanie są, a dane dwóch kont się nie mieszają — ale nie ma
-            <strong>zapraszania, wspólnego budżetu ani hostingu</strong>. Żeby korzystał
-            ktoś jeszcze, musi postawić to u siebie.
-          </p>
+          <h3>To wczesna wersja</h3>
+          <p>Mogą zdarzać się błędy, a funkcje będą się zmieniać — dlatego dostęp jest na zaproszenie.</p>
         </div>
       </li>
-      <li>
-        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
-        <div>
-          <h3>Nie pyta banku o saldo</h3>
-          <p>
-            Saldo otwarcia podajesz sam przy zakładaniu budżetu, resztę aplikacja liczy
-            z zaimportowanych transakcji. Konto, którego nie wgrasz, <strong>po prostu nie
-            istnieje w rachunku</strong> — i nic nie przyjdzie tego sprostować z zewnątrz.
-          </p>
-        </div>
-      </li>
-      <li>
-        <nz-icon nzType="close" class="limits__mark" aria-hidden="true" />
+      <li class="row row--plain">
         <div>
           <h3>Nie czyta paragonów</h3>
-          <p>Widzi transakcję, nie jej pozycje. „Zakupy za 240 zł” zostają jedną kwotą.</p>
+          <p>Widzi to, co jest w wyciągu, bez rozbicia zakupów na pozycje.</p>
         </div>
       </li>
     </ul>
-
   </section>
 
-  <!-- ── Roadmapa ──────────────────────────────────────────────────────────────────────
-       Zastępuje wcześniejszy blok „W planach”. Kryterium akceptacji #12 zostaje spełnione
-       inaczej, ale mocniej: status stoi przy KAŻDYM punkcie, więc nie da się przeczytać
-       planu jako funkcji istniejącej. Kolejność nie jest listą życzeń — wynika z zależności
-       między etapami (CLAUDE.md §2: każdy etap żywi się danymi z poprzedniego) i każdy punkt
-       mówi wprost, dlaczego stoi właśnie tam. -->
-  <section class="band">
-    <div class="wrap">
-      <h2>Roadmapa</h2>
-      <p class="section-lead">
-        Kolejność wynika z zależności, nie z ochoty: każdy etap potrzebuje danych z poprzedniego.
-        Cztery pierwsze punkty działają; dwa ostatnie jeszcze nie istnieją.
-      </p>
-
-      <ol class="road">
-        <li class="road__item road__item--done">
-          <div class="road__body">
-            <p class="road__status">Gotowe</p>
-            <h3>Rdzeń: import, kategoryzacja, dashboard</h3>
-            <p>
-              Wyciąg wchodzi jako CSV, reguły i model nadają kategorie, a niepewne trafiają
-              do kolejki przeglądu. Do tego lista transakcji z edycją i akcjami masowymi
-              oraz cel oszczędnościowy z dowodem odporności.
-            </p>
-          </div>
-        </li>
-
-        <li class="road__item road__item--done">
-          <div class="road__body">
-            <p class="road__status">Gotowe</p>
-            <h3>Limity na kategorie</h3>
-            <p>
-              Limit ma sens dopiero wtedy, gdy jest z czego go ustalić. Postawiony na pustej
-              historii byłby liczbą wziętą z sufitu, a jego przekroczenie mówiłoby więcej
-              o złym limicie niż o wydatkach.
-            </p>
-          </div>
-        </li>
-
-        <li class="road__item road__item--done">
-          <div class="road__body">
-            <p class="road__status">Gotowe</p>
-            <h3>Wydatki stałe kontra epizodyczne</h3>
-            <p>
-              Czynsz i wakacje to dwie różne rzeczy. Zlecenia stałe mają własny rytm i pilnują,
-              czy rata przyszła w oczekiwanej kwocie; zlecenia epizodyczne obsługują wydatki
-              jednorazowe — przeszłe i zaplanowane, z rezerwacją pieniędzy na te drugie.
-            </p>
-          </div>
-        </li>
-
-        <li class="road__item road__item--done">
-          <div class="road__body">
-            <p class="road__status">Gotowe</p>
-            <h3>Wyszukiwarka i katalog funkcji</h3>
-            <p>
-              Jedno pole szuka po transakcjach, kategoriach, budżetach i zleceniach naraz,
-              z historią i ostatnio odwiedzanymi ekranami. Obok katalog wszystkich funkcji
-              pogrupowany po tym, po co się do nich wchodzi.
-            </p>
-          </div>
-        </li>
-
-        <li class="road__item road__item--next">
-          <div class="road__body">
-            <p class="road__status">Następne</p>
-            <h3>Prognozy</h3>
-            <p>
-              Stoją na poprzednim punkcie i bez niego nie mają sensu — prognoza, która nie
-              odróżnia stałego rachunku od jednorazowego zakupu, przewiduje, że w przyszłym
-              miesiącu znowu kupisz pralkę.
-            </p>
-          </div>
-        </li>
-
-        <li class="road__item">
-          <div class="road__body">
-            <p class="road__status">Później</p>
-            <h3>Paragony i pozycje</h3>
-            <p>
-              „Zakupy za 240 zł” rozbite na produkty. Najwięcej pracy z całej listy i najmniej
-              zależności od reszty, więc idzie na koniec, a nie dlatego, że jest najmniej ciekawe.
-            </p>
-          </div>
-        </li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- ── O autorze ─────────────────────────────────────────────────────────────────────
-       Sekcja istnieje, bo reszta strony mówi „projekt jednoosobowy”, nie mówiąc, kto nią jest.
-       ⚠️ Każde zdanie tutaj ma być sprawdzalne — to ta sama zasada co w „Czego to nie robi”.
-       Żadnej wymyślonej motywacji ani tytułów, których nie da się potwierdzić. -->
-  <section class="wrap section">
-    <h2>Kto to napisał</h2>
-    <p class="section-lead">
-      Jestem Kuba, od czterech lat piszę zawodowo w Angularze i .NET.
-    </p>
-    <p>
-      Wydatki.com powstały poza pracą, z poczucia gubienia pieniędzy w środku miesiąca
-      i małych oszczędności mimo wystarczających zarobków. Jestem jednocześnie jedynym autorem
-      i jedynym użytkownikiem, więc każda decyzja zapadała pod kątem tego, żeby
-      <strong>mnie</strong> było wygodnie prowadzić własny budżet — nie pod kątem hipotetycznego
-      rynku. Stąd rzeczy, których zwykle nie robi się w projekcie na jedną osobę: izolacja danych
-      na poziomie bazy zamiast filtrowania w kodzie, własny serwer tożsamości zamiast gotowej
-      usługi, model uczony na moich własnych poprawkach.
-    </p>
-    <p>
-      Kod jest publiczny razem z tym, co zwykle się przemilcza: dziennikiem decyzji i listą
-      rzeczy, których aplikacja nie robi.
-    </p>
-    <div class="cta__buttons">
-      <a nz-button nzSize="large" [href]="linkedInUrl" rel="noopener noreferrer" target="_blank">
-        <nz-icon nzType="linkedin" />
-        LinkedIn
-      </a>
-    </div>
-  </section>
-
-  <!-- ── Prośba o dostęp do bety ──────────────────────────────────────────────────────────
-       Makieta: Figma, strona „Landing — beta i dokumenty”. Adres trafia do serwera tożsamości (panel administratora,
-       zakładka „Prośby o dostęp”); zgoda i wersja dokumentów są zapisywane po stronie serwera. -->
-  <section class="wrap section beta" id="beta" aria-labelledby="beta-title">
-    <h2 id="beta-title">Zamknięta beta</h2>
-    <p class="section-lead">
-      Konto założysz tylko z zaproszeniem. Zostaw adres e-mail, a odezwę się, gdy będzie miejsce w becie —
-      zaproszenia wysyłam ręcznie, po kolei.
-    </p>
-
-    @if (requestState() === 'done') {
-      <div class="beta__done" role="status">
-        <strong>Zapisane. Dziękuję!</strong>
-        <span>Odezwę się na podany adres, gdy będzie miejsce w becie. Konta na nim jeszcze nie zakładam.</span>
+  <!-- ── Prośba o dostęp do bety ──────────────────────────────────────────────────────
+       Adres trafia do serwera tożsamości (panel administratora, zakładka „Prośby o dostęp”); zgoda i wersja
+       dokumentów są zapisywane po stronie serwera. -->
+  <section class="band" id="beta" aria-labelledby="beta-title">
+    <div class="wrap split">
+      <div class="split__head">
+        <h2 id="beta-title">Chcesz spróbować?</h2>
+        <p class="section-lead">
+          Konto założysz tylko z zaproszeniem. Zostaw adres e-mail, a odezwę się, gdy będzie miejsce —
+          zaproszenia wysyłam ręcznie, po kolei.
+        </p>
       </div>
-    } @else {
-      <form class="beta__form" (submit)="$event.preventDefault(); requestAccess()" novalidate>
-        <div class="beta__row">
-          <div class="beta__field">
-            <label class="beta__label" for="beta-email">Adres e-mail</label>
-            <input
-              id="beta-email" name="email" type="email" autocomplete="email" inputmode="email"
-              placeholder="np. jan.kowalski@poczta.pl"
-              [value]="email()" (input)="email.set($any($event.target).value)"
-              [class.beta__input--error]="emailError()"
-              [attr.aria-invalid]="emailError() ? 'true' : null"
-              [attr.aria-describedby]="emailError() ? 'beta-email-error' : null" />
-            @if (emailError()) {
-              <span class="beta__error" id="beta-email-error" role="alert">{{ emailError() }}</span>
-            }
+
+      <div>
+        @if (requestState() === 'done') {
+          <div class="beta__done" role="status">
+            <strong>Zapisane. Dziękuję!</strong>
+            <span>Odezwę się na podany adres, gdy będzie miejsce w becie. Konta na nim jeszcze nie zakładam.</span>
           </div>
-          <button nz-button nzType="primary" nzSize="large" type="submit" [nzLoading]="requestState() === 'sending'">
-            Poproś o dostęp
-          </button>
-        </div>
+        } @else {
+          <form class="beta__form" (submit)="$event.preventDefault(); requestAccess()" novalidate>
+            <div class="beta__row">
+              <div class="beta__field">
+                <label class="beta__label" for="beta-email">Adres e-mail</label>
+                <input
+                  id="beta-email" name="email" type="email" autocomplete="email" inputmode="email"
+                  placeholder="np. jan.kowalski@poczta.pl"
+                  [value]="email()" (input)="email.set($any($event.target).value)"
+                  [class.beta__input--error]="emailError()"
+                  [attr.aria-invalid]="emailError() ? 'true' : null"
+                  [attr.aria-describedby]="emailError() ? 'beta-email-error' : null" />
+                @if (emailError()) {
+                  <span class="beta__error" id="beta-email-error" role="alert">{{ emailError() }}</span>
+                }
+              </div>
+              <button class="btn" type="submit" [disabled]="requestState() === 'sending'">
+                {{ requestState() === 'sending' ? 'Wysyłam…' : 'Poproś o dostęp' }}
+              </button>
+            </div>
 
-        <!-- Pułapka na boty: człowiek jej nie widzi ani nie dotyka (aria-hidden, tabindex -1, poza ekranem). -->
-        <div class="beta__trap" aria-hidden="true">
-          <label for="beta-website">Strona internetowa</label>
-          <input id="beta-website" name="website" type="text" tabindex="-1" autocomplete="off"
-                 [value]="website()" (input)="website.set($any($event.target).value)" />
-        </div>
+            <!-- Pułapka na boty: człowiek jej nie widzi ani nie dotyka (aria-hidden, tabindex -1, poza ekranem). -->
+            <div class="beta__trap" aria-hidden="true">
+              <label for="beta-website">Strona internetowa</label>
+              <input id="beta-website" name="website" type="text" tabindex="-1" autocomplete="off"
+                     [value]="website()" (input)="website.set($any($event.target).value)" />
+            </div>
 
-        <div class="beta__consent">
-          <input id="beta-consent" name="consent" type="checkbox"
-                 [checked]="consent()" (change)="consent.set($any($event.target).checked)"
-                 [attr.aria-invalid]="consentError() ? 'true' : null" />
-          <label for="beta-consent">
-            Zgadzam się na przetwarzanie mojego adresu e-mail w celu odpowiedzi na prośbę o dostęp do bety.
-            Akceptuję <a href="/regulamin" target="_blank">Regulamin</a> i zapoznałem się z
-            <a href="/polityka-prywatnosci" target="_blank">Polityką prywatności</a>.
-          </label>
-        </div>
-        @if (consentError()) {
-          <span class="beta__error" role="alert">{{ consentError() }}</span>
+            <div class="beta__consent">
+              <input id="beta-consent" name="consent" type="checkbox"
+                     [checked]="consent()" (change)="consent.set($any($event.target).checked)"
+                     [attr.aria-invalid]="consentError() ? 'true' : null" />
+              <label for="beta-consent">
+                Zgadzam się na przetwarzanie mojego adresu e-mail w celu odpowiedzi na prośbę o dostęp do bety.
+                Akceptuję <a href="/regulamin" target="_blank">Regulamin</a> i zapoznałem się z
+                <a href="/polityka-prywatnosci" target="_blank">Polityką prywatności</a>.
+              </label>
+            </div>
+            @if (consentError()) {
+              <span class="beta__error" role="alert">{{ consentError() }}</span>
+            }
+            @if (formError()) {
+              <span class="beta__error" role="alert">{{ formError() }}</span>
+            }
+
+            <p class="beta__note">Adres służy wyłącznie do zaproszenia do bety. Usunę go na Twoją prośbę.</p>
+          </form>
         }
-        @if (formError()) {
-          <span class="beta__error" role="alert">{{ formError() }}</span>
-        }
-
-        <p class="beta__note">Adres służy wyłącznie do zaproszenia do bety. Usunę go na Twoją prośbę.</p>
-      </form>
-    }
+      </div>
+    </div>
   </section>
 
-  <!-- ── CTA ───────────────────────────────────────────────────────────────────────────
-       Nadal bez „Wypróbuj”: nie ma rejestracji otwartej dla każdego, jest zamknięta beta
-       na zaproszenia. Przycisk prowadzi do wdrożonej aplikacji i mówi wprost, co zastanie. -->
-  <section class="wrap section cta">
-    <h2>Kod jest otwarty</h2>
-    <p class="section-lead">
-      Aplikacja jest wdrożona, ale konto założysz tylko z zaproszeniem — trwa zamknięta beta.
-      Repozytorium jest za to otwarte, razem z decyzjami projektowymi i ich uzasadnieniami.
-    </p>
-    <div class="cta__buttons">
-      <a nz-button nzType="primary" nzSize="large" [href]="repoUrl" rel="noopener noreferrer" target="_blank">
-        <nz-icon nzType="github" />
-        Zobacz kod na GitHubie
-      </a>
-      <a nz-button nzSize="large" [href]="appUrl">
-        <nz-icon nzType="arrow-right" />
-        Przejdź do aplikacji
-      </a>
+  <!-- ── Kto za tym stoi ───────────────────────────────────────────────────────────── -->
+  <section class="wrap section split" id="autor" aria-labelledby="autor-title">
+    <div class="split__head">
+      <h2 id="autor-title">Kto za tym stoi</h2>
+    </div>
+    <div class="about">
+      <p>
+        Jestem Kuba. Zrobiłem Wydatki.com dla siebie, bo chciałem wiedzieć, gdzie w środku miesiąca znikają mi
+        pieniądze. Buduję to sam, po godzinach, i chętnie poznam Twoje uwagi z bety.
+      </p>
+      <p class="about__dev">
+        Programujesz? Kod jest otwarty:
+        <a [href]="repoUrl" rel="noopener noreferrer" target="_blank">zobacz go na GitHubie</a>.
+        <a [href]="linkedInUrl" rel="noopener noreferrer" target="_blank">Tu znajdziesz mnie na LinkedInie.</a>
+      </p>
     </div>
   </section>
 </main>
 
 <footer class="foot">
   <div class="wrap">
-    <div class="foot__inner">
-      <img class="foot__logo" src="logo.svg" width="40" height="40" alt="" />
-      <p>
-        Wydatki.com — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
-        Zrzuty ekranu pochodzą z danych demonstracyjnych.
-      </p>
-    </div>
+    <p>
+      Wydatki.com — osobisty tracker wydatków. Projekt jednoosobowy, w budowie.
+      Zrzuty ekranu pochodzą z danych demonstracyjnych.
+    </p>
     <nav class="foot__links" aria-label="Dokumenty">
       <a href="/regulamin">Regulamin</a>
       <a href="/polityka-prywatnosci">Polityka prywatności</a>

@@ -1,106 +1,72 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { NzAlertModule } from 'ng-zorro-antd/alert';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzTagModule } from 'ng-zorro-antd/tag';
 
 /**
- * Landing — prezentacja PROJEKTU, nie landing produktu.
+ * Landing — strona główna dla zwykłego użytkownika (makieta Figma: „Landing — strona główna v3, od produktu”).
  *
  * <para>
- * Rozstrzygnięcie z issue #12: adresatem jest ktoś oceniający warsztat, nie ktoś szukający
- * narzędzia do budżetu. Powód jest twardy, nie estetyczny — aplikacja jest single-user,
- * bez rejestracji i bez hostingu, więc przycisk „Wypróbuj za darmo” nie ma dokąd prowadzić.
- * Strona, która obiecuje coś, czego nie ma czym spełnić, szkodzi bardziej niż jej brak.
+ * Adresatem jest ktoś, kto chce wiedzieć, na co idą jego pieniądze, a nie ktoś oceniający warsztat. Stąd prosty
+ * język, prawdziwe zrzuty ekranu i jedno wezwanie do działania: prośba o dostęp do zamkniętej bety. Szczegóły
+ * techniczne żyją w repozytorium i dzienniku decyzji (jedno zdanie w sekcji „Kto za tym stoi”).
  * </para>
  *
  * <para>
- * ⚠️ Cała treść jest tu na sztywno po polsku, wbrew konwencji aplikacji (teksty w
- * `public/i18n/*.json`). To świadome odstępstwo: landing jest jednojęzyczny z założenia
- * (wersja angielska jest jawnie poza zakresem #12), a przepuszczenie prozy marketingowej
- * przez klucze tłumaczeń zamieniłoby tekst możliwy do przeczytania i ocenienia w recenzji
- * na listę identyfikatorów. Gdy dojdzie druga wersja językowa, to się zmienia.
+ * ⚠️ Cała treść jest tu na sztywno po polsku, wbrew konwencji aplikacji (teksty w `public/i18n/*.json`). To
+ * świadome odstępstwo: landing jest jednojęzyczny z założenia, a proza przepuszczona przez klucze tłumaczeń
+ * staje się listą identyfikatorów, której nie da się ocenić w recenzji. Gdy dojdzie druga wersja językowa,
+ * to się zmienia.
  * </para>
  *
  * <para>
- * Sekcje NIE są osobnymi komponentami. Landing to dokument liniowy bez stanu i bez powtórzeń —
- * siedem komponentów po jednym użyciu byłoby rusztowaniem na zapas, którego ten projekt unika
- * (CLAUDE.md §10). Jeśli któraś sekcja zacznie żyć własnym życiem, wtedy się ją wyciągnie.
+ * ⚠️ Uczciwość jest wymogiem, nie ozdobą: strona nie obiecuje funkcji, których nie ma (łączenia z bankiem,
+ * czytania paragonów, prognoz). Sekcja „Czego jeszcze nie ma” i testy w `app.spec.ts` tego pilnują.
+ * </para>
+ *
+ * <para>
+ * Sekcje NIE są osobnymi komponentami: to dokument liniowy bez stanu i powtórzeń (poza formularzem). Jeśli
+ * któraś zacznie żyć własnym życiem, wtedy się ją wyciągnie.
  * </para>
  */
 @Component({
   selector: 'app-root',
-  imports: [NzAlertModule, NzButtonModule, NzDividerModule, NzIconModule, NzTagModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   /**
-   * Jedyne prawdziwe CTA na tej stronie — patrz doc klasy.
+   * Publiczne repozytorium — dla programistów, w sekcji „Kto za tym stoi”.
    *
-   * ⚠️ Musi wskazywać repozytorium **publiczne**. Do 2026-09-12 stał tu adres repo prywatnego,
-   * czyli jedyny przycisk na stronie dawał każdemu odwiedzającemu 404 — a to psuje dokładnie
-   * to, po co ta strona istnieje. Kod przeniósł się do `budget-tracker`, bo starego repo nie
-   * dało się bezpiecznie upublicznić (historia i `refs/pull/*` przeżywają force-push).
-   * Pilnuje tego `app.spec.ts`: sprawdza konkretny adres, nie samo „jest w domenie github.com".
+   * ⚠️ Musi wskazywać repozytorium **publiczne**. Do 2026-09-12 stał tu adres repo prywatnego, czyli link dawał
+   * 404 każdemu odwiedzającemu. Pilnuje tego `app.spec.ts`: sprawdza konkretny adres, nie samo „jest w domenie
+   * github.com".
    */
   protected readonly repoUrl = 'https://github.com/KubaKrychowski/budget-tracker';
 
   /**
-   * Adres lokalnej instancji aplikacji.
-   *
-   * ⚠️ REWIZJA decyzji z issue #12 (2026-09-25, na prośbę właściciela). Landing celowo NIE miał
-   * przycisku do aplikacji: bez hostingu i rejestracji prowadziłby donikąd, a strona obiecująca
-   * coś, czego nie ma czym spełnić, szkodzi bardziej niż jej brak. Przycisk wraca, bo dziś ta
-   * strona jest serwowana WYŁĄCZNIE lokalnie (`ng serve landing`), obok aplikacji na 4200 —
-   * w tym jedynym użyciu link prowadzi dokładnie tam, gdzie zapowiada.
-   *
-   * ⚠️ REWIZJA (2026-09-25, wieczór): aplikacja stoi już na Static Web Apps, więc adres przestał być
-   * lokalny. To był dokładnie ten moment, przed którym ostrzegała poprzednia wersja tego komentarza:
-   * `localhost` u obcego czytelnika to jedyne CTA prowadzące donikąd.
-   *
-   * ⚠️ REWIZJA (2026-09-26): adres wskazywał host Static Web Apps. Działał, ale logowanie startowało
-   * wtedy z NIEWŁAŚCIWEGO originu — klient SPA buduje `redirect_uri` z `window.location.origin`, więc
-   * wejście przez stary host kończyło się powrotem na stary host, mimo że Identity zna już wyłącznie
-   * `app.wydatki.com`.
-   *
-   * Adres jest wpisany na sztywno, bo landing nie ma konfiguracji wczytywanej w czasie działania
-   * (aplikacja ma — patrz `core/runtime-config.ts`). Od przejścia na własną domenę jest to jednak adres
-   * STABILNY, a nie losowy host, który trzeba było podmieniać po każdym odtworzeniu środowiska.
-   */
-  /**
-   * Profil autora. ⚠️ Nazwisko celowo NIE pada w treści strony, ale ten link i adres repozytorium
-   * i tak je ujawniają — to świadomy kompromis: sekcja „kto to napisał" bez możliwości sprawdzenia,
-   * kto to napisał, nie ma sensu.
+   * Profil autora. ⚠️ Nazwisko celowo NIE pada w treści strony, ale ten link i adres repozytorium i tak je
+   * ujawniają — to świadomy kompromis: sekcja „kto za tym stoi” bez możliwości sprawdzenia, kim jest autor,
+   * nie ma sensu.
    */
   protected readonly linkedInUrl = 'https://www.linkedin.com/in/kuba-krychowski/';
 
-  protected readonly appUrl = 'https://app.wydatki.com';
-
   /**
-   * DOMYŚLNY próg pewności, poniżej którego transakcja idzie do przeglądu zamiast dostać kategorię.
+   * Adres aplikacji — dla osób z zaproszeniem („Zaloguj się”).
    *
-   * ⚠️ To kopia wartości z backendu (`MlCategorizer.ConfidenceThreshold`, domyślnie `0.7m`,
-   * nadpisywalna w `appsettings`), a nie jej źródło — i NIC tego nie synchronizuje. Landing jest
-   * osobnym projektem, więc nie ma tu testu, który złapałby zmianę progu po stronie API.
-   * Dlatego tekst na stronie mówi „domyślnie”, zamiast podawać tę liczbę jako prawo: sam próg
-   * jest w CLAUDE.md §9 opisany jako ZAŁOŻENIE do strojenia na realnych danych.
-   *
-   * Stoi na stronie mimo to, bo „model czasem się myli” bez liczby jest ogólnikiem,
-   * a z liczbą jest sprawdzalnym opisem mechanizmu.
+   * Wpisany na sztywno, bo landing nie ma konfiguracji wczytywanej w czasie działania (aplikacja ma — patrz
+   * `core/runtime-config.ts`). Jest to adres STABILNY (własna domena), a nie losowy host Static Web Apps,
+   * który trzeba było podmieniać po każdym odtworzeniu środowiska. ⚠️ Logowanie startuje z originu,
+   * na którym wylądował użytkownik — wejście przez inny host kończyłoby się powrotem na ten host, a Identity
+   * zna wyłącznie `app.wydatki.com`.
    */
-  protected readonly reviewThreshold = 0.7;
+  protected readonly appUrl = 'https://app.wydatki.com';
 
   private readonly document = inject(DOCUMENT);
 
   /**
    * Adres serwera tożsamości, do którego idzie prośba o dostęp do bety.
    *
-   * ⚠️ Na sztywno, z jednym wyjątkiem na lokalny dev — z tego samego powodu co `appUrl`: landing nie ma konfiguracji
-   * wczytywanej w czasie działania. Przy renderowaniu po stronie serwera (prerender) `location` bywa puste, więc
-   * pusty host to produkcja, a nie błąd.
+   * ⚠️ Na sztywno, z jednym wyjątkiem na lokalny dev — z tego samego powodu co `appUrl`. Przy renderowaniu po
+   * stronie serwera (prerender) `location` bywa puste, więc pusty host to produkcja, a nie błąd.
    */
   private readonly identityUrl = computed(() =>
     this.document.location?.hostname === 'localhost' ? 'https://localhost:7226' : 'https://auth.wydatki.com');
