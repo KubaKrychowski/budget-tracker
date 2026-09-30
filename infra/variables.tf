@@ -56,6 +56,18 @@ variable "postgres_connection_string_api" {
   sensitive   = true
 }
 
+variable "postgres_connection_string_worker" {
+  description = <<-EOT
+    Connection string roli zadań systemowych (`budget_worker`: LOGIN + BYPASSRLS), używany TYLKO przez sprzątanie budżetów,
+    operacje administracyjne na danych właściciela i seedy. Puste = stary tor (SET ROLE budget_jobs z roli budget_app),
+    który pozwala każdemu z connection stringiem budget_app przeczytać dane wszystkich użytkowników.
+    Patrz api/db/separate-worker-role.sql — kolejność wdrożenia ma znaczenie.
+  EOT
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "postgres_connection_string_identity" {
   description = "Connection string do bazy serwera tożsamości (osobna baza od budżetowej)."
   type        = string

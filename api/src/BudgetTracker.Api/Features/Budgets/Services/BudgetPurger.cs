@@ -1,5 +1,6 @@
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BudgetTracker.Api.Features.Budgets.Services;
 
@@ -20,7 +21,7 @@ namespace BudgetTracker.Api.Features.Budgets.Services;
 /// bez ostrzeżenia. Jeden warunek w jednym miejscu jest tu zabezpieczeniem, nie oszczędnością linii.
 /// </para>
 /// </remarks>
-public sealed class BudgetPurger(AppDbContext db)
+public sealed class BudgetPurger([FromKeyedServices(SystemDb.Key)] AppDbContext db)
 {
     /// <param name="deletedBefore">
     /// Górna granica znacznika usunięcia: kasujemy budżety ostemplowane nie później niż wtedy.
@@ -37,9 +38,9 @@ public sealed class BudgetPurger(AppDbContext db)
         // Zadanie systemowe (Hangfire), bez kontekstu żadnego użytkownika — sprząta WSZYSTKICH,
         // więc pod RLS w Postgresie potrzebuje roli, która go omija. `SET LOCAL` żyje tylko w tej
         // transakcji: appka wraca do zwykłej, ograniczonej roli, gdy tylko ta metoda się skończy —
-        // patrz DECISIONS.md (RLS) i rola `budget_jobs`.
+        // patrz DECISIONS.md (RLS) i `SystemDb`: kontekst systemowy łączy się osobną rolą (`budget_worker`).
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        await db.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs", ct);
+        await db.EnterSystemRoleAsync(ct);
 
         var doomed = await db.Budgets
             .IgnoreQueryFilters()

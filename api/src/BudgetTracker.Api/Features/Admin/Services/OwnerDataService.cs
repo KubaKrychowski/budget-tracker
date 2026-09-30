@@ -4,6 +4,7 @@ using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Admin.Contracts;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BudgetTracker.Api.Features.Admin.Services;
 
@@ -14,8 +15,8 @@ namespace BudgetTracker.Api.Features.Admin.Services;
 /// <remarks>
 /// <para>
 /// Wszystko idzie przez <see cref="AsSystemAsync{T}"/>: to zadanie systemowe bez kontekstu żadnego użytkownika,
-/// więc pod RLS w Postgresie widziałoby zero wierszy. <c>budget_jobs</c> (<c>BYPASSRLS</c>) obowiązuje tylko w
-/// jednej transakcji — tak samo jak w <c>BudgetPurger</c>. Filtry EF (soft delete, właściciel) są wyłączane jawnie:
+/// więc pod RLS w Postgresie widziałoby zero wierszy. kontekst systemowy (<see cref="SystemDb"/>) łączy się rolą omijającą RLS
+/// (<c>budget_worker</c>), osobnym connection stringiem — tak samo jak w <c>BudgetPurger</c>. Filtry EF (soft delete, właściciel) są wyłączane jawnie:
 /// usunięcie konta ma zabrać także wiersze skasowane logicznie.
 /// </para>
 /// <para>
@@ -29,13 +30,13 @@ namespace BudgetTracker.Api.Features.Admin.Services;
 /// (klucze obce są <c>Restrict</c>). Zmiana kolejności kończy się błędem klucza obcego, nie cichą utratą danych.
 /// </para>
 /// </remarks>
-public sealed class OwnerDataService(AppDbContext db, BlobServiceClient blobServiceClient)
+public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbContext db, BlobServiceClient blobServiceClient)
 {
     /// <summary>Wykonuje <paramref name="work"/> w jednej transakcji z rolą omijającą RLS.</summary>
     public async Task<T> AsSystemAsync<T>(Func<Task<T>> work, CancellationToken ct)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        await db.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs", ct);
+        await db.EnterSystemRoleAsync(ct);
 
         var result = await work();
 

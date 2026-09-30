@@ -60,6 +60,8 @@ builder.Services.AddScoped<RlsTransactionInterceptor>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 
+builder.Services.AddSystemDbContext(builder.Configuration);
+
 builder.Services.AddDbContext<AppDbContext>((sp, options) =>
     options
         .UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
@@ -156,14 +158,21 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = supportedCultures
 });
 
+if (!app.Environment.IsDevelopment() && !app.Configuration.HasWorkerConnection())
+{
+    app.Logger.LogWarning(
+        "Brak ConnectionStrings:PostgresWorker — zadania systemowe wchodzą w rolę budget_jobs przez SET ROLE, więc " +
+        "wyciek connection stringa budget_app daje dostęp do danych wszystkich użytkowników. Patrz api/db/separate-worker-role.sql.");
+}
+
 using (var baseline = app.Services.CreateScope())
 {
-    var baselineDb = baseline.ServiceProvider.GetRequiredService<AppDbContext>();
+    var baselineDb = baseline.ServiceProvider.GetRequiredKeyedService<AppDbContext>(SystemDb.Key);
 
     // Reguły bazowe są WSPÓLNE (UserId = pusty Guid), a RLS pozwala roli budget_app zapisywać tylko własne wiersze —
     // seed bez kontekstu użytkownika działa więc na budget_jobs (BYPASSRLS), w jednej transakcji, jak BudgetPurger.
     await using var baselineTransaction = await baselineDb.Database.BeginTransactionAsync();
-    await baselineDb.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs");
+    await baselineDb.EnterSystemRoleAsync();
 
     await BaselineSeed.SeedAsync(baselineDb);
 
@@ -180,7 +189,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi().AllowAnonymous();
 
     using var scope = app.Services.CreateScope();
-    var seedDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var seedDb = scope.ServiceProvider.GetRequiredKeyedService<AppDbContext>(SystemDb.Key);
     var seedClock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
 
     // Seed startuje bez kontekstu żądania HTTP (jak BudgetPurger) — pod RLS w Postgresie strażnik
@@ -189,7 +198,7 @@ if (app.Environment.IsDevelopment())
     // TEJ jednej transakcji, tak samo jak w BudgetPurger.PurgeAsync.
     await using (var seedTransaction = await seedDb.Database.BeginTransactionAsync())
     {
-        await seedDb.Database.ExecuteSqlRawAsync("SET LOCAL ROLE budget_jobs");
+        await seedDb.EnterSystemRoleAsync();
 
         if (app.Configuration.GetValue<bool>("Demo:Seed")) await DemoSeed.SeedAsync(seedDb, seedClock);
         else await DevSeed.SeedAsync(seedDb, seedClock);
@@ -235,8 +244,8 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken ct) =>
 // RlsTransactionEndpointFilter). /health i /health/db zostają poza grupą (anonimowe, nie dotykają danych właściciela).
 var api = app.MapGroup("").AddEndpointFilter<RlsTransactionEndpointFilter>();
 
-// ⚠️ Admin POZA filtrem: `OwnerDataService` sam zarządza transakcją i przełącza rolę na `budget_jobs`
-// (BYPASSRLS) przez `SET LOCAL ROLE`. Reużycie transakcji żądania zostawiłoby resztę żądania z tą rolą,
+// ⚠️ Admin POZA filtrem: `OwnerDataService` sam zarządza transakcją na kontekście systemowym
+// (rola `budget_worker` z BYPASSRLS, patrz SystemDb). Reużycie transakcji żądania zostawiłoby resztę żądania z tą rolą,
 // a jego własne `BeginTransactionAsync` wywaliłoby się na zagnieżdżeniu. Admin nie potrzebuje
 // `app.current_user_id` — czyta z jawnym `.Where(UserId == ownerId)` i tak omija RLS.
 app.MapAdmin();

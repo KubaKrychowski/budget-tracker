@@ -71,6 +71,9 @@ resource "azurerm_linux_web_app" "api" {
 
     ConnectionStrings__Postgres = var.postgres_connection_string_api
 
+    # Rola zadań systemowych (patrz variables.tf). Pusty string znaczy „brak” i włącza stary tor (patrz SystemDb).
+    ConnectionStrings__PostgresWorker = var.postgres_connection_string_worker
+
     # Resource server: API waliduje tokeny przez JWKS serwera tożsamości, bez wspólnej bazy.
     Identity__Issuer = "${local.identity_url}/"
 

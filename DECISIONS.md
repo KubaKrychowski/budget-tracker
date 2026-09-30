@@ -1338,3 +1338,15 @@ poczty serwer tożsamości nie wstanie, bo `SmtpOptions` ma `ValidateOnStart`. N
 wymusza `required` (obiekt powstaje przez refleksję). Serwer wstawał z `Host = null`, a wywalała się
 dopiero pierwsza rejestracja — czyli błąd konfiguracji wychodził u użytkownika zamiast przy starcie.
 Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe dopiero teraz.
+
+### REWIZJA 2026-09-30 — rola zadań systemowych osobno od roli aplikacji
+
+**Problem:** `budget_jobs` (BYPASSRLS) była członkiem-celem `budget_app` (`GRANT budget_jobs TO budget_app`), a kod wchodził w nią przez `SET LOCAL ROLE`. Każdy z connection stringiem `budget_app` mógł więc wykonać `SET ROLE budget_jobs` i przeczytać dane wszystkich użytkowników — RLS chroniło przed błędem w kodzie, ale nie przed wyciekiem poświadczeń.
+
+**Decyzja:** zadania systemowe (`BudgetPurger`, `OwnerDataService`, seedy) używają OSOBNEGO kontekstu (`SystemDb`) na osobnym connection stringu roli `budget_worker` (LOGIN + BYPASSRLS). `budget_app` traci członkostwo w `budget_jobs` (`api/db/separate-worker-role.sql`, krok po wdrożeniu). Tor zapasowy (`SET LOCAL ROLE`, gdy `PostgresWorker` nie jest ustawiony) zostaje do czasu wdrożenia roli i znika samoistnie po odebraniu członkostwa; bez `PostgresWorker` poza Development start loguje ostrzeżenie.
+
+**Odrzucone:** sekret w politykach RLS (sesja bez sekretu widzi zero wierszy) — nie warto; szyfrowanie pól opisów transakcji — psuje filtrowanie i sortowanie w `IQueryable` po stronie bazy.
+
+⚠️ **Zakres:** oba stringi leżą w ustawieniach tej samej aplikacji, więc włamanie DO APLIKACJI daje oba. Zmiana chroni przed wyciekiem samego stringa webowego (logi, kopia ustawień, stacja robocza), nie przed przejęciem procesu. Pełne rozdzielenie wymagałoby osobnej aplikacji dla zadań.
+
+**Nie sprawdzone:** testy na bazie (Docker był wyłączony przy pisaniu; nowe `SystemDbTests` i istniejące testy RLS przejdą dopiero w CI). Skrypt ról nie był uruchamiany na Neonie.
