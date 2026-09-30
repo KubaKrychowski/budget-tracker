@@ -19,8 +19,9 @@ body {
 }
 
 body {
-  /* Rodzina i bazowy rozmiar przychodzą z motywu NG-ZORRO (`theme.less`),
-     który mapuje je z tokenów. Tu tylko to, czego motyw nie ustawia. */
+  /* Landing nie ładuje NG-ZORRO, więc rodzinę i rozmiar bazowy ustawiamy tu, z tokenów. */
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: var(--ds-body-2);
   color: var(--ds-text-primary);
   background: #fff;
   line-height: var(--ds-line-height);

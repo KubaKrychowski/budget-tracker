@@ -370,6 +370,12 @@ a {
     }
   }
 
+  /* Linki w zdaniu muszą różnić się od tekstu czymś więcej niż kolorem (WCAG 1.4.1). */
+  &__consent a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   &__note {
     font-size: 13px;
     color: var(--ds-neutral-600);
