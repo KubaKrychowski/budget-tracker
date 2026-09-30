@@ -140,10 +140,6 @@ resource "azurerm_linux_web_app" "identity" {
 
       Clients__Admin__Secret = random_password.admin_client.result
 
-      # ⚠️ Wymagane, choć CLI nie jest tu wdrazane: OpenIddictSeeder zaklada tego klienta bezwarunkowo
-      # i bez sekretu rzuca wyjatkiem, wiec serwer tozsamosci nie wstanie na swiezej bazie.
-      Clients__Cli__Secret = random_password.cli_client.result
-
       Registration__ClosedBeta = tostring(var.registration_closed_beta)
 
       # Connection string czytany wprost z zasobu ACS - nie przechodzi przez tfvars ani przez rece.

@@ -24,8 +24,11 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, SpaOrigins s
     /// </remarks>
     private const string FrameablePath = "/connect/authorize";
 
-    private readonly string defaultPolicy = BuildContentSecurityPolicy(spaOrigins.All);
-    private readonly string frameablePolicy = BuildContentSecurityPolicy(spaOrigins.All, frameableBy: spaOrigins.All);
+    private readonly string defaultPolicy = BuildContentSecurityPolicy(
+        spaOrigins.All, extraFormActionOrigins: OAuthDefaults.CliLoopbackOrigins);
+
+    private readonly string frameablePolicy = BuildContentSecurityPolicy(
+        spaOrigins.All, frameableBy: spaOrigins.All, extraFormActionOrigins: OAuthDefaults.CliLoopbackOrigins);
 
     public Task InvokeAsync(HttpContext context)
     {
@@ -60,11 +63,18 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, SpaOrigins s
     /// ⚠️ <c>form-action</c> zawiera originy SPA, bo Chrome sprawdza je także dla PRZEKIEROWAŃ po wysłaniu formularza:
     /// logowanie i zgoda kończą się przekierowaniem na <c>redirect_uri</c> frontu, więc bez tego przeglądarka
     /// zablokowałaby powrót do aplikacji.
+    ///
+    /// ⚠️ To samo dotyczy <c>bt-cli</c>: jego adresy loopback (<see cref="OAuthDefaults.CliLoopbackOrigins"/>) idą w
+    /// <paramref name="extraFormActionOrigins"/>, a NIE do listy SPA — ta służy też do CORS, do sprawdzania open redirectów
+    /// i do <c>frame-ancestors</c>, więc wpisanie tam loopbacku pozwoliłoby osadzać stronę i wołać Identity z dowolnej aplikacji
+    /// na tym porcie.
     /// </remarks>
     public static string BuildContentSecurityPolicy(
-        IEnumerable<string> spaOrigins, IEnumerable<string>? frameableBy = null)
+        IEnumerable<string> spaOrigins, IEnumerable<string>? frameableBy = null,
+        IEnumerable<string>? extraFormActionOrigins = null)
     {
         var ancestors = frameableBy is null ? [] : frameableBy.ToArray();
+        var formActionOrigins = spaOrigins.Concat(extraFormActionOrigins ?? []);
 
         return string.Join("; ",
         [
@@ -74,7 +84,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, SpaOrigins s
             "font-src https://fonts.gstatic.com",
             "img-src 'self'",
             "connect-src 'self'",
-            $"form-action 'self' {string.Join(' ', spaOrigins)}".TrimEnd(),
+            $"form-action 'self' {string.Join(' ', formActionOrigins)}".TrimEnd(),
             ancestors.Length == 0 ? "frame-ancestors 'none'" : $"frame-ancestors {string.Join(' ', ancestors)}",
             "base-uri 'none'",
             "object-src 'none'",

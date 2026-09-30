@@ -23,7 +23,7 @@ namespace BudgetTracker.Identity.Controllers;
 /// <para>
 /// Ekran zgody, kod + PKCE i wymiana kodu/odświeżenia wzorowane na przykładzie Velusia:
 /// <see href="https://github.com/openiddict/openiddict-samples/blob/dev/samples/Velusia/Velusia.Server/Controllers/AuthorizationController.cs"/>.
-/// Dopasowane pod ASP.NET Identity jako magazyn kont; grant hasła (bt-cli) jest naszym dodatkiem, nie częścią tego przykładu.
+/// Dopasowane pod ASP.NET Identity jako magazyn kont.
 /// </para>
 /// </summary>
 public sealed class AuthorizationController(
@@ -245,61 +245,6 @@ public sealed class AuthorizationController(
             principal.SetScopes(result.Principal!.GetScopes());
             principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
             principal.SetAuthorizationId(result.Principal!.GetAuthorizationId());
-
-            foreach (var claim in principal.Claims)
-            {
-                claim.SetDestinations(GetDestinations(claim, principal));
-            }
-
-            return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-        }
-
-        if (request.IsPasswordGrantType())
-        {
-            // Klient zaufany pierwszej strony (bt-cli) — patrz DECISIONS.md: jedyny użytkownik
-            // jest też jedynym deweloperem, więc grant "password" jest tu świadomym uproszczeniem,
-            // nie ogólną praktyką dla klientów zewnętrznych.
-            var user = await userManager.FindByEmailAsync(request.Username!);
-            if (user is null)
-            {
-                return ForbidWithError(Errors.InvalidGrant, localizer["Login_InvalidCredentials"]);
-            }
-
-            // ⚠️ Lockout egzekwowany RĘCZNIE, bo goły CheckPasswordAsync go nie rusza — bez tego ROPuC był
-            // kanałem na nieograniczone zgadywanie hasła, omijającym blokadę po 3 próbach z logowania webowego.
-            // Ręcznie (nie CheckPasswordSignInAsync), żeby ZACHOWAĆ kolejność: hasło sprawdzamy PRZED wymogiem
-            // potwierdzenia e-maila — inaczej ujawnialibyśmy istnienie niepotwierdzonego konta bez znajomości hasła.
-            if (await userManager.IsLockedOutAsync(user))
-            {
-                return ForbidWithError(Errors.InvalidGrant, localizer["Login_LockedOut"]);
-            }
-
-            if (!await userManager.CheckPasswordAsync(user, request.Password!))
-            {
-                // Zlicza nieudaną próbę i nakłada blokadę po przekroczeniu progu (Lockout w Program.cs).
-                await userManager.AccessFailedAsync(user);
-                return ForbidWithError(Errors.InvalidGrant, localizer["Login_InvalidCredentials"]);
-            }
-
-            // Udane hasło zeruje licznik nieudanych prób — tak samo jak robi to SignInManager przy logowaniu webowym.
-            await userManager.ResetAccessFailedCountAsync(user);
-
-            if (!await userManager.IsEmailConfirmedAsync(user))
-            {
-                // Ten sam wymóg co logowanie webowe (RequireConfirmedAccount, patrz Program.cs) — password
-                // grant idzie bezpośrednio przez UserManager i pomija automatyczne egzekwowanie SignInManagera.
-                return ForbidWithError(Errors.InvalidGrant, localizer["OAuth_CliEmailNotConfirmed"]);
-            }
-
-            if (await userManager.GetTwoFactorEnabledAsync(user))
-            {
-                return ForbidWithError(Errors.InvalidGrant, localizer["OAuth_CliTwoFactor"]);
-            }
-
-            var principal = await signInManager.CreateUserPrincipalAsync(user);
-            principal.SetClaim(Claims.Subject, await userManager.GetUserIdAsync(user));
-            principal.SetScopes(request.GetScopes());
-            principal.SetResources(await ListResourcesAsync(principal.GetScopes()));
 
             foreach (var claim in principal.Claims)
             {

@@ -169,9 +169,9 @@ Cztery wartości są tak pomyślane i **nie ma ich w `terraform.tfvars.example`*
 
 Connection stringa do poczty **nie ma na tej liście** — Terraform czyta go wprost z zasobu ACS.
 
-Sekretów klientów OAuth (`budgettracker-admin`, `bt-cli`) **nie podajesz** — generuje je Terraform
-(`secrets.tf`). Są wewnętrzne: serwer tożsamości sam je zapisuje w swojej bazie i sam ich używa, więc
-nie ma drugiej strony, która musiałaby je poznać.
+Sekretu klienta OAuth `budgettracker-admin` **nie podajesz** — generuje go Terraform (`secrets.tf`). Jest
+wewnętrzny: serwer tożsamości sam go zapisuje w swojej bazie i sam go używa, więc nie ma drugiej strony,
+która musiałaby go poznać. `bt-cli` sekretu nie ma wcale (klient publiczny, kod + PKCE na loopbacku).
 
 Na stałe, dla swojego konta w Windows (nowa sesja terminala je zobaczy):
 
