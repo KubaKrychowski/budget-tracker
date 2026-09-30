@@ -20,11 +20,27 @@ export interface SavingsReservation {
   readonly contributions: SavingsContribution[];
 }
 
-/** Umowna wpłata na cel — pieniądze zostają na koncie oszczędnościowym. */
+/** Odpowiednik ContributionSource z BudgetTracker.Api.Domain.Consts — konto, z którego odkładasz na cel. */
+export type ContributionSource = 'Savings' | 'Regular';
+
+/** Umowna wpłata na cel — pieniądze zostają na koncie, z którego odkładasz. */
 export interface SavingsContribution {
   readonly id: string;
   readonly date: string;
   readonly amount: number;
+  readonly source: ContributionSource;
+  /** Kategoria limitu wpłaty ze zwykłego konta; `null` dla oszczędności. */
+  readonly categoryId: string | null;
+}
+
+/** Kategoria do wyboru przy wpłacie ze zwykłego konta — z limitem i wydanym w bieżącym okresie budżetu. */
+export interface ContributionCategory {
+  readonly id: string;
+  readonly name: string;
+  /** `null`, gdy kategoria nie ma w tym okresie limitu. */
+  readonly limit: number | null;
+  /** Wydane w okresie razem z wpłatami na cele ze zwykłego konta. */
+  readonly spent: number;
 }
 
 /** Odpowiednik SavingsReservationsResponse. */
@@ -50,6 +66,8 @@ export interface ReservationsResponse {
    * Rozliczona rezerwacja przestaje ją pomniejszać (zgłoszenie #23) — zapłacony zakup zszedł już ze stanu konta.
    */
   readonly freeFunds: number;
+  /** Wpłaty ze zwykłego konta na rezerwacje nierozliczone — tyle na zwykłym koncie jest zarezerwowane na cele. */
+  readonly reservedOnRegular: number;
   /**
    * Miesiąc, w którym przy obecnym celu uzbiera się reszta rezerwacji.
    * `null`, gdy wszystko pokryte albo gdy nie ma celu — bez tempa to byłaby zgadywanka.

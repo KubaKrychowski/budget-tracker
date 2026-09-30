@@ -1,5 +1,8 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Limits.Consts;
+using BudgetTracker.Api.Features.Limits.Queries;
+using BudgetTracker.Api.Features.Limits.Services;
 using BudgetTracker.Api.Features.Savings.Commands;
 using BudgetTracker.Api.Features.Savings.Consts;
 using BudgetTracker.Api.Features.Savings.Contracts;
@@ -69,7 +72,14 @@ public sealed class SavingsReservationTests : IAsyncLifetime
 
     private SavingsAccount Account() => new(_db, new SavingsCategory(_db));
 
-    private ContributeToReservationCommandHandler ContributeHandler() => new(_db, Lookup(), Account(), Scope());
+    private ContributeToReservationCommandHandler ContributeHandler() =>
+        new(_db, Lookup(), Account(), Scope(), new LimitCategories(_db));
+
+    private GetContributionCategoriesQueryHandler CategoriesHandler() =>
+        new(_db, Lookup(), new LimitCategories(_db), new LimitSpending(_db), new LimitsBudgetScope(_db, _clock));
+
+    private GetLimitsQueryHandler LimitsHandler() =>
+        new(_db, new LimitsBudgetScope(_db, _clock), new LimitCategories(_db), new LimitSpending(_db));
 
     private UpdateSavingsReservationCommandHandler UpdateHandler() => new(_db, Lookup(), Scope());
 
@@ -457,6 +467,118 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         Assert.Equal(1000m, response.FreeFunds);
     }
 
+    // ── Wpłaty ze zwykłego konta ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Wplata_ze_zwyklego_konta_wymaga_kategorii_na_ktora_da_sie_ustawic_limit()
+    {
+        var reservation = await Reserve("Rower", 2000m, null);
+
+        // Bez kategorii, z nieznaną i z „Oszczędności" (wykluczona z limitów) — każda kończy się 400.
+        await Assert.ThrowsAsync<ContributionCategoryInvalidException>(() => ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(100m, ContributionSource.Regular), default));
+        await Assert.ThrowsAsync<ContributionCategoryInvalidException>(() => ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(100m, ContributionSource.Regular, Guid.NewGuid()), default));
+        var savings = await _db.Categories.SingleAsync(c => c.Id == _savingsCategoryId);
+        await Assert.ThrowsAsync<ContributionCategoryInvalidException>(() => ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(100m, ContributionSource.Regular, savings.BusinessId), default));
+    }
+
+    [Fact]
+    public async Task Wplata_ze_zwyklego_konta_nie_wymaga_oszczednosci_i_nie_rusza_ich_stanu()
+    {
+        // Konto oszczędnościowe puste: wpłata z niego byłaby 400, ze zwykłego przechodzi.
+        var reservation = await Reserve("Rower", 2000m, null);
+        var food = await FoodAsync();
+
+        var view = await ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(500m, ContributionSource.Regular, food.BusinessId), default);
+
+        var contribution = Assert.Single(view.Contributions);
+        Assert.Equal((ContributionSource.Regular, food.BusinessId), (contribution.Source, contribution.CategoryId));
+        Assert.Equal(500m, view.Collected);
+
+        var response = await GetHandler().HandleAsync([_budgetId], default);
+        Assert.Equal(500m, response.ReservedOnRegular);
+        Assert.Equal(0m, response.AvailableToContribute);
+    }
+
+    [Fact]
+    public async Task Wplata_ze_zwyklego_konta_pomniejsza_to_co_oszczednosci_musza_pokryc()
+    {
+        // Konto 3000, rezerwacja 2000 → wolne 1000. 500 ze zwykłego konta zdejmuje tyle z tego, co musi pokryć
+        // oszczędność: wolne 1500. Bez tego pieniądze ze zwykłego konta blokowałyby oszczędności podwójnie.
+        Deposit(2026, 10, 3000m);
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Rower", 2000m, null);
+        var food = await FoodAsync();
+
+        await ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(500m, ContributionSource.Regular, food.BusinessId), default);
+        await ContributeHandler().ContributeAsync(reservation.Id, new ContributeRequestDto(300m), default);
+
+        var response = await GetHandler().HandleAsync([_budgetId], default);
+        Assert.Equal(1500m, response.FreeFunds);
+        // Do odłożenia z oszczędności: 3000 − 300 (tylko wpłata z oszczędności).
+        Assert.Equal(2700m, response.AvailableToContribute);
+        Assert.Equal(800m, response.CollectedTotal);
+    }
+
+    [Fact]
+    public async Task Wplata_ze_zwyklego_konta_liczy_sie_do_limitu_wybranej_kategorii_w_okresie_wplaty()
+    {
+        _db.BudgetItems.Add(new BudgetItem(_budgetId, _foodCategoryId, 1000m, new DateOnly(2026, 1, 1), 80));
+        Add(2026, 11, -900m, _foodCategoryId);
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Rower", 2000m, null);
+        var food = await FoodAsync();
+
+        await ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(400m, ContributionSource.Regular, food.BusinessId), default);
+
+        var limits = await LimitsHandler().HandleAsync(_budgetId, null, default);
+        var row = Assert.Single(limits.Limits);
+        Assert.Equal(1300m, row.Spent);
+        Assert.Equal(LimitState.Over, row.State);
+
+        // Wpłata z listopada nie należy do października.
+        var october = await LimitsHandler().HandleAsync(_budgetId, new DateOnly(2026, 10, 1), default);
+        Assert.Equal(0m, october.Limits.Single().Spent);
+
+        // Podgląd w oknie wpłaty pokazuje to samo co ekran limitów.
+        var preview = (await CategoriesHandler().HandleAsync(reservation.Id, default)).Single(c => c.Id == food.BusinessId);
+        Assert.Equal((1000m, 1300m), (preview.Limit, preview.Spent));
+    }
+
+    [Fact]
+    public async Task Rozliczona_rezerwacja_przestaje_wliczac_wplat_ze_zwyklego_konta_do_limitu()
+    {
+        // Rozliczenie zakupem tworzy prawdziwą transakcję w swojej kategorii — wpłata liczona dalej to podwójne liczenie.
+        _db.BudgetItems.Add(new BudgetItem(_budgetId, _foodCategoryId, 1000m, new DateOnly(2026, 1, 1), 80));
+        await _db.SaveChangesAsync();
+        var reservation = await Reserve("Rower", 2000m, null);
+        var food = await FoodAsync();
+        await ContributeHandler().ContributeAsync(
+            reservation.Id, new ContributeRequestDto(400m, ContributionSource.Regular, food.BusinessId), default);
+
+        var entity = await _db.SavingsReservations.SingleAsync(r => r.BusinessId == reservation.Id);
+        entity.Settle(_clock.GetUtcNow(), Guid.NewGuid());
+        await _db.SaveChangesAsync();
+
+        var limits = await LimitsHandler().HandleAsync(_budgetId, null, default);
+        Assert.Equal(0m, limits.Limits.Single().Spent);
+    }
+
+    [Fact]
+    public void Zrodlo_wplaty_jedzie_do_frontu_jako_NAZWA_a_nie_liczba()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(
+            new SavingsContributionResponseDto(Guid.CreateVersion7(), new DateOnly(2026, 11, 15), 10m, ContributionSource.Regular, null));
+
+        Assert.Contains("\"Regular\"", json);
+        Assert.DoesNotContain("\"Source\":2", json);
+    }
+
     // ── Kontrakt z frontem ───────────────────────────────────────────────────────────────
 
     [Fact]
@@ -478,6 +600,8 @@ public sealed class SavingsReservationTests : IAsyncLifetime
     }
 
     // ── Pomocnicze ───────────────────────────────────────────────────────────────────────
+
+    private async Task<Category> FoodAsync() => await _db.Categories.SingleAsync(c => c.Id == _foodCategoryId);
 
     private async Task<SavingsReservationResponseDto> Reserve(string name, decimal amount, DateOnly? due) =>
         await CreateHandler().HandleAsync(new SaveReservationRequestDto(name, amount, due, 0, _budgetId), default);

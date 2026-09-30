@@ -104,13 +104,26 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
                 TopCategoryAmount: namedCategories.FirstOrDefault()?.Amount ?? 0m,
                 LargestExpenseDescription: largest?.Description,
                 LargestExpenseAmount: largest is null ? 0m : -largest.Amount,
-                ToReviewCount: toReviewCount),
+                ToReviewCount: toReviewCount,
+                ReservedOnRegular: await ReservedOnRegularAsync(selectedBudgetBusinessId, ct)),
             byCategory,
             budgetProgress,
             recent,
             budgets,
             SelectedBudgetId: selected?.BusinessId,
             HasAnyTransactions: await ofBudget.AnyAsync(ct));
+    }
+
+    /// <summary>Ile na zwykłym koncie budżetu jest zarezerwowane na cele — wpłaty ze zwykłego konta na rezerwacje nierozliczone.</summary>
+    /// <remarks>Suma w pamięci: wpłaty siedzą w kolumnie jsonb (patrz <c>SavingsAccount.ContributedAsync</c>).</remarks>
+    private async Task<decimal> ReservedOnRegularAsync(Guid? budget, CancellationToken ct)
+    {
+        if (budget is null) return 0m;
+
+        return (await db.SavingsReservations
+                .Where(r => r.BudgetBusinessId == budget && r.SettledAt == null)
+                .ToListAsync(ct))
+            .Sum(r => r.ContributedFrom(ContributionSource.Regular));
     }
 
     /// <summary>Budżety od najnowszego miesiąca — lista przełącznika i kandydaci na budżet domyślny.</summary>

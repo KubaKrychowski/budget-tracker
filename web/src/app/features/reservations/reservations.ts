@@ -18,6 +18,8 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
+import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -28,7 +30,8 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 import {
-  ReservationsResponse, SavingsContribution, SavingsReservation, SettleCandidate,
+  ContributionCategory, ContributionSource, ReservationsResponse, SavingsContribution, SavingsReservation,
+  SettleCandidate,
 } from '../../core/api/models/reservations';
 
 @Component({
@@ -36,8 +39,8 @@ import {
   imports: [
     CommonModule, FormsModule, RouterLink, BudgetSwitcher,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzCheckboxModule, NzDatePickerModule, NzEmptyModule,
-    NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzProgressModule, NzSpinModule,
-    NzTableModule, NzTagModule,
+    NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzProgressModule, NzSegmentedModule, NzSelectModule,
+    NzSpinModule, NzTableModule, NzTagModule,
     TranslatePipe,
   ],
   templateUrl: './reservations.html',
@@ -200,6 +203,27 @@ export class Reservations {
   private readonly contributingId = signal<string | null>(null);
   protected readonly contributing = computed(() => this.rows().find((r) => r.id === this.contributingId()) ?? null);
   protected readonly draftContribution = signal<number | null>(null);
+  /** Konto, z którego odkładasz. Domyślnie oszczędnościowe — tak działały wpłaty przed wyborem konta. */
+  protected readonly source = signal<ContributionSource>('Savings');
+  protected readonly draftCategoryId = signal<string | null>(null);
+
+  /**
+   * Kategorie do wyboru i to, ile limitu już poszło — ładowane, gdy dialog jest otwarty. Ten sam odczyt karmi podgląd
+   * limitu i podpis kategorii w historii wpłat.
+   */
+  private readonly categoriesResource = httpResource<ContributionCategory[]>(() =>
+    this.contributeOpen() && this.contributingId() !== null
+      ? `/api/savings/reservations/${this.contributingId()}/contribution-categories`
+      : undefined);
+  private readonly categoriesValue = valueOf(this.categoriesResource);
+  protected readonly categories = computed(() => this.categoriesValue() ?? []);
+  protected readonly chosenCategory = computed(() =>
+    this.categories().find((c) => c.id === this.draftCategoryId()) ?? null);
+
+  protected readonly sourceOptions = computed(() => [
+    { label: this.translate.instant('reservations.contribute.sourceSavings'), value: 'Savings' },
+    { label: this.translate.instant('reservations.contribute.sourceRegular'), value: 'Regular' },
+  ]);
 
   /** Brakuje do pełnej kwoty celu. */
   protected readonly missing = computed(() => {
@@ -207,22 +231,55 @@ export class Reservations {
     return row ? Math.max(0, row.amount - row.collected) : 0;
   });
 
-  /** Najwięcej, ile da się teraz wpłacić: brakująca kwota, ale nie więcej niż zostało na koncie. */
+  /**
+   * Najwięcej, ile da się teraz wpłacić: brakująca kwota, a z konta oszczędnościowego dodatkowo nie więcej niż na nim
+   * zostało. Zwykłe konto nie ma pułapu poza brakującą kwotą — jego stanu aplikacja nie zna (patrz DECISIONS.md).
+   */
   protected readonly maxContribution = computed(() =>
-    Math.max(0, Math.min(this.missing(), this.data()?.availableToContribute ?? 0)));
+    this.source() === 'Regular'
+      ? this.missing()
+      : Math.max(0, Math.min(this.missing(), this.data()?.availableToContribute ?? 0)));
 
   protected readonly canContribute = computed(() => {
     const amount = this.draftContribution() ?? 0;
-    return amount > 0 && amount <= this.maxContribution();
+    return amount > 0 && amount <= this.maxContribution()
+      && (this.source() === 'Savings' || this.draftCategoryId() !== null);
   });
+
+  /**
+   * Limit wybranej kategorii po tej wpłacie — `null`, gdy kategoria nie ma limitu i nie ma czego pokazywać.
+   * Przekroczenie tylko ostrzega: wpłata jest umowna i nie blokuje się limitem.
+   */
+  protected readonly limitPreview = computed(() => {
+    const category = this.chosenCategory();
+    if (this.source() !== 'Regular' || category === null || category.limit === null) return null;
+    const after = category.spent + (this.draftContribution() ?? 0);
+    return { limit: category.limit, spent: category.spent, after, over: Math.max(0, after - category.limit) };
+  });
+
+  protected categoryName(id: string | null): string | null {
+    return this.categories().find((c) => c.id === id)?.name ?? null;
+  }
 
   /** Podpowiedź w polu: tyle, ile brakuje, o ile starcza oszczędności. */
   protected openContribute(row: SavingsReservation): void {
     this.contributingId.set(row.id);
+    this.source.set('Savings');
+    this.draftCategoryId.set(null);
     this.contributeOpen.set(true);
-    const available = this.data()?.availableToContribute ?? 0;
-    const suggestion = Math.min(Math.max(0, row.amount - row.collected), Math.max(0, available));
-    this.draftContribution.set(suggestion > 0 ? suggestion : null);
+    this.suggestContribution(row);
+  }
+
+  protected switchSource(source: ContributionSource): void {
+    this.source.set(source);
+    const row = this.contributing();
+    if (row) this.suggestContribution(row);
+  }
+
+  private suggestContribution(row: SavingsReservation): void {
+    const missing = Math.max(0, row.amount - row.collected);
+    const cap = this.source() === 'Regular' ? missing : Math.min(missing, Math.max(0, this.data()?.availableToContribute ?? 0));
+    this.draftContribution.set(cap > 0 ? cap : null);
   }
 
   protected async contribute(): Promise<void> {
@@ -230,8 +287,13 @@ export class Reservations {
     const amount = this.draftContribution();
     if (!row || !this.canContribute() || amount === null) return;
 
+    const body = {
+      amount,
+      source: this.source(),
+      categoryId: this.source() === 'Regular' ? this.draftCategoryId() : null,
+    };
     await this.runContribution(
-      () => firstValueFrom(this.http.post(`/api/savings/reservations/${row.id}/contributions`, { amount })),
+      () => firstValueFrom(this.http.post(`/api/savings/reservations/${row.id}/contributions`, body)),
       'reservations.contribute.saved');
     this.contributeOpen.set(false);
   }
@@ -251,6 +313,7 @@ export class Reservations {
       await action();
       this.message.success(this.translate.instant(successKey));
       this.resource.reload();
+      this.categoriesResource.reload();
     } catch (e) {
       this.message.error(this.errorMessages.of(e));
     } finally {

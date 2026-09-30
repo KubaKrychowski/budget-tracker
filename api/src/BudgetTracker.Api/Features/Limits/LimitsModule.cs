@@ -22,6 +22,7 @@ public static class LimitsModule
     {
         services.AddScoped<LimitsBudgetScope>();
         services.AddScoped<LimitCategories>();
+        services.AddScoped<LimitSpending>();
 
         services.AddScoped<GetLimitsQueryHandler>();
         services.AddScoped<SetLimitCommandHandler>();
