@@ -421,6 +421,7 @@
         "initialBalance": "Balans początkowy",
         "balance": "Balans",
         "balanceHint": "Wyliczany z balansu początkowego i transakcji — nie da się go ustawić wprost.",
+        "balanceHintFromBank": "Pochodzi z salda po ostatniej operacji z wyciągu banku — balans początkowy go nie zmienia.",
         "recalculationTitle": "Zmiana balansu początkowego przeliczy cały budżet",
         "recalculation": "Balans na każdy dzień liczy się od tej wartości, więc przesunie się cały wykres, a nie jedna liczba.",
         "save": "Zapisz",

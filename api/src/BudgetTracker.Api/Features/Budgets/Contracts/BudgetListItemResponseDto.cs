@@ -10,6 +10,10 @@ namespace BudgetTracker.Api.Features.Budgets.Contracts;
 /// czy to ma być osobne pole na budżecie, rozstrzyga issue #5.
 /// </param>
 /// <param name="PeriodStartDay">Dzień początku okresu rozliczeniowego (1–28); 1 = miesiąc kalendarzowy.</param>
+/// <param name="BalanceFromBank">
+/// Bilans pochodzi z sald podanych przez bank (<c>BalanceLedger</c>), więc <c>InitialBalance</c> go nie zmienia. Ekran edycji nie
+/// straszy wtedy „przeliczeniem całego budżetu".
+/// </param>
 /// <param name="Balance">
 /// Bilans bieżący: <c>InitialBalance</c> plus suma transakcji budżetu. Ta sama formuła co na
 /// dashboardzie — dwa ekrany nie mogą pokazywać dla tego samego budżetu dwóch różnych kwot.
@@ -33,4 +37,5 @@ public sealed record BudgetListItemResponseDto(
     DateTimeOffset? DeletedAt,
     Guid? LinkedSavingsBudgetId,
     IReadOnlyList<TitleAmountRuleResponseDto> SavingsTransferRules,
-    int PeriodStartDay = 1);
+    int PeriodStartDay = 1,
+    bool BalanceFromBank = false);

@@ -419,6 +419,7 @@
         "initialBalance": "Opening balance",
         "balance": "Balance",
         "balanceHint": "Derived from the opening balance and the transactions — it cannot be set directly.",
+        "balanceHintFromBank": "Taken from the balance after the last statement transaction — the opening balance does not change it.",
         "recalculationTitle": "Changing the opening balance recalculates the whole budget",
         "recalculation": "The balance for every day is counted from this value, so the entire chart shifts, not a single number.",
         "save": "Save",

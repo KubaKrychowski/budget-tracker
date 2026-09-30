@@ -41,6 +41,11 @@ export interface BudgetListItem {
    * Dotyczy limitów oraz zleceń stałych i epizodycznych.
    */
   periodStartDay: number;
+  /**
+   * Bilans pochodzi z sald podanych przez bank, więc `initialBalance` go nie zmienia — ekran edycji nie straszy wtedy
+   * „przeliczeniem całego budżetu" i nie podgląda zmiany bilansu.
+   */
+  balanceFromBank: boolean;
 }
 
 export interface BudgetListResponse {

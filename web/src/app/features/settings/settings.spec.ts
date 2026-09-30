@@ -116,6 +116,7 @@ describe('Settings', () => {
     linkedSavingsBudgetId: null,
     savingsTransferRules: [],
     periodStartDay: 1,
+    balanceFromBank: false,
     ...over,
   });
 
@@ -419,6 +420,17 @@ describe('Settings', () => {
     expect(request.request.body.periodStartDay).toBe(28);
     request.flush({ ...row, periodStartDay: 28 });
     await done;
+  });
+
+  it('przy bilansie z salda banku nie ostrzega o przeliczeniu i nie podgląda zmiany bilansu', () => {
+    api().menuRow.set(budget({ initialBalance: 1000, balance: 5850, balanceFromBank: true }));
+    api().openEdit();
+
+    api().draftInitialBalance.set(2000);
+
+    // Bilans początkowy nie wpływa na bilans z banku: ostrzeżenie i przesunięty podgląd byłyby nieprawdą.
+    expect(api().initialBalanceChanged()).toBe(false);
+    expect(api().previewBalance()).toBe(5850);
   });
 
   it('przesuwa podgląd bilansu razem z bilansem początkowym', () => {

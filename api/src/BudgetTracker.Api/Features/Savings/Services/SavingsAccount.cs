@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,14 +47,9 @@ public sealed class SavingsAccount(AppDbContext db, SavingsCategory savingsCateg
             .Select(b => new { b.BusinessId, b.InitialBalance })
             .ToListAsync(ct);
 
-        var booked = await db.Transactions
-            .Where(t => t.BudgetBusinessId != null && linkedBudgetIds.Contains(t.BudgetBusinessId.Value))
-            .GroupBy(t => t.BudgetBusinessId)
-            .Select(g => new { BudgetBusinessId = g.Key!.Value, Sum = g.Sum(t => t.Amount) })
-            .ToListAsync(ct);
+        var ledgers = await BudgetLedgers.LoadAsync(db, [.. budgets.Select(b => (b.BusinessId, b.InitialBalance))], ct);
 
-        return budgets.Sum(b =>
-            b.InitialBalance + (booked.FirstOrDefault(s => s.BudgetBusinessId == b.BusinessId)?.Sum ?? 0m));
+        return budgets.Sum(b => ledgers[b.BusinessId].Closing);
     }
 
     /// <summary>
