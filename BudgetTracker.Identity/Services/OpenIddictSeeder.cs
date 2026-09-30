@@ -13,8 +13,7 @@ namespace BudgetTracker.Identity.Services;
 
 /// <summary>
 /// Zakłada przy starcie klientów OAuth wymaganych przez resztę systemu: SPA Angulara (kod + PKCE)
-/// i <c>bt-cli</c> (hasło — zaufany klient pierwszej strony, jedyny użytkownik jest też jedynym deweloperem,
-/// patrz DECISIONS.md). W Development zakłada też konta dev/demo — z TYM SAMYM identyfikatorem, którym
+/// i <c>bt-cli</c> (kod + PKCE na loopbacku, klient publiczny — patrz DECISIONS.md). W Development zakłada też konta dev/demo — z TYM SAMYM identyfikatorem, którym
 /// <c>DevSeed</c>/<c>DemoSeed</c> w API oznaczają zaseedowane budżety (patrz <see cref="DeterministicGuid"/>),
 /// inaczej zalogowany dev/demo user nie zobaczyłby własnych danych. Idempotentne — sprawdza istnienie
 /// przed utworzeniem.
@@ -164,35 +163,54 @@ public sealed class OpenIddictSeeder(
         await appManager.CreateAsync(descriptor, ct);
     }
 
-    private async Task SeedCliClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
+    /// <summary>
+    /// <c>bt-cli</c> jako klient PUBLICZNY: kod autoryzacyjny + PKCE z przekierowaniem na loopback (RFC 8252), bez sekretu
+    /// i bez grantu hasła. Uzgadniany przy KAŻDYM starcie (jak klient SPA), więc istniejący klient z sekretem i grantem hasła
+    /// zostaje przy wdrożeniu przekształcony — sekret znika z bazy.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Bez sekretu, bo CLI jest dla WSZYSTKICH użytkowników: sekret rozdany każdemu nie jest sekretem, a wgrywany
+    /// do kopii CLI byłby do wyciągnięcia z dysku. Klient publiczny nie udaje, że coś chroni — ochroną jest PKCE.</item>
+    /// <item>Hasło nie przechodzi przez CLI: użytkownik loguje się na zwykłej stronie Identity, więc działa też 2FA
+    /// (grant hasła odrzucał konta z 2FA).</item>
+    /// <item>⚠️ Zgoda JAWNA (jak w SPA), nie domyślna: klient publiczny na loopbacku może się podszyć pod <c>bt-cli</c>
+    /// dowolna lokalna aplikacja, a ekran zgody to jedyny moment, w którym użytkownik widzi, komu daje dostęp.
+    /// Zgoda zapisuje się trwale, więc pytanie pada raz.</item>
+    /// <item>Zakres <c>offline_access</c> zostaje: CLI odświeża sesję w tle, bo nie ma jak zrobić cichego iframe'a.</item>
+    /// </list>
+    /// </remarks>
+    private static async Task SeedCliClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
     {
-        const string clientId = OAuthDefaults.CliClientId;
-        if (await appManager.FindByClientIdAsync(clientId, ct) is not null) return;
-
-        // Sekret deweloperski — jedyny użytkownik jest też jedynym deweloperem (CLAUDE.md), więc
-        // "bt-cli" to zaufany klient pierwszej strony uruchamiany lokalnie, nie publiczna integracja.
-        // BEZ defaultu w kodzie/appsettings (trafiłby do gita) — patrz README `tools/bt-cli/`.
-        var secret = configuration["Clients:Cli:Secret"]
-            ?? throw new InvalidOperationException(
-                "Brak Clients:Cli:Secret w konfiguracji. Ustaw: dotnet user-secrets set \"Clients:Cli:Secret\" \"...\"");
-
-        await appManager.CreateAsync(new OpenIddictApplicationDescriptor
+        var descriptor = new OpenIddictApplicationDescriptor
         {
-            ClientId = clientId,
-            ClientSecret = secret,
+            ClientId = OAuthDefaults.CliClientId,
             DisplayName = "bt-cli (PowerShell)",
-            ClientType = ClientTypes.Confidential,
-            ConsentType = ConsentTypes.Implicit,
+            ClientType = ClientTypes.Public,
+            ConsentType = ConsentTypes.Explicit,
             Permissions =
             {
+                Permissions.Endpoints.Authorization,
                 Permissions.Endpoints.Token,
-                Permissions.GrantTypes.Password,
+                Permissions.GrantTypes.AuthorizationCode,
                 Permissions.GrantTypes.RefreshToken,
+                Permissions.ResponseTypes.Code,
                 Permissions.Scopes.Email,
                 Permissions.Scopes.Profile,
                 Permissions.Prefixes.Scope + "offline_access",
                 Permissions.Prefixes.Scope + OAuthDefaults.ApiScope,
             },
-        }, ct);
+            Requirements = { Requirements.Features.ProofKeyForCodeExchange },
+        };
+
+        foreach (var port in OAuthDefaults.CliLoopbackPorts) descriptor.RedirectUris.Add(new Uri(OAuthDefaults.CliRedirectUri(port)));
+
+        if (await appManager.FindByClientIdAsync(OAuthDefaults.CliClientId, ct) is { } existing)
+        {
+            await appManager.UpdateAsync(existing, descriptor, ct);
+            return;
+        }
+
+        await appManager.CreateAsync(descriptor, ct);
     }
 }

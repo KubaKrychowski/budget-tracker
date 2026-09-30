@@ -164,7 +164,6 @@ builder.Services.AddOpenIddict()
         options
             .AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange()
             .AllowRefreshTokenFlow()
-            .AllowPasswordFlow()
             .AllowClientCredentialsFlow();
 
         // Tokeny dostępu jako podpisane JWT (nie szyfrowane) — API weryfikuje je zdalnie przez

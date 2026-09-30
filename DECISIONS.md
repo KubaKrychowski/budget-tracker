@@ -1133,6 +1133,25 @@ wygasania ani limitu użyć, nie ma importu listy hurtem, a rejestracja nie jest
 > - Ograniczenie: po ponownym zalogowaniu aplikacja ląduje na `/`, nie na ekranie, na którym była (zapamiętywanie trasy robi tylko
 >   guard biblioteki).
 
+> **REWIZJA — 2026-09-30: `bt-cli` to klient PUBLICZNY z kodem + PKCE na loopbacku; sekret i grant hasła znikają.** CLI ma być dla
+> WSZYSTKICH użytkowników, a poprzedni projekt (klient poufny z sekretem + grant hasła, „jedyny użytkownik jest też jedynym deweloperem")
+> tego nie znosił: sekret rozdany każdemu nie jest sekretem, a na produkcji nikt go nie znał (losował go Terraform, `random_password.cli_client`),
+> więc `bt login` do produkcji w ogóle nie działał (`client credentials are invalid`).
+> - `bt login` otwiera przeglądarkę na zwykłej stronie logowania Identity i odbiera kod na `http://127.0.0.1:<port>/callback` (RFC 8252).
+>   Hasło nie przechodzi przez CLI, więc działa też 2FA (grant hasła odrzucał konta z 2FA). Grant hasła (`AllowPasswordFlow`) usunięty z serwera.
+> - Porty loopback: stała lista (`OAuthDefaults.CliLoopbackPorts`, 53682–53686), bo `redirect_uri` jest porównywany DOSŁOWNIE, z portem.
+>   Ta sama lista jest w module (`$script:BtLoopbackPorts`); test w `Identity.Tests` pilnuje zgodności. CLI bierze pierwszy wolny port.
+> - Zgoda JAWNA (jak SPA), nie domyślna: klient publiczny na loopbacku może się podszyć pod `bt-cli` dowolna lokalna aplikacja, a ekran zgody
+>   to jedyny moment, w którym użytkownik widzi, komu daje dostęp. Zapisuje się trwale, więc pytanie pada raz.
+> - ⚠️ Loopback trafia do `form-action` w CSP (Chrome sprawdza je także dla przekierowań po formularzu), ale NIE do `SpaOrigins` — ta lista
+>   służy też do CORS, open-redirectów i `frame-ancestors`.
+> - `OpenIddictSeeder` uzgadnia klienta przy KAŻDYM starcie (jak SPA), więc istniejący klient z sekretem zostaje przy wdrożeniu przekształcony
+>   w publiczny (sprawdzone na bazie z „starym" klientem). Stare wersje modułu `bt` przestają działać — trzeba zaktualizować moduł.
+>   Znika `Clients:Cli:Secret` (konfiguracja, Terraform, `BT_CLI_CLIENT_SECRET`).
+> - Odświeżanie tokenu jak wcześniej (`offline_access`, refresh token 14 dni), tylko bez sekretu; token dalej zaszyfrowany DPAPI.
+> - Sprawdzone ręcznie na lokalnym Identity: rejestracja, zgoda, przekierowanie na loopback, wymiana kodu z PKCE, odświeżenie. Port spoza listy
+>   i brak PKCE → 400.
+
 ## 13. Wdrożenie na Azure (Terraform)
 
 Kod infrastruktury: `infra/`. Instrukcja uruchomienia i kroki ręczne: `infra/README.md`. Tu są same decyzje.

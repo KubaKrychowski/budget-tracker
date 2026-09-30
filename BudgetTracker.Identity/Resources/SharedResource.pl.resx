@@ -123,8 +123,6 @@
   <data name="OAuth_ConsentMissing" xml:space="preserve"><value>Użytkownik nie wyraził jeszcze zgody.</value></data>
   <data name="OAuth_Denied" xml:space="preserve"><value>Użytkownik odrzucił żądanie autoryzacji.</value></data>
   <data name="OAuth_TokenNoLongerValid" xml:space="preserve"><value>Token stracił ważność — konto zostało usunięte albo zablokowane.</value></data>
-  <data name="OAuth_CliEmailNotConfirmed" xml:space="preserve"><value>Musisz potwierdzić adres e-mail, zanim zalogujesz się przez bt-cli. Sprawdź skrzynkę albo zaloguj się w aplikacji webowej, żeby wysłać link ponownie.</value></data>
-  <data name="OAuth_CliTwoFactor" xml:space="preserve"><value>Konto ma włączoną weryfikację dwuetapową — bt-cli jej jeszcze nie obsługuje. Zaloguj się w aplikacji webowej.</value></data>
   <data name="Mail_LinkFallback" xml:space="preserve"><value>Przycisk nie działa? Skopiuj ten adres do przeglądarki:</value></data>
   <data name="Mail_Confirm_Subject" xml:space="preserve"><value>Potwierdź adres e-mail — Wydatki.com</value></data>
   <data name="Mail_Confirm_Heading" xml:space="preserve"><value>Potwierdź adres e-mail</value></data>

@@ -19,24 +19,30 @@ Zmiana adresu później: `.\tools\bt-cli\install.ps1 -ApiUrl https://localhost:5
 
 ## Logowanie
 
-API wymaga zalogowanego użytkownika (BudgetTracker.Identity). Klient `bt-cli` jest zarejestrowany
-z sekretem, który **celowo nie jest w repo** (trzyma go serwer tożsamości w `dotnet user-secrets`,
-`Clients:Cli:Secret`) — ustaw go raz, lokalnie:
+API wymaga zalogowanego użytkownika (BudgetTracker.Identity). Nic nie trzeba konfigurować poza adresami —
+`bt-cli` jest klientem publicznym (kod autoryzacyjny + PKCE), **bez sekretu**:
 
 ```powershell
-[Environment]::SetEnvironmentVariable('BT_CLI_CLIENT_SECRET', '<sekret z BudgetTracker.Identity>', 'User')
+bt login    # otwiera przeglądarkę na stronie logowania; po zalogowaniu i zgodzie wraca do terminala
 ```
 
-Potem, przed pierwszym użyciem:
+Hasło nie przechodzi przez CLI (loguje się Ci strona Identity, więc działa też weryfikacja dwuetapowa). Wynik wraca na adres
+`http://127.0.0.1:<port>/callback` — moduł nasłuchuje na pierwszym wolnym z portów 53682–53686 (tylko na tej maszynie),
+więc żaden z nich nie może być zajęty. Jeśli przeglądarka się nie otworzy, moduł wypisze adres do wklejenia.
+Logowanie trzeba dokończyć w ciągu 3 minut.
+
+Token zapisuje się w `%LOCALAPPDATA%\bt-cli\token.json` i odświeża się sam w tle (refresh token); `bt logout` go czyści.
+Zapisany token jest zaszyfrowany DPAPI (odczyta go tylko to samo konto Windows na tym komputerze), starszy plik z jawnym
+tekstem jest przy pierwszym użyciu migrowany. Serwer tożsamości domyślnie to `https://localhost:7226` — inny adres
+(np. produkcyjny) ustaw przez `BT_IDENTITY_URL`, trwale jak `BT_API_URL`:
 
 ```powershell
-bt login    # pyta o e-mail i hasło, zapamiętuje token w %LOCALAPPDATA%\bt-cli\token.json
+[Environment]::SetEnvironmentVariable('BT_IDENTITY_URL', 'https://twoj-adres-identity', 'User')
 ```
 
-Token odświeża się sam w tle (refresh token); `bt logout` czyści zapisany token. Zapisany token jest zaszyfrowany DPAPI
-(odczyta go tylko to samo konto Windows na tym komputerze), starszy plik z jawnym tekstem jest przy pierwszym użyciu migrowany. Serwer tożsamości
-domyślnie to `https://localhost:7226` — inny adres ustaw przez `$env:BT_IDENTITY_URL` (trwale jak
-`BT_API_URL`, przez `[Environment]::SetEnvironmentVariable`).
+**Aktualizacja z wersji 1.x:** wcześniej `bt login` pytał o e-mail i hasło i wymagał `BT_CLI_CLIENT_SECRET`. Po wdrożeniu nowego
+serwera tożsamości stary sposób przestaje działać — zainstaluj moduł ponownie (`.\tools\bt-cli\install.ps1`) i zaloguj się
+`bt login`. Zmienną `BT_CLI_CLIENT_SECRET` możesz usunąć.
 
 ## Użycie
 

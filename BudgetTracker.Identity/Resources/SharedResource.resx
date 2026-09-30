@@ -123,8 +123,6 @@
   <data name="OAuth_ConsentMissing" xml:space="preserve"><value>The user has not given consent yet.</value></data>
   <data name="OAuth_Denied" xml:space="preserve"><value>The user denied the authorization request.</value></data>
   <data name="OAuth_TokenNoLongerValid" xml:space="preserve"><value>The token is no longer valid — the account was deleted or locked.</value></data>
-  <data name="OAuth_CliEmailNotConfirmed" xml:space="preserve"><value>You must confirm your email address before signing in through bt-cli. Check your inbox or sign in to the web app to resend the link.</value></data>
-  <data name="OAuth_CliTwoFactor" xml:space="preserve"><value>This account has two-step verification turned on — bt-cli does not support it yet. Sign in to the web app.</value></data>
   <data name="Mail_LinkFallback" xml:space="preserve"><value>Button not working? Copy this address into your browser:</value></data>
   <data name="Mail_Confirm_Subject" xml:space="preserve"><value>Confirm your email address — Wydatki.com</value></data>
   <data name="Mail_Confirm_Heading" xml:space="preserve"><value>Confirm your email address</value></data>

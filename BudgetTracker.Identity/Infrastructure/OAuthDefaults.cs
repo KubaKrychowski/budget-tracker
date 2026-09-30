@@ -16,6 +16,22 @@ public static class OAuthDefaults
 
     public const string CliClientId = "bt-cli";
 
+    /// <summary>
+    /// Porty na 127.0.0.1, na których <c>bt-cli</c> odbiera kod autoryzacyjny (RFC 8252, przekierowanie na loopback).
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Lista jest zaszyta też w module PowerShell (<c>tools/bt-cli/Bt/Bt.psm1</c>, <c>$BtLoopbackPorts</c>) — obie muszą
+    /// się zgadzać, bo OpenIddict porównuje <c>redirect_uri</c> DOSŁOWNIE, z portem. Kilka portów zamiast jednego, żeby
+    /// zajęty port nie blokował logowania; CLI bierze pierwszy wolny.
+    /// </remarks>
+    public static readonly int[] CliLoopbackPorts = [53682, 53683, 53684, 53685, 53686];
+
+    /// <summary>Adres powrotu klienta <c>bt-cli</c> na danym porcie loopback.</summary>
+    public static string CliRedirectUri(int port) => $"http://127.0.0.1:{port}/callback";
+
+    /// <summary>Originy loopback klienta <c>bt-cli</c> — potrzebne w <c>form-action</c> CSP, bo logowanie kończy się przekierowaniem na nie.</summary>
+    public static IEnumerable<string> CliLoopbackOrigins => CliLoopbackPorts.Select(port => $"http://127.0.0.1:{port}");
+
     /// <summary>Klient serwisowy (client credentials), którym serwer tożsamości wywołuje endpointy /api/admin API budżetu.</summary>
     public const string AdminClientId = "budgettracker-admin";
 
