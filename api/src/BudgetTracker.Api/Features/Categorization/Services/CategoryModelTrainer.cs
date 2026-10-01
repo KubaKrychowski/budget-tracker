@@ -1,6 +1,8 @@
 using BudgetTracker.Api.Features.Categorization.Contracts;
 using BudgetTracker.Api.Features.Categorization.Models;
+using BudgetTracker.Api.Infrastructure.Telemetry;
 using Microsoft.ML;
+using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms.Text;
 
@@ -66,14 +68,21 @@ public static class CategoryModelTrainer
                 labelColumnName: "Label", featureColumnName: "Features"))
             .Append(ml.Transforms.Conversion.MapKeyToValue("PredictedCategory", "PredictedLabel"));
 
-        var model = pipeline.Fit(split.TrainSet);
+        ITransformer model;
+        using (AppTelemetry.Source.StartActivity("training.fit"))
+            model = pipeline.Fit(split.TrainSet);
 
-        var metrics = ml.MulticlassClassification.Evaluate(
-            model.Transform(split.TestSet), labelColumnName: "Label");
+        MulticlassClassificationMetrics metrics;
+        using (AppTelemetry.Source.StartActivity("training.evaluate"))
+            metrics = ml.MulticlassClassification.Evaluate(
+                model.Transform(split.TestSet), labelColumnName: "Label");
 
         var buffer = new MemoryStream();
-        ml.Model.Save(model, all.Schema, buffer);
-        buffer.Position = 0;
+        using (AppTelemetry.Source.StartActivity("training.save"))
+        {
+            ml.Model.Save(model, all.Schema, buffer);
+            buffer.Position = 0;
+        }
 
         var rows = ml.Data.CreateEnumerable<TransactionFeatures>(all, reuseRowObject: false).ToList();
 
