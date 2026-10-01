@@ -1362,3 +1362,20 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 ⚠️ **Zakres i ograniczenia:** bilet jedzie w adresie, więc trafia do logów i telemetrii — dlatego jest krótki i jednorazowy. Zużyte bilety pamięta proces (jedna instancja); klucze Data Protection nie są utrwalane, więc po restarcie aplikacji trzeba wejść ponownie. Panel pokazuje argumenty zadań (identyfikatory użytkowników), a pozwala kasować zadania — dostęp ma wyłącznie administrator.
 
 **Nie sprawdzone:** przepływ end-to-end na działającym Identity i API (bez Dockera); testy obejmują bilet i ciasteczko (`JobsDashboardAccessTests`) oraz zgodność zasobów Identity.
+
+
+## 14. Telemetria (Application Insights)
+
+**OpenTelemetry z eksportem do Azure Monitor, tylko API.** Dystrybucja `Azure.Monitor.OpenTelemetry.AspNetCore` zbiera żądania HTTP, HttpClient, runtime .NET oraz zapytania Npgsql (źródło i metryki `Npgsql` wbudowane w sterownik). Własne metryki i spany (`AppTelemetry`): podgląd i zapis importu oraz trening modelu, w tym kroki `training.fit`/`training.evaluate`/`training.save`. Identity, frontend i Hangfire poza treningiem nie są objęte.
+
+- **Eksport włącza się tylko przy `APPLICATIONINSIGHTS_CONNECTION_STRING`** (albo `ApplicationInsights:ConnectionString`). Lokalnie i w testach nic nie wychodzi; dystrybucja rzuca wyjątek przy starcie bez connection stringa, dlatego rejestracja jest warunkowa.
+- **Zasoby w Terraformie** (`infra/monitoring.tf`): Log Analytics (retencja 30 dni, dzienny limit `log_daily_quota_gb` = 0,1 GB) i Application Insights. Connection string trafia do ustawień App Service API wprost z zasobu, bez zmiennej środowiskowej.
+- ⚠️ **Limit dzienny jest twardy:** po jego przekroczeniu dane przestają wpływać do końca doby UTC. Zapytania SQL zajmują najwięcej miejsca — po kilku dniach sprawdź zużycie.
+- ⚠️ **Etykiety metryk tylko o niskiej kardynalności** (krok, wynik); nigdy identyfikator użytkownika, budżetu ani opis transakcji. Npgsql nie wysyła wartości parametrów SQL do spanów — nie włączaj ich.
+- Polityka prywatności opisuje telemetrię (punkt 2d); wersja dokumentów `2026-10-01` (`BetaAccessRequestService.ConsentVersion`).
+
+**Co pokazały pierwsze pomiary (2026-10-01).** Pierwsze żądanie po każdym starcie procesu płaci ok. 5 s za pierwszy token tożsamości zarządzanej (`/msi/token`) i ok. 1 s za zimne połączenie z Neonem. Dlatego `AzureWarmupService` pobiera token i otwiera połączenie zaraz po starcie, na TYM SAMYM singletonie `TokenCredential`, którego używa klient bloba (osobna instancja miałaby osobną pamięć podręczną). Rozgrzany endpoint odpowiada w ok. 1 s. Stałym kosztem pozostaje odległość do bazy: Neon stoi w `us-east-2`, a aplikacja w Poland Central, więc każde zapytanie to ok. 125 ms, a każde żądanie dokłada dwa `set_config` (RLS).
+
+**Do rozstrzygnięcia:** przeniesienie bazy do regionu europejskiego (największy zysk dla wszystkich endpointów) oraz scalenie sekwencyjnych zapytań w `GET /api/dashboard` i `GET /api/categorization/training-set`. Trening modelu trwa ok. 40–50 s na 154 wierszach (CPU, jeden rdzeń B1) — po wdrożeniu spanów kroków widać, który krok dominuje.
+
+**Nie sprawdzone:** działanie rozgrzewki po wdrożeniu (kod zbudowany, ale bez testów — Docker nie działał) oraz zachowanie `health_check_path` z `UseHttpsRedirection` (patrz `infra/app-service.tf`).
