@@ -6,6 +6,7 @@ using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Services;
 using BudgetTracker.Api.Features.StandingOrders.Services;
 using BudgetTracker.Api.Infrastructure;
+using BudgetTracker.Api.Infrastructure.Telemetry;
 using Microsoft.EntityFrameworkCore;
 
 namespace BudgetTracker.Api.Features.Import.Commands;
@@ -48,6 +49,14 @@ public sealed class CommitImportCommandHandler(
     /// </list>
     /// </remarks>
     public async Task<ImportSummaryResponseDto> HandleAsync(CommitRequestDto request, CancellationToken ct)
+    {
+        using var activity = AppTelemetry.Source.StartActivity("import.commit");
+        activity?.SetTag("import.rows", request.Rows.Count);
+        return await AppTelemetry.MeasureAsync(
+            AppTelemetry.ImportCommitDuration, () => CommitAsync(request, ct));
+    }
+
+    private async Task<ImportSummaryResponseDto> CommitAsync(CommitRequestDto request, CancellationToken ct)
     {
         var rows = request.Rows;
         var budget = await budgets.FindAcceptingAsync(request.BudgetId, ct);

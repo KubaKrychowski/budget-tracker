@@ -3,6 +3,7 @@ using BudgetTracker.Api.Features.Import.Contracts;
 using BudgetTracker.Api.Features.Import.Models;
 using BudgetTracker.Api.Features.Import.Services;
 using BudgetTracker.Api.Infrastructure;
+using BudgetTracker.Api.Infrastructure.Telemetry;
 using Microsoft.EntityFrameworkCore;
 
 namespace BudgetTracker.Api.Features.Import.Queries;
@@ -43,6 +44,17 @@ public sealed class GetImportPreviewQueryHandler(
     /// nad wierszami wołającymi o przegląd.
     /// </remarks>
     public async Task<ImportPreviewResponseDto> HandleAsync(
+        IReadOnlyList<ParsedRow> rows, Guid budgetId, CancellationToken ct)
+    {
+        using var activity = AppTelemetry.Source.StartActivity("import.preview");
+        var preview = await AppTelemetry.MeasureAsync(
+            AppTelemetry.ImportPreviewDuration, () => BuildPreviewAsync(rows, budgetId, ct));
+        AppTelemetry.ImportPreviewRows.Record(preview.RowsInFile);
+        activity?.SetTag("import.rows", preview.RowsInFile);
+        return preview;
+    }
+
+    private async Task<ImportPreviewResponseDto> BuildPreviewAsync(
         IReadOnlyList<ParsedRow> rows, Guid budgetId, CancellationToken ct)
     {
         var budget = await budgets.FindAcceptingAsync(budgetId, ct);

@@ -62,6 +62,15 @@ variable "postgres_connection_string_identity" {
   sensitive   = true
 }
 
+variable "log_daily_quota_gb" {
+  description = <<-EOT
+    Dzienny limit danych telemetrii w GB (patrz monitoring.tf). Po przekroczeniu workspace przestaje
+    przyjmować dane do końca doby. Pierwsze 5 GB miesięcznie jest za darmo.
+  EOT
+  type        = number
+  default     = 0.1
+}
+
 # ---------------------------------------------------------------------------------------------------
 # Serwer tożsamości
 # ---------------------------------------------------------------------------------------------------
