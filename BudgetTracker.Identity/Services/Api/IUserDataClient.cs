@@ -20,4 +20,7 @@ public interface IUserDataClient
     /// Zakłada magazyn plików nowego konta (kontener modeli i artefaktów). Powtórzenie jest bezpieczne.
     /// </summary>
     Task CreateUserContainerAsync(Guid userId, CancellationToken ct);
+
+    /// <summary>Bilet jednorazowy (ważny ok. minuty) do wejścia administratora do panelu zadań w tle API.</summary>
+    Task<string> CreateJobsDashboardTicketAsync(CancellationToken ct);
 }

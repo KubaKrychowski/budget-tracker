@@ -8,10 +8,14 @@
         <img class="admin-brand__logo" src="~/logo.svg" width="28" height="28" alt=""/>
         @L["Admin_Brand"]
     </span>
-    @if (Spa.Default is { } spaUrl)
-    {
-        <a href="@spaUrl" class="auth-link">@L["Common_BackToApp"]</a>
-    }
+    <span class="admin-header__links">
+        @* Zwykły GET: akcja po stronie serwera pobiera bilet z API i przekierowuje; nowa karta, bo panel to osobna aplikacja. *@
+        <a asp-action="JobsDashboard" class="auth-link" target="_blank" rel="noopener">@L["Admin_JobsDashboard"] ↗</a>
+        @if (Spa.Default is { } spaUrl)
+        {
+            <a href="@spaUrl" class="auth-link">@L["Common_BackToApp"]</a>
+        }
+    </span>
 </div>
 
 <div class="admin-titles">
