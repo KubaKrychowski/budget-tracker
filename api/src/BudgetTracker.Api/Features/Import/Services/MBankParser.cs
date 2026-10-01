@@ -14,7 +14,8 @@ namespace BudgetTracker.Api.Features.Import.Services;
 /// <remarks>
 /// Rozpoznane cechy formatu, wszystkie zaskakujące na pierwszy rzut oka:
 /// <list type="bullet">
-///   <item>kodowanie <b>CP1250</b>, bez BOM — jak PKO, nie UTF-8;</item>
+///   <item>kodowanie <b>CP1250</b>, bez BOM — jak PKO, nie UTF-8 (wariant „Lista operacji” jest za to UTF-8,
+///     więc <see cref="Decode"/> sprawdza, czy bajty są poprawnym UTF-8, i dopiero w razie porażki schodzi na CP1250);</item>
 ///   <item>plik zaczyna kilkanaście linii metadanych klienta i rachunku, każda w innym kształcie —
 ///     jedyny stały punkt zaczepienia to nagłówek tabeli operacji;</item>
 ///   <item>⚠️ nagłówek NIE jest rozpoznawany po dokładnym tekście z polskimi znakami („Data księgowania”
@@ -40,6 +41,12 @@ namespace BudgetTracker.Api.Features.Import.Services;
 ///     (obserwowane na realnym pliku, zapewne przez opóźnione księgowanie zaokrągleń „Na Twoje Cele”).
 ///     Dlatego <see cref="ParseAsync"/> jawnie sortuje wynik po dacie, zamiast ufać kolejności w pliku —
 ///     stabilnie (<c>OrderBy</c>), żeby nie zaburzyć kolejności operacji tego samego dnia.</item>
+///   <item>⚠️ <b>drugi układ pliku: „Lista operacji”</b> (eksport z listy operacji w serwisie, nie „Elektroniczne
+///     zestawienie operacji”). Nagłówek ma tylko 5 kolumn (<c>#Data operacji, #Opis operacji, #Rachunek,
+///     #Kategoria, #Kwota</c>), wiersz operacji jest zwykłym wierszem CSV (bez zagnieżdżenia), a kwota
+///     („-108,28 PLN”) ma przecinek dziesiętny i walutę, ale NIE jest cytowana — rozpada się więc na dwa pola
+///     zewnętrznego CSV. Dlatego kwotę składamy z pól od piątego wzwyż. Opis jest dopełniony spacjami, a numer konta
+///     skrócony („eKonto 1311 ... 7634”) — numer pomijamy, salda w tym układzie nie ma;</item>
 /// </list>
 /// </remarks>
 public sealed class MBankParser : IStatementParser
@@ -54,6 +61,16 @@ public sealed class MBankParser : IStatementParser
     /// wiersza operacji, bo oba mają dokładnie 8 pól.
     /// </summary>
     private const int MinInnerColumns = 8;
+
+    /// <summary>Liczba kolumn nagłówka w układzie „Lista operacji”.</summary>
+    private const int ListColumns = 5;
+
+    /// <summary>Układ pliku wykryty po nagłówku tabeli operacji.</summary>
+    private enum Layout
+    {
+        Statement = 1,
+        OperationsList = 2,
+    }
 
     /// <summary>
     /// Rejestruje strony kodowe: .NET zna domyślnie tylko Unicode, więc bez tego CP1250 rzuca wyjątkiem.
@@ -72,7 +89,9 @@ public sealed class MBankParser : IStatementParser
     /// </remarks>
     public async Task<IReadOnlyList<ParsedRow>> ParseAsync(Stream content, CancellationToken ct)
     {
-        using var reader = new StreamReader(content, Encoding.GetEncoding(1250));
+        using var memory = new MemoryStream();
+        await content.CopyToAsync(memory, ct);
+        using var reader = new StringReader(Decode(memory.ToArray()));
         using var csv = new CsvParser(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = ",",
@@ -92,7 +111,7 @@ public sealed class MBankParser : IStatementParser
             throw new StatementFormatException("Import_UnrecognizedFormat");
         }
 
-        var sawHeader = false;
+        Layout? layout = null;
         var rows = new List<ParsedRow>();
 
         while (await csv.ReadAsync())
@@ -102,20 +121,17 @@ public sealed class MBankParser : IStatementParser
             var outer = csv.Record;
             if (outer is null || outer.Length == 0) continue;
 
-            if (!sawHeader)
+            if (layout is null)
             {
-                if (LooksLikeOperationsHeader(outer))
-                {
-                    sawHeader = true;
-                }
+                layout = DetectLayout(outer);
                 continue;
             }
 
-            var row = TryParseRow(outer[0]);
+            var row = layout == Layout.Statement ? TryParseRow(outer[0]) : TryParseListRow(outer);
             if (row is not null) rows.Add(row);
         }
 
-        if (!sawHeader)
+        if (layout is null)
         {
             throw new StatementFormatException("Import_UnrecognizedFormat");
         }
@@ -126,6 +142,37 @@ public sealed class MBankParser : IStatementParser
         }
 
         return rows.OrderBy(r => r.Date).ToList();
+    }
+
+    /// <summary>
+    /// UTF-8 w trybie ścisłym (bajty CP1250 z polskimi znakami nie są poprawnym UTF-8, więc nie przejdą),
+    /// a gdy się nie uda — CP1250. Ewentualny BOM jest odcinany, żeby nie zepsuł pierwszej kolumny.
+    /// </summary>
+    private static string Decode(byte[] bytes)
+    {
+        string text;
+        try
+        {
+            text = new UTF8Encoding(false, true).GetString(bytes);
+        }
+        catch (DecoderFallbackException)
+        {
+            text = Encoding.GetEncoding(1250).GetString(bytes);
+        }
+
+        return text.TrimStart('﻿');
+    }
+
+    /// <summary>Rozpoznaje układ po kształcie nagłówka; null = to jeszcze nie nagłówek tabeli operacji.</summary>
+    private static Layout? DetectLayout(string[] cells)
+    {
+        if (LooksLikeOperationsHeader(cells)) return Layout.Statement;
+
+        return cells.Length >= ListColumns &&
+               cells[0].TrimStart().StartsWith('#') &&
+               cells.Take(ListColumns).All(c => !string.IsNullOrWhiteSpace(c))
+            ? Layout.OperationsList
+            : null;
     }
 
     /// <summary>
@@ -186,6 +233,32 @@ public sealed class MBankParser : IStatementParser
         decimal? balanceAfter = TryParseAmount(cells[7], out var balance) ? balance : null;
 
         return new ParsedRow(date, amount, description, type, null, balanceAfter);
+    }
+
+    /// <summary>Wiersz układu „Lista operacji”: data, opis, rachunek, kategoria, kwota (+ ewentualna reszta kwoty).</summary>
+    /// <remarks>
+    /// ⚠️ Kwota „-108,28 PLN” bez cytowania rozpada się na „-108” i „28 PLN” — składamy ją z powrotem z pól od piątego.
+    /// Gdyby eksporter zacytował kwotę, pole jest jedno i złożenie nic nie zmienia. Opis ma ciągi spacji (dopełnienie
+    /// kolumn), więc je zwijamy — inaczej ten sam sklep różniłby się kluczem deduplikacji i regułami kategoryzacji.
+    /// </remarks>
+    private static ParsedRow? TryParseListRow(string[] cells)
+    {
+        if (cells.Length < ListColumns) return null;
+
+        if (!DateOnly.TryParseExact(cells[0].Trim(), "yyyy-MM-dd",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            return null;
+        }
+
+        var rawAmount = string.Join(',', cells.Skip(ListColumns - 1));
+        var numeric = new string(rawAmount.Where(c => char.IsDigit(c) || c is '-' or ',' or '.').ToArray());
+        if (!TryParseAmount(numeric, out var amount)) return null;
+
+        var description = string.Join(' ', cells[1].Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        if (description.Length == 0) return null;
+
+        return new ParsedRow(date, amount, description, string.Empty, null);
     }
 
     /// <summary>

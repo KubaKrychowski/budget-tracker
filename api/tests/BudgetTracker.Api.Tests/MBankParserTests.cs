@@ -143,4 +143,41 @@ public class MBankParserTests
 
         Assert.Equal("Import_EmptyFile", ex.ResourceKey);
     }
+
+    private static async Task<IReadOnlyList<ParsedRow>> ParseList()
+    {
+        await using var stream = File.OpenRead(Path.Combine("testdata", "mbank-list-sample.csv"));
+        return await new MBankParser().ParseAsync(stream, default);
+    }
+
+    [Fact]
+    public async Task Parses_the_five_column_operations_list_export_in_utf8()
+    {
+        var rows = await ParseList();
+
+        // Ten układ miał nagłówek z 5 kolumn i był odrzucany jako „nierozpoznany format”.
+        Assert.Equal(3, rows.Count);
+        Assert.Contains(rows, r => r.Description.Contains("SPÓŁDZIELNIA TESTOWA"));
+    }
+
+    [Fact]
+    public async Task Rebuilds_the_unquoted_amount_split_by_its_decimal_comma()
+    {
+        var rows = await ParseList();
+
+        // „-108,28 PLN” bez cytowania to dwa pola CSV; „5 000,00 PLN” ma jeszcze spację tysięcy.
+        Assert.Contains(rows, r => r.Amount == -108.28m);
+        Assert.Contains(rows, r => r.Amount == 5000.00m);
+        Assert.Contains(rows, r => r.Amount == -1500.00m);
+    }
+
+    [Fact]
+    public async Task Collapses_the_padding_spaces_in_the_operations_list_description()
+    {
+        var rows = await ParseList();
+
+        var shop = rows.Single(r => r.Amount == -108.28m);
+        Assert.Equal("Sklep Testowy SPOŻYWCZY 12 BLIK ZAKUP NFC", shop.Description);
+        Assert.Null(shop.BalanceAfter);
+    }
 }
