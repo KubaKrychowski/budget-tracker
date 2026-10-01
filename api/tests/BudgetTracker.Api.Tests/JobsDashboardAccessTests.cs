@@ -89,4 +89,16 @@ public sealed class JobsDashboardAccessTests
     {
         Assert.False(NewAccess().IsValidCookie(value));
     }
+
+    [Fact]
+    public void The_dashboard_policy_allows_own_scripts_but_never_inline_or_eval()
+    {
+        // Panel potrzebuje własnych skryptów i stylów, ale to jedyna strona HTML w API — skrypty inline i eval zostają zakazane.
+        var csp = JobsDashboardAccess.ContentSecurityPolicy;
+        var scriptSrc = csp.Split(';').Select(d => d.Trim()).Single(d => d.StartsWith("script-src"));
+
+        Assert.Equal("script-src 'self'", scriptSrc);
+        Assert.Contains("frame-ancestors 'none'", csp);
+        Assert.DoesNotContain("unsafe-eval", csp);
+    }
 }

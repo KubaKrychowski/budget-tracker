@@ -33,6 +33,15 @@ public sealed class JobsDashboardAccess
 
     private const string CookiePayload = "jobs-dashboard";
 
+    /// <summary>
+    /// Polityka treści dla stron panelu Hangfire. Skrypty tylko z własnego hosta (panel nie używa skryptów inline —
+    /// konfigurację przekazuje atrybutami <c>data-</c>), style także inline, bo panel ma <c>style="…"</c> na paskach
+    /// postępu. Reszta jak w reszcie API: brak osadzania w ramkach, brak <c>base</c>, formularze tylko do siebie.
+    /// </summary>
+    public const string ContentSecurityPolicy =
+        "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
+        "font-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+
     private readonly ITimeLimitedDataProtector _tickets;
     private readonly ITimeLimitedDataProtector _cookies;
     private readonly ConcurrentDictionary<string, DateTimeOffset> _usedTickets = new();
