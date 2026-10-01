@@ -40,6 +40,9 @@ public sealed class ApiUserDataClient(IHttpClientFactory httpClientFactory, Serv
     public Task CreateUserContainerAsync(Guid userId, CancellationToken ct) =>
         SendAsync(HttpMethod.Post, $"api/admin/users/{userId}/container", null, ct);
 
+    public async Task<string> CreateJobsDashboardTicketAsync(CancellationToken ct) =>
+        (await SendAsync<TicketResponse>(HttpMethod.Post, "api/admin/jobs-dashboard/ticket", null, ct)).Ticket;
+
     private async Task<T> SendAsync<T>(HttpMethod method, string url, object? body, CancellationToken ct)
     {
         using var response = await SendCoreAsync(method, url, body, ct);
@@ -95,4 +98,6 @@ public sealed class ApiUserDataClient(IHttpClientFactory httpClientFactory, Serv
     private sealed record OrphansResponse(List<OrphanedOwner> Owners);
 
     private sealed record ChangeResponse(OwnerDataCounts Counts);
+
+    private sealed record TicketResponse(string Ticket);
 }

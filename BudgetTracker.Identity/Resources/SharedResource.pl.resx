@@ -279,6 +279,9 @@
   <data name="Admin_History_Action_UserDeleted" xml:space="preserve"><value>Usunięcie konta</value></data>
   <data name="Admin_History_Action_OwnAccountDeleted" xml:space="preserve"><value>Usunięcie własnego konta</value></data>
   <data name="Admin_History_Action_OrphanDataAssigned" xml:space="preserve"><value>Przepisanie danych bez właściciela</value></data>
+  <data name="Admin_History_Action_JobsDashboardOpened" xml:space="preserve"><value>Wejście do panelu zadań w tle</value></data>
+  <data name="Admin_JobsDashboard" xml:space="preserve"><value>Zadania w tle</value></data>
+  <data name="Admin_Flash_JobsDashboardUnavailable" xml:space="preserve"><value>Nie udało się otworzyć panelu zadań w tle. API jest niedostępne albo odrzuciło żądanie.</value></data>
   <data name="Admin_History_Action_OrphanDataDeleted" xml:space="preserve"><value>Usunięcie danych bez właściciela</value></data>
   <data name="Admin_History_Outcome_Succeeded" xml:space="preserve"><value>Udane</value></data>
   <data name="Admin_History_Outcome_NotFound" xml:space="preserve"><value>Brak konta</value></data>

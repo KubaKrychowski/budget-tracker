@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using BudgetTracker.Identity.Infrastructure;
 using BudgetTracker.Identity.Models;
+using BudgetTracker.Identity.Options;
 using BudgetTracker.Identity.Resources;
 using BudgetTracker.Identity.Services.Api;
 using BudgetTracker.Identity.Services.Audit;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 
 namespace BudgetTracker.Identity.Controllers;
 
@@ -33,6 +35,7 @@ public sealed class AdminController(
     IAdminAuditLog audit,
     IAdminAuditReader auditReader,
     IStringLocalizer<SharedResource> localizer,
+    IOptions<ApiOptions> apiOptions,
     ILogger<AdminController> logger) : Controller
 {
     private const int PageSize = 20;
@@ -496,6 +499,42 @@ public sealed class AdminController(
             logger.LogWarning(ex, "API budżetu nie odpowiedziało.");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Wejście do panelu zadań w tle (Hangfire) w API: pobiera bilet jednorazowy i przekierowuje na adres wejścia API.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Panel pozwala uruchamiać, ponawiać i kasować zadania, więc każde wejście trafia do dziennika audytu — także nieudane.
+    /// Bilet jest ważny ok. minuty i jednorazowy (patrz <c>JobsDashboardAccess</c> w API), a tu nie jest nigdzie zapisywany.
+    /// </para>
+    /// <para>
+    /// Zwykły GET zamiast POST: to link w nagłówku, który otwiera nową kartę. Nie zmienia stanu u nas poza wpisem audytu,
+    /// a bilet i tak nic nie daje bez przeglądarki administratora, do której wraca ciasteczko z API.
+    /// </para>
+    /// </remarks>
+    [HttpGet]
+    public async Task<IActionResult> JobsDashboard(CancellationToken ct)
+    {
+        string ticket;
+        try
+        {
+            ticket = await data.CreateJobsDashboardTicketAsync(ct);
+        }
+        catch (UserDataServiceException ex)
+        {
+            logger.LogWarning(ex, "Nie udało się pobrać biletu do panelu zadań w tle (próbował {ActorId}).", CurrentUserId());
+            await audit.RecordAsync(new AdminAuditRecord(
+                CurrentUserId(), AdminAuditAction.JobsDashboardOpened, AdminAuditOutcome.DataServiceUnavailable, Guid.Empty), ct);
+            return FlashAndRedirect(nameof(Users), "Admin_Flash_JobsDashboardUnavailable", isError: true);
+        }
+
+        await audit.RecordAsync(new AdminAuditRecord(
+            CurrentUserId(), AdminAuditAction.JobsDashboardOpened, AdminAuditOutcome.Succeeded, Guid.Empty), ct);
+
+        var apiBase = apiOptions.Value.BaseUrl.TrimEnd('/');
+        return Redirect($"{apiBase}/hangfire/enter?ticket={Uri.EscapeDataString(ticket)}");
     }
 
     private IActionResult FlashAndRedirect(string action, string resourceKey, bool isError, params object[] args)

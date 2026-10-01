@@ -29,4 +29,7 @@ public enum AdminAuditAction
 
     /// <summary>Administrator usunął prośbę o dostęp (cofnięcie zgody, koniec bety). Nie rusza zaproszenia ani konta.</summary>
     BetaRequestRemoved = 8,
+
+    /// <summary>Administrator wszedł do panelu zadań w tle (Hangfire) — panel pozwala uruchamiać i kasować zadania.</summary>
+    JobsDashboardOpened = 9,
 }

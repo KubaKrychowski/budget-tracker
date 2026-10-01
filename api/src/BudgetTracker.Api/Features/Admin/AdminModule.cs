@@ -4,6 +4,7 @@ using BudgetTracker.Api.Features.Admin.Contracts;
 using BudgetTracker.Api.Features.Admin.Queries;
 using BudgetTracker.Api.Features.Admin.Services;
 using BudgetTracker.Api.Infrastructure;
+using BudgetTracker.Api.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Authorization;
 using OpenIddict.Abstractions;
 
@@ -50,6 +51,13 @@ public static class AdminModule
             Results.Ok(await handler.HandleAsync(request, ct)))
             .WithName("GetUserDataSummaries")
             .Produces<UserDataSummariesResponseDto>()
+            .Produces(StatusCodes.Status403Forbidden);
+
+        // Bilet jednorazowy do panelu Hangfire — patrz JobsDashboardAccess. Wołane przez Identity po kliknięciu administratora.
+        admin.MapPost("/jobs-dashboard/ticket", (JobsDashboardAccess access) =>
+            Results.Ok(new JobsDashboardTicketResponseDto(access.IssueTicket())))
+            .WithName("CreateJobsDashboardTicket")
+            .Produces<JobsDashboardTicketResponseDto>()
             .Produces(StatusCodes.Status403Forbidden);
 
         admin.MapPost("/orphans", async (

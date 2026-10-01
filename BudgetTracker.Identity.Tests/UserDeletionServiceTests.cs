@@ -235,6 +235,8 @@ public sealed class UserDeletionServiceTests
         public Task<IReadOnlyList<OrphanedOwner>> GetOrphansAsync(IReadOnlyCollection<Guid> knownUserIds, CancellationToken ct) =>
             throw new NotSupportedException();
 
+        public Task<string> CreateJobsDashboardTicketAsync(CancellationToken ct) => throw new NotSupportedException();
+
         public Task<OwnerDataCounts> DeleteDataAsync(Guid ownerId, CancellationToken ct)
         {
             calls.Add("data");

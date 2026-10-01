@@ -279,6 +279,9 @@
   <data name="Admin_History_Action_UserDeleted" xml:space="preserve"><value>Account deleted</value></data>
   <data name="Admin_History_Action_OwnAccountDeleted" xml:space="preserve"><value>Own account deleted</value></data>
   <data name="Admin_History_Action_OrphanDataAssigned" xml:space="preserve"><value>Ownerless data reassigned</value></data>
+  <data name="Admin_History_Action_JobsDashboardOpened" xml:space="preserve"><value>Jobs dashboard opened</value></data>
+  <data name="Admin_JobsDashboard" xml:space="preserve"><value>Background jobs</value></data>
+  <data name="Admin_Flash_JobsDashboardUnavailable" xml:space="preserve"><value>Could not open the background jobs dashboard. The API is unavailable or rejected the request.</value></data>
   <data name="Admin_History_Action_OrphanDataDeleted" xml:space="preserve"><value>Ownerless data deleted</value></data>
   <data name="Admin_History_Outcome_Succeeded" xml:space="preserve"><value>Done</value></data>
   <data name="Admin_History_Outcome_NotFound" xml:space="preserve"><value>Account not found</value></data>

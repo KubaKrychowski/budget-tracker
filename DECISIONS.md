@@ -1350,3 +1350,15 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 ⚠️ **Zakres:** oba stringi leżą w ustawieniach tej samej aplikacji, więc włamanie DO APLIKACJI daje oba. Zmiana chroni przed wyciekiem samego stringa webowego (logi, kopia ustawień, stacja robocza), nie przed przejęciem procesu. Pełne rozdzielenie wymagałoby osobnej aplikacji dla zadań.
 
 **Nie sprawdzone:** testy na bazie (Docker był wyłączony przy pisaniu; nowe `SystemDbTests` i istniejące testy RLS przejdą dopiero w CI). Skrypt ról nie był uruchamiany na Neonie.
+
+### 2026-10-01 — panel Hangfire na produkcji przez bilet z panelu administratora
+
+**Problem:** panel `/hangfire` istniał tylko w Development (połączenia lokalne), więc na produkcji nie dało się obejrzeć historii zadań (np. nieudanego treningu modelu) ani uruchomić zadania z palca.
+
+**Decyzja:** w panelu administratora Identity jest link „Zadania w tle ↗”. Identity pobiera od API (token serwisowy, polityka `AdminPolicies.Admin`) bilet jednorazowy ważny ok. 60 s i przekierowuje na `/hangfire/enter?ticket=…`. API przyjmuje bilet raz, ustawia ciasteczko (HttpOnly, Secure, SameSite=Strict, ścieżka `/hangfire`, 30 min) i przekierowuje do panelu; autoryzuje go `JobsDashboardAuthorizationFilter`. Panel jest w PEŁNYM trybie (uruchamianie, ponawianie, kasowanie zadań). Każde wejście trafia do dziennika audytu (`JobsDashboardOpened`), także nieudane.
+
+**Odrzucone:** panel hostowany w Identity (Identity nie ma dostępu do bazy API); osobne hasło Basic Auth (kolejny sekret).
+
+⚠️ **Zakres i ograniczenia:** bilet jedzie w adresie, więc trafia do logów i telemetrii — dlatego jest krótki i jednorazowy. Zużyte bilety pamięta proces (jedna instancja); klucze Data Protection nie są utrwalane, więc po restarcie aplikacji trzeba wejść ponownie. Panel pokazuje argumenty zadań (identyfikatory użytkowników), a pozwala kasować zadania — dostęp ma wyłącznie administrator.
+
+**Nie sprawdzone:** przepływ end-to-end na działającym Identity i API (bez Dockera); testy obejmują bilet i ciasteczko (`JobsDashboardAccessTests`) oraz zgodność zasobów Identity.
