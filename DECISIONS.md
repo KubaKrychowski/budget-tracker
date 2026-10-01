@@ -1376,6 +1376,8 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 
 **Co pokazały pierwsze pomiary (2026-10-01).** Pierwsze żądanie po każdym starcie procesu płaci ok. 5 s za pierwszy token tożsamości zarządzanej (`/msi/token`) i ok. 1 s za zimne połączenie z Neonem. Dlatego `AzureWarmupService` pobiera token i otwiera połączenie zaraz po starcie, na TYM SAMYM singletonie `TokenCredential`, którego używa klient bloba (osobna instancja miałaby osobną pamięć podręczną). Rozgrzany endpoint odpowiada w ok. 1 s. Stałym kosztem pozostaje odległość do bazy: Neon stoi w `us-east-2`, a aplikacja w Poland Central, więc każde zapytanie to ok. 125 ms, a każde żądanie dokłada dwa `set_config` (RLS).
 
-**Do rozstrzygnięcia:** przeniesienie bazy do regionu europejskiego (największy zysk dla wszystkich endpointów) oraz scalenie sekwencyjnych zapytań w `GET /api/dashboard` i `GET /api/categorization/training-set`. Trening modelu trwa ok. 40–50 s na 154 wierszach (CPU, jeden rdzeń B1) — po wdrożeniu spanów kroków widać, który krok dominuje.
+**Decyzja właściciela (2026-10-01): baza zostaje na Neonie w `us-east-2`, na razie bez przenoszenia.** Azure Flexible Server B1ms w Poland Central to ok. 14,5 USD/mies. samego compute (storage i kopie osobno), więc odpada; darmowy Neon w `aws-eu-central-1` (Frankfurt) jest możliwy, gdy opóźnienie zacznie przeszkadzać. Dawne repozytorium `budget-tracker-2-infrastructure` zostało usunięte — jedyny Terraform to `infra/`.
+
+**Do rozstrzygnięcia:** scalenie sekwencyjnych zapytań w `GET /api/dashboard` i `GET /api/categorization/training-set`. Trening modelu trwa ok. 40–50 s na 154 wierszach (CPU, jeden rdzeń B1) — po wdrożeniu spanów kroków widać, który krok dominuje.
 
 **Nie sprawdzone:** działanie rozgrzewki po wdrożeniu (kod zbudowany, ale bez testów — Docker nie działał) oraz zachowanie `health_check_path` z `UseHttpsRedirection` (patrz `infra/app-service.tf`).
