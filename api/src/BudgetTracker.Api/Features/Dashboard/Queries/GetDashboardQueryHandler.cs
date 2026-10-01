@@ -66,18 +66,18 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
         // liczy się z `ofBudget`, nie z tej zmiennej, i ich celowo NIE pomija.
         var forTotals = inRange.Where(t => t.SavingsTransferBudgetBusinessId == null);
 
-        var totalExpenses = -await forTotals.Where(t => t.Amount < 0).SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
-        var totalIncome = await forTotals.Where(t => t.Amount > 0).SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        var sums = await SumRangeAsync(inRange, ct);
+        var totalExpenses = -sums.Expenses;
+        var totalIncome = sums.Income;
+        var toReviewCount = sums.ToReview;
 
         var namedCategories = await SpendByNamedCategoryAsync(forTotals, ct);
-        var byCategory = await WithUncategorizedAsync(namedCategories, forTotals, ct);
+        var byCategory = WithUncategorized(namedCategories, -sums.Uncategorized);
 
         var largest = await forTotals.Where(t => t.Amount < 0)
             .OrderBy(t => t.Amount)
             .Select(t => new { t.Description, t.Amount })
             .FirstOrDefaultAsync(ct);
-
-        var toReviewCount = await inRange.CountAsync(t => t.Status == TransactionStatus.PendingReview, ct);
 
         // ⚠️ Bilans z salda banku, nie „początkowy + suma" — patrz BalanceLedger. Ta sama księga zasila listę budżetów,
         // podsumowanie importu i konto oszczędnościowe, więc wszystkie ekrany pokazują to samo.
@@ -111,7 +111,7 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
             recent,
             budgets,
             SelectedBudgetId: selected?.BusinessId,
-            HasAnyTransactions: await ofBudget.AnyAsync(ct));
+            HasAnyTransactions: ledger.Entries.Count > 0);
     }
 
     /// <summary>Ile na zwykłym koncie budżetu jest zarezerwowane na cele — wpłaty ze zwykłego konta na rezerwacje nierozliczone.</summary>
@@ -179,6 +179,27 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
             .ToList();
     }
 
+    /// <summary>Sumy okresu jednym zapytaniem: wydatki, przychody, wydatki bez kategorii i licznik „do weryfikacji".</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>⚠️ To jedno zapytanie zastępuje cztery. Baza stoi w innym regionie niż aplikacja, więc każde zapytanie to
+    /// ok. 125 ms samego łącza — liczba zapytań na ekran jest tu ważniejsza niż koszt pojedynczego.</item>
+    /// <item>Wydatki, przychody i kubełek „bez kategorii" pomijają przelewy do/z budżetu oszczędnościowego
+    /// (<see cref="Transaction.SavingsTransferBudgetBusinessId"/>), a licznik „do weryfikacji" liczy się z CAŁEGO okresu —
+    /// tak jak przed scaleniem. Warunki siedzą więc w sumach warunkowych, nie w wspólnym filtrze.</item>
+    /// <item>Pusty okres daje zero wierszy z <c>GROUP BY</c>, stąd <c>default</c> (same zera).</item>
+    /// </list>
+    /// </remarks>
+    private static async Task<RangeSums> SumRangeAsync(IQueryable<Transaction> inRange, CancellationToken ct) =>
+        await inRange
+            .GroupBy(_ => 1)
+            .Select(g => new RangeSums(
+                g.Sum(t => t.SavingsTransferBudgetBusinessId == null && t.Amount < 0 ? t.Amount : 0m),
+                g.Sum(t => t.SavingsTransferBudgetBusinessId == null && t.Amount > 0 ? t.Amount : 0m),
+                g.Sum(t => t.SavingsTransferBudgetBusinessId == null && t.Amount < 0 && t.CategoryId == null ? t.Amount : 0m),
+                g.Count(t => t.Status == TransactionStatus.PendingReview)))
+            .FirstOrDefaultAsync(ct);
+
     /// <summary>Seria wykresu kategorii: nazwane kategorie plus kubełek „bez kategorii", gdy coś w nim jest.</summary>
     /// <remarks>
     /// Wykres dostaje kubełek „bez kategorii", żeby sumował się do sumy wydatków. „Najdroższa kategoria" go NIE
@@ -186,13 +207,9 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
     /// <c>CategoryId = null</c> jest tu SENTINELEM „bez kategorii", nie brakiem danych — front filtruje listę
     /// transakcji po nim (<c>uncategorized=true</c>), nigdy po przetłumaczonej nazwie.
     /// </remarks>
-    private async Task<List<CategorySpendResponseDto>> WithUncategorizedAsync(
-        List<CategorySpendResponseDto> namedCategories, IQueryable<Transaction> inRange, CancellationToken ct)
+    private List<CategorySpendResponseDto> WithUncategorized(
+        List<CategorySpendResponseDto> namedCategories, decimal uncategorized)
     {
-        var uncategorized = -await inRange
-            .Where(t => t.Amount < 0 && t.CategoryId == null)
-            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
-
         return uncategorized > 0m
             ? [.. namedCategories, new CategorySpendResponseDto(null, localizer[UncategorizedResourceKey], uncategorized)]
             : namedCategories;
@@ -276,6 +293,9 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
         thinned.Add(points[^1]);
         return thinned;
     }
+
+    /// <summary>Sumy okresu z <see cref="SumRangeAsync"/>; wydatki i „bez kategorii" jako wartości ujemne, jak w bazie.</summary>
+    private readonly record struct RangeSums(decimal Expenses, decimal Income, decimal Uncategorized, int ToReview);
 
     /// <summary>Budżet w kształcie potrzebnym ekranowi — bez kolumn, których dashboard nie czyta.</summary>
     private sealed record BudgetRow(
