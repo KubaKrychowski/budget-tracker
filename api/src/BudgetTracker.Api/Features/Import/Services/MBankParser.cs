@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using BudgetTracker.Api.Features.Import.Consts;
 using BudgetTracker.Api.Features.Import.Exceptions;
 using BudgetTracker.Api.Features.Import.Models;
 using CsvHelper;
@@ -65,13 +66,6 @@ public sealed class MBankParser : IStatementParser
     /// <summary>Liczba kolumn nagłówka w układzie „Lista operacji”.</summary>
     private const int ListColumns = 5;
 
-    /// <summary>Układ pliku wykryty po nagłówku tabeli operacji.</summary>
-    private enum Layout
-    {
-        Statement = 1,
-        OperationsList = 2,
-    }
-
     /// <summary>
     /// Rejestruje strony kodowe: .NET zna domyślnie tylko Unicode, więc bez tego CP1250 rzuca wyjątkiem.
     /// </summary>
@@ -111,7 +105,7 @@ public sealed class MBankParser : IStatementParser
             throw new StatementFormatException("Import_UnrecognizedFormat");
         }
 
-        Layout? layout = null;
+        MBankLayout? layout = null;
         var rows = new List<ParsedRow>();
 
         while (await csv.ReadAsync())
@@ -127,7 +121,7 @@ public sealed class MBankParser : IStatementParser
                 continue;
             }
 
-            var row = layout == Layout.Statement ? TryParseRow(outer[0]) : TryParseListRow(outer);
+            var row = layout == MBankLayout.Statement ? TryParseRow(outer[0]) : TryParseListRow(outer);
             if (row is not null) rows.Add(row);
         }
 
@@ -164,14 +158,14 @@ public sealed class MBankParser : IStatementParser
     }
 
     /// <summary>Rozpoznaje układ po kształcie nagłówka; null = to jeszcze nie nagłówek tabeli operacji.</summary>
-    private static Layout? DetectLayout(string[] cells)
+    private static MBankLayout? DetectLayout(string[] cells)
     {
-        if (LooksLikeOperationsHeader(cells)) return Layout.Statement;
+        if (LooksLikeOperationsHeader(cells)) return MBankLayout.Statement;
 
         return cells.Length >= ListColumns &&
                cells[0].TrimStart().StartsWith('#') &&
                cells.Take(ListColumns).All(c => !string.IsNullOrWhiteSpace(c))
-            ? Layout.OperationsList
+            ? MBankLayout.OperationsList
             : null;
     }
 
