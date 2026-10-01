@@ -142,13 +142,17 @@ var app = builder.Build();
 // API zwraca wyłącznie JSON i nie serwuje HTML/skryptów, więc `default-src 'none'` jest bezpieczne i mocne;
 // `frame-ancestors 'none'` + `X-Frame-Options: DENY` odcinają osadzanie API w ramce, `nosniff` blokuje
 // MIME-sniffing JSON-a, `no-referrer` nie wypuszcza adresu z tokenem w Referer.
+// Wyjątek: panel Hangfire pod /hangfire to strony HTML z własnymi skryptami i stylami, więc `default-src 'none'`
+// zostawiał go gołym HTML-em — dostaje łagodniejszą, ale nadal zamkniętą politykę (patrz JobsDashboardAccess).
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
     headers["X-Content-Type-Options"] = "nosniff";
     headers["X-Frame-Options"] = "DENY";
     headers["Referrer-Policy"] = "no-referrer";
-    headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    headers["Content-Security-Policy"] = context.Request.Path.StartsWithSegments(JobsDashboardAccess.DashboardPath)
+        ? JobsDashboardAccess.ContentSecurityPolicy
+        : "default-src 'none'; frame-ancestors 'none'";
     await next();
 });
 
