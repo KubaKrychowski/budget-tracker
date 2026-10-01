@@ -30,7 +30,7 @@ public sealed class BetaAccessRequestService(ApplicationDbContext db, TimeProvid
     /// (<c>web/projects/landing/public/regulamin.html</c>, <c>polityka-prywatnosci.html</c>) — zgoda zapisana pod starą
     /// wersją dotyczy starego tekstu, i po to ją w ogóle zapisujemy.
     /// </summary>
-    public const string ConsentVersion = "2026-09-30";
+    public const string ConsentVersion = "2026-10-01";
 
     /// <summary>
     /// Zapisuje prośbę. Powtórzenie adresu NIE jest błędem i nie różni się od pierwszego zapisu dla wołającego.
