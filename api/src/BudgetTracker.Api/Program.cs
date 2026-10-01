@@ -16,6 +16,7 @@ using BudgetTracker.Api.Features.StandingOrders;
 using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Infrastructure.Jobs;
+using BudgetTracker.Api.Infrastructure.Telemetry;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddOpenApi();
+builder.Services.AddTelemetry(builder.Configuration);
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddLocalization();

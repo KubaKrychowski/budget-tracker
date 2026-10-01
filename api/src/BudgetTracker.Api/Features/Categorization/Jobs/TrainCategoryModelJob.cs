@@ -2,6 +2,8 @@ using BudgetTracker.Api.Features.Categorization.Contracts;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Infrastructure;
+using BudgetTracker.Api.Infrastructure.Telemetry;
+using System.Diagnostics;
 using Hangfire;
 using Hangfire.Server;
 using Microsoft.Extensions.Logging;
@@ -50,6 +52,9 @@ public sealed class TrainCategoryModelJob(
         }
 
         using var asUser = BackgroundUser.Use(userId);
+        using var activity = AppTelemetry.Source.StartActivity("categorization.training");
+        var started = Stopwatch.GetTimestamp();
+        var outcome = "failure";
         _logger.LogInformation("Trening modelu: start, konto {UserId}, zgłoszenie {JobId}.", userId, jobId);
 
         try
@@ -72,6 +77,8 @@ public sealed class TrainCategoryModelJob(
                 "Trening modelu: koniec, konto {UserId}, zgłoszenie {JobId}, {Rows} przykładów, trafność micro {Micro:P1} / macro {Macro:P1}.",
                 userId, jobId, reportData.Item1.Rows, reportData.Item1.MicroAccuracy, reportData.Item1.MacroAccuracy);
 
+            outcome = "success";
+            activity?.SetTag("training.rows", reportData.Item1.Rows);
             return reportData.Item1;
         }
         catch (Exception e) when (e is not OperationCanceledException)
@@ -79,6 +86,11 @@ public sealed class TrainCategoryModelJob(
             // Zadanie nie ma ponowień, więc ten wpis jest jedynym śladem POWODU (panel Hangfire pokazuje sam wyjątek).
             _logger.LogError(e, "Trening modelu: niepowodzenie, konto {UserId}, zgłoszenie {JobId}.", userId, jobId);
             throw;
+        }
+        finally
+        {
+            AppTelemetry.TrainingDuration.Record(
+                Stopwatch.GetElapsedTime(started).TotalSeconds, new KeyValuePair<string, object?>("outcome", outcome));
         }
     }
 }

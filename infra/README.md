@@ -169,6 +169,10 @@ Cztery wartości są tak pomyślane i **nie ma ich w `terraform.tfvars.example`*
 
 Connection stringa do poczty **nie ma na tej liście** — Terraform czyta go wprost z zasobu ACS.
 
+Connection stringa telemetrii **też nie podajesz** — Terraform tworzy Application Insights z workspace Log Analytics
+(`monitoring.tf`) i sam wstawia go do ustawienia `APPLICATIONINSIGHTS_CONNECTION_STRING` aplikacji **API**
+(patrz `TelemetryModule`). Dzienny limit danych to zmienna `log_daily_quota_gb` (domyślnie 0,1 GB).
+
 Sekretu klienta OAuth `budgettracker-admin` **nie podajesz** — generuje go Terraform (`secrets.tf`). Jest
 wewnętrzny: serwer tożsamości sam go zapisuje w swojej bazie i sam go używa, więc nie ma drugiej strony,
 która musiałaby go poznać. `bt-cli` sekretu nie ma wcale (klient publiczny, kod + PKCE na loopbacku).

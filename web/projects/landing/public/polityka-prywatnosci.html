@@ -16,7 +16,7 @@
 
 <main>
   <h1>Polityka prywatności</h1>
-  <p class="meta">Obowiązuje od 30.09.2026 · wersja 2026-09-30</p>
+  <p class="meta">Obowiązuje od 01.10.2026 · wersja 2026-10-01</p>
 
   <p>
     Niniejsza Polityka prywatności określa zasady przetwarzania danych osobowych w związku z korzystaniem ze strony
@@ -51,13 +51,35 @@
       a zaimportowane dane mogą zostać usunięte w każdej chwili.
     </li>
   </ul>
-  <p><strong>c) Bezpieczeństwo.</strong> Adres IP Użytkownika jest przetwarzany wyłącznie chwilowo, w pamięci serwera, w celu ograniczania liczby żądań (ochrona przed nadużyciami). Nie jest zapisywany w bazie danych ani w dzienniku.</p>
+  <p><strong>c) Bezpieczeństwo.</strong> Adres IP Użytkownika jest przetwarzany chwilowo, w pamięci serwera, w celu ograniczania liczby żądań (ochrona przed nadużyciami). Nie jest zapisywany w bazie danych aplikacji. Adres IP w kontekście telemetrii opisano w punkcie d).</p>
+  <p><strong>d) Telemetria i diagnostyka (wyłącznie aplikacja, nie strona projektu).</strong></p>
+  <ul>
+    <li>
+      Serwer aplikacji zbiera dane o własnym działaniu: metryki wydajności (czas odpowiedzi, czas zapytań do bazy,
+      czas importu wyciągu i treningu modelu kategoryzacji, liczba wierszy importowanego pliku, zużycie zasobów serwera),
+      ślady żądań (metoda, ścieżka adresu, kod odpowiedzi, czas trwania) oraz dziennik zdarzeń i błędów aplikacji.
+    </li>
+    <li>
+      Ścieżki adresów mogą zawierać losowe identyfikatory zasobów (np. budżetu), a wpisy dziennika
+      — identyfikator konta Użytkownika. Są to dane pseudonimowe; telemetria nie zawiera treści, kwot ani opisów transakcji,
+      haseł, tokenów ani wartości parametrów zapytań do bazy danych.
+    </li>
+    <li>
+      Telemetria jest zbierana wyłącznie po stronie serwera. Nie używamy skryptów ani plików cookies do
+      śledzenia Użytkownika w przeglądarce.
+    </li>
+    <li>
+      Celem jest wykrywanie awarii i wąskich gardeł wydajności oraz utrzymanie bezpieczeństwa i jakości usługi. Dane
+      nie są wykorzystywane do celów reklamowych ani do profilowania Użytkowników.
+    </li>
+  </ul>
 
   <h2>3. Podstawa prawna przetwarzania</h2>
   <ul>
     <li>Prośba o dostęp — zgoda Użytkownika (art. 6 ust. 1 lit. a RODO). Zgodę można cofnąć w każdej chwili; cofnięcie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej cofnięciem.</li>
     <li>Konto w aplikacji — wykonanie umowy o świadczenie usługi drogą elektroniczną (art. 6 ust. 1 lit. b RODO).</li>
     <li>Ochrona przed nadużyciami — prawnie uzasadniony interes Administratora, polegający na zapewnieniu bezpieczeństwa serwisu (art. 6 ust. 1 lit. f RODO).</li>
+    <li>Telemetria i diagnostyka — prawnie uzasadniony interes Administratora, polegający na zapewnieniu poprawnego działania, wydajności i bezpieczeństwa aplikacji (art. 6 ust. 1 lit. f RODO). Użytkownik ma prawo sprzeciwu wobec takiego przetwarzania (zob. punkt 7).</li>
   </ul>
 
   <h2>4. Okres przechowywania danych</h2>
@@ -70,12 +92,14 @@
     </li>
     <li>Dane konta i dane finansowe są przechowywane do czasu usunięcia konta. Usunięcie konta w aplikacji powoduje ich natychmiastowe i nieodwracalne skasowanie (zob. <a href="/usun-konto">Usuwanie konta</a>).</li>
     <li>Budżet usunięty przez Użytkownika z aplikacji jest przechowywany przez 30 dni w celu umożliwienia jego przywrócenia. Jest to funkcja aplikacji uruchamiana z inicjatywy Użytkownika. Po upływie tego okresu budżet jest kasowany, a na żądanie Użytkownika może zostać skasowany niezwłocznie.</li>
+    <li>Dane telemetryczne i dziennik zdarzeń aplikacji są przechowywane przez 30 dni, po czym są automatycznie usuwane. Usunięcie konta nie powoduje wcześniejszego usunięcia wpisów telemetrii dotyczących konta; wygasają one wraz z upływem tego okresu.</li>
   </ul>
 
   <h2>5. Odbiorcy danych</h2>
   <ul>
     <li>Administrator nie sprzedaje danych osobowych, nie dokonuje profilowania Użytkowników ani nie wykorzystuje danych do celów reklamowych.</li>
     <li>Aplikacja jest udostępniana z wykorzystaniem usług Microsoft Azure (hosting aplikacji i strony projektu oraz wysyłka wiadomości e-mail związanych z kontem, np. potwierdzenia adresu). Microsoft przetwarza dane jako podmiot przetwarzający na zlecenie Administratora. W usłudze Azure przechowywane są również pliki modeli kategoryzacji, odrębne dla każdego Użytkownika.</li>
+    <li>Telemetria aplikacji (punkt 2 lit. d) jest przetwarzana w usłudze Azure Monitor (Application Insights i Log Analytics) firmy Microsoft, która działa jako podmiot przetwarzający na zlecenie Administratora. Zasoby znajdują się w regionie Poland Central, w Europejskim Obszarze Gospodarczym.</li>
     <li>Baza danych zawierająca dane konta i dane finansowe jest prowadzona w usłudze Neon (Neon, Inc.), która przetwarza dane jako podmiot przetwarzający na zlecenie Administratora. Baza jest zlokalizowana w infrastrukturze Amazon Web Services w regionie us-east na terytorium Stanów Zjednoczonych, wobec czego dane są przekazywane poza Europejski Obszar Gospodarczy. Neon należy do grupy Databricks, która, zgodnie ze swoją informacją o prywatności, stosuje standardowe klauzule umowne Komisji Europejskiej oraz uczestniczy w programie EU-U.S. Data Privacy Framework.</li>
     <li>Dane osobowe nie są udostępniane innym podmiotom trzecim poza dostawcami infrastruktury wskazanymi powyżej.</li>
     <li>Plik CSV z wyciągiem bankowym jest odczytywany wyłącznie w trakcie importu; zapisywane są zawarte w nim transakcje, natomiast sam plik nie jest przechowywany.</li>
@@ -85,6 +109,7 @@
   <h2>6. Pliki cookies i pamięć przeglądarki</h2>
   <ul>
     <li>Strona projektu nie wykorzystuje plików cookies ani narzędzi analitycznych lub reklamowych.</li>
+    <li>Telemetria aplikacji (punkt 2 lit. d) jest zbierana po stronie serwera i nie wykorzystuje plików cookies ani skryptów w przeglądarce.</li>
     <li>Strona logowania i aplikacja wykorzystują wyłącznie niezbędne pliki cookies, służące do utrzymania sesji i zabezpieczenia formularzy. Ich stosowanie nie wymaga zgody Użytkownika.</li>
     <li>Aplikacja zapisuje w przeglądarce ustawienia ułatwiające korzystanie (np. wybrany budżet, historię wyszukiwań). Dane te są usuwane przy wylogowaniu.</li>
   </ul>

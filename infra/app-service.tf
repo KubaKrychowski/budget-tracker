@@ -59,32 +59,39 @@ resource "azurerm_linux_web_app" "api" {
     }
   }
 
-  app_settings = {
-    ASPNETCORE_ENVIRONMENT = "Production"
+  # Connection string telemetrii czytany wprost z zasobu Application Insights (monitoring.tf) — nie przechodzi
+  # przez tfvars ani przez ręce, tak samo jak connection string poczty w Identity.
+  app_settings = merge(
+    {
+      ASPNETCORE_ENVIRONMENT = "Production"
 
-    # ⚠️ App Service konczy TLS na froncie i przekazuje zadanie do kontenera zwyklym HTTP, wiec
-    # aplikacja widzi Request.IsHttps == false. Bez tego ustawienia antiforgery z SecurePolicy.Always
-    # rzuca przy kazdym formularzu, a UseHttpsRedirection z UseHsts robi nieskonczone przekierowanie.
-    # Wlacza middleware naglowkow przekazanych - bez zmiany w kodzie, patrz dokumentacja ASP.NET Core
-    # "Configure ASP.NET Core to work with proxy servers and load balancers".
-    ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true"
+      # ⚠️ App Service konczy TLS na froncie i przekazuje zadanie do kontenera zwyklym HTTP, wiec
+      # aplikacja widzi Request.IsHttps == false. Bez tego ustawienia antiforgery z SecurePolicy.Always
+      # rzuca przy kazdym formularzu, a UseHttpsRedirection z UseHsts robi nieskonczone przekierowanie.
+      # Wlacza middleware naglowkow przekazanych - bez zmiany w kodzie, patrz dokumentacja ASP.NET Core
+      # "Configure ASP.NET Core to work with proxy servers and load balancers".
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true"
 
-    ConnectionStrings__Postgres = var.postgres_connection_string_api
+      ConnectionStrings__Postgres = var.postgres_connection_string_api
 
-    # Rola zadań systemowych (patrz variables.tf). Pusty string znaczy „brak” i włącza stary tor (patrz SystemDb).
-    ConnectionStrings__PostgresWorker = var.postgres_connection_string_worker
+      # Rola zadań systemowych (patrz variables.tf). Pusty string znaczy „brak” i włącza stary tor (patrz SystemDb).
+      ConnectionStrings__PostgresWorker = var.postgres_connection_string_worker
 
-    # Resource server: API waliduje tokeny przez JWKS serwera tożsamości, bez wspólnej bazy.
-    Identity__Issuer = "${local.identity_url}/"
+      # Resource server: API waliduje tokeny przez JWKS serwera tożsamości, bez wspólnej bazy.
+      Identity__Issuer = "${local.identity_url}/"
 
-    Storage__BlobServiceUri      = azurerm_storage_account.models.primary_blob_endpoint
-    Storage__SharedContainerName = azurerm_storage_container.shared.name
-    Storage__TrainingSetName     = "training-set.csv"
+      Storage__BlobServiceUri      = azurerm_storage_account.models.primary_blob_endpoint
+      Storage__SharedContainerName = azurerm_storage_container.shared.name
+      Storage__TrainingSetName     = "training-set.csv"
 
-    # Front woła API z innego originu (Static Web Apps), więc bez tej listy przeglądarka odrzuci każde
-    # żądanie. Landing tu NIE jest wymieniony — to strona statyczna, która nie rozmawia z API.
-    Cors__Origins__0 = local.front_url
-  }
+      # Front woła API z innego originu (Static Web Apps), więc bez tej listy przeglądarka odrzuci każde
+      # żądanie. Landing tu NIE jest wymieniony — to strona statyczna, która nie rozmawia z API.
+      Cors__Origins__0 = local.front_url
+    },
+    {
+      APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
+    }
+  )
 
   tags = local.tags
 }
