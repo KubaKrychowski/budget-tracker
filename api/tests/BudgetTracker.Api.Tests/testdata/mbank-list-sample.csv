@@ -1,0 +1,20 @@
+mBank S.A. Bankowość Detaliczna,,,,
+,,Skrytka Pocztowa 1,,
+,,00-001 Warszawa,,
+,,,,
+#Klient,,,,
+----------------------,,,,
+,,,,
+Lista operacji,,,,
+,,,,
+#Za okres:,,,,
+01.09.2026,30.09.2026,,,
+,,,,
+      #Waluta,#Wpływy,#Wydatki,,
+PLN,5000,00,-1634,28
+      ,,,,
+#Data operacji,#Opis operacji,#Rachunek,#Kategoria,#Kwota
+2026-09-30,Sklep Testowy  SPOŻYWCZY 12                                           BLIK ZAKUP NFC                  ,eKonto 0000 ... 0000,Żywność i chemia domowa,-108,28 PLN
+2026-09-05,PRACODAWCA TESTOWY SP. Z O.O.        WYNAGRODZENIE                 ,eKonto 0000 ... 0000,Wynagrodzenie,5 000,00 PLN
+2026-09-02,SPÓŁDZIELNIA TESTOWA        CZYNSZ ZA WRZESIEŃ                      ,eKonto 0000 ... 0000,Mieszkanie,-1 500,00 PLN
+nie-jest-data,USZKODZONY,eKonto 0000 ... 0000,Inne,-10,00 PLN
