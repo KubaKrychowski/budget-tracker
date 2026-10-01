@@ -180,4 +180,18 @@ public class MBankParserTests
         Assert.Equal("Sklep Testowy SPOŻYWCZY 12 BLIK ZAKUP NFC", shop.Description);
         Assert.Null(shop.BalanceAfter);
     }
+
+    [Fact]
+    public async Task Parses_the_operations_list_downloaded_as_a_semicolon_delimited_file()
+    {
+        await using var stream = File.OpenRead(Path.Combine("testdata", "mbank-list-semicolon-sample.csv"));
+        var rows = await new MBankParser().ParseAsync(stream, default);
+
+        // Prawdziwy plik z serwisu ma średnik zamiast przecinka, cytowane pola i pusty średnik na końcu wiersza —
+        // parser czytał go przecinkiem i widział jedno pole na linię, więc nie znajdował nagłówka.
+        Assert.Equal(3, rows.Count);
+        Assert.Contains(rows, r => r.Amount == -108.28m);
+        Assert.Contains(rows, r => r.Amount == 5000.00m);
+        Assert.Contains(rows, r => r.Amount == -1500.00m && r.Description.Contains("CZYNSZ ZA WRZESIEŃ"));
+    }
 }

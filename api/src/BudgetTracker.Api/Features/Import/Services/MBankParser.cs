@@ -85,10 +85,11 @@ public sealed class MBankParser : IStatementParser
     {
         using var memory = new MemoryStream();
         await content.CopyToAsync(memory, ct);
-        using var reader = new StringReader(Decode(memory.ToArray()));
+        var text = Decode(memory.ToArray());
+        using var reader = new StringReader(text);
         using var csv = new CsvParser(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            Delimiter = ",",
+            Delimiter = DetectDelimiter(text),
             HasHeaderRecord = false,
             BadDataFound = null,
             DetectColumnCountChanges = false,
@@ -156,6 +157,17 @@ public sealed class MBankParser : IStatementParser
 
         return text.TrimStart('﻿');
     }
+
+    /// <summary>
+    /// Separator zewnętrznego CSV: „Lista operacji” pobrana z serwisu jest rozdzielana ŚREDNIKIEM, a ten sam plik po
+    /// przejściu przez arkusz — przecinkiem; wyciąg („zestawienie”) zawsze przecinkiem. Średnik wybieramy tylko wtedy,
+    /// gdy nagłówek tabeli („#Data …”) ma co najmniej pięć średników — inaczej średnik w tytule operacji wyciągu
+    /// przestawiłby parser na zły separator.
+    /// </summary>
+    private static string DetectDelimiter(string text) =>
+        text.Split('\n').Any(l => l.TrimStart().StartsWith("#Data", StringComparison.Ordinal) && l.Count(c => c == ';') >= ListColumns - 1)
+            ? ";"
+            : ",";
 
     /// <summary>Rozpoznaje układ po kształcie nagłówka; null = to jeszcze nie nagłówek tabeli operacji.</summary>
     private static MBankLayout? DetectLayout(string[] cells)
@@ -232,7 +244,7 @@ public sealed class MBankParser : IStatementParser
     /// <summary>Wiersz układu „Lista operacji”: data, opis, rachunek, kategoria, kwota (+ ewentualna reszta kwoty).</summary>
     /// <remarks>
     /// ⚠️ Kwota „-108,28 PLN” bez cytowania rozpada się na „-108” i „28 PLN” — składamy ją z powrotem z pól od piątego.
-    /// Gdyby eksporter zacytował kwotę, pole jest jedno i złożenie nic nie zmienia. Opis ma ciągi spacji (dopełnienie
+    /// Gdy kwota jest w jednym polu (eksport średnikowy: „-5,41 PLN”), złożenie nic nie zmienia; puste pola końcowe (średnik na końcu wiersza) pomijamy. Opis ma ciągi spacji (dopełnienie
     /// kolumn), więc je zwijamy — inaczej ten sam sklep różniłby się kluczem deduplikacji i regułami kategoryzacji.
     /// </remarks>
     private static ParsedRow? TryParseListRow(string[] cells)
@@ -245,7 +257,7 @@ public sealed class MBankParser : IStatementParser
             return null;
         }
 
-        var rawAmount = string.Join(',', cells.Skip(ListColumns - 1));
+        var rawAmount = string.Join(',', cells.Skip(ListColumns - 1).Where(c => !string.IsNullOrWhiteSpace(c)));
         var numeric = new string(rawAmount.Where(c => char.IsDigit(c) || c is '-' or ',' or '.').ToArray());
         if (!TryParseAmount(numeric, out var amount)) return null;
 
