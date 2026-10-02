@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using Azure.Core;
 using Azure.Identity;
 using BudgetTracker.Api.Features.Admin;
 using BudgetTracker.Api.Features.Budgets;
@@ -110,15 +111,19 @@ builder.Services.AddStandingOrders();
 builder.Services.AddEpisodicOrders();
 builder.Services.AddSearch();
 
+builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential(new DefaultAzureCredentialOptions
+{
+    ExcludeManagedIdentityCredential = builder.Environment.IsDevelopment(),
+    ExcludeWorkloadIdentityCredential = true,
+}));
+
 builder.Services.AddAzureClients(clients =>
 {
     clients.AddBlobServiceClient(new Uri(builder.Configuration["Storage:BlobServiceUri"]!));
-    clients.UseCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions
-    {
-        ExcludeManagedIdentityCredential = builder.Environment.IsDevelopment(),
-        ExcludeWorkloadIdentityCredential = true,
-    }));
+    clients.UseCredential(sp => sp.GetRequiredService<TokenCredential>());
 });
+
+if (!builder.Environment.IsDevelopment()) builder.Services.AddHostedService<AzureWarmupService>();
 
 // Originy frontu z konfiguracji, nie z kodu: adres i port zależą od środowiska.
 //

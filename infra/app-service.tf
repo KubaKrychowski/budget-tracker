@@ -54,6 +54,12 @@ resource "azurerm_linux_web_app" "api" {
     ftps_state          = "Disabled"
     minimum_tls_version = "1.2"
 
+    # App Service odpytuje ten adres i nie kieruje ruchu do instancji, która nie odpowiada. Adres jest anonimowy
+    # i nie dotyka danych (patrz Program.cs). ⚠️ NIE zmieniaj na /health/db: chwilowa niedostępność bazy
+    # wyrzuciłaby wtedy z rotacji instancję, która sama jest zdrowa.
+    health_check_path                 = "/health"
+    health_check_eviction_time_in_min = 10
+
     application_stack {
       dotnet_version = "10.0"
     }
