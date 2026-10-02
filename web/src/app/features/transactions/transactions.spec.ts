@@ -134,8 +134,8 @@ describe('Transactions', () => {
   });
 
   const categories: CategoryOption[] = [
-    { id: 'c1000000-0000-4000-8000-000000000001', name: 'Jedzenie' },
-    { id: 'c1000000-0000-4000-8000-000000000002', name: 'Transport' },
+    { id: 'c1000000-0000-4000-8000-000000000001', name: 'Jedzenie', type: 'Expense' },
+    { id: 'c1000000-0000-4000-8000-000000000002', name: 'Transport', type: 'Expense' },
   ];
 
   /** Odpowiada na WSZYSTKIE oczekujące żądania listy — httpResource potrafi wystrzelić kilka. */

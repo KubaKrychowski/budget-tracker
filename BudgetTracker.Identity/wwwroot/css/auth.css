@@ -326,3 +326,32 @@ body.admin-page { align-items: flex-start; padding-top: 56px; }
 /* Formularz „dopisz adres" na liście zaproszeń: pole i przycisk w jednej linii, pole rośnie do szerokości karty. */
 .admin-add { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
 .admin-add .auth-field { flex: 1 1 280px; }
+
+/* Pole hasła z przyciskiem "pokaż hasło" (wwwroot/js/password-toggle.js). Wrapper dokłada skrypt, więc bez JS
+   pole wygląda jak zwykłe. Odstęp po prawej robi miejsce na przycisk, żeby tekst nie wchodził pod ikonę. */
+.auth-password { position: relative; display: flex; }
+.auth-password input { width: 100%; padding-right: 44px; }
+.auth-password__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 40px;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ds-neutral-500);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.auth-password__toggle:hover { color: var(--ds-neutral-900); }
+.auth-password__toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(91, 216, 128, 0.25);
+  color: var(--ds-neutral-900);
+}
+.auth-password__slash { display: none; }
+.auth-password__toggle.is-visible .auth-password__slash { display: inline; }

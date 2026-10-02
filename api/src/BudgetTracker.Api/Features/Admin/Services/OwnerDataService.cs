@@ -24,6 +24,7 @@ namespace BudgetTracker.Api.Features.Admin.Services;
 /// „danych bez właściciela": reguły wspólne (bazowe) mają pusty <c>UserId</c>, więc właściciel „pusty" wyglądałby jak
 /// sierota, a jego usunięcie skasowałoby reguły wszystkich. Usunięcie i przepisanie ruszają wyłącznie reguły konkretnego
 /// konta i NIGDY wspólnych (<see cref="Domain.CategoryRule.SharedUserId"/>).
+/// To samo dotyczy własnych kategorii (<c>Categories</c>): kategorie wspólne mają pusty <c>UserId</c> i nie są sierotami.
 /// </para>
 /// <para>
 /// ⚠️ Kolejność kasowania to kolejność z <c>BudgetPurger</c>: dzieci przed rodzicem, transakcje przed importami
@@ -115,6 +116,7 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         var budgets = await db.Budgets.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var models = await db.ModelVersions.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         await DeleteOwnRulesAsync(ownerId, ct);
+        await DeleteOwnCategoriesAsync(ownerId, ct);
         await DeleteStorageAsync(ownerId, ct);
 
         return new OwnerDataCountsResponseDto(
@@ -141,6 +143,7 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         var episodic = await db.EpisodicOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
         await ReassignOwnRulesAsync(ownerId, targetUserId, ct);
+        await ReassignOwnCategoriesAsync(ownerId, targetUserId, ct);
 
         return new OwnerDataCountsResponseDto(
             budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic, ModelVersions: 0);
@@ -152,6 +155,24 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         if (ownerId == CategoryRule.SharedUserId) return;
 
         await db.CategoryRules.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+    }
+
+    /// <summary>Kasuje trwale własne kategorie konta (także skasowane logicznie); kategorii wspólnych nie rusza nigdy.</summary>
+    /// <remarks>⚠️ Po transakcjach, regułach, limitach i zleceniach konta — kategoria jest ich celem (klucze obce Restrict).</remarks>
+    private async Task DeleteOwnCategoriesAsync(Guid ownerId, CancellationToken ct)
+    {
+        if (ownerId == Category.SharedUserId) return;
+
+        await db.Categories.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+    }
+
+    /// <summary>Przepisuje własne kategorie konta na inne konto; kategorii wspólnych nie rusza nigdy.</summary>
+    private async Task ReassignOwnCategoriesAsync(Guid ownerId, Guid targetUserId, CancellationToken ct)
+    {
+        if (ownerId == Category.SharedUserId) return;
+
+        await db.Categories.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
     }
 
     /// <summary>Przepisuje reguły konta na inne konto; reguł wspólnych nie rusza nigdy.</summary>

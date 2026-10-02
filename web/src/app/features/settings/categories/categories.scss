@@ -1,0 +1,63 @@
+/* Te same neutralne co w regułach, ustawieniach i danych treningowych: #252B27 tekst,
+   #78877C tekst wygaszony. */
+
+.cat__intro {
+  margin: 0 0 16px;
+  color: #78877c;
+}
+
+/* Alert wspólnych kategorii stoi nad listą — odstęp zamiast marginesu tabeli. */
+.cat__shared {
+  margin-bottom: 24px;
+}
+
+.cat__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cat__title {
+  margin: 0;
+  color: #252b27;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cat__right {
+  text-align: right;
+}
+
+.cat__usage {
+  color: #78877c;
+}
+
+.cat__editor-alert {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.cat__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cat__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cat__label {
+  color: #252b27;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cat__hint {
+  color: #78877c;
+  font-size: 12px;
+}

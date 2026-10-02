@@ -1,0 +1,136 @@
+<p class="cat__intro">{{ 'settings.categories.intro' | translate }}</p>
+
+<!-- Alert na górze treści, nie pod tabelą — tak ustalono w makiecie (reguła alertów). -->
+<nz-alert
+  class="cat__shared"
+  nzType="warning"
+  nzShowIcon
+  [nzMessage]="'settings.categories.sharedTitle' | translate"
+  [nzDescription]="'settings.categories.sharedDescription' | translate"
+/>
+
+<div class="cat__header">
+  <h3 class="cat__title">{{ 'settings.categories.listTitle' | translate }}</h3>
+  <button nz-button nzType="primary" (click)="openCreate()">
+    {{ 'settings.categories.create' | translate }}
+  </button>
+</div>
+
+<nz-spin [nzSpinning]="loading()">
+  <!-- ⚠️ Paginacja WIDOCZNA (patrz scripts/check-tables.mjs): `[nzShowPagination]="false"` chowa tylko
+       kontrolkę, a tabela dalej tnie do 10 wierszy. -->
+  <nz-table
+    #categoriesTable
+    [nzData]="categories()"
+    [nzPageSize]="20"
+    nzSize="middle"
+    [nzNoResult]="'settings.categories.empty' | translate"
+  >
+    <thead>
+      <tr>
+        <th>{{ 'settings.categories.columns.name' | translate }}</th>
+        <th nzWidth="160px">{{ 'settings.categories.columns.type' | translate }}</th>
+        <th nzWidth="160px">{{ 'settings.categories.columns.scope' | translate }}</th>
+        <th>{{ 'settings.categories.columns.usage' | translate }}</th>
+        <th nzWidth="80px" class="cat__right">{{ 'settings.categories.columns.actions' | translate }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (category of categoriesTable.data; track category.id) {
+        <tr>
+          <td>{{ category.name }}</td>
+          <td>{{ 'settings.categories.type.' + category.type | translate }}</td>
+          <td>{{ (category.isShared ? 'settings.categories.scope.shared' : 'settings.categories.scope.own') | translate }}</td>
+          <td class="cat__usage">{{ usage(category) }}</td>
+          <td class="cat__right">
+            <!-- Kategorie wspólne nie mają menu: nie da się ich zmienić ani usunąć (API odpowie 409). -->
+            @if (!category.isShared) {
+              <button
+                nz-button
+                nzType="text"
+                nz-dropdown
+                [nzDropdownMenu]="rowMenu"
+                nzTrigger="click"
+                [attr.aria-label]="'settings.categories.columns.actions' | translate"
+              >
+                <nz-icon nzType="more" />
+              </button>
+              <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item tabindex="0" (click)="openEdit(category)" (keydown.enter)="openEdit(category)">
+                    {{ 'settings.budgets.actions.edit' | translate }}
+                  </li>
+                  <li
+                    nz-menu-item
+                    nzDanger
+                    tabindex="0"
+                    [nzDisabled]="category.inUse"
+                    [attr.title]="category.inUse ? ('settings.categories.delete.inUse' | translate) : null"
+                    (click)="!category.inUse && remove(category)"
+                    (keydown.enter)="!category.inUse && remove(category)"
+                  >
+                    {{ 'settings.categories.delete.confirm' | translate }}
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</nz-spin>
+
+<nz-modal
+  [nzVisible]="editorOpen()"
+  [nzTitle]="editorTitle() | translate"
+  nzWidth="520px"
+  [nzMaskClosable]="false"
+  (nzOnCancel)="closeEditor()"
+  [nzFooter]="editorFooter"
+>
+  <ng-container *nzModalContent>
+    @if (editorError(); as error) {
+      <nz-alert class="cat__editor-alert" nzType="error" nzShowIcon [nzMessage]="error" />
+    }
+
+    <div class="cat__form">
+      <!-- Typ przed nazwą — tak jest w makiecie. -->
+      <div class="cat__field">
+        <span class="cat__label" id="category-type-label">{{ 'settings.categories.editor.type' | translate }}</span>
+        <nz-segmented
+          aria-labelledby="category-type-label"
+          [nzOptions]="typeOptions()"
+          [nzDisabled]="typeLocked()"
+          [ngModel]="type()"
+          (ngModelChange)="type.set($event)"
+        />
+        <span class="cat__hint">
+          {{ (typeLocked() ? 'settings.categories.editor.typeLockedHint' : 'settings.categories.editor.typeHint') | translate }}
+        </span>
+      </div>
+
+      <label class="cat__field" for="category-name">
+        <span class="cat__label">{{ 'settings.categories.editor.name' | translate }}</span>
+        <input
+          id="category-name"
+          nz-input
+          [maxLength]="nameMaxLength"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          [placeholder]="'settings.categories.editor.namePlaceholder' | translate"
+          (keydown.enter)="save()"
+        />
+        <span class="cat__hint">{{ 'settings.categories.editor.nameHint' | translate }}</span>
+      </label>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Przyciski stopki do prawej — reguła dialogów; kolejność jak w kreatorze reguł (Anuluj, potem akcja główna). -->
+<ng-template #editorFooter>
+  <button nz-button (click)="closeEditor()">{{ 'settings.categories.editor.cancel' | translate }}</button>
+  <button nz-button nzType="primary" (click)="save()" [nzLoading]="saving()" [disabled]="!canSave()">
+    {{ 'settings.categories.editor.save' | translate }}
+  </button>
+</ng-template>

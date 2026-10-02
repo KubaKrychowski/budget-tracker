@@ -2,6 +2,7 @@ using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Admin.Exceptions;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Budgets.Exceptions;
+using BudgetTracker.Api.Features.Categories.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Limits.Exceptions;
 using BudgetTracker.Api.Features.Savings.Exceptions;
@@ -49,6 +50,15 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         BudgetDisabledException => (StatusCodes.Status409Conflict, "Import_BudgetDisabled"),
         // Reguła wspólna (bazowa) jest tylko do odczytu — żądanie poprawne, stan zasobu nie pozwala.
         CategoryRuleSharedReadOnlyException => (StatusCodes.Status409Conflict, "CategoryRule_SharedReadOnly"),
+        CategoryNameRequiredException => (StatusCodes.Status400BadRequest, "Category_NameRequired"),
+        CategoryNameTooLongException => (StatusCodes.Status400BadRequest, "Category_NameTooLong"),
+        CategoryTypeInvalidException => (StatusCodes.Status400BadRequest, "Category_TypeInvalid"),
+        CategoryTypeMismatchException => (StatusCodes.Status400BadRequest, "Category_TypeMismatch"),
+        // Żądanie poprawne, to stan zasobu (duplikat, wspólna, używana) na nie nie pozwala — stąd 409.
+        CategoryNameTakenException => (StatusCodes.Status409Conflict, "Category_NameTaken"),
+        CategorySharedReadOnlyException => (StatusCodes.Status409Conflict, "Category_SharedReadOnly"),
+        CategoryInUseException => (StatusCodes.Status409Conflict, "Category_InUse"),
+        CategoryTypeLockedException => (StatusCodes.Status409Conflict, "Category_TypeLocked"),
         // Ta sama zasada: trening jest poprawnym żądaniem, tylko nie w trakcie importu.
         TrainingBusyException => (StatusCodes.Status409Conflict, "Training_Busy"),
         TrainingDataMissingException => (StatusCodes.Status400BadRequest, "Training_NoData"),

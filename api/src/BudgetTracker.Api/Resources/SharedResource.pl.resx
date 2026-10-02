@@ -55,4 +55,12 @@
   <data name="Rule_PatternInvalid" xml:space="preserve"><value>Wzorzec nie jest poprawnym wyrażeniem regularnym.</value></data>
   <data name="Rule_AmountRangeInvalid" xml:space="preserve"><value>Kwota od musi być mniejsza niż kwota do — przy równych widełkach reguła nie dopasuje niczego.</value></data>
   <data name="CategoryRule_SharedReadOnly" xml:space="preserve"><value>To reguła wbudowana, wspólna dla wszystkich kont, więc nie można jej zmienić ani usunąć. Dodaj własną regułę z niższym numerem priorytetu.</value></data>
+  <data name="Category_NameRequired" xml:space="preserve"><value>Podaj nazwę kategorii.</value></data>
+  <data name="Category_NameTooLong" xml:space="preserve"><value>Nazwa kategorii może mieć najwyżej 100 znaków.</value></data>
+  <data name="Category_TypeInvalid" xml:space="preserve"><value>Wybierz typ kategorii: wydatek albo wpływ.</value></data>
+  <data name="Category_TypeMismatch" xml:space="preserve"><value>Kategoria przychodowa przyjmuje tylko wpływy. Wybierz kategorię wydatkową dla tej transakcji.</value></data>
+  <data name="Category_NameTaken" xml:space="preserve"><value>Kategoria o tej nazwie już istnieje (własna albo wspólna). Wybierz inną nazwę.</value></data>
+  <data name="Category_SharedReadOnly" xml:space="preserve"><value>To kategoria wspólna dla wszystkich kont, więc nie można jej zmienić ani usunąć. Dodaj własną kategorię.</value></data>
+  <data name="Category_InUse" xml:space="preserve"><value>Tej kategorii nie można usunąć, bo ma transakcje, reguły, limity albo zlecenia. Najpierw przypisz je do innej kategorii.</value></data>
+  <data name="Category_TypeLocked" xml:space="preserve"><value>Typu tej kategorii nie można zmienić, bo jest już używana. Możesz zmienić samą nazwę albo dodać nową kategorię.</value></data>
 </root>

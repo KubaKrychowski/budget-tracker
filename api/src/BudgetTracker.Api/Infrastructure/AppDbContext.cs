@@ -41,6 +41,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<TransactionStatusDictionary> TransactionStatuses => Set<TransactionStatusDictionary>();
     public DbSet<RuleDirectionDictionary> RuleDirections => Set<RuleDirectionDictionary>();
+    public DbSet<CategoryTypeDictionary> CategoryTypes => Set<CategoryTypeDictionary>();
     public DbSet<AccountTypeDictionary> AccountTypes => Set<AccountTypeDictionary>();
     public DbSet<StandingOrderRhythmDictionary> StandingOrderRhythms => Set<StandingOrderRhythmDictionary>();
     public DbSet<ModelVersion> ModelVersions => Set<ModelVersion>(); 
@@ -76,7 +77,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
         b.Entity<Category>(e =>
         {
             e.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            e.HasIndex(x => x.Name).IsUnique().HasFilter(AliveOnly);
+            e.Property(x => x.Type).HasConversion<string>().HasMaxLength(DictionaryCodeLength);
+            e.HasOne<CategoryTypeDictionary>().WithMany()
+                .HasForeignKey(x => x.Type).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.UserId).IsRequired();
+            // Nazwa jest unikalna u jednego właściciela; zderzenie własnej nazwy ze wspólną pilnuje handler,
+            // bo indeks nie widzi wierszy innego właściciela.
+            e.HasIndex(x => new { x.UserId, x.Name }).IsUnique().HasFilter(AliveOnly);
+            // Własne kategorie ORAZ wspólne (bazowe, UserId = pusty Guid): bez wspólnych nowe konto nie miałoby czego wybrać.
+            e.HasQueryFilter(QueryFilterNames.Owner,
+                x => CurrentUserId == null || x.UserId == Category.SharedUserId || x.UserId == CurrentUserId);
         });
 
         b.Entity<Account>(e =>
@@ -168,6 +178,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
         {
             e.ToTable("RuleDirections");
             e.HasData(Enum.GetValues<RuleDirection>().Select(code => new RuleDirectionDictionary(code)));
+        });
+
+        b.Entity<CategoryTypeDictionary>(e =>
+        {
+            e.ToTable("CategoryTypes");
+            e.HasData(Enum.GetValues<CategoryType>().Select(code => new CategoryTypeDictionary(code)));
         });
 
         b.Entity<AccountTypeDictionary>(e =>

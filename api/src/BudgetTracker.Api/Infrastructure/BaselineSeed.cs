@@ -43,12 +43,15 @@ public static class BaselineSeed
             "Wynagrodzenie", "Zwroty", "Przychody inne",
         };
 
+        var incomeNames = new HashSet<string> { "Wynagrodzenie", "Zwroty", "Przychody inne" };
+
         // BusinessId wyprowadzony z nazwy, nie losowy — ponowny seed musi dać te same
         // identyfikatory, inaczej wszystko, co wskazuje na zaseedowaną kategorię, wskazuje
         // po re-seedzie na nic.
         var categories = names.ToDictionary(
             n => n,
-            n => new Category(n).WithSeedBusinessId<Category>(DeterministicGuid.For($"category:{n}")));
+            n => new Category(n, incomeNames.Contains(n) ? CategoryType.Income : CategoryType.Expense)
+                .WithSeedBusinessId<Category>(DeterministicGuid.For($"category:{n}")));
         db.Categories.AddRange(categories.Values);
         await db.SaveChangesAsync(ct);
 

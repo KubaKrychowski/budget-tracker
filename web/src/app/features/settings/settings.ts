@@ -34,6 +34,7 @@ import { ErrorMessages } from '../../core/errors/error-messages';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeader } from '../../core/page-header/page-header';
 import { Rules } from './rules/rules';
+import { Categories } from './categories/categories';
 import { Training } from './training/training';
 import { AccountSecurity } from './account-security/account-security';
 import { valueOf } from '../../core/api/resource-value';
@@ -47,13 +48,16 @@ const TrainingTab = 'training';
 const TrainingTabIndex = 1;
 const RulesTab = 'rules';
 const RulesTabIndex = 2;
+const CategoriesTab = 'categories';
+const CategoriesTabIndex = 3;
 const AccountTab = 'account';
-const AccountTabIndex = 3;
+const AccountTabIndex = 4;
 
 /** Zakładka wskazana w adresie, albo 0 (budżety), gdy parametru nie ma lub jest nieznany. */
 const TabIndexByParam: Record<string, number> = {
   [TrainingTab]: TrainingTabIndex,
   [RulesTab]: RulesTabIndex,
+  [CategoriesTab]: CategoriesTabIndex,
   [AccountTab]: AccountTabIndex,
 };
 
@@ -61,6 +65,7 @@ const TabIndexByParam: Record<string, number> = {
 const TabParamByIndex: Record<number, string> = {
   [TrainingTabIndex]: TrainingTab,
   [RulesTabIndex]: RulesTab,
+  [CategoriesTabIndex]: CategoriesTab,
   [AccountTabIndex]: AccountTab,
 };
 
@@ -153,7 +158,7 @@ function startOfDay(date: Date): number {
     NzAlertModule, NzBadgeModule, NzButtonModule, NzDatePickerModule, NzDropdownModule,
     NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSelectModule,
     NzSpinModule, NzTableModule, NzTabsModule, TranslatePipe, NzBreadCrumbComponent, NzBreadCrumbItemComponent,
-    RangeFilter, PageHeader, Rules, Training, AccountSecurity,
+    RangeFilter, PageHeader, Rules, Categories, Training, AccountSecurity,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
