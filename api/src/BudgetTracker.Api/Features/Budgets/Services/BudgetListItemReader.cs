@@ -23,6 +23,8 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
     /// (<see cref="BudgetItem.ValidFrom"/>), więc suma wszystkich wierszy liczyłaby każdą zmianę kwoty
     /// jako osobny limit — po jednej podwyżce „miesięczny limit" wyszedłby prawie dwa razy za duży.
     /// „Bieżący miesiąc" to okres rozliczeniowy TEGO budżetu (<see cref="Budget.PeriodStartDay"/>), a nie kalendarzowy.
+    /// <para>Liczba transakcji budżetu pochodzi z księgi (<see cref="BalanceLedger.Entries"/>), która i tak ładuje
+    /// wszystkie jego transakcje — osobne zapytanie z <c>COUNT</c> kosztowało tylko kolejny obrót do bazy.</para>
     /// </remarks>
     public async Task<IReadOnlyList<BudgetListItemResponseDto>> ReadAllAsync(CancellationToken ct)
     {
@@ -34,12 +36,6 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             .ToListAsync(ct);
 
         var budgetIds = budgets.Select(b => b.BusinessId).ToList();
-
-        var sums = await db.Transactions
-            .Where(t => t.BudgetBusinessId != null && budgetIds.Contains(t.BudgetBusinessId.Value))
-            .GroupBy(t => t.BudgetBusinessId!.Value)
-            .Select(g => new { BudgetBusinessId = g.Key, Total = g.Sum(t => t.Amount), Count = g.Count() })
-            .ToDictionaryAsync(x => x.BudgetBusinessId, ct);
 
         var calendarMonth = new DateOnly(today.Year, today.Month, 1);
         var keys = budgets.ToDictionary(b => b.BusinessId, b => BillingPeriod.KeyOf(today, b.PeriodStartDay));
@@ -63,7 +59,7 @@ public sealed class BudgetListItemReader(AppDbContext db, TimeProvider clock)
             Balance: ledgers[b.BusinessId].Closing,
             MonthlyLimit: limits.GetValueOrDefault(b.BusinessId, 0m),
             CreatedAt: b.CreatedAt,
-            TransactionCount: sums.TryGetValue(b.BusinessId, out var c) ? c.Count : 0,
+            TransactionCount: ledgers[b.BusinessId].Entries.Count,
             Status: StatusOf(b),
             DisabledAt: b.DisabledAt,
             DeletedAt: b.DeletedAt,
