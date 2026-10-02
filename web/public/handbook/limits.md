@@ -3,6 +3,9 @@
 Limit ustawia się **na kategorię**, a miesięczny limit całego budżetu to po prostu suma limitów
 wszystkich kategorii — nie osobne pole do wypełnienia.
 
+Limit można ustawić tylko na kategorii **wydatkowej**. Kategorie przychodowe (typ „Wpływ", ustawiany w
+Ustawieniach → Kategorie) nie pojawiają się na liście kategorii dla limitu.
+
 ![Limity kategorii z paskami wykorzystania; kreska na pasku to próg ostrzeżenia](handbook/images/limits-overview.png)
 
 ### Jak liczy się zużycie
