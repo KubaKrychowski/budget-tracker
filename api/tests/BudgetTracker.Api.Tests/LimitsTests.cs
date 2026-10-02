@@ -50,16 +50,13 @@ public sealed class LimitsTests : IAsyncLifetime
 
         _food = new Category("Jedzenie");
         _fun = new Category("Rozrywka");
-        _salary = new Category("Wynagrodzenie");
+        _salary = new Category("Wynagrodzenie", CategoryType.Income);
         _savings = new Category("Oszczędności");
         _db.Categories.AddRange(_food, _fun, _salary, _savings);
 
+        // Wynagrodzenie jest przychodowe z typu kategorii, nie z reguł.
         var budget = new Budget("Domowy", new DateOnly(2026, 1, 1), 0m, default);
         _db.Budgets.Add(budget);
-        await _db.SaveChangesAsync();
-
-        // Wynagrodzenie jest przychodowe, bo WSZYSTKIE jego reguły dotyczą wyłącznie wpływów.
-        _db.CategoryRules.Add(new CategoryRule(_salary.Id, RuleDirection.Income, 1, Guid.Empty, pattern: "^wyplata"));
         await _db.SaveChangesAsync();
 
         _budgetId = budget.BusinessId;

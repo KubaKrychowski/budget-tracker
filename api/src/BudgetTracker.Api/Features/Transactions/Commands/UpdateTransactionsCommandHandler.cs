@@ -1,5 +1,6 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Features.Categorization.Services;
 using BudgetTracker.Api.Features.Transactions.Consts;
 using BudgetTracker.Api.Features.Transactions.Contracts;
@@ -47,18 +48,23 @@ public sealed class UpdateTransactionsCommandHandler(
             .Where(t => ids.Contains(t.BusinessId))
             .ToDictionaryAsync(t => t.BusinessId, ct);
 
-        var categoryKeys = await db.Categories
-            .Select(c => new { c.Id, c.BusinessId })
-            .ToDictionaryAsync(c => c.BusinessId, c => c.Id, ct);
+        var categories = await db.Categories
+            .Select(c => new { c.Id, c.BusinessId, c.Type })
+            .ToDictionaryAsync(c => c.BusinessId, c => (c.Id, c.Type), ct);
 
         foreach (var edit in request.Edits)
         {
             if (!transactions.TryGetValue(edit.Id, out var transaction))
                 throw new TransactionNotFoundException(edit.Id);
 
+            var amountChanged = transaction.Amount != edit.Amount;
             transaction.Edit(edit.Date, edit.Description.Trim(), edit.Amount);
 
-            var newCategoryKey = ResolveCategory(edit.CategoryId, categoryKeys);
+            var newCategory = ResolveCategory(edit.CategoryId, categories);
+            var newCategoryKey = newCategory?.Id;
+            if (newCategory is { } chosen && (amountChanged || newCategoryKey != transaction.CategoryId))
+                CategoryTypeGuard.EnsureAccepts(chosen.Type, edit.Amount);
+
             if (newCategoryKey != transaction.CategoryId)
             {
                 transaction.Recategorize(
@@ -93,7 +99,8 @@ public sealed class UpdateTransactionsCommandHandler(
             throw new TransactionDescriptionTooLongException();
     }
 
-    /// <summary>Publiczny identyfikator kategorii → klucz zapisu; nieznany albo pusty = brak kategorii.</summary>
-    private static int? ResolveCategory(Guid? businessId, IReadOnlyDictionary<Guid, int> keys) =>
-        businessId is { } id && keys.TryGetValue(id, out var key) ? key : null;
+    /// <summary>Publiczny identyfikator kategorii → klucz zapisu; nieznany albo pusty = brak kategorii; typ rozstrzyga o dopuszczalnej kwocie.</summary>
+    private static (int Id, CategoryType Type)? ResolveCategory(
+        Guid? businessId, IReadOnlyDictionary<Guid, (int Id, CategoryType Type)> categories) =>
+        businessId is { } id && categories.TryGetValue(id, out var category) ? category : null;
 }

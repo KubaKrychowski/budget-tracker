@@ -55,4 +55,12 @@
   <data name="Rule_PatternInvalid" xml:space="preserve"><value>The pattern is not a valid regular expression.</value></data>
   <data name="Rule_AmountRangeInvalid" xml:space="preserve"><value>The lower bound must be smaller than the upper one — with equal bounds the rule matches nothing.</value></data>
   <data name="CategoryRule_SharedReadOnly" xml:space="preserve"><value>This is a built-in rule shared by all accounts, so it cannot be edited or deleted. Add your own rule with a lower priority number instead.</value></data>
+  <data name="Category_NameRequired" xml:space="preserve"><value>Enter a category name.</value></data>
+  <data name="Category_NameTooLong" xml:space="preserve"><value>A category name can be at most 100 characters long.</value></data>
+  <data name="Category_TypeInvalid" xml:space="preserve"><value>Pick a category type: expense or income.</value></data>
+  <data name="Category_TypeMismatch" xml:space="preserve"><value>An income category only accepts incoming transactions. Pick an expense category for this transaction.</value></data>
+  <data name="Category_NameTaken" xml:space="preserve"><value>A category with this name already exists (your own or a shared one). Pick another name.</value></data>
+  <data name="Category_SharedReadOnly" xml:space="preserve"><value>This category is shared by all accounts, so it cannot be edited or deleted. Add your own category instead.</value></data>
+  <data name="Category_InUse" xml:space="preserve"><value>This category cannot be deleted because it has transactions, rules, limits or orders. Move them to another category first.</value></data>
+  <data name="Category_TypeLocked" xml:space="preserve"><value>The type of this category cannot be changed because it is already in use. You can rename it or add a new category.</value></data>
 </root>

@@ -3,6 +3,7 @@ using System.Globalization;
 using Azure.Identity;
 using BudgetTracker.Api.Features.Admin;
 using BudgetTracker.Api.Features.Budgets;
+using BudgetTracker.Api.Features.Categories;
 using BudgetTracker.Api.Features.Categorization;
 using BudgetTracker.Api.Features.Cli;
 using BudgetTracker.Api.Features.Cli.Services;
@@ -99,6 +100,7 @@ builder.Services.AddJobs(builder.Configuration);
 builder.Services.AddAdmin();
 builder.Services.AddDashboard();
 builder.Services.AddCategorization(builder.Configuration);
+builder.Services.AddCategories();
 builder.Services.AddImport();
 builder.Services.AddBudgets(builder.Configuration);
 builder.Services.AddTransactions();
@@ -254,6 +256,7 @@ app.MapAdmin();
 
 api.MapDashboard();
 api.MapCategorization();
+api.MapCategories();
 api.MapSavings();
 api.MapLimits();
 api.MapStandingOrders();
@@ -268,6 +271,7 @@ api.MapTransactions();
 var cli = new CliCommandRegistry()
     .MapDashboardCli()
     .MapCategorizationCli()
+    .MapCategoriesCli()
     .MapImportCli()
     .MapLimitsCli()
     .MapStandingOrdersCli()

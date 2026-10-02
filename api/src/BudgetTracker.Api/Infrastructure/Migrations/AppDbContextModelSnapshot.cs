@@ -232,12 +232,22 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId")
                         .IsUnique();
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Type");
+
+                    b.HasIndex("UserId", "Name")
                         .IsUnique()
                         .HasFilter("\"DeletedAt\" IS NULL");
 
@@ -306,6 +316,27 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("CategoryRules");
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.CategoryTypeDictionary", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("CategoryTypes", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "Expense"
+                        },
+                        new
+                        {
+                            Code = "Income"
+                        });
                 });
 
             modelBuilder.Entity("BudgetTracker.Api.Domain.Currency", b =>
@@ -927,6 +958,15 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.HasOne("BudgetTracker.Api.Domain.Category", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.Category", b =>
+                {
+                    b.HasOne("BudgetTracker.Api.Domain.CategoryTypeDictionary", null)
+                        .WithMany()
+                        .HasForeignKey("Type")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

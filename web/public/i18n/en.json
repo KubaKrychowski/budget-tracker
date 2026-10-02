@@ -328,6 +328,7 @@
     "tabs": {
       "budgets": "Budgets",
       "training": "Training data",
+      "categories": "Categories",
       "account": "Account & security"
     },
     "training": {
@@ -519,6 +520,53 @@
         "action": "Delete account…"
       },
       "logout": "Log out"
+    },
+    "categories": {
+      "intro": "Categories organise your transactions, limits and the dashboard. Besides the shared categories you can add your own — only you can see them. A category type (expense or income) decides which transactions it can be assigned to.",
+      "sharedTitle": "Shared categories are read-only",
+      "sharedDescription": "Categories marked “Shared” are available to all accounts — you cannot edit or delete them. You can always rename your own category, but delete it only when it has no transactions, limits or rules.",
+      "listTitle": "Category list",
+      "create": "New category",
+      "empty": "No categories.",
+      "usage": "Transactions: {{transactions}} · rules: {{rules}} · limits: {{limits}}",
+      "columns": {
+        "name": "Name",
+        "type": "Type",
+        "scope": "Scope",
+        "usage": "Usage",
+        "actions": "Actions"
+      },
+      "type": {
+        "Expense": "Expense",
+        "Income": "Income"
+      },
+      "scope": {
+        "shared": "Shared",
+        "own": "Own"
+      },
+      "editor": {
+        "createTitle": "New category",
+        "editTitle": "Edit category",
+        "type": "Type",
+        "typeHint": "The type decides which transactions the category can be assigned to. Once saved you cannot change it if the category is already in use.",
+        "typeLockedHint": "This category cannot be switched between expense and income because it is already in use. You can still rename it.",
+        "name": "Name",
+        "namePlaceholder": "e.g. Hobby",
+        "nameHint": "The name must be unique among your own and the shared categories.",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "delete": {
+        "header": "Delete the category “{{name}}”?",
+        "description": "The category will disappear from the pick lists. Only a category without transactions, limits or rules can be deleted.",
+        "confirm": "Delete category",
+        "inUse": "The category is in use — move its transactions, limits and rules to another one first."
+      },
+      "toast": {
+        "created": "Category added.",
+        "updated": "Category saved.",
+        "deleted": "Category deleted."
+      }
     }
   },
   "confirmDialog": {

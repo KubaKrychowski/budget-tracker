@@ -303,4 +303,6 @@
   <data name="Admin_Flash_RequestNotFound" xml:space="preserve"><value>That request no longer exists.</value></data>
   <data name="Admin_History_Action_BetaRequestInvited" xml:space="preserve"><value>Invited from access request</value></data>
   <data name="Admin_History_Action_BetaRequestRemoved" xml:space="preserve"><value>Access request removed</value></data>
+  <data name="Password_Show" xml:space="preserve"><value>Show password</value></data>
+  <data name="Password_Hide" xml:space="preserve"><value>Hide password</value></data>
 </root>

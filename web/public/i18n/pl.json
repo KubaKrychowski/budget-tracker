@@ -330,6 +330,7 @@
       "budgets": "Budżety",
       "training": "Dane treningowe",
       "rules": "Reguły predykatu",
+      "categories": "Kategorie",
       "account": "Konto i bezpieczeństwo"
     },
     "training": {
@@ -585,6 +586,53 @@
         "action": "Usuń konto…"
       },
       "logout": "Wyloguj się"
+    },
+    "categories": {
+      "intro": "Kategorie porządkują transakcje, limity i dashboard. Obok kategorii wspólnych możesz dodać własne — widzisz je tylko Ty. Typ kategorii (wydatek albo wpływ) decyduje, do jakich transakcji można ją przypisać.",
+      "sharedTitle": "Kategorie wspólne są tylko do odczytu",
+      "sharedDescription": "Kategorie oznaczone jako „Wspólna” są dostępne dla wszystkich kont — nie zmienisz ich ani nie usuniesz. Własną kategorię możesz zawsze przemianować, a usunąć tylko wtedy, gdy nie ma transakcji, limitów ani reguł.",
+      "listTitle": "Lista kategorii",
+      "create": "Nowa kategoria",
+      "empty": "Brak kategorii.",
+      "usage": "Transakcje: {{transactions}} · reguły: {{rules}} · limity: {{limits}}",
+      "columns": {
+        "name": "Nazwa",
+        "type": "Typ",
+        "scope": "Zakres",
+        "usage": "Użycie",
+        "actions": "Akcje"
+      },
+      "type": {
+        "Expense": "Wydatek",
+        "Income": "Wpływ"
+      },
+      "scope": {
+        "shared": "Wspólna",
+        "own": "Własna"
+      },
+      "editor": {
+        "createTitle": "Nowa kategoria",
+        "editTitle": "Edycja kategorii",
+        "type": "Typ",
+        "typeHint": "Typ decyduje, do jakich transakcji można przypisać kategorię. Po zapisaniu nie zmienisz go, jeśli kategoria jest już używana.",
+        "typeLockedHint": "Tej kategorii nie zmienisz z wydatku na wpływ ani odwrotnie, bo jest już używana. Możesz zmienić samą nazwę.",
+        "name": "Nazwa",
+        "namePlaceholder": "np. Hobby",
+        "nameHint": "Nazwa musi być unikalna wśród Twoich i wspólnych kategorii.",
+        "cancel": "Anuluj",
+        "save": "Zapisz"
+      },
+      "delete": {
+        "header": "Usunąć kategorię „{{name}}”?",
+        "description": "Kategoria zniknie z list wyboru. Usunąć można tylko kategorię, która nie ma transakcji, limitów ani reguł.",
+        "confirm": "Usuń kategorię",
+        "inUse": "Kategoria jest używana — najpierw przenieś jej transakcje, limity i reguły do innej."
+      },
+      "toast": {
+        "created": "Dodano kategorię.",
+        "updated": "Zapisano kategorię.",
+        "deleted": "Usunięto kategorię."
+      }
     }
   },
   "confirmDialog": {

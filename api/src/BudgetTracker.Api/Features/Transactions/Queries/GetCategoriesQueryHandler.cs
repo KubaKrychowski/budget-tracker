@@ -11,6 +11,6 @@ public sealed class GetCategoriesQueryHandler(AppDbContext db)
     public async Task<IReadOnlyList<CategoryOptionResponseDto>> HandleAsync(CancellationToken ct) =>
         await db.Categories
             .OrderBy(c => c.Name)
-            .Select(c => new CategoryOptionResponseDto(c.BusinessId, c.Name))
+            .Select(c => new CategoryOptionResponseDto(c.BusinessId, c.Name, c.Type))
             .ToListAsync(ct);
 }

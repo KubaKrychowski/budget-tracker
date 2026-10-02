@@ -279,9 +279,18 @@
       </section>
     </nz-tab>
 
-    <nz-tab [nzTitle]="'settings.tabs.account' | translate">
+    <!-- Ta sama leniwość co przy regułach: lista kategorii z użyciem liczy transakcje, reguły i limity. -->
+    <nz-tab [nzTitle]="'settings.tabs.categories' | translate">
       <section class="set__section">
         @if (activeTab() === 3) {
+          <app-categories />
+        }
+      </section>
+    </nz-tab>
+
+    <nz-tab [nzTitle]="'settings.tabs.account' | translate">
+      <section class="set__section">
+        @if (activeTab() === 4) {
           <app-account-security />
         }
       </section>

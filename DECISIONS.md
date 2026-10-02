@@ -223,6 +223,26 @@ by chronić encje przed logiką i łagodzić główną pułapkę slice'ów (dupl
 > - **Testy RLS** (`CategoryRulesRlsTests`) łączą się jako `budget_app` na bazie z prawdziwych migracji; testy handlerów
 >   idą jako superuser `budget` i RLS omijają. Instrukcja dodawania RLS do tabeli: wiki „Jak dodać RLS do tabeli".
 
+> **REWIZJA — 2026-10-02: własne kategorie kont (RLS na `Categories`).** Kategorie były jedną listą dla całej instalacji;
+> użytkownik może teraz dodać własne, widoczne tylko dla jego konta (ekran: Ustawienia → Kategorie).
+> - **Ten sam wzorzec co reguły:** `Category.UserId`, pusty Guid (`Category.SharedUserId`) = kategoria **wspólna** (bazowa, tylko do
+>   odczytu — API odpowiada 409 `Category_SharedReadOnly`). Cztery polityki RLS (odczyt własnych i wspólnych, zapis tylko
+>   własnych), migracja `CustomCategories`, seed bazowy dalej działa jako `budget_jobs`. Istniejące kategorie stały się wspólne.
+> - **Typ kategorii** (`CategoryType`: `Expense`/`Income`, słownik `CategoryTypes`) zastępuje heurystykę „wszystkie reguły są
+>   wpływowe" z `LimitCategories`: limit można nałożyć tylko na wydatkową. Migracja ustawia `Income` kategoriom, których wszystkie
+>   żywe reguły mają kierunek `Income`; reszta dostaje `Expense`. Kategoria wspólna, która ma być przychodowa mimo to, wymaga
+>   ręcznej poprawki w bazie.
+> - **Ręczne przypisanie:** kategoria przychodowa nie przyjmie transakcji o kwocie ujemnej (400 `Category_TypeMismatch`), kategoria
+>   wydatkowa przyjmie każdą — bo zwrot zakupu jest dodatni i musi móc trafić do kategorii wydatku. Kontrola dotyczy edycji
+>   inline i masowego ustawienia kategorii, a **nie** importu ani kategoryzatora (reguły mają własny `Direction`).
+> - **Nazwa:** unikalna u właściciela (indeks częściowy `UserId + Name`) i dodatkowo sprawdzana przez handler względem kategorii
+>   wspólnych, bez względu na wielkość liter (409 `Category_NameTaken`). Dwa konta mogą mieć własne kategorie o tej samej nazwie.
+> - **Zmiana i usunięcie:** nazwę własnej kategorii zawsze można zmienić; typ i usunięcie tylko, gdy kategoria nie ma transakcji,
+>   reguł, limitów, zleceń epizodycznych ani wpłat na rezerwacje (409 `Category_TypeLocked` / `Category_InUse`).
+> - **Konto:** usunięcie konta kasuje jego własne kategorie, a przepisanie danych przenosi je na konto docelowe; kategorii wspólnych
+>   żadna z tych operacji nie rusza. ⚠️ Przepisanie na konto, które ma kategorię o tej samej nazwie, złamie unikalny indeks.
+> - ⚠️ Reguły wspólne nie mogą wskazywać na kategorię własną (wspólne widzą wszyscy). Własna reguła na własną kategorię działa.
+
 > **REWIZJA — 2026-09-03: tożsamość, kasowanie, kaskady.** Trzy reguły przekrojowe, ustalone przy
 > okazji projektowania ekranu ustawień budżetów. Obowiązują **wszystkie encje**, nie tylko budżet.
 > Plan wdrożenia: `plans/business-id-soft-delete.md`.
