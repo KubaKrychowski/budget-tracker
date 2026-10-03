@@ -20,6 +20,7 @@ export const HANDBOOK_TOPICS: readonly HandbookTopic[] = [
   { key: 'standing-orders', labelKey: 'handbook.topics.standingOrders', file: 'handbook/standing-orders.md' },
   { key: 'episodic-orders', labelKey: 'handbook.topics.episodicOrders', file: 'handbook/episodic-orders.md' },
   { key: 'savings', labelKey: 'handbook.topics.savings', file: 'handbook/savings.md' },
+  { key: 'strategies', labelKey: 'handbook.topics.strategies', file: 'handbook/strategies.md' },
   { key: 'settings', labelKey: 'handbook.topics.settings', file: 'handbook/settings.md' },
   { key: 'cli', labelKey: 'handbook.topics.cli', file: 'handbook/cli.md' },
 ];
@@ -43,11 +44,14 @@ const ROUTE_TOPIC: Readonly<Record<string, string>> = {
   '/episodic-orders': 'episodic-orders',
   '/savings': 'savings',
   '/savings/reservations': 'savings',
+  '/strategies': 'strategies',
   '/settings': 'settings',
 };
 
 /** Trasa spoza mapy (np. sam `/handbook`) wraca do pierwszego tematu jak `handbookTopicByKey`. */
 export function handbookTopicKeyForRoute(url: string): string {
   const path = url.split('?')[0].split('#')[0];
+  /* Tablica strategii ma adres z identyfikatorem (`/strategies/<id>`), więc nie trafi w mapę dokładnych tras. */
+  if (path.startsWith('/strategies/')) return 'strategies';
   return ROUTE_TOPIC[path] ?? HANDBOOK_TOPICS[0].key;
 }

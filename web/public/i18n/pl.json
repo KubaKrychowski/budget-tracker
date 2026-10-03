@@ -1325,6 +1325,7 @@
       "standingOrders": "Zlecenia stałe",
       "episodicOrders": "Zlecenia epizodyczne",
       "savings": "Cele oszczędzania i rezerwacje",
+      "strategies": "Strategie: kredyt, nadpłata, poduszka",
       "settings": "Ustawienia i reguły",
       "cli": "Terminal (CLI)"
     }
