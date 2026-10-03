@@ -90,6 +90,10 @@ public sealed class BudgetPurger([FromKeyedServices(SystemDb.Key)] AppDbContext 
             .Where(o => businessIds.Contains(o.BudgetBusinessId))
             .ExecuteDeleteAsync(ct);
 
+        await db.Strategies.IgnoreQueryFilters()
+            .Where(x => businessIds.Contains(x.BudgetBusinessId))
+            .ExecuteDeleteAsync(ct);
+
 
         await db.Budgets.IgnoreQueryFilters()
             .Where(b => ids.Contains(b.Id))

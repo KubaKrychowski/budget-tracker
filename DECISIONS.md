@@ -749,6 +749,35 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Koszt: księga wczytuje WSZYSTKIE transakcje budżetu (4 kolumny) przy każdym zapytaniu o dashboard, zamiast sumy w SQL. Dla tysięcy
 >   wierszy nieistotne; jeśli urośnie, można startować od ostatniej kotwicy sprzed zakresu.
 
+> **REWIZJA — 2026-10-03: kreator strategii, backend (etap 1a)** (issue #27 na tablicy; makiety Figma — strona „Strategia”, ramka
+> `377:97` i okolice; `Features/Strategies`):
+> - **Strategia to nazwany GRAF kafelków w jednym budżecie** (zdarzenia, akcje, warunki, połączenia), z którego czysta funkcja
+>   `StrategySimulator` liczy gotówkę i dług miesiąc po miesiącu. Zasada budżetu jak cele i zlecenia: **reset ją zostawia, usunięcie
+>   zabiera**, przywrócenie oddaje, purge kasuje (`BudgetChildren`, `BudgetPurger`). Węzły i połączenia siedzą w kolumnach `jsonb`
+>   (`Nodes`, `Edges`) — wartości bez własnego cyklu życia, bez osobnych tabel.
+> - ⚠️ **Dane wpisane w kafelkach, bez encji kredytu** (decyzja użytkownika): kredyt, premia i nadwyżka to parametry kafelków, a
+>   aplikacja nie zna długu. Dlatego akcje „Nadpłać kredyt”, „Zwiększ nadwyżkę” i „Spłać resztę” istnieją tylko w symulacji;
+>   „cel”, „rezerwacja”, „zakończ zlecenie”, „limit” są akcjami do zastosowania w budżecie (etap 3), w symulacji bez skutku.
+> - **Kolejność w miesiącu ma znaczenie** (komentarz w `StrategySimulator`): start kredytu, zdarzenia i ich łańcuchy akcji na saldach
+>   z końca poprzedniego miesiąca, odsetki i rata, nadwyżka, na końcu warunki i akcje, które z nich wynikają. Dzięki temu nadpłata
+>   w maju liczy odsetki od niższego salda już za maj, a podwyżka ze stycznia działa od stycznia.
+> - ⚠️ **Nadwyżka jest PO racie kredytu:** rata zmniejsza dług, ale nie odejmuje gotówki (rata jest już w wydatkach, z których
+>   powstaje nadwyżka). Odsetki wg daty rzeczywistej (rok 365 dni). To SZACUNEK, nie porada — ekran musi to mówić.
+> - **Pętla tylko przez „Czekaj”.** Węzeł wykonuje się najwyżej raz w miesiącu, „Czekaj” przenosi następniki na kolejny miesiąc;
+>   cykl bez „Czekaj” jest problemem grafu i taki węzeł się nie wykonuje.
+> - **Problem grafu to nie błąd zapisu.** Szkic zapisuje się zawsze; `StrategyGraphAnalyzer` zwraca problemy (brak parametru, brak
+>   połączenia wchodzącego, zdarzenie bez akcji, „Czekaj” bez wyjścia, cykl, duplikat kredytu/poduszki), które klient rysuje na
+>   węzłach, a symulator pomija takie węzły. Odrzucane jest tylko to, czego nie da się zapisać (`StrategyGraphValidator`: powtórzony
+>   identyfikator, połączenie do nieistniejącego węzła lub węzła z samym sobą, etykieta tak/nie poza warunkiem, wartości spoza zakresu).
+> - **Podgląd symulacji niezapisanego grafu to `POST /api/strategies/simulate`** — niczego nie zapisuje, przechodzi tę samą walidację
+>   co zapis. Ekran liczy wynik na bieżąco przy każdej zmianie tablicy.
+> - Enumy węzłów są w `jsonb` jako LICZBY (`StrategyNodeType` z grupami co 10, żeby dopisać rodzaj bez przenumerowania) — numeracja
+>   jest częścią formatu danych. Szablon „kredyt i poduszka” ma liczby PRZYKŁADOWE, a jego podpisy idą przez zasoby (`Strategy_Template_*`).
+> - **RLS** jak przy pozostałych encjach budżetu (`owner_isolation` + `FORCE`) — strategia niesie salda i kredyt, a `StrategiesRlsTests`
+>   sprawdza izolację w bazie na prawdziwej migracji.
+> - Poza tym PR-em: ekran (etap 1b, `@foblex/flow` po spike'u z PR #85), warianty (etap 2), „Zastosuj w budżecie” (etap 3),
+>   „zdarzenie nastąpiło” (etap 4), changelog (etap 5).
+
 ---
 
 ## 6. Przepływ importu + mapowanie

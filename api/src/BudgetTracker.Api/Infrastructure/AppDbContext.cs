@@ -37,6 +37,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<SavingsReservation> SavingsReservations => Set<SavingsReservation>();
     public DbSet<StandingOrder> StandingOrders => Set<StandingOrder>();
     public DbSet<EpisodicOrder> EpisodicOrders => Set<EpisodicOrder>();
+    public DbSet<Strategy> Strategies => Set<Strategy>();
 
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<TransactionStatusDictionary> TransactionStatuses => Set<TransactionStatusDictionary>();
@@ -226,6 +227,23 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => x.TransactionBusinessId)
                 .IsUnique()
                 .HasFilter($"\"TransactionBusinessId\" IS NOT NULL AND {AliveOnly}");
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
+        });
+
+        b.Entity<Strategy>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            e.Property(x => x.StartCash).HasColumnType("numeric(18,2)");
+            e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+            e.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
+            e.ToTable(t => t.HasCheckConstraint(
+                "CK_Strategies_HorizonMonths", $"\"HorizonMonths\" BETWEEN {Strategy.MinHorizonMonths} AND {Strategy.MaxHorizonMonths}"));
+            // Graf jako jsonb: wartość strategii bez własnego cyklu życia — kasuje się, przywraca i purge'uje razem z nią.
+            e.ComplexCollection(x => x.Nodes, n => n.ToJson());
+            e.ComplexCollection(x => x.Edges, ed => ed.ToJson());
+            e.HasIndex(x => x.BudgetBusinessId);
 
             e.HasIndex(x => x.UserId);
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);

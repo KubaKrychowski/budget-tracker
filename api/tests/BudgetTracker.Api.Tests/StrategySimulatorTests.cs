@@ -1,0 +1,293 @@
+using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Strategies.Consts;
+using BudgetTracker.Api.Features.Strategies.Models;
+using BudgetTracker.Api.Features.Strategies.Services;
+using Xunit;
+
+namespace BudgetTracker.Api.Tests;
+
+/// <summary>
+/// Symulator strategii: gotówka i dług miesiąc po miesiącu, zdarzenia, warunki, „Czekaj”, problemy grafu.
+/// Czysta funkcja — bez bazy i Dockera. Kwoty i scenariusz są zmyślone (kształt jak kredyt + premia + poduszka).
+/// </summary>
+public sealed class StrategySimulatorTests
+{
+    private static readonly DateOnly October2026 = new(2026, 10, 1);
+
+    private static DateOnly M(int year, int month) => new(year, month, 1);
+
+    private static StrategyNode Node(
+        string id, StrategyNodeType type, DateOnly? month = null, decimal? amount = null, decimal? rate = null,
+        decimal? installment = null, OverpaymentMode? mode = null, StrategyConditionMetric? metric = null,
+        StrategyConditionComparison? comparison = null, decimal? threshold = null) =>
+        new(id, type, string.Empty, 0, 0, month, amount, rate, installment, mode, metric, comparison, threshold);
+
+    private static StrategyEdge Edge(string from, string to, StrategyEdgeLabel label = StrategyEdgeLabel.None) =>
+        new($"{from}->{to}", from, to, label);
+
+    private static StrategyResult Run(
+        IReadOnlyList<StrategyNode> nodes, IReadOnlyList<StrategyEdge>? edges = null, decimal cash = 0m, int months = 24) =>
+        StrategySimulator.Run(new StrategyInput(October2026, cash, months, nodes, edges ?? []));
+
+    private static StrategyNode Loan(decimal balance = 18_400m, decimal rate = 12m, decimal installment = 880m) =>
+        Node("loan", StrategyNodeType.Loan, amount: balance, rate: rate, installment: installment);
+
+    [Fact]
+    public void Monthly_surplus_adds_to_cash_every_month_from_the_start()
+    {
+        var result = Run([Node("s", StrategyNodeType.Surplus, amount: 700m)], cash: 1_000m, months: 6);
+
+        Assert.Equal(6, result.Months.Count);
+        Assert.Equal(M(2026, 10), result.Months[0].Month);
+        Assert.Equal(1_700m, result.Months[0].Cash);
+        Assert.Equal(5_200m, result.FinalCash);
+    }
+
+    [Fact]
+    public void Loan_interest_uses_the_actual_days_of_the_month()
+    {
+        var result = Run([Loan()], months: 6);
+
+        var october = Math.Round(18_400m * 0.12m * 31m / 365m, 2);
+        Assert.Equal(october, result.Months[0].Interest);
+        Assert.Equal(Math.Round(18_400m + october - 880m, 2), result.Months[0].Debt);
+
+        var november = Math.Round(result.Months[0].Debt * 0.12m * 30m / 365m, 2);
+        Assert.Equal(november, result.Months[1].Interest);
+    }
+
+    [Fact]
+    public void Loan_is_paid_off_by_installments_and_the_month_is_reported()
+    {
+        var result = Run([Loan(balance: 1_500m, installment: 800m)], months: 6);
+
+        Assert.Equal(0m, result.Months[^1].Debt);
+        Assert.Equal(M(2026, 11), result.LoanPaidOffIn);
+        Assert.Equal(result.Months.Sum(m => m.Interest), result.TotalInterest);
+    }
+
+    [Fact]
+    public void One_off_income_and_expense_events_hit_cash_in_their_own_month()
+    {
+        var result = Run(
+        [
+            Node("in", StrategyNodeType.Income, M(2026, 12), 6_000m),
+            Node("out", StrategyNodeType.Expense, M(2027, 1), 2_200m),
+        ], cash: 500m, months: 6);
+
+        Assert.Equal(500m, result.Months[1].Cash);
+        Assert.Equal(6_500m, result.Months[2].Cash);
+        Assert.Equal(4_300m, result.Months[3].Cash);
+    }
+
+    [Fact]
+    public void An_event_outside_the_horizon_never_fires()
+    {
+        var result = Run([Node("in", StrategyNodeType.Income, M(2030, 1), 6_000m)], cash: 100m, months: 12);
+
+        Assert.Equal(100m, result.FinalCash);
+        Assert.DoesNotContain(result.Nodes, n => n.NodeId == "in");
+    }
+
+    [Fact]
+    public void An_action_after_an_event_runs_in_the_event_month_and_changes_the_surplus_from_that_month()
+    {
+        var result = Run(
+        [
+            Node("s", StrategyNodeType.Surplus, amount: 700m),
+            Node("raise", StrategyNodeType.Trigger, M(2027, 1)),
+            Node("plus", StrategyNodeType.IncreaseSurplus, amount: 400m),
+        ], [Edge("raise", "plus")], months: 6);
+
+        Assert.Equal(700m, result.Months[2].Cash - result.Months[1].Cash);
+        Assert.Equal(1_100m, result.Months[3].Cash - result.Months[2].Cash);
+        Assert.Equal(M(2027, 1), result.Nodes.Single(n => n.NodeId == "plus").FiredIn);
+    }
+
+    [Fact]
+    public void An_overpayment_charges_interest_on_the_lower_balance_in_the_same_month()
+    {
+        var result = Run(
+        [
+            Loan(balance: 10_000m),
+            Node("bonus", StrategyNodeType.Income, M(2026, 10), 4_000m),
+            Node("pay", StrategyNodeType.Overpay, amount: 4_000m, mode: OverpaymentMode.ShortenPeriod),
+        ], [Edge("bonus", "pay")], months: 6);
+
+        var interest = Math.Round(6_000m * 0.12m * 31m / 365m, 2);
+        Assert.Equal(interest, result.Months[0].Interest);
+        Assert.Equal(0m, result.Months[0].Cash);
+    }
+
+    [Fact]
+    public void Reducing_the_installment_lowers_it_in_proportion_and_shortening_keeps_it()
+    {
+        StrategyNode[] Graph(OverpaymentMode mode) =>
+        [
+            Loan(balance: 10_000m, rate: 0m, installment: 1_000m),
+            Node("bonus", StrategyNodeType.Income, M(2026, 10), 5_000m),
+            Node("pay", StrategyNodeType.Overpay, amount: 5_000m, mode: mode),
+        ];
+        var edges = new[] { Edge("bonus", "pay") };
+
+        var reduced = Run(Graph(OverpaymentMode.ReduceInstallment), edges, months: 6);
+        var shortened = Run(Graph(OverpaymentMode.ShortenPeriod), edges, months: 6);
+
+        Assert.Equal(4_000m, reduced.Months[1].Debt);
+        Assert.Equal(3_000m, shortened.Months[1].Debt);
+    }
+
+    [Fact]
+    public void An_overpayment_is_capped_by_the_cash_on_hand()
+    {
+        var result = Run(
+        [
+            Loan(balance: 10_000m, rate: 0m, installment: 1_000m),
+            Node("e", StrategyNodeType.Trigger, M(2026, 10)),
+            Node("pay", StrategyNodeType.Overpay, amount: 8_000m, mode: OverpaymentMode.ShortenPeriod),
+        ], [Edge("e", "pay")], cash: 3_000m, months: 6);
+
+        Assert.Equal(0m, result.Months[0].Cash);
+        Assert.Equal(6_000m, result.Months[0].Debt);
+    }
+
+    [Fact]
+    public void A_met_condition_follows_the_yes_edge_and_pays_off_the_rest_of_the_loan()
+    {
+        var result = Run(
+        [
+            Loan(balance: 5_000m, rate: 0m, installment: 100m),
+            Node("bonus", StrategyNodeType.Income, M(2026, 12), 20_000m),
+            Node("check", StrategyNodeType.Condition, metric: StrategyConditionMetric.CashMinusDebt,
+                comparison: StrategyConditionComparison.AtLeast, threshold: 10_000m),
+            Node("payoff", StrategyNodeType.PayOffLoan),
+        ],
+        [Edge("bonus", "check"), Edge("check", "payoff", StrategyEdgeLabel.Yes)], months: 6);
+
+        Assert.Equal(M(2026, 12), result.LoanPaidOffIn);
+        Assert.Equal(M(2026, 12), result.Nodes.Single(n => n.NodeId == "check").ConditionMetIn);
+        Assert.Equal(0m, result.Months[2].Debt);
+        Assert.Equal(15_300m, result.Months[2].Cash);
+    }
+
+    [Fact]
+    public void An_unmet_condition_waits_a_month_and_checks_again_until_it_passes()
+    {
+        var result = Run(
+        [
+            Node("s", StrategyNodeType.Surplus, amount: 1_000m),
+            Loan(balance: 3_000m, rate: 0m, installment: 0.01m),
+            Node("e", StrategyNodeType.Trigger, M(2026, 10)),
+            Node("check", StrategyNodeType.Condition, metric: StrategyConditionMetric.Cash,
+                comparison: StrategyConditionComparison.AtLeast, threshold: 5_000m),
+            Node("wait", StrategyNodeType.Wait),
+            Node("payoff", StrategyNodeType.PayOffLoan),
+        ],
+        [
+            Edge("e", "check"),
+            Edge("check", "payoff", StrategyEdgeLabel.Yes),
+            Edge("check", "wait", StrategyEdgeLabel.No),
+            Edge("wait", "check"),
+        ], months: 12);
+
+        Assert.DoesNotContain(result.Problems, p => p.Kind == StrategyProblemKind.Cycle);
+        Assert.Equal(M(2026, 10), result.Nodes.Single(n => n.NodeId == "check").FiredIn);
+        Assert.Equal(M(2027, 2), result.Nodes.Single(n => n.NodeId == "check").ConditionMetIn);
+        Assert.Equal(M(2027, 2), result.LoanPaidOffIn);
+    }
+
+    [Fact]
+    public void A_node_without_an_incoming_edge_is_reported_and_never_runs()
+    {
+        var result = Run([Node("s", StrategyNodeType.Surplus, amount: 100m), Node("plus", StrategyNodeType.IncreaseSurplus, amount: 900m)],
+            months: 6);
+
+        Assert.Contains(result.Problems, p => p is { NodeId: "plus", Kind: StrategyProblemKind.NoIncomingEdge });
+        Assert.Equal(100m, result.Months[1].Cash - result.Months[0].Cash);
+        Assert.DoesNotContain(result.Nodes, n => n.NodeId == "plus");
+    }
+
+    [Fact]
+    public void A_node_missing_a_required_parameter_is_reported_and_skipped()
+    {
+        var result = Run(
+        [
+            Node("e", StrategyNodeType.Income, M(2026, 11), amount: null),
+            Node("s", StrategyNodeType.Surplus, amount: 100m),
+        ], months: 6);
+
+        Assert.Contains(result.Problems, p => p is { NodeId: "e", Kind: StrategyProblemKind.MissingParameter });
+        Assert.Equal(600m, result.FinalCash);
+    }
+
+    [Fact]
+    public void A_cycle_that_does_not_pass_through_wait_is_reported_and_does_not_hang()
+    {
+        var result = Run(
+        [
+            Node("e", StrategyNodeType.Trigger, M(2026, 10)),
+            Node("a", StrategyNodeType.IncreaseSurplus, amount: 100m),
+            Node("b", StrategyNodeType.IncreaseSurplus, amount: 100m),
+        ], [Edge("e", "a"), Edge("a", "b"), Edge("b", "a")], months: 6);
+
+        Assert.Contains(result.Problems, p => p is { NodeId: "a", Kind: StrategyProblemKind.Cycle });
+        Assert.Contains(result.Problems, p => p is { NodeId: "b", Kind: StrategyProblemKind.Cycle });
+        Assert.Equal(0m, result.FinalCash);
+    }
+
+    [Fact]
+    public void A_trigger_without_actions_and_a_wait_without_a_successor_are_flagged()
+    {
+        var result = Run(
+        [
+            Node("e", StrategyNodeType.Trigger, M(2026, 10)),
+            Node("w", StrategyNodeType.Wait),
+        ], [Edge("e", "w")], months: 6);
+
+        Assert.Contains(result.Problems, p => p is { NodeId: "w", Kind: StrategyProblemKind.WaitDoesNotReturn });
+
+        var lonely = Run([Node("e2", StrategyNodeType.Trigger, M(2026, 10))], months: 6);
+        Assert.Contains(lonely.Problems, p => p is { NodeId: "e2", Kind: StrategyProblemKind.EventWithoutChain });
+    }
+
+    [Fact]
+    public void A_second_loan_is_flagged_as_a_duplicate_and_ignored()
+    {
+        var result = Run(
+        [
+            Loan(balance: 1_000m, rate: 0m, installment: 1_000m),
+            Node("loan2", StrategyNodeType.Loan, amount: 99_000m, rate: 0m, installment: 1m),
+        ], months: 6);
+
+        Assert.Contains(result.Problems, p => p is { NodeId: "loan2", Kind: StrategyProblemKind.Duplicate });
+        Assert.Equal(0m, result.Months[^1].Debt);
+    }
+
+    [Fact]
+    public void The_cushion_is_reached_only_once_the_debt_is_gone()
+    {
+        var result = Run(
+        [
+            Node("s", StrategyNodeType.Surplus, amount: 2_000m),
+            Loan(balance: 6_000m, rate: 0m, installment: 1_000m),
+            Node("cushion", StrategyNodeType.CushionGoal, amount: 5_000m),
+        ], months: 12);
+
+        Assert.Equal(M(2027, 3), result.LoanPaidOffIn);
+        Assert.Equal(M(2027, 3), result.CushionReachedIn);
+    }
+
+    [Fact]
+    public void Actions_that_only_exist_in_the_app_have_no_effect_in_the_simulation()
+    {
+        var result = Run(
+        [
+            Node("e", StrategyNodeType.Trigger, M(2026, 10)),
+            Node("goal", StrategyNodeType.SetSavingsGoal, amount: 800m),
+        ], [Edge("e", "goal")], cash: 250m, months: 6);
+
+        Assert.Equal(250m, result.FinalCash);
+        Assert.Equal(M(2026, 10), result.Nodes.Single(n => n.NodeId == "goal").FiredIn);
+    }
+}

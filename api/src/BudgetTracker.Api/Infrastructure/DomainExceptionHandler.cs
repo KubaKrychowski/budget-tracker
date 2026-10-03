@@ -8,6 +8,7 @@ using BudgetTracker.Api.Features.Limits.Exceptions;
 using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Features.EpisodicOrders.Exceptions;
 using BudgetTracker.Api.Features.StandingOrders.Exceptions;
+using BudgetTracker.Api.Features.Strategies.Exceptions;
 using BudgetTracker.Api.Features.Transactions.Exceptions;
 using BudgetTracker.Api.Infrastructure.Exceptions;
 using BudgetTracker.Api.Resources;
@@ -112,6 +113,10 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         EpisodicOrderPlanInvalidException => (StatusCodes.Status400BadRequest, "EpisodicOrder_PlanInvalid"),
         EpisodicOrderTransactionInvalidException => (StatusCodes.Status400BadRequest, "EpisodicOrder_TransactionInvalid"),
         EpisodicOrderStateConflictException => (StatusCodes.Status409Conflict, "EpisodicOrder_StateConflict"),
+
+        StrategyNameRequiredException => (StatusCodes.Status400BadRequest, "Strategy_NameRequired"),
+        StrategyHorizonInvalidException => (StatusCodes.Status400BadRequest, "Strategy_HorizonInvalid"),
+        StrategyGraphInvalidException => (StatusCodes.Status400BadRequest, "Strategy_GraphInvalid"),
 
         // Trzy razy ta sama historia: reguła zapisałaby się bez błędu i nigdy nie zadziałała.
         // 400, bo to wejście jest niepoprawne, a nie stan zasobu.

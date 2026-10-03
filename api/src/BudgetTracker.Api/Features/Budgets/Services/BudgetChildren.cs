@@ -80,6 +80,10 @@ public sealed class BudgetChildren(AppDbContext db)
         await db.EpisodicOrders
             .Where(o => o.BudgetBusinessId == budget.BusinessId)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.DeletedAt, deletedAt), ct);
+
+        await db.Strategies
+            .Where(x => x.BudgetBusinessId == budget.BusinessId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.DeletedAt, deletedAt), ct);
     }
 
     /// <summary>Zdejmuje stempel wyłącznie z dzieci skasowanych razem z budżetem.</summary>
@@ -116,6 +120,10 @@ public sealed class BudgetChildren(AppDbContext db)
         await db.EpisodicOrders.IgnoreQueryFilters()
             .Where(o => o.BudgetBusinessId == budget.BusinessId && o.DeletedAt == deletedAt)
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.DeletedAt, (DateTimeOffset?)null), ct);
+
+        await db.Strategies.IgnoreQueryFilters()
+            .Where(x => x.BudgetBusinessId == budget.BusinessId && x.DeletedAt == deletedAt)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.DeletedAt, (DateTimeOffset?)null), ct);
 
     }
 }

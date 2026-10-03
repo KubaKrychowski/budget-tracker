@@ -63,4 +63,22 @@
   <data name="Category_SharedReadOnly" xml:space="preserve"><value>This category is shared by all accounts, so it cannot be edited or deleted. Add your own category instead.</value></data>
   <data name="Category_InUse" xml:space="preserve"><value>This category cannot be deleted because it has transactions, rules, limits or orders. Move them to another category first.</value></data>
   <data name="Category_TypeLocked" xml:space="preserve"><value>The type of this category cannot be changed because it is already in use. You can rename it or add a new category.</value></data>
+  <data name="Strategy_NameRequired" xml:space="preserve"><value>Name the strategy (up to 100 characters).</value></data>
+  <data name="Strategy_HorizonInvalid" xml:space="preserve"><value>The simulation horizon must be between 6 and 60 months.</value></data>
+  <data name="Strategy_GraphInvalid" xml:space="preserve"><value>The board cannot be saved: it has a duplicated id, a connection to a missing tile, a tile connected to itself, a yes/no label outside a condition, too many elements or a value out of range.</value></data>
+  <data name="Strategy_Template_Surplus" xml:space="preserve"><value>Monthly surplus</value></data>
+  <data name="Strategy_Template_Loan" xml:space="preserve"><value>Loan</value></data>
+  <data name="Strategy_Template_Cushion" xml:space="preserve"><value>Target cushion</value></data>
+  <data name="Strategy_Template_Bonus" xml:space="preserve"><value>Bonus + back pay</value></data>
+  <data name="Strategy_Template_Overpay" xml:space="preserve"><value>Overpay the loan</value></data>
+  <data name="Strategy_Template_Check" xml:space="preserve"><value>Condition</value></data>
+  <data name="Strategy_Template_Wait" xml:space="preserve"><value>Wait</value></data>
+  <data name="Strategy_Template_PayOff" xml:space="preserve"><value>Pay off the rest of the loan</value></data>
+  <data name="Strategy_Template_EndOrder" xml:space="preserve"><value>End the standing order</value></data>
+  <data name="Strategy_Template_Goal" xml:space="preserve"><value>Set a savings goal</value></data>
+  <data name="Strategy_Template_End" xml:space="preserve"><value>Strategy completed</value></data>
+  <data name="Strategy_Template_Raise" xml:space="preserve"><value>Raise</value></data>
+  <data name="Strategy_Template_RaiseSurplus" xml:space="preserve"><value>Increase the surplus</value></data>
+  <data name="Strategy_Template_Insurance" xml:space="preserve"><value>Insurance</value></data>
+  <data name="Strategy_Template_Reservation" xml:space="preserve"><value>Set a reservation</value></data>
 </root>
