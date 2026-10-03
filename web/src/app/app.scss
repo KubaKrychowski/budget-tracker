@@ -77,6 +77,20 @@
     margin-left: auto;
   }
 
+  &__whats-new {
+    position: relative;
+  }
+
+  &__dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: #f5222d;
+    border-radius: 50%;
+  }
+
   &__icon-link {
     display: inline-flex;
     align-items: center;

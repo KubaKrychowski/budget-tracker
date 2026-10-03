@@ -1459,3 +1459,14 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 **Do rozstrzygnięcia:** scalenie sekwencyjnych zapytań w `GET /api/dashboard` i `GET /api/categorization/training-set`. Trening modelu trwa ok. 40–50 s na 154 wierszach (CPU, jeden rdzeń B1) — po wdrożeniu spanów kroków widać, który krok dominuje.
 
 **Nie sprawdzone:** działanie rozgrzewki po wdrożeniu (kod zbudowany, ale bez testów — Docker nie działał) oraz zachowanie `health_check_path` z `UseHttpsRedirection` (patrz `infra/app-service.tf`).
+
+> **REWIZJA — 2026-10-03: „Co nowego” (changelog w aplikacji)** (`web/src/app/core/changelog`, `web/public/changelog.json`;
+> makiety Figma — strona „Co nowego”: 387:362 i 387:412):
+> - Lista wydań to **statyczny plik** `public/changelog.json` (pl + en w jednym wpisie, od najnowszego) — bez backendu i migracji.
+>   Nowe wydanie = nowy wpis NA GÓRZE tablicy; kolejność w tablicy jest jedynym źródłem „co nowsze”.
+> - „Przeczytane” pamięta **localStorage** (`bt.changelog.seen` = id najnowszego widzianego wydania), więc stan jest per przeglądarka.
+>   Prefiks `bt.` jest celowy: wylogowanie i zmiana konta czyszczą takie klucze (patrz `App.clearLocalAppState`).
+> - Pierwsza wizyta (brak zapisu) albo zapis o nieznanym wydaniu pokazuje tylko NAJNOWSZE wydanie, nie całą historię.
+> - Okno wyskakuje samo raz na sesję, gdy znika okładka logowania i są nieprzeczytane wydania; ikona gwiazdki w nagłówku
+>   (z czerwoną kropką) otwiera historię. Każde zamknięcie okna (przycisk, Esc, tło) oznacza wydania jako przeczytane.
+> - Błąd pobierania pliku zostawia listę pustą — „co nowego” nigdy nie blokuje aplikacji.

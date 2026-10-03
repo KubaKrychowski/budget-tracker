@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ChangelogService } from './core/changelog/changelog.service';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { of, ReplaySubject } from 'rxjs';
@@ -21,6 +22,8 @@ describe('App', () => {
       providers: [
         // App renderuje <router-outlet />, więc potrzebuje routera w teście.
         provideRouter([]),
+        // „Co nowego” ma własne testy — tu zaślepka, żeby żądanie changelog.json nie wisiało w whenStable().
+        { provide: ChangelogService, useValue: { load: vi.fn(), hasUnread: () => false, open: vi.fn() } },
         provideNzIcons(APP_ICONS),
         // Bez loadera — test nie sięga po pliki i18n, a TranslatePipe zwraca klucze.
         // Sprawdzamy strukturę shella, nie treść tłumaczeń.

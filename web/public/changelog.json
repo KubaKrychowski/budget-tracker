@@ -1,0 +1,34 @@
+[
+  {
+    "id": "2.1",
+    "date": "2026-10-03",
+    "pl": [
+      {
+        "title": "Strategie — kreator planów finansowych",
+        "text": "Układaj na tablicy zdarzenia i akcje, a aplikacja policzy oszczędności i dług miesiąc po miesiącu: nadpłata kredytu, premia, poduszka.",
+        "link": "/strategies",
+        "linkLabel": "Otwórz Strategie"
+      },
+      {
+        "title": "Podręcznik: temat o strategiach",
+        "text": "Jak liczy się symulacja i co oznaczają problemy na tablicy.",
+        "link": "/handbook?topic=strategies",
+        "linkLabel": "Otwórz podręcznik"
+      }
+    ],
+    "en": [
+      {
+        "title": "Strategies — a financial planning wizard",
+        "text": "Lay out events and actions on a board and the app works out your savings and debt month by month: loan overpayment, a bonus, a cushion.",
+        "link": "/strategies",
+        "linkLabel": "Open Strategies"
+      },
+      {
+        "title": "Handbook: a topic on strategies",
+        "text": "How the simulation is calculated and what the problems on the board mean.",
+        "link": "/handbook?topic=strategies",
+        "linkLabel": "Open the handbook"
+      }
+    ]
+  }
+]

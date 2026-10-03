@@ -1,0 +1,41 @@
+<div class="cl">
+  <h2 class="cl__title">{{ 'changelog.title' | translate }}</h2>
+  <p class="cl__sub">
+    @if (!showAll()) {
+      {{ countKey() | translate: { count } }}
+    } @else {
+      {{ (hasNew ? 'changelog.history' : 'changelog.historyRead') | translate }}
+    }
+  </p>
+
+  @for (release of visible(); track release.id) {
+    <section class="cl__release">
+      <h3 class="cl__version">
+        {{ 'changelog.version' | translate: { id: release.id } }}
+        <span class="cl__date">{{ release.date | date: 'd MMMM y' : undefined : locale() }}</span>
+        @if (isNew(release.id)) {
+          <span class="cl__badge">{{ 'changelog.new' | translate }}</span>
+        }
+      </h3>
+      @for (item of items(release); track item.title) {
+        <div class="cl__item" [class.cl__item--new]="isNew(release.id)">
+          <strong class="cl__item-title">{{ item.title }}</strong>
+          <p class="cl__item-text">{{ item.text }}</p>
+          @if (item.link) {
+            <a class="cl__link" [href]="item.link" (click)="go($event, item.link)">{{ item.linkLabel }} →</a>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Dolna belka zawsze do prawej; „Pokaż wszystkie zmiany" to wyjątek — drugorzędny link po lewej (makieta). -->
+  <div class="cl__footer">
+    @if (!showAll()) {
+      <button type="button" class="cl__all" (click)="showHistory()">{{ 'changelog.showAll' | translate }}</button>
+      <button nz-button nzType="primary" (click)="close()">{{ 'changelog.ok' | translate }}</button>
+    } @else {
+      <button nz-button (click)="close()">{{ 'changelog.close' | translate }}</button>
+    }
+  </div>
+</div>
