@@ -52,6 +52,18 @@ export const routes: Routes = [
         title: 'Limity wydatków — Wydatki.com',
       },
       {
+        path: 'strategies',
+        loadComponent: () =>
+          import('./features/strategies/strategies').then((m) => m.Strategies),
+        title: 'Strategie — Wydatki.com',
+      },
+      {
+        path: 'strategies/:id',
+        loadComponent: () =>
+          import('./features/strategy-board/strategy-board').then((m) => m.StrategyBoard),
+        title: 'Strategia — Wydatki.com',
+      },
+      {
         path: 'standing-orders',
         loadComponent: () =>
           import('./features/standing-orders/standing-orders').then((m) => m.StandingOrders),

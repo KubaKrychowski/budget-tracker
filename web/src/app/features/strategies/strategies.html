@@ -1,0 +1,115 @@
+<section class="str">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>{{ 'strategies.title' | translate }}</nz-breadcrumb-item>
+  </nz-breadcrumb>
+
+  @if (failure(); as problem) {
+    <nz-alert
+      nzType="error"
+      nzShowIcon
+      [nzMessage]="'strategies.errors.loadFailed' | translate"
+      [nzDescription]="failureBody"
+    >
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">{{ 'transactions.errors.retry' | translate }}</button>
+      </ng-template>
+    </nz-alert>
+  } @else {
+    @if (lastData(); as data) {
+      <div class="str__config">
+        <h3 class="str__config-title">{{ 'dashboard.configuration' | translate }}</h3>
+        <div class="str__config-fields">
+          <app-budget-switcher
+            [budgets]="data.budgets"
+            [selectedId]="data.selectedBudgetId"
+            (budgetChange)="switchBudget($event)" />
+        </div>
+      </div>
+    }
+
+    <div class="str__head">
+      <div>
+        <h1 class="str__title">{{ 'strategies.heading' | translate }}</h1>
+        <p class="str__lead">{{ 'strategies.lead' | translate }}</p>
+      </div>
+      @if (!noBudget()) {
+        <button nz-button nzType="primary" [disabled]="busy()" (click)="openCreate('Blank')">
+          {{ 'strategies.new' | translate }}
+        </button>
+      }
+    </div>
+
+    <nz-spin [nzSpinning]="loading() && !lastData()">
+      @if (noBudget()) {
+        <nz-alert nzType="info" nzShowIcon [nzMessage]="'strategies.noBudget' | translate" />
+      } @else {
+        <ul class="str__list">
+          @for (row of strategies(); track row.id) {
+            <li class="str__row">
+              <div class="str__row-body">
+                <a class="str__row-name" [routerLink]="['/strategies', row.id]">{{ row.name }}</a>
+                <span class="str__row-meta">
+                  {{ 'strategies.meta' | translate: { events: row.eventCount, actions: row.actionCount } }}
+                  · {{ 'strategies.changed' | translate: { date: (row.updatedAt | date: 'd MMMM y' : undefined : locale()) } }}
+                </span>
+              </div>
+              <div class="str__row-actions">
+                <a [routerLink]="['/strategies', row.id]">{{ 'strategies.open' | translate }}</a>
+                <button type="button" class="str__link str__link--danger" [disabled]="busy()" (click)="remove(row)">
+                  {{ 'strategies.remove' | translate }}
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+
+        @if (lastData()) {
+          <div class="str__new">
+            <h2 class="str__new-title">{{ 'strategies.new' | translate }}</h2>
+            <p class="str__new-lead">
+              {{ (strategies().length === 0 ? 'strategies.emptyLead' : 'strategies.newLead') | translate }}
+            </p>
+            <div class="str__new-actions">
+              <button nz-button [disabled]="busy()" (click)="openCreate('LoanAndCushion')">
+                {{ 'strategies.fromTemplate' | translate }}
+              </button>
+              <button nz-button [disabled]="busy()" (click)="openCreate('Blank')">
+                {{ 'strategies.blank' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </nz-spin>
+  }
+
+  <nz-modal
+    [nzVisible]="creating() !== null"
+    [nzTitle]="'strategies.create.title' | translate"
+    [nzOkText]="'strategies.create.ok' | translate"
+    [nzCancelText]="'strategies.create.cancel' | translate"
+    [nzOkDisabled]="!newNameValid() || busy()"
+    [nzOkLoading]="busy()"
+    (nzOnOk)="create()"
+    (nzOnCancel)="closeCreate()"
+  >
+    <ng-container *nzModalContent>
+      @if (creating() === 'LoanAndCushion') {
+        <nz-alert nzType="info" nzShowIcon [nzMessage]="'strategies.create.templateNote' | translate" />
+      }
+      <label class="str__field-label" for="strategy-name">{{ 'strategies.create.nameLabel' | translate }}</label>
+      <input
+        nz-input
+        id="strategy-name"
+        [maxlength]="maxNameLength"
+        [ngModel]="newName()"
+        (ngModelChange)="newName.set($event)"
+        (keydown.enter)="create()" />
+    </ng-container>
+  </nz-modal>
+</section>

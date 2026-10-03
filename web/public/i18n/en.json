@@ -28,7 +28,8 @@
     "categoryRules": "Categorisation rules",
     "modelTraining": "Model training",
     "handbook": "Handbook",
-    "allFunctions": "All functions"
+    "allFunctions": "All functions",
+    "strategies": "Strategies"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -940,6 +941,184 @@
       "alert": "After this month the order will not be expected or counted in the total. Linked transactions stay; new imports will no longer be linked.",
       "lastMonth": "Last month of the order",
       "confirm": "End standing order"
+    }
+  },
+  "strategies": {
+    "title": "Strategies",
+    "heading": "Choose a strategy",
+    "lead": "Each strategy is a separate board of events and actions in this budget.",
+    "new": "New strategy",
+    "fromTemplate": "From a template: loan and cushion",
+    "blank": "Blank board",
+    "emptyLead": "You have no strategies yet. Start from a template or a blank board.",
+    "newLead": "Start from a template or a blank board.",
+    "meta": "Events: {{events}} · actions: {{actions}}",
+    "changed": "changed {{date}}",
+    "open": "Open",
+    "remove": "Delete",
+    "removed": "Strategy deleted. Goals and reservations created from it stay in the budget.",
+    "removeConfirm": {
+      "header": "Delete the strategy “{{name}}”?",
+      "description": "The board will disappear (events: {{events}}, actions: {{actions}}). Goals, reservations and orders created from this strategy earlier stay in the budget."
+    },
+    "noBudget": "A strategy belongs to a budget — create a budget first.",
+    "create": {
+      "title": "New strategy",
+      "nameLabel": "Strategy name",
+      "ok": "Create",
+      "cancel": "Cancel",
+      "templateNote": "The template has example numbers — enter your own in the tiles.",
+      "defaultNameLoan": "Loan and cushion",
+      "defaultNameBlank": "My strategy"
+    },
+    "errors": {
+      "loadFailed": "Could not load the strategies",
+      "saveFailed": "Could not save the changes"
+    },
+    "board": {
+      "lead": "Connect events to actions. Drag tiles from the right onto the board or click “+”, and draw arrows between the dots.",
+      "params": "Parameters",
+      "discard": "Discard changes",
+      "save": "Save strategy",
+      "unsaved": "There are unsaved changes",
+      "saved": "Strategy saved.",
+      "problemsBanner": "Problems on the board: {{count}}",
+      "problemsBannerBody": "The simulation skips tiles with problems. You can still save the draft.",
+      "showProblems": "Show problems",
+      "problemsTitle": "Problems ({{count}})",
+      "problemBadge": "This tile has a problem",
+      "openNode": "Open the tile",
+      "yes": "yes",
+      "no": "no",
+      "edgeLabel": "Connection: {{from}} → {{to}}",
+      "perMonth": "{{amount}} / mo.",
+      "installmentShort": "installment {{amount}}",
+      "edge": {
+        "title": "Connection",
+        "remove": "Delete the connection"
+      },
+      "sim": {
+        "title": "Simulation",
+        "loan": "loan paid off",
+        "cushion": "cushion reached",
+        "cash": "cash at the end",
+        "never": "not within the horizon"
+      },
+      "palette": {
+        "title": "Add a tile",
+        "tabs": {
+          "events": "Events",
+          "actions": "Actions",
+          "controls": "Conditions"
+        },
+        "search": "Search tiles…",
+        "hint": "Drag onto the board or click “+”. A tile added with the plus lands next to the selected one and connects to it.",
+        "add": "Add a tile: {{name}}"
+      },
+      "paramsTitle": "Strategy parameters",
+      "paramsOk": "Apply",
+      "paramsMonth": "First month of the simulation",
+      "paramsCash": "Starting cash (PLN)",
+      "paramsHorizon": "Horizon (months, 6–60)",
+      "kinds": {
+        "event": "Event · start of a chain",
+        "base": "Starting state",
+        "action": "Action",
+        "condition": "Condition · checked at the end of the month",
+        "wait": "Wait · check again next month",
+        "end": "End of the chain"
+      },
+      "types": {
+        "Trigger": "Event",
+        "Income": "One-off income",
+        "Expense": "One-off expense",
+        "Surplus": "Monthly surplus",
+        "Loan": "Loan",
+        "CushionGoal": "Target cushion",
+        "IncreaseSurplus": "Increase the surplus",
+        "Overpay": "Overpay the loan",
+        "PayOffLoan": "Pay off the rest of the loan",
+        "SetSavingsGoal": "Set a savings goal",
+        "CreateReservation": "Set a reservation",
+        "EndStandingOrder": "End the standing order",
+        "SetLimit": "Set a category limit",
+        "Condition": "Condition",
+        "Wait": "Wait",
+        "End": "Strategy completed"
+      },
+      "hints": {
+        "Trigger": "Raise, end of an order — starts actions",
+        "Income": "Bonus, back pay, refund",
+        "Expense": "Insurance, renovation, holidays",
+        "Surplus": "A fixed amount set aside every month",
+        "Loan": "Balance, interest rate, installment",
+        "CushionGoal": "The amount you want to reach",
+        "IncreaseSurplus": "Changes the amount set aside monthly",
+        "Overpay": "Amount and mode: lower the installment or shorten the term",
+        "PayOffLoan": "From cash, as far as it goes",
+        "SetSavingsGoal": "A monthly or a target amount",
+        "CreateReservation": "Name, amount and purchase date",
+        "EndStandingOrder": "From a chosen month",
+        "SetLimit": "A category spending limit",
+        "Condition": "Cash and debt with yes and no outputs",
+        "Wait": "A loop: returns to the condition next month",
+        "End": "Marks the goal as reached"
+      },
+      "unavailable": {
+        "incomeLimit": "Unavailable: income does not change spending"
+      },
+      "amount": {
+        "Income": "Income amount (PLN)",
+        "Expense": "Expense amount (PLN)",
+        "Surplus": "Monthly surplus (PLN)",
+        "Loan": "Loan balance (PLN)",
+        "CushionGoal": "Cushion amount (PLN)",
+        "IncreaseSurplus": "Surplus change (PLN / mo.)",
+        "Overpay": "Overpayment (PLN)",
+        "SetSavingsGoal": "Goal amount (PLN)",
+        "CreateReservation": "Reservation amount (PLN)",
+        "SetLimit": "Limit amount (PLN)"
+      },
+      "mode": {
+        "ReduceInstallment": "Lower the installment",
+        "ShortenPeriod": "Shorten the term"
+      },
+      "metric": {
+        "Cash": "Cash",
+        "Debt": "Debt",
+        "CashMinusDebt": "Cash − debt"
+      },
+      "comparison": {
+        "AtLeast": "is at least",
+        "AtMost": "is at most"
+      },
+      "form": {
+        "back": "Add a tile",
+        "title": "Tile label",
+        "month": "Month",
+        "loanMonth": "Loan start month",
+        "rate": "Annual interest rate (%)",
+        "installment": "Monthly installment (PLN)",
+        "mode": "Settlement mode",
+        "metric": "What to compare",
+        "comparison": "Comparison",
+        "threshold": "Value (PLN)",
+        "remove": "Delete the tile",
+        "done": "Done"
+      },
+      "outcome": {
+        "met": "Met: {{month}}",
+        "notMet": "Not met in this simulation",
+        "fired": "Executed: {{month}}"
+      },
+      "problem": {
+        "MissingParameter": "A parameter is missing — fill in the tile fields.",
+        "NoIncomingEdge": "No arrow leads here, so the simulation will not run it.",
+        "EventWithoutChain": "The event has no action — nothing follows it.",
+        "WaitDoesNotReturn": "“Wait” has to lead back to a condition.",
+        "Cycle": "The tile is on a loop without “Wait” — the simulation skips it.",
+        "Duplicate": "The simulator counts only one loan and one cushion — this tile is skipped."
+      }
     }
   },
   "episodicOrders": {
