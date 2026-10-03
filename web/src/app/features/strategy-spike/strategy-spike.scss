@@ -1,0 +1,78 @@
+.spike {
+  padding: 16px 32px;
+
+  &__title {
+    font-size: 18px;
+    margin: 0 0 12px;
+  }
+
+  &__area {
+    display: flex;
+    border: 1px solid #ddd;
+  }
+
+  &__flow {
+    display: block;
+    flex: 1;
+    height: 520px;
+    background: #f6f7f8;
+  }
+
+  &__palette {
+    width: 260px;
+    padding: 16px;
+    background: #fff;
+  }
+
+  &__item {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: grab;
+  }
+
+  &__node {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 170px;
+    height: 56px;
+    padding: 0 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+
+    &--event {
+      border-radius: 28px;
+      background: #252b27;
+      color: #fff;
+    }
+
+    &--condition {
+      border-style: dashed;
+      border-color: #d98c0d;
+    }
+  }
+
+  &__port {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: #43a05b;
+
+    &[data-f-connector-type='target'],
+    &:first-child {
+      left: -6px;
+    }
+
+    &:last-child {
+      right: -6px;
+    }
+  }
+}

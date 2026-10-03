@@ -37,6 +37,7 @@
               "node_modules/@fontsource/ibm-plex-sans/400.css",
               "node_modules/@fontsource/ibm-plex-sans/600.css",
               "src/theme.less",
+              "node_modules/@foblex/flow/styles/default.scss",
               "src/styles.scss"
             ],
             "externalDependencies": [
