@@ -15,6 +15,7 @@ using BudgetTracker.Api.Features.EpisodicOrders;
 using BudgetTracker.Api.Features.Savings;
 using BudgetTracker.Api.Features.Search;
 using BudgetTracker.Api.Features.StandingOrders;
+using BudgetTracker.Api.Features.Strategies;
 using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Infrastructure.Jobs;
@@ -109,6 +110,7 @@ builder.Services.AddSavings();
 builder.Services.AddLimits();
 builder.Services.AddStandingOrders();
 builder.Services.AddEpisodicOrders();
+builder.Services.AddStrategies();
 builder.Services.AddSearch();
 
 builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential(new DefaultAzureCredentialOptions
@@ -270,6 +272,7 @@ api.MapSavings();
 api.MapLimits();
 api.MapStandingOrders();
 api.MapEpisodicOrders();
+api.MapStrategies();
 api.MapSearch();
 api.MapImport();
 api.MapBudgets();
