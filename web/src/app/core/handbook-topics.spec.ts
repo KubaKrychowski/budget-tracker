@@ -27,6 +27,12 @@ describe('handbookTopicKeyForRoute', () => {
     expect(handbookTopicKeyForRoute('/savings/reservations')).toBe('savings');
   });
 
+  it('lista i tablica strategii (adres z identyfikatorem) mapują na temat o strategiach', () => {
+    expect(handbookTopicKeyForRoute('/strategies')).toBe('strategies');
+    expect(handbookTopicKeyForRoute('/strategies/0198a2f1-aaaa-7bbb-8ccc-123456789abc')).toBe('strategies');
+    expect(handbookTopicKeyForRoute('/strategies/0198a2f1?budgetId=b1')).toBe('strategies');
+  });
+
   it('trasa spoza mapy (np. sam podręcznik) wraca do pierwszego tematu', () => {
     expect(handbookTopicKeyForRoute('/handbook')).toBe(HANDBOOK_TOPICS[0].key);
   });
