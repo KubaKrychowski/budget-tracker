@@ -8,6 +8,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { AuthSplash } from './core/auth-splash/auth-splash';
 import { AuthSplashScreen } from './core/auth-splash/auth-splash-screen';
+import { ChangelogService } from './core/changelog/changelog.service';
 import { handbookTopicKeyForRoute } from './core/handbook-topics';
 import { RecentScreens } from './core/search/recent-screens';
 import { SearchMenu } from './core/search-menu/search-menu';
@@ -28,11 +29,14 @@ export class App {
   private readonly oidcSecurityService = inject(OidcSecurityService);
   private readonly recentScreens = inject(RecentScreens);
   protected readonly terminal = inject(TerminalService);
+  protected readonly changelog = inject(ChangelogService);
 
   /** Okładka na czas logowania — patrz `AuthSplash`. Powłoka pod nią jest `inert`, więc fokus nie ucieka za okładkę. */
   protected readonly splash = inject(AuthSplash);
 
   /** Statyczna okładka z `index.html` służyła tylko do momentu, aż Angular narysuje własną (albo uzna ją za zbędną). */
+  private readonly loadChangelog = afterNextRender(() => this.changelog.load());
+
   private readonly removeBootSplash = afterNextRender(() => document.getElementById('boot-splash')?.remove());
 
   /**
@@ -96,6 +100,15 @@ export class App {
     } catch {
       // localStorage niedostępny — nic nie czyścimy, ale też nic nie blokujemy.
     }
+  });
+
+  /** Okno „Co nowego" wyskakuje samo raz na sesję — dopiero gdy okładka logowania zniknie i jest sesja. */
+  private autoOpened = false;
+  private readonly openChangelogAfterUpdate = effect(() => {
+    if (this.autoOpened || this.splash.visible() || !this.oidcSecurityService.authenticated().isAuthenticated) return;
+    if (!this.changelog.hasUnread()) return;
+    this.autoOpened = true;
+    this.changelog.open(true);
   });
 
   /**

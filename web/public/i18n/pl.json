@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Wydatki.com",
-    "version": "v.2.0",
+    "version": "v.2.1",
     "searchPlaceholder": "Wpisz nazwę akcji do wykonania",
     "dashboard": "Dashboard"
   },
@@ -10,6 +10,24 @@
     "splash": {
       "signingIn": "Logowanie…",
       "loading": "Wczytuję Twoje dane…"
+    }
+  },
+  "changelog": {
+    "open": "Co nowego",
+    "unread": "Są nowe zmiany",
+    "title": "Co nowego w Wydatki.com",
+    "version": "Wersja {{id}}",
+    "new": "Nowe",
+    "showAll": "Pokaż wszystkie zmiany",
+    "ok": "Rozumiem",
+    "close": "Zamknij",
+    "history": "Historia zmian",
+    "historyRead": "Historia zmian · przeczytane",
+    "sinceVisit": {
+      "one": "Od Twojej ostatniej wizyty: {{count}} wydanie",
+      "few": "Od Twojej ostatniej wizyty: {{count}} wydania",
+      "many": "Od Twojej ostatniej wizyty: {{count}} wydań",
+      "other": "Od Twojej ostatniej wizyty: {{count}} wydania"
     }
   },
   "actions": {

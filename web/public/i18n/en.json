@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Wydatki.com",
-    "version": "v.2.0",
+    "version": "v.2.1",
     "searchPlaceholder": "Type the name of an action to run",
     "dashboard": "Dashboard"
   },
@@ -10,6 +10,22 @@
     "splash": {
       "signingIn": "Signing in…",
       "loading": "Loading your data…"
+    }
+  },
+  "changelog": {
+    "open": "What's new",
+    "unread": "There are new changes",
+    "title": "What's new in Wydatki.com",
+    "version": "Version {{id}}",
+    "new": "New",
+    "showAll": "Show all changes",
+    "ok": "Got it",
+    "close": "Close",
+    "history": "Change history",
+    "historyRead": "Change history · read",
+    "sinceVisit": {
+      "one": "Since your last visit: {{count}} release",
+      "other": "Since your last visit: {{count}} releases"
     }
   },
   "actions": {

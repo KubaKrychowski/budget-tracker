@@ -37,3 +37,9 @@ transakcję, także zwrot zakupu. Nazwa musi być unikalna wśród Twoich i wsp�
   „Użycie" pokazuje liczbę transakcji, reguł i limitów. Zajętą kategorię najpierw opróżnij, przenosząc
   jej transakcje, reguły i limity do innej.
 - Własnej kategorii możesz użyć w **regułach predykatu**, limitach i przy ręcznym przypisywaniu transakcji.
+
+### Co nowego
+
+Ikona gwiazdki w górnym pasku otwiera historię zmian w aplikacji. Czerwona kropka przy niej oznacza wydania,
+których jeszcze nie widziałeś — po aktualizacji okno „Co nowego” pokaże się też samo, raz. Zamknięcie okna oznacza
+zmiany jako przeczytane **w tej przeglądarce**; w innej przeglądarce okno pojawi się ponownie.
