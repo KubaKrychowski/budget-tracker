@@ -22,6 +22,19 @@
        środkowym klikiem i „otwórz w nowej karcie"); terminal to <button> — otwiera panel
        w TYM samym widoku, nie zmienia trasy. -->
   <div class="app-header__icons">
+    <!-- Co nowego: kropka, gdy są nieprzeczytane wydania; patrz core/changelog. -->
+    <button
+      type="button"
+      class="app-header__icon-link app-header__whats-new"
+      (click)="changelog.open(false)"
+      [attr.aria-label]="'changelog.open' | translate"
+      [title]="'changelog.open' | translate"
+    >
+      <nz-icon nzType="star" />
+      @if (changelog.hasUnread()) {
+        <span class="app-header__dot" [attr.aria-label]="'changelog.unread' | translate"></span>
+      }
+    </button>
     <!-- Podręcznik (#19): temat dobrany do bieżącego ekranu, patrz `handbookTopic` w app.ts. -->
     <a
       [routerLink]="['/handbook']"

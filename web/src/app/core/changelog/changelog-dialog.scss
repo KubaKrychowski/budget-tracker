@@ -1,0 +1,78 @@
+.cl {
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  &__sub {
+    margin: 4px 0 16px;
+    color: var(--ds-neutral-600);
+    font-size: 13px;
+  }
+
+  &__release {
+    margin-bottom: 16px;
+  }
+
+  &__version {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__date {
+    color: var(--ds-neutral-600);
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  &__badge {
+    padding: 0 8px;
+    color: #237804;
+    font-size: 12px;
+    font-weight: 400;
+    background: #d9f2e0;
+    border-radius: 10px;
+  }
+
+  &__item {
+    margin-bottom: 8px;
+    padding: 2px 0 2px 12px;
+    border-left: 2px solid var(--ds-neutral-200);
+
+    &--new {
+      border-left-color: #3fa05d;
+    }
+  }
+
+  &__item-text {
+    margin: 2px 0 0;
+    color: var(--ds-neutral-600);
+    font-size: 13px;
+  }
+
+  &__link {
+    font-size: 13px;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  &__all {
+    margin-right: auto;
+    padding: 0;
+    color: #3fa05d;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+}
