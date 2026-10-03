@@ -28,7 +28,8 @@
     "categoryRules": "Reguły kategoryzacji",
     "modelTraining": "Trening modelu",
     "handbook": "Podręcznik",
-    "allFunctions": "Wszystkie funkcje"
+    "allFunctions": "Wszystkie funkcje",
+    "strategies": "Strategie"
   },
   "dashboard": {
     "breadcrumb": "Dashboard",
@@ -1006,6 +1007,184 @@
       "alert": "Po tym miesiącu zlecenie nie będzie oczekiwane ani liczone w sumie. Przypięte transakcje zostają, nowe z importu nie będą się już przypinać.",
       "lastMonth": "Ostatni miesiąc zlecenia",
       "confirm": "Zakończ zlecenie"
+    }
+  },
+  "strategies": {
+    "title": "Strategie",
+    "heading": "Wybierz strategię",
+    "lead": "Każda strategia to osobna tablica zdarzeń i akcji w tym budżecie.",
+    "new": "Nowa strategia",
+    "fromTemplate": "Z szablonu: kredyt i poduszka",
+    "blank": "Pusta tablica",
+    "emptyLead": "Nie masz jeszcze żadnej strategii. Zacznij od szablonu albo od pustej tablicy.",
+    "newLead": "Zacznij od szablonu albo od pustej tablicy.",
+    "meta": "Zdarzenia: {{events}} · akcje: {{actions}}",
+    "changed": "zmieniona {{date}}",
+    "open": "Otwórz",
+    "remove": "Usuń",
+    "removed": "Strategia usunięta. Cele i rezerwacje założone z niej zostają w budżecie.",
+    "removeConfirm": {
+      "header": "Usunąć strategię „{{name}}”?",
+      "description": "Zniknie tablica (zdarzenia: {{events}}, akcje: {{actions}}). Cele, rezerwacje i zlecenia założone wcześniej z tej strategii zostają w budżecie."
+    },
+    "noBudget": "Strategia należy do budżetu — utwórz najpierw budżet.",
+    "create": {
+      "title": "Nowa strategia",
+      "nameLabel": "Nazwa strategii",
+      "ok": "Utwórz",
+      "cancel": "Anuluj",
+      "templateNote": "Szablon ma przykładowe liczby — wpisz własne w kafelkach.",
+      "defaultNameLoan": "Kredyt i poduszka",
+      "defaultNameBlank": "Moja strategia"
+    },
+    "errors": {
+      "loadFailed": "Nie udało się wczytać strategii",
+      "saveFailed": "Nie udało się zapisać zmian"
+    },
+    "board": {
+      "lead": "Połącz zdarzenia z akcjami. Przeciągnij kafelki z prawej na tablicę albo kliknij „+”, a strzałki prowadź między kropkami.",
+      "params": "Parametry",
+      "discard": "Odrzuć zmiany",
+      "save": "Zapisz strategię",
+      "unsaved": "Są niezapisane zmiany",
+      "saved": "Strategia zapisana.",
+      "problemsBanner": "Problemy w tablicy: {{count}}",
+      "problemsBannerBody": "Symulacja pomija kafelki z problemami. Szkic można zapisać mimo to.",
+      "showProblems": "Pokaż problemy",
+      "problemsTitle": "Problemy ({{count}})",
+      "problemBadge": "Ten kafelek ma problem",
+      "openNode": "Otwórz kafelek",
+      "yes": "tak",
+      "no": "nie",
+      "edgeLabel": "Połączenie: {{from}} → {{to}}",
+      "perMonth": "{{amount}} / mies.",
+      "installmentShort": "rata {{amount}}",
+      "edge": {
+        "title": "Połączenie",
+        "remove": "Usuń połączenie"
+      },
+      "sim": {
+        "title": "Symulacja",
+        "loan": "kredyt spłacony",
+        "cushion": "poduszka osiągnięta",
+        "cash": "gotówka na koniec",
+        "never": "nie w tym horyzoncie"
+      },
+      "palette": {
+        "title": "Dodaj kafelek",
+        "tabs": {
+          "events": "Zdarzenia",
+          "actions": "Akcje",
+          "controls": "Warunki"
+        },
+        "search": "Szukaj kafelków…",
+        "hint": "Przeciągnij na tablicę albo kliknij „+”. Kafelek dodany plusem trafia obok zaznaczonego i łączy się z nim.",
+        "add": "Dodaj kafelek: {{name}}"
+      },
+      "paramsTitle": "Parametry strategii",
+      "paramsOk": "Zastosuj",
+      "paramsMonth": "Pierwszy miesiąc symulacji",
+      "paramsCash": "Gotówka na początku (zł)",
+      "paramsHorizon": "Horyzont (miesięcy, 6–60)",
+      "kinds": {
+        "event": "Zdarzenie · początek łańcucha",
+        "base": "Stan wyjściowy",
+        "action": "Akcja",
+        "condition": "Warunek · sprawdzany na koniec miesiąca",
+        "wait": "Czekaj · sprawdź ponownie w następnym miesiącu",
+        "end": "Koniec łańcucha"
+      },
+      "types": {
+        "Trigger": "Zdarzenie",
+        "Income": "Wpływ jednorazowy",
+        "Expense": "Wydatek jednorazowy",
+        "Surplus": "Nadwyżka miesięczna",
+        "Loan": "Kredyt",
+        "CushionGoal": "Poduszka docelowa",
+        "IncreaseSurplus": "Zwiększ nadwyżkę",
+        "Overpay": "Nadpłać kredyt",
+        "PayOffLoan": "Spłać resztę kredytu",
+        "SetSavingsGoal": "Załóż cel oszczędzania",
+        "CreateReservation": "Załóż rezerwację",
+        "EndStandingOrder": "Zakończ zlecenie stałe",
+        "SetLimit": "Ustaw limit kategorii",
+        "Condition": "Warunek",
+        "Wait": "Czekaj",
+        "End": "Strategia zrealizowana"
+      },
+      "hints": {
+        "Trigger": "Podwyżka, koniec zlecenia — uruchamia akcje",
+        "Income": "Premia, wyrównanie, zwrot",
+        "Expense": "Ubezpieczenie, remont, wakacje",
+        "Surplus": "Stała kwota odkładana co miesiąc",
+        "Loan": "Saldo, oprocentowanie, rata",
+        "CushionGoal": "Kwota, o którą chcesz się dobić",
+        "IncreaseSurplus": "Zmienia kwotę odkładaną co miesiąc",
+        "Overpay": "Kwota i tryb: obniż ratę albo skróć okres",
+        "PayOffLoan": "Z gotówki, w granicach tego, co jest",
+        "SetSavingsGoal": "Kwota miesięczna albo kwota docelowa",
+        "CreateReservation": "Nazwa, kwota i termin zakupu",
+        "EndStandingOrder": "Od wybranego miesiąca",
+        "SetLimit": "Limit wydatków kategorii",
+        "Condition": "Gotówka i dług z wyjściami tak i nie",
+        "Wait": "Pętla: wraca do warunku w następnym miesiącu",
+        "End": "Oznacza osiągnięty cel"
+      },
+      "unavailable": {
+        "incomeLimit": "Niedostępna: wpływ nie zmienia wydatków"
+      },
+      "amount": {
+        "Income": "Kwota wpływu (zł)",
+        "Expense": "Kwota wydatku (zł)",
+        "Surplus": "Nadwyżka miesięczna (zł)",
+        "Loan": "Saldo kredytu (zł)",
+        "CushionGoal": "Kwota poduszki (zł)",
+        "IncreaseSurplus": "Zmiana nadwyżki (zł / mies.)",
+        "Overpay": "Kwota nadpłaty (zł)",
+        "SetSavingsGoal": "Kwota celu (zł)",
+        "CreateReservation": "Kwota rezerwacji (zł)",
+        "SetLimit": "Kwota limitu (zł)"
+      },
+      "mode": {
+        "ReduceInstallment": "Obniż ratę",
+        "ShortenPeriod": "Skróć okres"
+      },
+      "metric": {
+        "Cash": "Gotówka",
+        "Debt": "Dług",
+        "CashMinusDebt": "Gotówka − dług"
+      },
+      "comparison": {
+        "AtLeast": "jest co najmniej",
+        "AtMost": "jest co najwyżej"
+      },
+      "form": {
+        "back": "Dodaj kafelek",
+        "title": "Podpis kafelka",
+        "month": "Miesiąc",
+        "loanMonth": "Miesiąc startu kredytu",
+        "rate": "Oprocentowanie roczne (%)",
+        "installment": "Rata miesięczna (zł)",
+        "mode": "Tryb rozliczenia",
+        "metric": "Co porównujemy",
+        "comparison": "Porównanie",
+        "threshold": "Wartość (zł)",
+        "remove": "Usuń kafelek",
+        "done": "Gotowe"
+      },
+      "outcome": {
+        "met": "Spełniony: {{month}}",
+        "notMet": "W tej symulacji nie został spełniony",
+        "fired": "Wykonany: {{month}}"
+      },
+      "problem": {
+        "MissingParameter": "Brakuje parametru — uzupełnij pola kafelka.",
+        "NoIncomingEdge": "Żadna strzałka tu nie prowadzi, więc symulacja go nie wykona.",
+        "EventWithoutChain": "Zdarzenie nie ma żadnej akcji — nic po nim nie następuje.",
+        "WaitDoesNotReturn": "„Czekaj” musi prowadzić z powrotem do warunku.",
+        "Cycle": "Kafelek leży na pętli bez „Czekaj” — symulacja go pomija.",
+        "Duplicate": "Symulator liczy tylko jeden kredyt i jedną poduszkę — ten kafelek jest pomijany."
+      }
     }
   },
   "episodicOrders": {

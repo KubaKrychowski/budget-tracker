@@ -87,6 +87,14 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
     group: 'planning',
   },
   {
+    key: 'strategies',
+    labelKey: 'actions.strategies',
+    icon: 'apartment',
+    route: '/strategies',
+    quickAction: false,
+    group: 'planning',
+  },
+  {
     key: 'episodic-orders',
     labelKey: 'actions.episodicOrders',
     // Własna ikona sekcji. `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.

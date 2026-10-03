@@ -778,6 +778,35 @@ Do bazy trafia **nazwa** stanu (kod słownika `TransactionStatuses`) — zmiana 
 > - Poza tym PR-em: ekran (etap 1b, `@foblex/flow` po spike'u z PR #85), warianty (etap 2), „Zastosuj w budżecie” (etap 3),
 >   „zdarzenie nastąpiło” (etap 4), changelog (etap 5).
 
+> **REWIZJA — 2026-10-03: kreator strategii, ekran (etap 1b)** (issue #27; makiety Figma — strona „Strategia”: lista 381:453,
+> tablica 377:97, ustawienia węzłów 380:415 / 385:246 / 385:532 / 385:812, błędy 386:301, menu węzła 386:575;
+> `features/strategies`, `features/strategy-board`, trasy `/strategies` i `/strategies/:id`):
+> - **Nowa zależność: `@foblex/flow` 19.3.0** (MIT) — wybrana po spike'u na Angularze 22.2 (PR #85, test z prawdziwymi zdarzeniami
+>   wskaźnika i klawiatury). Węzły i połączenia z przeciąganiem to realny problem, którego CDK `drag-drop` nie rozwiązuje.
+>   Motyw biblioteki jest w `angular.json` → `styles`, a jej kolory przejmują tokeny aplikacji (`--ff-*` ustawione na `.sb__flow`).
+> - ⚠️ **Biblioteka NIE trzyma grafu.** Przesunięcie, połączenie, upuszczenie z palety i usunięcie wracają do komponentu jako
+>   zdarzenia, a on aktualizuje sygnały (`nodes`, `edges`), z których szablon rysuje tablicę. Stan roboczy jest osobno od
+>   zapisanego: „Odrzuć zmiany” i znacznik „niezapisane zmiany” liczą się z porównania podpisów (`JSON.stringify`) obu.
+> - **Symulacja na bieżąco:** zmiana tablicy woła po 400 ms `POST /api/strategies/simulate` (nic nie zapisuje); odpowiedź spóźniona
+>   nie nadpisuje nowszej, a graf, którego serwer nie przyjmie, zostawia poprzedni wynik bez komunikatu. „Zapisz” to jeden `PUT`.
+> - **Identyfikatory złączy:** `<id>-in`, `<id>-out`, a warunek ma dwa wyjścia `<id>-out-yes` i `<id>-out-no` — dzięki temu etykieta
+>   tak/nie wynika z miejsca, z którego poprowadzono strzałkę, a nie z zgadywania. Wyjścia mają `fConnectorMultiple` (domyślnie
+>   biblioteka dopuszcza z wyjścia JEDNĄ strzałkę).
+> - **Paleta:** kafelek przeciąga się na tablicę albo dodaje przyciskiem „+”, który stawia go obok zaznaczonego i łączy z nim.
+>   ⚠️ Przycisk jest OBOK elementu `fExternalItem`, nie w środku — biblioteka ustawia inline `pointer-events: none` na wszystkich
+>   jego dzieciach, więc „+” w środku nigdy nie dostałby kliknięcia.
+> - ⚠️ **Pułapka z `ngModel` i datą:** pole miesiąca w formularzu kafelka musi dostawać TĘ SAMĄ instancję `Date` między renderami
+>   (`computed`, nie metoda). Metoda zwracała nową przy każdym renderze → `ngModel` widział „zmianę”, emitował ją, tablica się
+>   aktualizowała, formularz renderował od nowa — pętla, która wywracała renderer przeglądarki po zaznaczeniu kredytu. Testy
+>   jednostkowe tego nie widziały (jsdom), złapał to dopiero test w prawdziwej przeglądarce; regresja ma test, który BEZ poprawki wisi.
+> - **Biblioteka przestawia kolejność węzłów w DOM po zaznaczeniu** (z-order), więc testy wybierają węzły po treści, nie po indeksie.
+>   `ResizeObserver` dla jsdom jest stubowany w `src/test-setup.ts`; ostrzeżenia FF1006 (geometria 0×0) w jsdom to fałszywy alarm,
+>   specy je wyciszają. Geometrię i strzałki sprawdza przegląd w przeglądarce.
+> - Zakres tego PR-a: lista strategii (zakładanie pustej albo z szablonu, usuwanie), tablica, paleta, formularz kafelka,
+>   problemy grafu, parametry strategii, podsumowanie symulacji. **Nie ma:** „Zastosuj w budżecie” (etap 3), wariantów i wykresu
+>   (etap 2), „Duplikuj” (brak operacji w API), polskich komunikatów czytnika ekranu (biblioteka mówi po angielsku; nazwy połączeń
+>   niosą już tytuły kafelków), ochrony przed opuszczeniem ekranu z niezapisanymi zmianami.
+
 ---
 
 ## 6. Przepływ importu + mapowanie

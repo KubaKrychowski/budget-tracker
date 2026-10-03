@@ -1,4 +1,4 @@
-import { beforeEach } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 import { setRuntimeConfigForTests } from './app/core/runtime-config';
 
 /**
@@ -30,3 +30,19 @@ beforeEach(() => {
     // Środowisko bez storage — nie ma czego czyścić.
   }
 });
+
+/**
+ * `ResizeObserver` w jsdom.
+ *
+ * ⚠️ Biblioteka tablicy strategii (`@foblex/flow`) liczy rozmiar kafelków przez `ResizeObserver`, którego jsdom nie ma —
+ * bez stubu montaż komponentu z tablicą pada na „ResizeObserver is not defined”. Geometrii stub nie liczy, więc testy
+ * nie sprawdzają położenia ani strzałek; to robi przegląd w przeglądarce.
+ */
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+  },
+);

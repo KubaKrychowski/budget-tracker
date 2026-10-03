@@ -1,4 +1,5 @@
 import {
+  ApartmentOutline,
   ArrowDownOutline,
   ArrowLeftOutline,
   ArrowRightOutline,
@@ -39,6 +40,7 @@ import {
  * więc dodając nową ikonę w szablonie dopisz ją TAKŻE tutaj.
  */
 export const APP_ICONS = [
+  ApartmentOutline,
   ArrowDownOutline,
   ArrowLeftOutline,
   ArrowRightOutline,

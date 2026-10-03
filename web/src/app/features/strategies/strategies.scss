@@ -1,0 +1,144 @@
+.str {
+  padding: 16px 24px 48px;
+
+  /* Karta „Konfiguracja" — ten sam wygląd co na ekranie limitów (makieta 203:3). */
+  &__config {
+    margin: 16px 0;
+    padding: 12px 16px 16px;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 8px;
+  }
+
+  &__config-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  &__config-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 24px 0 16px;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  &__lead {
+    margin: 0;
+    color: var(--ds-neutral-600);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 24px;
+    border: 1px solid var(--ds-neutral-300);
+    background: var(--ds-neutral-50);
+  }
+
+  &__row-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__row-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ds-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &__row-meta {
+    color: var(--ds-neutral-600);
+    font-size: 13px;
+  }
+
+  &__row-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    white-space: nowrap;
+  }
+
+  /* Akcja jak odnośnik, ale przycisk — niszcząca nie ma być linkiem do nowej strony. */
+  &__link {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--ds-primary-600);
+
+    &--danger {
+      color: var(--ds-error-500);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  /* Karta „Nowa strategia" — przerywana ramka, jak miejsce na upuszczenie na tablicy (makieta 381:453). */
+  &__new {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 24px;
+    border: 1.5px dashed var(--ds-primary-600);
+    border-radius: 4px;
+    background: var(--ds-primary-50);
+  }
+
+  &__new-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ds-primary-600);
+  }
+
+  &__new-lead {
+    margin: 0;
+    color: var(--ds-neutral-600);
+    text-align: center;
+  }
+
+  &__new-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  &__field-label {
+    display: block;
+    margin: 16px 0 6px;
+    font-size: 13px;
+    color: var(--ds-neutral-600);
+  }
+}

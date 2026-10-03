@@ -1,0 +1,150 @@
+<div class="snf">
+  <button type="button" class="snf__back" (click)="closed.emit()">← {{ 'strategies.board.form.back' | translate }}</button>
+
+  <header class="snf__head">
+    <h2 class="snf__title">{{ node().title || ('strategies.board.types.' + node().type | translate) }}</h2>
+    <p class="snf__sub">{{ 'strategies.board.kinds.' + meta().kind | translate }}</p>
+  </header>
+
+  <div class="snf__field">
+    <label class="snf__label" for="node-title">{{ 'strategies.board.form.title' | translate }}</label>
+    <input
+      nz-input
+      id="node-title"
+      [maxlength]="maxTitleLength"
+      [placeholder]="'strategies.board.types.' + node().type | translate"
+      [ngModel]="node().title"
+      (ngModelChange)="patch({ title: $event ?? '' })" />
+  </div>
+
+  @if (has('month')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-month">{{
+        (node().type === 'Loan' ? 'strategies.board.form.loanMonth' : 'strategies.board.form.month') | translate
+      }}</label>
+      <nz-date-picker
+        nzId="node-month"
+        nzMode="month"
+        [nzAllowClear]="false"
+        [ngModel]="monthDate()"
+        (ngModelChange)="setMonth($event)" />
+    </div>
+  }
+
+  @if (has('amount')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-amount">{{ 'strategies.board.amount.' + node().type | translate }}</label>
+      <nz-input-number
+        nzId="node-amount"
+        class="snf__number"
+        [nzParser]="parseAmount"
+        [nzStep]="100"
+        [nzPrecision]="2"
+        [ngModel]="node().amount"
+        (ngModelChange)="patch({ amount: $event })" />
+    </div>
+  }
+
+  @if (has('rate')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-rate">{{ 'strategies.board.form.rate' | translate }}</label>
+      <nz-input-number
+        nzId="node-rate"
+        class="snf__number"
+        [nzParser]="parseAmount"
+        [nzStep]="0.1"
+        [nzMin]="0"
+        [nzPrecision]="2"
+        [ngModel]="node().rate"
+        (ngModelChange)="patch({ rate: $event })" />
+    </div>
+  }
+
+  @if (has('installment')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-installment">{{ 'strategies.board.form.installment' | translate }}</label>
+      <nz-input-number
+        nzId="node-installment"
+        class="snf__number"
+        [nzParser]="parseAmount"
+        [nzStep]="10"
+        [nzMin]="0"
+        [nzPrecision]="2"
+        [ngModel]="node().installment"
+        (ngModelChange)="patch({ installment: $event })" />
+    </div>
+  }
+
+  @if (has('mode')) {
+    <div class="snf__field">
+      <span class="snf__label" id="node-mode-label">{{ 'strategies.board.form.mode' | translate }}</span>
+      <nz-segmented
+        aria-labelledby="node-mode-label"
+        [nzOptions]="[
+          { label: ('strategies.board.mode.ReduceInstallment' | translate), value: 0 },
+          { label: ('strategies.board.mode.ShortenPeriod' | translate), value: 1 }
+        ]"
+        [ngModel]="modeIndex()"
+        (ngModelChange)="setMode($event)" />
+    </div>
+  }
+
+  @if (has('condition')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-metric">{{ 'strategies.board.form.metric' | translate }}</label>
+      <nz-select nzId="node-metric" [ngModel]="node().metric" (ngModelChange)="patch({ metric: $event })">
+        @for (m of metrics; track m) {
+          <nz-option [nzValue]="m" [nzLabel]="'strategies.board.metric.' + m | translate" />
+        }
+      </nz-select>
+    </div>
+    <div class="snf__field">
+      <label class="snf__label" for="node-comparison">{{ 'strategies.board.form.comparison' | translate }}</label>
+      <nz-select nzId="node-comparison" [ngModel]="node().comparison" (ngModelChange)="patch({ comparison: $event })">
+        @for (c of comparisons; track c) {
+          <nz-option [nzValue]="c" [nzLabel]="'strategies.board.comparison.' + c | translate" />
+        }
+      </nz-select>
+    </div>
+    <div class="snf__field">
+      <label class="snf__label" for="node-threshold">{{ 'strategies.board.form.threshold' | translate }}</label>
+      <nz-input-number
+        nzId="node-threshold"
+        class="snf__number"
+        [nzParser]="parseAmount"
+        [nzStep]="100"
+        [nzPrecision]="2"
+        [ngModel]="node().threshold"
+        (ngModelChange)="patch({ threshold: $event })" />
+    </div>
+  }
+
+  @if (outcome(); as result) {
+    <div class="snf__outcome">
+      <strong>
+        @if (result.conditionMetIn) {
+          {{ 'strategies.board.outcome.met' | translate: { month: (result.conditionMetIn | date: 'LLLL y' : undefined : locale()) } }}
+        } @else if (node().type === 'Condition') {
+          {{ 'strategies.board.outcome.notMet' | translate }}
+        } @else {
+          {{ 'strategies.board.outcome.fired' | translate: { month: (result.firedIn | date: 'LLLL y' : undefined : locale()) } }}
+        }
+      </strong>
+    </div>
+  }
+
+  @if (problems().length > 0) {
+    <ul class="snf__problems">
+      @for (kind of problems(); track kind) {
+        <li>{{ 'strategies.board.problem.' + kind | translate }}</li>
+      }
+    </ul>
+  }
+
+  <footer class="snf__foot">
+    <button type="button" class="snf__remove" (click)="removed.emit()">
+      {{ 'strategies.board.form.remove' | translate }}
+    </button>
+    <button nz-button nzType="primary" (click)="closed.emit()">{{ 'strategies.board.form.done' | translate }}</button>
+  </footer>
+</div>

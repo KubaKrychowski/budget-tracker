@@ -1,0 +1,98 @@
+.spal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--ds-neutral-600);
+  }
+
+  &__tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--ds-neutral-100);
+  }
+
+  &__tab {
+    padding: 0 0 8px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+    color: var(--ds-neutral-600);
+
+    &--active {
+      border-bottom-color: var(--ds-primary-600);
+      color: var(--ds-primary-600);
+    }
+  }
+
+  /* Wiersz palety: kafelek do przeciągnięcia i przycisk „+” OBOK niego.
+     ⚠️ Biblioteka ustawia inline `pointer-events: none` na wszystkich dzieciach elementu `fExternalItem`, więc przycisk
+     w środku nigdy nie dostałby kliknięcia. */
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--ds-neutral-300);
+    border-radius: 4px;
+    background: #fff;
+    cursor: grab;
+
+    &--off {
+      cursor: not-allowed;
+      background: var(--ds-neutral-50);
+      color: var(--ds-neutral-500);
+    }
+  }
+
+  &__grip {
+    color: var(--ds-neutral-400);
+  }
+
+  &__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    small {
+      font-size: 12px;
+      color: var(--ds-neutral-600);
+    }
+  }
+
+  &__add {
+    padding: 0 6px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--ds-primary-600);
+
+    &:disabled {
+      cursor: not-allowed;
+      color: var(--ds-neutral-400);
+    }
+  }
+}

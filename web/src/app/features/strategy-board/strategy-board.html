@@ -1,0 +1,262 @@
+<section class="sb">
+  <nz-breadcrumb>
+    <nz-breadcrumb-item>
+      <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
+    </nz-breadcrumb-item>
+    <nz-breadcrumb-item>
+      <a routerLink="/strategies">{{ 'strategies.title' | translate }}</a>
+    </nz-breadcrumb-item>
+    @if (saved()) {
+      <nz-breadcrumb-item>{{ name() }}</nz-breadcrumb-item>
+    }
+  </nz-breadcrumb>
+
+  @if (failure(); as problem) {
+    <nz-alert
+      nzType="error"
+      nzShowIcon
+      [nzMessage]="'strategies.errors.loadFailed' | translate"
+      [nzDescription]="failureBody"
+    >
+      <ng-template #failureBody>
+        {{ errorText(problem) }}
+        <br />
+        <button nz-button nzType="link" (click)="reload()">{{ 'transactions.errors.retry' | translate }}</button>
+      </ng-template>
+    </nz-alert>
+  } @else if (saved()) {
+    <header class="sb__head">
+      <div>
+        <h1 class="sb__title">{{ name() }}</h1>
+        <p class="sb__lead">{{ 'strategies.board.lead' | translate }}</p>
+      </div>
+      <div class="sb__head-actions">
+        <div class="sb__buttons">
+          <button nz-button (click)="openParams()">{{ 'strategies.board.params' | translate }}</button>
+          <button nz-button [disabled]="!dirty() || busy()" (click)="discard()">{{ 'strategies.board.discard' | translate }}</button>
+          <button nz-button nzType="primary" [disabled]="!dirty() || busy()" [nzLoading]="busy()" (click)="save()">
+            {{ 'strategies.board.save' | translate }}
+          </button>
+        </div>
+        @if (dirty()) {
+          <span class="sb__unsaved">{{ 'strategies.board.unsaved' | translate }}</span>
+        }
+      </div>
+    </header>
+
+    @if (problemNodes().length > 0) {
+      <nz-alert
+        style="display: block; margin-bottom: 16px"
+        nzType="warning"
+        nzShowIcon
+        [nzMessage]="'strategies.board.problemsBanner' | translate: { count: problemNodes().length }"
+        [nzDescription]="bannerBody"
+      >
+        <ng-template #bannerBody>
+          {{ 'strategies.board.problemsBannerBody' | translate }}
+          <button type="button" class="sb__link" (click)="panel.set('problems')">
+            {{ 'strategies.board.showProblems' | translate }}
+          </button>
+        </ng-template>
+      </nz-alert>
+    }
+
+    <div class="sb__area">
+      <div class="sb__stage">
+        <f-flow
+          class="sb__flow"
+          fDraggable
+          (fNodesRendered)="fitToScreen()"
+          (fCreateNode)="onCreateNode($event)"
+          (fCreateConnection)="onCreateConnection($event)"
+          (fMoveNodes)="onMoveNodes($event)"
+          (fSelectionChange)="onSelection($event)"
+          (fDeleteSelected)="onDeleteSelected($event)"
+        >
+          <f-canvas fZoom>
+            <f-connection-for-create />
+
+            @for (edge of edges(); track edge.id) {
+              <f-connection
+                [fConnectionId]="edge.id"
+                [fSourceId]="sourceConnector(edge)"
+                [fTargetId]="targetConnector(edge)"
+                fType="segment"
+                fSourceSide="right"
+                fTargetSide="left"
+                [fRadius]="10"
+                [fOffset]="24"
+                [attr.aria-label]="edgeLabel(edge)"
+              >
+                <svg
+                  fMarker
+                  type="f-connection-marker-end"
+                  viewBox="0 0 10 10"
+                  [width]="8"
+                  [height]="8"
+                  [refX]="9"
+                  [refY]="5"
+                  orient="auto"
+                >
+                  <path d="M0 0 L10 5 L0 10 Z" />
+                </svg>
+                @if (edge.label !== 'None') {
+                  <span fConnectionContent [position]="0.5" class="sb__edge-label">
+                    {{ (edge.label === 'Yes' ? 'strategies.board.yes' : 'strategies.board.no') | translate }}
+                  </span>
+                }
+              </f-connection>
+            }
+
+            @for (view of viewNodes(); track view.node.id) {
+              <div
+                fNode
+                fDragHandle
+                class="sb__node sb__node--{{ view.kind }}"
+                [class.sb__node--problem]="view.problems.length > 0"
+                [fNodeId]="view.node.id"
+                [fNodePosition]="view.position"
+              >
+                @if (view.receives) {
+                  <div fConnector fConnectorType="target" [fConnectorId]="view.node.id + '-in'" class="sb__port sb__port--in"></div>
+                }
+
+                <span class="sb__glyph" aria-hidden="true">{{ glyph(view.kind) }}</span>
+                <span class="sb__text">
+                  <strong class="sb__node-title">{{ view.title }}</strong>
+                  @if (view.summary) {
+                    <small class="sb__node-summary">{{ view.summary }}</small>
+                  }
+                </span>
+
+                @if (view.problems.length > 0) {
+                  <span class="sb__badge" [attr.title]="'strategies.board.problemBadge' | translate">!</span>
+                }
+
+                @if (view.kind === 'condition') {
+                  <div fConnector fConnectorType="source" [fConnectorMultiple]="true" [fConnectorId]="view.node.id + '-out-yes'" class="sb__port sb__port--yes"></div>
+                  <div fConnector fConnectorType="source" [fConnectorMultiple]="true" [fConnectorId]="view.node.id + '-out-no'" class="sb__port sb__port--no"></div>
+                } @else if (view.sends) {
+                  <div fConnector fConnectorType="source" [fConnectorMultiple]="true" [fConnectorId]="view.node.id + '-out'" class="sb__port sb__port--out"></div>
+                }
+              </div>
+            }
+          </f-canvas>
+        </f-flow>
+
+        @if (result(); as sim) {
+          <div class="sb__chip" role="status">
+            <strong>{{ 'strategies.board.sim.title' | translate }}</strong>
+            @if (hasLoan()) {
+              <span>
+                {{ 'strategies.board.sim.loan' | translate }}:
+                {{ sim.loanPaidOffIn ? (sim.loanPaidOffIn | date: 'LLLL y' : undefined : locale()) : ('strategies.board.sim.never' | translate) }}
+              </span>
+            }
+            @if (hasCushion()) {
+              <span>
+                {{ 'strategies.board.sim.cushion' | translate }}:
+                {{ sim.cushionReachedIn ? (sim.cushionReachedIn | date: 'LLLL y' : undefined : locale()) : ('strategies.board.sim.never' | translate) }}
+              </span>
+            }
+            <span>{{ 'strategies.board.sim.cash' | translate }}: {{ finalCash() }}</span>
+          </div>
+        }
+      </div>
+
+      <aside class="sb__panel">
+        @if (formNode(); as node) {
+          <app-strategy-node-form
+            [node]="node"
+            [outcome]="formOutcome()"
+            [problems]="problemsByNodeOf(node.id)"
+            (changed)="updateNode($event)"
+            (removed)="removeNode(node.id)"
+            (closed)="closeForm()" />
+        } @else if (selectedEdge(); as edge) {
+          <div class="sb__edge-panel">
+            <h2 class="sb__panel-title">{{ 'strategies.board.edge.title' | translate }}</h2>
+            <p class="sb__panel-hint">{{ edgeLabel(edge) }}</p>
+            <button nz-button nzDanger (click)="removeEdge(edge.id)">{{ 'strategies.board.edge.remove' | translate }}</button>
+          </div>
+        } @else if (panel() === 'problems') {
+          <div class="sb__problems">
+            <h2 class="sb__panel-title">{{ 'strategies.board.problemsTitle' | translate: { count: problemNodes().length } }}</h2>
+            @for (view of problemNodes(); track view.node.id) {
+              <div class="sb__problem">
+                <strong>{{ view.title }}</strong>
+                <ul>
+                  @for (kind of view.problems; track kind) {
+                    <li>{{ 'strategies.board.problem.' + kind | translate }}</li>
+                  }
+                </ul>
+                <button type="button" class="sb__link" (click)="openNode(view.node.id)">
+                  {{ 'strategies.board.openNode' | translate }} →
+                </button>
+              </div>
+            }
+            <button type="button" class="sb__link" (click)="panel.set('palette')">← {{ 'strategies.board.palette.title' | translate }}</button>
+          </div>
+        } @else {
+          <app-strategy-palette [selectedType]="selectedNode()?.type ?? null" (add)="addNode($event)" />
+        }
+      </aside>
+    </div>
+  } @else {
+    <nz-spin [nzSpinning]="loading()" />
+  }
+
+  <nz-modal
+    [nzVisible]="paramsOpen()"
+    [nzTitle]="'strategies.board.paramsTitle' | translate"
+    [nzOkText]="'strategies.board.paramsOk' | translate"
+    [nzCancelText]="'strategies.create.cancel' | translate"
+    [nzOkDisabled]="!paramsValid()"
+    (nzOnOk)="applyParams()"
+    (nzOnCancel)="paramsOpen.set(false)"
+  >
+    <ng-container *nzModalContent>
+      <div class="sb__field">
+        <label class="sb__label" for="strategy-params-name">{{ 'strategies.create.nameLabel' | translate }}</label>
+        <input
+          nz-input
+          id="strategy-params-name"
+          [maxlength]="maxNameLength"
+          [ngModel]="draftName()"
+          (ngModelChange)="draftName.set($event)" />
+      </div>
+      <div class="sb__field">
+        <label class="sb__label" for="strategy-params-month">{{ 'strategies.board.paramsMonth' | translate }}</label>
+        <nz-date-picker
+          nzId="strategy-params-month"
+          nzMode="month"
+          [nzAllowClear]="false"
+          [ngModel]="draftMonth()"
+          (ngModelChange)="draftMonth.set($event)" />
+      </div>
+      <div class="sb__field">
+        <label class="sb__label" for="strategy-params-cash">{{ 'strategies.board.paramsCash' | translate }}</label>
+        <nz-input-number
+          nzId="strategy-params-cash"
+          class="sb__number"
+          [nzParser]="parseAmount"
+          [nzStep]="100"
+          [nzPrecision]="2"
+          [ngModel]="draftCash()"
+          (ngModelChange)="draftCash.set($event)" />
+      </div>
+      <div class="sb__field">
+        <label class="sb__label" for="strategy-params-horizon">{{ 'strategies.board.paramsHorizon' | translate }}</label>
+        <nz-input-number
+          nzId="strategy-params-horizon"
+          class="sb__number"
+          [nzMin]="6"
+          [nzMax]="60"
+          [nzStep]="1"
+          [nzPrecision]="0"
+          [ngModel]="draftHorizon()"
+          (ngModelChange)="draftHorizon.set($event)" />
+      </div>
+    </ng-container>
+  </nz-modal>
+</section>

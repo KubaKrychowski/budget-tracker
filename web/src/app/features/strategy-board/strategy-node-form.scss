@@ -1,0 +1,81 @@
+.snf {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__back {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ds-primary-600);
+  }
+
+  &__head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  &__sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ds-neutral-600);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: 12px;
+    color: var(--ds-neutral-600);
+  }
+
+  &__number {
+    width: 100%;
+  }
+
+  &__outcome {
+    padding: 12px 14px;
+    border-radius: 4px;
+    background: var(--ds-primary-100);
+    font-size: 13px;
+  }
+
+  &__problems {
+    margin: 0;
+    padding: 12px 14px 12px 30px;
+    border-radius: 4px;
+    background: var(--ds-error-50);
+    font-size: 13px;
+    color: var(--ds-error-600);
+  }
+
+  &__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__remove {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ds-error-500);
+  }
+}
