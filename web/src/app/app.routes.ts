@@ -9,6 +9,12 @@ import { autoLoginPartialRoutesGuard } from 'angular-auth-oidc-client';
  * jakikolwiek ekran się wyrenderuje.
  */
 export const routes: Routes = [
+  // SPIKE (gałąź spike/foblex-flow): poza strażnikiem logowania, żeby dało się obejrzeć bez konta.
+  {
+    path: 'strategy-spike',
+    loadComponent: () => import('./features/strategy-spike/strategy-spike').then((m) => m.StrategySpike),
+    title: 'Spike — @foblex/flow',
+  },
   {
     path: '',
     canActivate: [autoLoginPartialRoutesGuard],

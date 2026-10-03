@@ -1,0 +1,40 @@
+<section class="spike">
+  <h1 class="spike__title">Spike: @foblex/flow na Angularze 22</h1>
+
+  <div class="spike__area">
+    <f-flow
+      class="spike__flow"
+      fDraggable
+      (fCreateNode)="onCreateNode($event)"
+      (fCreateConnection)="onCreateConnection($event)"
+      (fMoveNodes)="onMoveNodes($event)"
+    >
+      <f-canvas fZoom>
+        <f-connection-for-create />
+        @for (c of connections(); track c.id) {
+          <f-connection [fConnectionId]="c.id" [fSourceId]="c.source" [fTargetId]="c.target" />
+        }
+        @for (n of nodes(); track n.id) {
+          <div
+            fNode
+            fDragHandle
+            class="spike__node spike__node--{{ n.kind }}"
+            [fNodeId]="n.id"
+            [fNodePosition]="n.position"
+          >
+            <div fConnector fConnectorType="target" [fConnectorId]="n.id + '-in'" class="spike__port"></div>
+            <span>{{ n.title }}</span>
+            <div fConnector fConnectorType="source" [fConnectorMultiple]="true" [fConnectorId]="n.id + '-out'" class="spike__port"></div>
+          </div>
+        }
+      </f-canvas>
+    </f-flow>
+
+    <aside class="spike__palette">
+      <h2>Dodaj kafelek</h2>
+      @for (item of palette; track item.kind) {
+        <div fExternalItem class="spike__item" [fData]="item">{{ item.title }}</div>
+      }
+    </aside>
+  </div>
+</section>
