@@ -308,6 +308,13 @@
       "descriptionPlaceholder": "What it was — e.g. “timing belt and brake pads”",
       "save": "Save order",
       "saved": "One-off order “{{name}}” saved."
+    },
+    "mobile": {
+      "filters": "Filters",
+      "period": "Period",
+      "anyCategory": "All categories",
+      "showResults": "Show results",
+      "balance": "Balance {{amount}}"
     }
   },
   "currencies": {

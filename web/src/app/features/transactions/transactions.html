@@ -61,6 +61,105 @@
   <!-- Table-Toolbar wprost z makiety (Figma 125:9044): szukajka po lewej, trzy akcje
        masowe po prawej. Przyciski są WIDOCZNE ZAWSZE i wygaszone bez zaznaczenia —
        tak jak „Usuń zaznaczone" w imporcie, a nie chowane do osobnego paska. -->
+  @if (viewport.isMobile()) {
+    <!-- Telefon (makieta „Mobile — Lista transakcji”): wyszukiwarka i „Filtry” z licznikiem; reszta filtrów
+         w panelu od dołu, aktywne jako etykiety z ✕. Bez akcji masowych (decyzja z makiety, 2026-10-04). -->
+    <div class="tx__mtoolbar">
+      <div class="tx__mtoolbar-row">
+        <nz-input-search class="tx__msearch" nzEnterButton>
+          <input
+            nz-input
+            [ngModel]="search()"
+            (ngModelChange)="setSearch($event)"
+            [placeholder]="'transactions.filters.search' | translate"
+          />
+        </nz-input-search>
+        <button nz-button (click)="filtersOpen.set(true)">
+          <nz-icon nzType="filter" nzTheme="fill" />
+          {{ 'transactions.mobile.filters' | translate }}
+          @if (activeFilterCount() > 0) {
+            <span class="tx__mbadge">{{ activeFilterCount() }}</span>
+          }
+        </button>
+      </div>
+      @if (activeFilterCount() > 0) {
+        <div class="tx__mchips">
+          @if (from() && to()) {
+            <nz-tag nzMode="closeable" (nzOnClose)="setDateRange(null)">{{ day(from()!) }} – {{ day(to()!) }}</nz-tag>
+          }
+          @if (categoryFilterName(); as name) {
+            <nz-tag nzMode="closeable" (nzOnClose)="setCategoryFilter(null)">{{ name }}</nz-tag>
+          }
+          @if (standingOrderId()) {
+            <nz-tag nzMode="closeable" (nzOnClose)="clearStandingOrder()">
+              {{ 'transactions.filters.standingOrder' | translate }} <strong>{{ standingOrderName() ?? '…' }}</strong>
+            </nz-tag>
+          }
+        </div>
+      }
+    </div>
+
+    <nz-drawer
+      [nzVisible]="filtersOpen()"
+      (nzOnClose)="filtersOpen.set(false)"
+      nzPlacement="bottom"
+      nzHeight="auto"
+      [nzTitle]="'transactions.mobile.filters' | translate"
+      nzWrapClassName="mnav-sheet"
+    >
+      <ng-container *nzDrawerContent>
+        <div class="tx__mfilters">
+          <label class="tx__mfilters-label" for="tx-m-dates">{{ 'transactions.mobile.period' | translate }}</label>
+          <nz-range-picker
+            nzId="tx-m-dates"
+            [ngModel]="dateRange()"
+            (ngModelChange)="setDateRange($event)"
+            [nzPlaceHolder]="['transactions.filters.from' | translate, 'transactions.filters.to' | translate]"
+            nzFormat="dd.MM.yyyy"
+          />
+
+          <label class="tx__mfilters-label" for="tx-m-category">{{ 'transactions.filters.category' | translate }}</label>
+          <nz-select
+            nzId="tx-m-category"
+            nzAllowClear
+            nzShowSearch
+            [ngModel]="categoryFilter()"
+            (ngModelChange)="setCategoryFilter($event ?? null)"
+            [nzPlaceHolder]="'transactions.mobile.anyCategory' | translate"
+          >
+            <nz-option [nzValue]="noCategoryValue" [nzLabel]="'transactions.filters.uncategorized' | translate" />
+            @for (c of categories(); track c.id) {
+              <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+            }
+          </nz-select>
+
+          <label class="tx__mfilters-label" for="tx-m-budgets">{{ 'transactions.filters.budgets' | translate }}</label>
+          <nz-select
+            nzId="tx-m-budgets"
+            nzMode="multiple"
+            [ngModel]="selectedBudgetIds()"
+            (ngModelChange)="setBudgets($event)"
+            [nzPlaceHolder]="'transactions.filters.budgets' | translate"
+          >
+            @for (b of budgetOptions(); track b.id) {
+              <nz-option
+                [nzValue]="b.id"
+                [nzLabel]="b.disabled ? b.name + ' · ' + ('dashboard.budgetDisabledTag' | translate) : b.name"
+              />
+            }
+          </nz-select>
+          @if (selectedBudgetIds().length > 1) {
+            <p class="tx__budgets-note">{{ 'transactions.filters.budgetsNote' | translate }}</p>
+          }
+
+          <div class="tx__mfilters-actions">
+            <button nz-button (click)="clearFilters()">{{ 'transactions.filters.clear' | translate }}</button>
+            <button nz-button nzType="primary" (click)="filtersOpen.set(false)">{{ 'transactions.mobile.showResults' | translate }}</button>
+          </div>
+        </div>
+      </ng-container>
+    </nz-drawer>
+  } @else {
   <div class="tx__toolbar">
     <div class="tx__toolbar-filters">
       <nz-input-search class="tx__search" nzEnterButton>
@@ -158,7 +257,7 @@
       </button>
     </div>
   </div>
-
+  }
 
   <!-- ⚠️ Stan błędu idzie PIERWSZY i jest osobny od pustych stanów niżej. „Nic nie pasuje
        do filtra" i „nie wiadomo, co pasuje" to dwie różne wiadomości; pokazanie tej pierwszej
@@ -213,6 +312,91 @@
            sortowały lokalnie tablicę na stronie) — `true` mówi tabeli „tylko pokaż UI
            i zgłoś zmianę", a (nzQueryParams) niesie komplet stanu na każdą zmianę
            (strona, sortowanie, filtry kolumn), tak jak w imporcie, tylko po stronie serwera. -->
+      @if (viewport.isMobile()) {
+        <!-- Telefon: karty pogrupowane po dniu z sumą dnia; menu „⋯” to samo co w wierszu tabeli. -->
+        @for (group of dayGroups(); track group.date) {
+          <div class="tx__mday">
+            <span>{{ group.label }}</span>
+            <span class="amount">{{ money(group.sum) }} PLN</span>
+          </div>
+          <ul class="tx__mcards">
+            @for (item of group.items; track item.id) {
+              <li class="tx__mcard">
+                @if (editingIds().has(item.id)) {
+                  <!-- Edycja z menu: te same pola i ta sama belka „Zapisz / Anuluj” co w tabeli. -->
+                  <div class="tx__medit">
+                    <nz-date-picker
+                      nzFormat="dd.MM.yyyy"
+                      [ngModel]="drafts()[item.id].date"
+                      (ngModelChange)="updateDraft(item.id, { date: $event })"
+                    />
+                    <input
+                      nz-input
+                      maxlength="500"
+                      [class.tx__invalid]="errorFor(item.id) === 'description'"
+                      [ngModel]="drafts()[item.id].description"
+                      (ngModelChange)="updateDraft(item.id, { description: $event })"
+                    />
+                    <nz-select
+                      nzAllowClear
+                      nzShowSearch
+                      [ngModel]="drafts()[item.id].categoryId"
+                      (ngModelChange)="updateDraft(item.id, { categoryId: $event })"
+                      [nzPlaceHolder]="'transactions.filters.uncategorized' | translate"
+                    >
+                      @for (c of categories(); track c.id) {
+                        <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+                      }
+                    </nz-select>
+                    <nz-input-number
+                      [nzParser]="parseAmount"
+                      [class.tx__invalid]="errorFor(item.id) === 'amount'"
+                      [ngModel]="drafts()[item.id].amount"
+                      (ngModelChange)="updateDraft(item.id, { amount: $event })"
+                      [nzPrecision]="2"
+                      [nzStep]="10"
+                    />
+                  </div>
+                } @else {
+                  <div class="tx__mcard-main">
+                    <span class="tx__mcard-desc" [title]="item.description">{{ item.description }}</span>
+                    <span class="tx__mcard-meta">
+                      <nz-tag class="tx__mcard-cat">{{ item.categoryName ?? ('transactions.filters.uncategorized' | translate) }}</nz-tag>
+                      <nz-badge [nzStatus]="statusBadge(item.status)" [nzText]="item.status | enumTranslate: 'transactionStatus'" />
+                    </span>
+                  </div>
+                  <div class="tx__mcard-right">
+                    <span class="amount tx__mcard-amount" [style.color]="amountColor(item.amount)">{{ money(item.amount) }} PLN</span>
+                    @if (item.balanceAfter !== null) {
+                      <span class="tx__mcard-balance">{{ 'transactions.mobile.balance' | translate: { amount: money(item.balanceAfter) } }}</span>
+                    }
+                  </div>
+                  <button
+                    nz-button
+                    nzType="text"
+                    nzSize="small"
+                    nz-dropdown
+                    [nzDropdownMenu]="rowMenu"
+                    nzTrigger="click"
+                    (click)="menuRow.set(item)"
+                    [attr.aria-label]="'transactions.columns.actions' | translate"
+                  >
+                    <nz-icon nzType="more" />
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+        <nz-pagination
+          class="tx__mpager"
+          nzSimple
+          [nzPageIndex]="page()"
+          [nzTotal]="total()"
+          [nzPageSize]="pageSize()"
+          (nzPageIndexChange)="setPage($event)"
+        />
+      } @else {
       <nz-table
         #txTable
         [nzData]="items()"
@@ -440,6 +624,7 @@
           }
         </tbody>
       </nz-table>
+      }
 
       <!-- Menu wiersza z makiety: Edytuj / Oznacz jako duży wydatek / Usuń.
            `tabindex` i Enter, bo pozycje menu NG-ZORRO reagują tylko na klik —

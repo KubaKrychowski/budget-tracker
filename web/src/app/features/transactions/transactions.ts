@@ -23,12 +23,15 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzStatisticModule } from 'ng-zorro-antd/statistic';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzDrawerModule } from 'ng-zorro-antd/drawer';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EnumTranslatePipe } from '../../core/pipes/enum-translate.pipe';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { fromIsoDate, toIsoDate } from '../../core/api/date-param';
 import { CategoryOption } from '../../core/api/models/category-option';
 import { TransactionListItem } from '../../core/api/models/transaction-list-item';
+import { Viewport } from '../../core/layout/viewport';
 import { TransactionListResponse } from '../../core/api/models/transaction-list-response';
 import { errorOf, valueOf } from '../../core/api/resource-value';
 import { ErrorMessages } from '../../core/errors/error-messages';
@@ -117,8 +120,8 @@ interface SelectionPayload {
   imports: [
     CommonModule, FormsModule, RouterLink,
     NzAlertModule, NzBadgeModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule,
-    NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule,
-    NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule, NzTagModule,
+    NzDrawerModule, NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule,
+    NzModalModule, NzPaginationModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule, NzTagModule,
     TranslatePipe, EnumTranslatePipe,
   ],
   templateUrl: './transactions.html',
@@ -133,6 +136,12 @@ export class Transactions {
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
   private readonly message = inject(NzMessageService);
+
+  /**
+   * Telefon (makieta Figma „Mobile — Lista transakcji”): karty pogrupowane po dniach, filtry w panelu od dołu,
+   * bez zaznaczania i akcji masowych (decyzja z makiety, 2026-10-04).
+   */
+  protected readonly viewport = inject(Viewport);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly errorMessages = inject(ErrorMessages);
 
@@ -839,6 +848,68 @@ export class Transactions {
       to: to ? toIsoDate(to) : null,
       page: 1,
     });
+  }
+
+  /** Telefon: panel filtrów (daty, budżety, kategoria) otwierany przyciskiem „Filtry”. */
+  protected readonly filtersOpen = signal(false);
+
+  /** Licznik na przycisku „Filtry” — filtry poza wyszukiwarką, które zawężają listę. */
+  protected readonly activeFilterCount = computed(() =>
+    [
+      this.from() !== null || this.to() !== null,
+      this.categoryId() !== null || this.uncategorized(),
+      this.standingOrderId() !== null,
+      this.selectedBudgetIds().length > 1,
+    ].filter(Boolean).length,
+  );
+
+  /** Telefon: kategoria wybierana w panelu filtrów — na desktopie to filtr kolumny tabeli. */
+  protected readonly categoryFilter = computed(() => (this.uncategorized() ? NoCategory : this.categoryId()));
+  protected readonly noCategoryValue = NoCategory;
+
+  /** Nazwa kategorii z filtra — do etykiety aktywnego filtra na telefonie. */
+  protected readonly categoryFilterName = computed(() => {
+    if (this.uncategorized()) return this.translate.instant('transactions.filters.uncategorized') as string;
+    const id = this.categoryId();
+    return id === null ? null : (this.categories().find((c) => c.id === id)?.name ?? null);
+  });
+
+  protected setCategoryFilter(value: string | null): void {
+    void this.changeQuery({
+      categoryId: value !== null && value !== NoCategory ? value : null,
+      uncategorized: value === NoCategory ? true : null,
+      page: 1,
+    });
+  }
+
+  /** Telefon: zmiana strony z pagera pod kartami — na desktopie stronę zgłasza `nz-table`. */
+  protected setPage(page: number): void {
+    void this.changeQuery({ page });
+  }
+
+  /**
+   * Telefon: transakcje bieżącej strony pogrupowane po dniu, w kolejności z serwera, z sumą dnia.
+   * Kolejne wiersze tego samego dnia trafiają do jednej grupy także przy sortowaniu po kwocie — wtedy grup jest więcej.
+   */
+  protected readonly dayGroups = computed(() => {
+    const groups: { date: string; label: string; sum: number; items: TransactionListItem[] }[] = [];
+    for (const item of this.items()) {
+      const last = groups[groups.length - 1];
+      if (last && last.date === item.date) {
+        last.items.push(item);
+        last.sum += item.amount;
+      } else {
+        groups.push({ date: item.date, label: this.dayLabel(item.date), sum: item.amount, items: [item] });
+      }
+    }
+    return groups;
+  });
+
+  /** „wtorek, 30 września 2026” — nagłówek grupy dnia na telefonie. */
+  private dayLabel(iso: string): string {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      .format(new Date(y, m - 1, d));
   }
 
   protected clearFilters(): void {

@@ -310,6 +310,13 @@
       "descriptionPlaceholder": "Co to było — np. „rozrząd i klocki”",
       "save": "Zapisz zlecenie",
       "saved": "Zapisano zlecenie epizodyczne „{{name}}”."
+    },
+    "mobile": {
+      "filters": "Filtry",
+      "period": "Okres",
+      "anyCategory": "Wszystkie kategorie",
+      "showResults": "Pokaż wyniki",
+      "balance": "Saldo {{amount}}"
     }
   },
   "currencies": {
