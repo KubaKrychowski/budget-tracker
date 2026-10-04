@@ -853,6 +853,11 @@
     },
     "errors": {
       "loadFailed": "Could not load limits"
+    },
+    "mobile": {
+      "spentOf": "{{spent}} of {{limit}} PLN",
+      "left": "{{amount}} PLN left",
+      "over": "{{amount}} PLN over the limit"
     }
   },
   "standingOrders": {
@@ -1436,5 +1441,13 @@
       "model-training": "Training set, versions and activation",
       "handbook": "How the app works, topic by topic"
     }
+  },
+  "mobileNav": {
+    "label": "Main navigation",
+    "dashboard": "Dashboard",
+    "limits": "Limits",
+    "goals": "Goals",
+    "standingOrders": "Standing orders",
+    "more": "More"
   }
 }

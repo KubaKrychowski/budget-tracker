@@ -239,3 +239,98 @@
     width: 100%;
   }
 }
+
+/* ── Telefon (makieta Figma „Mobile — Limity”) ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .lim {
+    padding: 0 16px 24px;
+
+    /* Etykiety nad polami zamiast obok — stała szerokość kontrolki (240px) nie mieści się z etykietą. */
+    &__config-label {
+      min-width: 0;
+      flex-basis: 100%;
+    }
+
+    &__config-control {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    &__config ::ng-deep .bsw__label,
+    &__config ::ng-deep .bsw__control {
+      min-width: 0;
+    }
+
+    /* Kafelki 2×2 jak na dashboardzie. */
+    &__metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+
+      > * {
+        padding: 12px;
+        background: #fff;
+        border: 1px solid var(--ds-neutral-200);
+        border-radius: 8px;
+      }
+    }
+
+    &__card {
+      padding: 16px;
+      border-color: var(--ds-neutral-200);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    &__mcards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    &__mcard {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 0 0;
+      border-top: 1px solid var(--ds-neutral-200);
+
+      &:first-child {
+        padding-top: 0;
+        border-top: none;
+      }
+
+      .lim__track {
+        flex: none;
+        width: 100%;
+      }
+    }
+
+    &__mcard-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    &__mcard-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-weight: 500;
+    }
+
+    &__mcard-percent {
+      font-weight: 500;
+    }
+
+    &__mcard-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ds-text-description);
+    }
+  }
+}

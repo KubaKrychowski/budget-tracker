@@ -25,7 +25,7 @@
     <!-- Co nowego: kropka, gdy są nieprzeczytane wydania; patrz core/changelog. -->
     <button
       type="button"
-      class="app-header__icon-link app-header__whats-new"
+      class="app-header__icon-link app-header__whats-new app-header__icon-link--desktop"
       (click)="changelog.open(false)"
       [attr.aria-label]="'changelog.open' | translate"
       [title]="'changelog.open' | translate"
@@ -48,7 +48,7 @@
     <!-- Terminal CLI (#25): panel komend, patrz core/terminal. -->
     <button
       type="button"
-      class="app-header__icon-link"
+      class="app-header__icon-link app-header__icon-link--desktop"
       (click)="terminal.toggle()"
       [attr.aria-label]="'terminal.openTerminal' | translate"
       [title]="'terminal.openTerminal' | translate"
@@ -57,7 +57,7 @@
     </button>
     <a
       routerLink="/settings"
-      class="app-header__icon-link"
+      class="app-header__icon-link app-header__icon-link--desktop"
       [attr.aria-label]="'settings.openSettings' | translate"
       [title]="'settings.openSettings' | translate"
     >
@@ -67,7 +67,7 @@
          wywołuje wylogowanie po stronie klienta, bez własnego ekranu. -->
     <button
       type="button"
-      class="app-header__icon-link"
+      class="app-header__icon-link app-header__icon-link--desktop"
       (click)="logout()"
       [attr.aria-label]="'auth.logout' | translate"
       [title]="'auth.logout' | translate"
@@ -82,3 +82,8 @@
 </main>
 
 <app-terminal />
+
+<!-- Telefon: dolny pasek i arkusz „Więcej” przejmują ikony nagłówka (poza podręcznikiem). -->
+@if (viewport.isMobile() && !splash.visible()) {
+  <app-mobile-nav (logout)="logout()" />
+}

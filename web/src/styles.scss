@@ -81,3 +81,21 @@ body {
     border-color: var(--ds-error-400);
   }
 }
+
+// Arkusz „Więcej” na telefonie (core/mobile-nav) — szuflada NG-ZORRO renderuje się w nakładce poza komponentem,
+// więc zaokrąglenie z makiety („Mobile — menu Więcej”) musi być globalne.
+.mnav-sheet .ant-drawer-content {
+  border-radius: 16px 16px 0 0;
+}
+
+// Telefon: wartości `nz-statistic` w kafelkach podsumowań (limity, cele, zlecenia, dashboard) — domyślne 24px
+// łamały kwoty na trzy linie w kafelku o szerokości połowy ekranu.
+@media (max-width: 768px) {
+  .ant-statistic-title {
+    font-size: 12px;
+  }
+
+  .ant-statistic-content {
+    font-size: 18px;
+  }
+}

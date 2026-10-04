@@ -51,6 +51,12 @@ import { BudgetOption } from '../api/models/budget-option';
     .bsw { display: flex; align-items: center; gap: 12px; }
     .bsw__label { white-space: nowrap; }
     .bsw__control { min-width: 240px; }
+    /* Telefon: etykieta nad polem, pole na całą szerokość — 240px obok etykiety nie mieści się w 360px. */
+    @media (max-width: 768px) {
+      .bsw { flex-wrap: wrap; gap: 4px; }
+      .bsw__label { flex-basis: 100%; }
+      .bsw__control { flex: 1 1 auto; min-width: 0; }
+    }
   `,
 })
 export class BudgetSwitcher {

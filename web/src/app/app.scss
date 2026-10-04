@@ -138,10 +138,16 @@
     &__icon-link {
       width: 32px;
       height: 32px;
+
+      // Gwiazdka, terminal, ustawienia i wylogowanie są na telefonie w arkuszu „Więcej” (core/mobile-nav).
+      &--desktop {
+        display: none;
+      }
     }
   }
 
+  // Miejsce na dolny pasek (core/mobile-nav), żeby nie przykrywał końca treści.
   .app-main {
-    padding: 16px 0;
+    padding: 16px 0 calc(88px + env(safe-area-inset-bottom));
   }
 }
