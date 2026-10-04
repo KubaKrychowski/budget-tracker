@@ -25,6 +25,7 @@ import { QUICK_ACTIONS, actionByKey } from '../../core/system-actions';
 import { SystemAction } from '../../core/models/system-action';
 import { RecentScreens } from '../../core/search/recent-screens';
 import { CATEGORY_SERIES_COLORS, CHART_COLORS } from '../../core/chart-palette';
+import { Viewport } from '../../core/layout/viewport';
 import { loadRememberedRange, rememberRange } from './budget-range-memory';
 import { snapToAvailableRange } from './chart-range-selection';
 import { valueOf } from '../../core/api/resource-value';
@@ -214,6 +215,30 @@ export class Dashboard {
   protected readonly isBlank = computed(() => this.noBudget() || this.noTransactions());
 
   protected readonly hasDataInPeriod = computed(() => (this.data()?.byCategory.length ?? 0) > 0);
+
+  /** Telefon: bez „Ostatnich akcji”, kategorie jako lista z paskami (makieta Figma „Mobile — Dashboard”). */
+  protected readonly viewport = inject(Viewport);
+
+  /**
+   * Telefon: wiersze listy kategorii — pasek względem NAJWIĘKSZEJ kategorii, nie sumy, żeby lider wypełniał tor,
+   * a różnice między resztą były widoczne. Kolor ten sam co słupek kategorii na wykresie desktopu.
+   */
+  protected readonly categoryRows = computed(() => {
+    const rows = this.data()?.byCategory ?? [];
+    const max = Math.max(1, ...rows.map((r) => r.amount));
+    return rows.map((r, index) => ({
+      index,
+      name: r.categoryName,
+      amount: r.amount,
+      width: (r.amount / max) * 100,
+      color: CATEGORY_SERIES_COLORS[index % CATEGORY_SERIES_COLORS.length],
+    }));
+  });
+
+  /** Stuknięcie w kategorię na telefonie robi to samo, co klik w słupek na desktopie. */
+  protected openCategory(index: number): void {
+    this.onCategoryBarClick(index);
+  }
 
   protected readonly categoryChart = computed(() => {
     this.langLoaded();
