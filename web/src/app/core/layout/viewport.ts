@@ -9,12 +9,13 @@ export const MOBILE_MEDIA_QUERY = '(max-width: 768px)';
 /** Czy ekran jest wąski jak telefon — sygnał, bo część ekranów renderuje wtedy INNY szablon, nie tylko inne CSS. */
 @Injectable({ providedIn: 'root' })
 export class Viewport {
-  private readonly query = window.matchMedia(MOBILE_MEDIA_QUERY);
+  // `matchMedia` bywa niedostępne (jsdom w testach) — wtedy widok desktopowy, jak przed wersją mobilną.
+  private readonly query = typeof window.matchMedia === 'function' ? window.matchMedia(MOBILE_MEDIA_QUERY) : null;
 
-  private readonly mobile = signal(this.query.matches);
+  private readonly mobile = signal(this.query?.matches ?? false);
   readonly isMobile = this.mobile.asReadonly();
 
   constructor() {
-    this.query.addEventListener('change', (event) => this.mobile.set(event.matches));
+    this.query?.addEventListener('change', (event) => this.mobile.set(event.matches));
   }
 }

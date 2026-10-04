@@ -752,6 +752,15 @@
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać oszczędności"
+    },
+    "mobile": {
+      "thisMonth": "Odłożone w tym miesiącu",
+      "ofGoal": "{{deposited}} z {{goal}} zł",
+      "showAll": "Pokaż wszystkie ({{count}})",
+      "showLess": "Pokaż mniej",
+      "legendMet": "Cel osiągnięty",
+      "legendBelow": "Poniżej celu",
+      "legendGoal": "cel {{amount}} zł"
     }
   },
   "reservations": {

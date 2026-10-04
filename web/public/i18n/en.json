@@ -684,6 +684,15 @@
     },
     "errors": {
       "loadFailed": "Could not load the savings data"
+    },
+    "mobile": {
+      "thisMonth": "Saved this month",
+      "ofGoal": "{{deposited}} of {{goal}} PLN",
+      "showAll": "Show all ({{count}})",
+      "showLess": "Show less",
+      "legendMet": "Goal met",
+      "legendBelow": "Below goal",
+      "legendGoal": "goal {{amount}} PLN"
     }
   },
   "reservations": {

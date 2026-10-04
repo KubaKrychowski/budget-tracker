@@ -15,6 +15,8 @@ import { ActiveBudget } from '../../core/active-budget';
 import { By } from '@angular/platform-browser';
 import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
 import { Savings } from './savings';
+import { Viewport } from '../../core/layout/viewport';
+import { WritableSignal } from '@angular/core';
 
 class FakeConfirmDialogService {
   lastOptions: ConfirmDialogOptions | null = null;
@@ -480,5 +482,69 @@ describe('Savings', () => {
 
     expect(text()).toContain('przekraczają stan konta o 600,00');
     expect(text()).not.toContain('Wolne środki: -600');
+  });
+
+  describe('na telefonie (makieta „Mobile — Cele oszczędzania”)', () => {
+    beforeEach(() => {
+      (TestBed.inject(Viewport) as unknown as { mobile: WritableSignal<boolean> }).mobile.set(true);
+      TestBed.inject(TranslateService).setTranslation('pl', {
+        savings: {
+          mobile: {
+            thisMonth: 'Odłożone w tym miesiącu',
+            ofGoal: '{{deposited}} z {{goal}} zł',
+            showAll: 'Pokaż wszystkie ({{count}})',
+            showLess: 'Pokaż mniej',
+          },
+        },
+      }, true);
+    });
+
+    const fiveMonths = ['2026-10-01', '2026-09-01', '2026-08-01', '2026-07-01', '2026-06-01']
+      .map((m, i) => month({ month: m, deposited: i % 2 === 0 ? 1500 : 900, verdict: i % 2 === 0 ? 'GoalMet' : 'GoalMissed' }));
+
+    it('pokazuje bieżący miesiąc z kwotą względem celu zamiast dwóch osobnych kafli', async () => {
+      await settle(response({ months: fiveMonths }));
+
+      expect(text()).toContain('Odłożone w tym miesiącu');
+      expect(text()).toContain('1200,00 z 1500,00 zł');
+      const fill = fixture.nativeElement.querySelector('.sav__mmonth .sav__bar-fill') as HTMLElement;
+      expect(fill.style.width).toBe('80%');
+    });
+
+    it('lista miesięcy pokazuje trzy najnowsze, resztę po „Pokaż wszystkie”', async () => {
+      await settle(response({ months: fiveMonths }));
+
+      expect(fixture.nativeElement.querySelectorAll('.sav__mlist-row').length).toBe(3);
+      expect(fixture.nativeElement.querySelector('nz-table')).toBeNull();
+
+      const more = [...fixture.nativeElement.querySelectorAll('button')]
+        .find((b: HTMLButtonElement) => b.textContent?.includes('Pokaż wszystkie (5)')) as HTMLButtonElement;
+      more.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelectorAll('.sav__mlist-row').length).toBe(5);
+    });
+
+    it('mały wykres ma słupek na miesiąc, zielony tylko gdy cel osiągnięty', async () => {
+      await settle(response({ months: fiveMonths }));
+
+      const bars = [...fixture.nativeElement.querySelectorAll('.sav__mbars-bar')] as HTMLElement[];
+      expect(bars.length).toBe(5);
+      expect(bars.filter((b) => b.classList.contains('sav__mbars-bar--met')).length).toBe(3);
+      expect(fixture.nativeElement.querySelector('apx-chart')).toBeNull();
+    });
+
+    it('rezerwacje to paski z kwotą uzbieraną względem całości, nie pierścienie', async () => {
+      await settle(response(), {
+        ...reservations,
+        reservedTotal: 1200,
+        reservations: [{ id: 'r1', name: 'Ubezpieczenie', amount: 1200, dueMonth: null, collected: 900, status: 'Collecting', settledOn: null, settledTransactionId: null, contributions: [] }],
+      });
+
+      expect(text()).toContain('Ubezpieczenie');
+      expect(text()).toContain('Ubezpieczenie900 / 1200');
+      const fill = fixture.nativeElement.querySelector('.sav__mres .sav__bar-fill') as HTMLElement;
+      expect(fill.style.width).toBe('75%');
+    });
   });
 });

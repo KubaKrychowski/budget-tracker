@@ -28,6 +28,7 @@ import { SavingsMonth, SavingsResponse } from '../../core/api/models/savings';
 import { ReservationsResponse, SavingsReservation } from '../../core/api/models/reservations';
 import { parseAmount } from '../../core/parse-amount';
 import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
+import { Viewport } from '../../core/layout/viewport';
 
 /**
  * Miesiące w MIEJSCOWNIKU — używane wyłącznie w zdaniach „w …".
@@ -82,6 +83,9 @@ export class Savings {
   });
 
   private readonly activeBudget = inject(ActiveBudget);
+
+  /** Telefon: karta bieżącego miesiąca, paski zamiast wykresów, lista miesięcy (makieta Figma „Mobile — Cele oszczędzania”). */
+  protected readonly viewport = inject(Viewport);
 
   /** Budżety z adresu — ta sama nazwa parametru co na liście transakcji. */
   private readonly budgetIdsFromUrl = computed(() => this.queryParams().getAll('budgetId'));
@@ -466,6 +470,46 @@ export class Savings {
    */
   protected isCurrent(month: SavingsMonth): boolean {
     return month.month === this.current()?.month;
+  }
+
+  /** Telefon: ile procent celu odłożono w bieżącym miesiącu — wypełnienie paska w karcie miesiąca. */
+  protected readonly currentPercent = computed(() => {
+    const goal = this.goal()?.amount ?? 0;
+    const deposited = this.current()?.deposited ?? 0;
+    return goal > 0 ? Math.min(100, Math.round((deposited / goal) * 100)) : 0;
+  });
+
+  /** Telefon: lista miesięcy pokazuje trzy najnowsze, resztę po „Pokaż wszystkie”. */
+  protected readonly showAllMonths = signal(false);
+  protected readonly visibleMonths = computed(() => (this.showAllMonths() ? this.months() : this.months().slice(0, 3)));
+
+  /**
+   * Telefon: mały wykres słupkowy zamiast liniowego — ostatnie 12 miesięcy, od najstarszego. Wysokość względem
+   * największej wpłaty albo celu (co wyższe), żeby linia celu zawsze mieściła się na wykresie.
+   */
+  protected readonly monthBars = computed(() => {
+    const points = [...this.months()].reverse().slice(-12);
+    const max = Math.max(1, this.goal()?.amount ?? 0, ...points.map((p) => p.deposited));
+    return {
+      goalLine: this.goal() ? ((this.goal()!.amount / max) * 100) : null,
+      bars: points.map((p) => ({
+        month: p.month,
+        label: this.monthRomanShort(p.month),
+        height: (p.deposited / max) * 100,
+        met: p.goal !== null && p.deposited >= p.goal,
+        title: `${this.monthLabel(p.month)}: ${this.money(p.deposited)}`,
+      })),
+    };
+  });
+
+  /** Wypełnienie paska rezerwacji na telefonie — bez zaokrąglania w górę ponad 100%. */
+  protected reservationFill(row: SavingsReservation): number {
+    return Math.min(100, this.reservationPercent(row));
+  }
+
+  private monthRomanShort(iso: string): string {
+    const month = Number(iso.split('-')[1]);
+    return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][month - 1] ?? '';
   }
 
   protected reload(): void {
