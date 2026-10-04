@@ -16,4 +16,6 @@ public sealed record StrategyNodeRequestDto(
     OverpaymentMode? Mode,
     StrategyConditionMetric? Metric,
     StrategyConditionComparison? Comparison,
-    decimal? Threshold);
+    decimal? Threshold,
+    Guid? CategoryId = null,
+    Guid? StandingOrderId = null);

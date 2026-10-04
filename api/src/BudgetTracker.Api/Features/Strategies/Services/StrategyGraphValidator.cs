@@ -61,7 +61,7 @@ public static class StrategyGraphValidator
             if (title.Length > MaxTitleLength) throw new StrategyGraphInvalidException();
             domainNodes.Add(new StrategyNode(
                 id, n.Type, title, n.X, n.Y, n.Month is { } m ? new DateOnly(m.Year, m.Month, 1) : null,
-                n.Amount, n.Rate, n.Installment, n.Mode, n.Metric, n.Comparison, n.Threshold));
+                n.Amount, n.Rate, n.Installment, n.Mode, n.Metric, n.Comparison, n.Threshold, n.CategoryId, n.StandingOrderId));
         }
 
         var types = domainNodes.ToDictionary(n => n.Id, n => n.Type);

@@ -8,7 +8,8 @@ namespace BudgetTracker.Api.Features.Strategies.Services;
 /// <summary>Gotowe grafy startowe nowej strategii.</summary>
 /// <remarks>
 /// ⚠️ Liczby w szablonie są PRZYKŁADOWE i zmyślone — mają pokazać kształt (kredyt, premia, nadpłata, warunek, poduszka),
-/// nie czyjąkolwiek sytuację. Podpisy kafelków idą przez <paramref name="text"/>, bo są tekstem dla użytkownika
+/// nie czyjąkolwiek sytuację. Nie ma w nim akcji, które wymagają wskazania konkretnego obiektu użytkownika (zlecenie stałe,
+/// kategoria) — szablon ma działać dla każdego bez dopisywania parametrów. Podpisy kafelków idą przez <paramref name="text"/>, bo są tekstem dla użytkownika
 /// (klucze <c>Strategy_Template_*</c> w zasobach); test podaje tożsamość.
 /// </remarks>
 public static class StrategyTemplates
@@ -46,9 +47,8 @@ public static class StrategyTemplates
                 threshold: 9_000m),
             Node("wait", StrategyNodeType.Wait, "Strategy_Template_Wait", c3, 280),
             Node("payoff", StrategyNodeType.PayOffLoan, "Strategy_Template_PayOff", c4, 140),
-            Node("endOrder", StrategyNodeType.EndStandingOrder, "Strategy_Template_EndOrder", c4, 280),
-            Node("goal", StrategyNodeType.SetSavingsGoal, "Strategy_Template_Goal", c4, 420, amount: 15_000m),
-            Node("end", StrategyNodeType.End, "Strategy_Template_End", c4, 560),
+            Node("goal", StrategyNodeType.SetSavingsGoal, "Strategy_Template_Goal", c4, 280, amount: 1_100m),
+            Node("end", StrategyNodeType.End, "Strategy_Template_End", c4, 420),
 
             Node("raise", StrategyNodeType.Trigger, "Strategy_Template_Raise", c1, 420, In(3)),
             Node("raiseSurplus", StrategyNodeType.IncreaseSurplus, "Strategy_Template_RaiseSurplus", c2, 420, amount: 400m),
@@ -65,8 +65,7 @@ public static class StrategyTemplates
             Edge("check", "payoff", StrategyEdgeLabel.Yes),
             Edge("check", "wait", StrategyEdgeLabel.No),
             Edge("wait", "check"),
-            Edge("payoff", "endOrder"),
-            Edge("endOrder", "goal"),
+            Edge("payoff", "goal"),
             Edge("goal", "end"),
             Edge("raise", "raiseSurplus"),
             Edge("insurance", "reservation"),

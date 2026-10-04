@@ -51,6 +51,12 @@ public enum StrategyNodeType
     /// <summary>Limit kategorii — akcja do zastosowania w aplikacji, bez skutku w symulacji.</summary>
     SetLimit = 26,
 
+    /// <summary>
+    /// Wydatek jednorazowy do założenia w aplikacji jako zlecenie epizodyczne. W symulacji odejmuje kwotę od gotówki
+    /// w miesiącu wykonania akcji (jak <see cref="Expense"/>), a termin zlecenia to właśnie ten miesiąc.
+    /// </summary>
+    CreateEpisodicOrder = 27,
+
     /// <summary>Warunek na gotówce i długu z dwoma wyjściami: tak i nie.</summary>
     Condition = 30,
 

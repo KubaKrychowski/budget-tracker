@@ -66,8 +66,12 @@ public static class StrategyGraphAnalyzer
         StrategyNodeType.CushionGoal => node.Amount is not > 0m,
         StrategyNodeType.IncreaseSurplus => node.Amount is null or 0m,
         StrategyNodeType.Overpay => node.Amount is not > 0m,
-        StrategyNodeType.SetSavingsGoal or StrategyNodeType.CreateReservation or StrategyNodeType.SetLimit =>
-            node.Amount is not > 0m,
+        StrategyNodeType.SetSavingsGoal => node.Amount is not > 0m,
+        StrategyNodeType.CreateReservation => node.Amount is not > 0m || string.IsNullOrWhiteSpace(node.Title),
+        StrategyNodeType.SetLimit => node.Amount is not > 0m || node.CategoryId is null,
+        StrategyNodeType.EndStandingOrder => node.StandingOrderId is null || node.Month is null,
+        StrategyNodeType.CreateEpisodicOrder =>
+            node.Amount is not > 0m || node.CategoryId is null || string.IsNullOrWhiteSpace(node.Title),
         StrategyNodeType.Condition => node.Metric is null || node.Comparison is null || node.Threshold is null,
         _ => false,
     };

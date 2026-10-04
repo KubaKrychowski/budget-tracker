@@ -66,6 +66,7 @@
   <data name="Strategy_NameRequired" xml:space="preserve"><value>Nazwij strategię (do 100 znaków).</value></data>
   <data name="Strategy_HorizonInvalid" xml:space="preserve"><value>Horyzont symulacji musi mieścić się między 6 a 60 miesiącami.</value></data>
   <data name="Strategy_GraphInvalid" xml:space="preserve"><value>Tablicy nie da się zapisać: ma powtórzony identyfikator, połączenie do nieistniejącego kafelka, kafelek połączony z samym sobą, etykietę tak/nie poza warunkiem, zbyt wiele elementów albo wartość spoza zakresu.</value></data>
+  <data name="Strategy_ApplyNothingSelected" xml:space="preserve"><value>Zaznacz co najmniej jedną akcję do zastosowania w budżecie.</value></data>
   <data name="Strategy_Template_Surplus" xml:space="preserve"><value>Nadwyżka miesięczna</value></data>
   <data name="Strategy_Template_Loan" xml:space="preserve"><value>Kredyt</value></data>
   <data name="Strategy_Template_Cushion" xml:space="preserve"><value>Poduszka docelowa</value></data>
@@ -74,11 +75,10 @@
   <data name="Strategy_Template_Check" xml:space="preserve"><value>Warunek</value></data>
   <data name="Strategy_Template_Wait" xml:space="preserve"><value>Czekaj</value></data>
   <data name="Strategy_Template_PayOff" xml:space="preserve"><value>Spłać resztę kredytu</value></data>
-  <data name="Strategy_Template_EndOrder" xml:space="preserve"><value>Zakończ zlecenie stałe</value></data>
-  <data name="Strategy_Template_Goal" xml:space="preserve"><value>Załóż cel oszczędzania</value></data>
+  <data name="Strategy_Template_Goal" xml:space="preserve"><value>Cel oszczędzania</value></data>
   <data name="Strategy_Template_End" xml:space="preserve"><value>Strategia zrealizowana</value></data>
   <data name="Strategy_Template_Raise" xml:space="preserve"><value>Podwyżka</value></data>
   <data name="Strategy_Template_RaiseSurplus" xml:space="preserve"><value>Zwiększ nadwyżkę</value></data>
   <data name="Strategy_Template_Insurance" xml:space="preserve"><value>Ubezpieczenie</value></data>
-  <data name="Strategy_Template_Reservation" xml:space="preserve"><value>Załóż rezerwację</value></data>
+  <data name="Strategy_Template_Reservation" xml:space="preserve"><value>Rezerwacja na ubezpieczenie</value></data>
 </root>
