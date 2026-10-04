@@ -58,7 +58,7 @@
 
         <!-- ── Podsumowanie ───────────────────────────────────────────────────────────── -->
         <h2 class="so__caption">{{ 'standingOrders.summary' | translate }}</h2>
-        <div class="so__metrics">
+        <div class="so__metrics m-tiles">
           <nz-statistic [nzTitle]="'standingOrders.metrics.monthlyTotal' | translate"
             [nzValue]="money(d.monthlyTotal)" [nzSuffix]="'dashboard.currency' | translate" />
           <nz-statistic [nzTitle]="'standingOrders.metrics.paid' | translate"
@@ -185,7 +185,7 @@
               </ng-template>
               @for (group of mobileGroups(); track group.key) {
                 <h4 class="so__mgroup">{{ ('standingOrders.mobile.group.' + group.key) | translate: { count: group.rows.length } }}</h4>
-                <ul class="so__mcards">
+                <ul class="so__mcards m-list">
                   @for (row of group.rows; track row.id) {
                     <ng-container *ngTemplateOutlet="orderCard; context: { $implicit: row }" />
                   }
@@ -200,7 +200,7 @@
                   {{ 'standingOrders.table.ended' | translate: { count: endedOrders().length } }}
                 </button>
                 @if (endedOpen()) {
-                  <ul class="so__mcards">
+                  <ul class="so__mcards m-list">
                     @for (row of endedOrders(); track row.id) {
                       <ng-container *ngTemplateOutlet="orderCard; context: { $implicit: row }" />
                     }

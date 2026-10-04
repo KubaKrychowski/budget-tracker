@@ -177,7 +177,7 @@
       }
 
       <h2 class="sav__caption">{{ 'savings.summary' | translate }}</h2>
-      <div class="sav__metrics">
+      <div class="sav__metrics m-tiles">
         <nz-statistic
           class="sav__metric--desktop"
           [nzTitle]="'savings.metrics.thisMonth' | translate"
@@ -263,7 +263,7 @@
           <nz-empty [nzNotFoundContent]="'savings.months.empty' | translate" />
         } @else if (viewport.isMobile()) {
           <!-- Telefon: lista zamiast tabeli — miesiąc, odłożone / cel, werdykt. Stuknięcie = transakcje miesiąca. -->
-          <ul class="sav__mlist">
+          <ul class="sav__mlist m-list">
             @for (m of visibleMonths(); track m.month) {
               <li>
                 <button type="button" class="sav__mlist-row" (click)="showInTransactions(m)">

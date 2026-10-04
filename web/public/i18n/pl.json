@@ -659,6 +659,9 @@
         "updated": "Zapisano kategorię.",
         "deleted": "Usunięto kategorię."
       }
+    },
+    "mobile": {
+      "allSections": "Wszystkie ustawienia"
     }
   },
   "confirmDialog": {

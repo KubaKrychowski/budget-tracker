@@ -33,7 +33,7 @@
   @if (summary(); as m) {
     <section class="tx__summary-section">
       <h2 class="tx__caption">{{ 'dashboard.summary' | translate }}</h2>
-      <div class="tx__metrics">
+      <div class="tx__metrics m-tiles">
         <nz-statistic
           [nzTitle]="'transactions.metrics.totalExpenses' | translate"
           [nzValue]="money(m.totalExpenses)"
@@ -78,7 +78,7 @@
           <nz-icon nzType="filter" nzTheme="fill" />
           {{ 'transactions.mobile.filters' | translate }}
           @if (activeFilterCount() > 0) {
-            <span class="tx__mbadge">{{ activeFilterCount() }}</span>
+            <span class="m-count">{{ activeFilterCount() }}</span>
           }
         </button>
       </div>
@@ -108,8 +108,8 @@
       nzWrapClassName="mnav-sheet"
     >
       <ng-container *nzDrawerContent>
-        <div class="tx__mfilters">
-          <label class="tx__mfilters-label" for="tx-m-dates">{{ 'transactions.mobile.period' | translate }}</label>
+        <div class="m-sheet-form">
+          <label class="m-sheet-form__label" for="tx-m-dates">{{ 'transactions.mobile.period' | translate }}</label>
           <nz-range-picker
             nzId="tx-m-dates"
             [ngModel]="dateRange()"
@@ -118,7 +118,7 @@
             nzFormat="dd.MM.yyyy"
           />
 
-          <label class="tx__mfilters-label" for="tx-m-category">{{ 'transactions.filters.category' | translate }}</label>
+          <label class="m-sheet-form__label" for="tx-m-category">{{ 'transactions.filters.category' | translate }}</label>
           <nz-select
             nzId="tx-m-category"
             nzAllowClear
@@ -133,7 +133,7 @@
             }
           </nz-select>
 
-          <label class="tx__mfilters-label" for="tx-m-budgets">{{ 'transactions.filters.budgets' | translate }}</label>
+          <label class="m-sheet-form__label" for="tx-m-budgets">{{ 'transactions.filters.budgets' | translate }}</label>
           <nz-select
             nzId="tx-m-budgets"
             nzMode="multiple"
@@ -152,7 +152,7 @@
             <p class="tx__budgets-note">{{ 'transactions.filters.budgetsNote' | translate }}</p>
           }
 
-          <div class="tx__mfilters-actions">
+          <div class="m-sheet-form__actions">
             <button nz-button (click)="clearFilters()">{{ 'transactions.filters.clear' | translate }}</button>
             <button nz-button nzType="primary" (click)="filtersOpen.set(false)">{{ 'transactions.mobile.showResults' | translate }}</button>
           </div>
@@ -319,7 +319,7 @@
             <span>{{ group.label }}</span>
             <span class="amount">{{ money(group.sum) }} PLN</span>
           </div>
-          <ul class="tx__mcards">
+          <ul class="tx__mcards m-list">
             @for (item of group.items; track item.id) {
               <li class="tx__mcard">
                 @if (editingIds().has(item.id)) {

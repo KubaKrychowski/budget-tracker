@@ -11,11 +11,34 @@
 
   <p class="set__intro">{{ 'settings.intro' | translate }}</p>
 
-  <!-- `nzSelectedIndex` jest tu WARTOŚCIĄ POCZĄTKOWĄ, nie wiązaniem dwustronnym. Zakładkami
-       przełącza sama tabela; my tylko SŁUCHAMY, która jest otwarta, bo od tego zależy leniwe
-       zamontowanie „Danych treningowych" (patrz `activeTab` i `@if` niżej). Oddawanie indeksu
-       z powrotem na wejście nie dołożyłoby niczego poza drugim źródłem prawdy. -->
-  <nz-tabs [nzSelectedIndex]="initialTab" (nzSelectedIndexChange)="onTabChange($event)">
+  <!-- Jedno źródło prawdy: `activeTab`. Pasek zakładek je zmienia (`onTabChange`), a na telefonie także lista
+       sekcji niżej; `nzSelectedIndex` tylko je odzwierciedla. Od `activeTab` zależy leniwe zamontowanie
+       „Danych treningowych" i reszty (patrz `@if` w zakładkach). -->
+  @if (viewport.isMobile() && mobileMenu()) {
+    <!-- Telefon (makieta „Mobile — Ustawienia”): lista sekcji zamiast zakładek, które nie mieszczą się w szerokości. -->
+    <ul class="set__msections m-list">
+      @for (section of mobileSections; track section.index) {
+        <li>
+          <button type="button" class="set__msection" (click)="openMobileSection(section.index)">
+            @if ('svg' in section) {
+              <img [src]="section.svg" width="22" height="22" alt="" />
+            } @else {
+              <nz-icon class="set__msection-icon" [nzType]="section.icon" />
+            }
+            <span class="set__msection-label">{{ section.labelKey | translate }}</span>
+            <nz-icon class="set__msection-icon" nzType="right" />
+          </button>
+        </li>
+      }
+    </ul>
+  } @else {
+  @if (viewport.isMobile()) {
+    <button nz-button nzType="link" class="set__mback" (click)="backToMobileMenu()">
+      <nz-icon nzType="arrow-left" /> {{ 'settings.mobile.allSections' | translate }}
+    </button>
+  }
+  <!-- `activeTab()`, a nie stała z adresu: na telefonie sekcję wybiera lista, nie pasek zakładek. -->
+  <nz-tabs class="set__tabs" [nzSelectedIndex]="activeTab()" (nzSelectedIndexChange)="onTabChange($event)">
     <nz-tab [nzTitle]="'settings.tabs.budgets' | translate">
       <section class="set__section">
         <h2 class="set__caption">{{ 'settings.budgets.caption' | translate }}</h2>
@@ -38,6 +61,40 @@
                wraca do table-layout: auto: każda kolumna liczy się z zawartości nagłówka
                i wierszy, a NADMIAR miejsca (tabela ma width:100%) przeglądarka rozdziela
                między kolumny proporcjonalnie — to jest ta „dynamiczna szerokość". -->
+          @if (viewport.isMobile()) {
+            <!-- Telefon: karta na budżet z danymi z kolumn tabeli; akcje to samo menu „⋯”. -->
+            <ul class="set__mbudgets">
+              @for (row of filteredBudgets(); track row.id) {
+                <li class="set__mbudget" [class.set__row--deleted]="row.status === 'deleted'">
+                  <div class="set__mbudget-top">
+                    <span class="set__mbudget-name">{{ row.name }}</span>
+                    @switch (row.status) {
+                      @case ('active') { <nz-badge nzStatus="success" [nzText]="'settings.budgets.status.active' | translate" /> }
+                      @case ('disabled') { <nz-badge nzStatus="warning" [nzText]="'settings.budgets.status.disabled' | translate" /> }
+                      @default { <nz-badge nzStatus="default" [nzText]="'settings.budgets.status.deleted' | translate" /> }
+                    }
+                    <button
+                      nz-button
+                      nzType="text"
+                      nz-dropdown
+                      [nzDropdownMenu]="rowMenu"
+                      nzTrigger="click"
+                      (click)="menuRow.set(row)"
+                      [attr.aria-label]="'settings.budgets.columns.actions' | translate"
+                    >
+                      <nz-icon nzType="more" />
+                    </button>
+                  </div>
+                  <dl class="set__mbudget-data">
+                    <div><dt>{{ 'settings.budgets.columns.balance' | translate }}</dt><dd class="amount">{{ money(row.balance) }} {{ row.currency }}</dd></div>
+                    <div><dt>{{ 'settings.budgets.columns.monthlyLimit' | translate }}</dt><dd class="amount">{{ money(row.monthlyLimit) }} {{ row.currency }}</dd></div>
+                    <div><dt>{{ 'settings.budgets.columns.transactionCount' | translate }}</dt><dd class="amount">{{ row.transactionCount }}</dd></div>
+                    <div><dt>{{ 'settings.budgets.columns.createdAt' | translate }}</dt><dd>{{ day(row.createdAt) }}</dd></div>
+                  </dl>
+                </li>
+              }
+            </ul>
+          } @else {
           <nz-table
             #budgetTable
             [nzData]="filteredBudgets()"
@@ -175,6 +232,7 @@
               }
             </tbody>
           </nz-table>
+          }
         </nz-spin>
         </div>
 
@@ -296,6 +354,7 @@
       </section>
     </nz-tab>
   </nz-tabs>
+  }
 </div>
 
 <!-- ── Modal edycji ───────────────────────────────────────────────────────────────────── -->

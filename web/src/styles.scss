@@ -99,3 +99,77 @@ body {
     font-size: 18px;
   }
 }
+
+// ── Widok mobilny: wspólne klocki ekranów (makiety Figma „Mobile (propozycja)”) ───────────────────────────
+// Globalnie, a nie w każdym komponencie: kafelki podsumowań i ramka listy powtarzają się na pięciu ekranach,
+// a powielone w stylach komponentów przekraczały ich budżet rozmiaru (angular.json, anyComponentStyle).
+
+// Ramka listy kart (zlecenia, transakcje, miesiące celów, sekcje ustawień) — separatory wierszy zostają w ekranach.
+.m-list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  // Kafelki podsumowania 2×2 (dashboard, limity, cele, zlecenia, transakcje). ⚠️ `!important`, bo desktopowy
+  // `display: flex` kontenera stoi w stylu komponentu: ma wyższą specyficzność (atrybut `_ngcontent`) i ładuje się później.
+  .m-tiles {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+    border-bottom: none !important;
+
+    > * {
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--ds-neutral-200);
+      border-radius: 8px;
+    }
+  }
+}
+
+// Licznik przy przycisku (np. „Filtry 2” na liście transakcji).
+.m-count {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 4px;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: #fff;
+  text-align: center;
+  background: var(--ds-primary-600);
+  border-radius: 9px;
+}
+
+// Formularz w arkuszu od dołu (np. filtry transakcji): etykieta nad polem, pola na całą szerokość, akcje do prawej.
+.m-sheet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+
+  nz-range-picker,
+  nz-select,
+  nz-date-picker,
+  nz-input-number {
+    width: 100%;
+  }
+
+  &__label {
+    margin-top: 6px;
+    color: var(--ds-text-description);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+}

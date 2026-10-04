@@ -182,19 +182,6 @@
       display: none;
     }
 
-    &__metrics {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-
-      > * {
-        padding: 12px;
-        background: #fff;
-        border: 1px solid var(--ds-neutral-200);
-        border-radius: 8px;
-      }
-    }
-
     /* Najpierw zobowiązania (rezerwacje), potem historia (wykres, miesiące) — kolejność z makiety. */
     &__col:last-child {
       order: -1;
@@ -346,15 +333,6 @@
       &--met {
         background: var(--ds-primary-500);
       }
-    }
-
-    &__mlist {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      background: #fff;
-      border: 1px solid var(--ds-neutral-200);
-      border-radius: 8px;
     }
 
     &__mlist-row {

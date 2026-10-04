@@ -591,6 +591,9 @@
         "updated": "Category saved.",
         "deleted": "Category deleted."
       }
+    },
+    "mobile": {
+      "allSections": "All settings"
     }
   },
   "confirmDialog": {

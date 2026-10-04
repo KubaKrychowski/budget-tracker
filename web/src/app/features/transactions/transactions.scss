@@ -261,19 +261,6 @@
     padding-left: 16px;
   }
 
-  .tx__metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-
-    > * {
-      padding: 12px;
-      background: #fff;
-      border: 1px solid var(--ds-neutral-200);
-      border-radius: 8px;
-    }
-  }
-
   .tx__mtoolbar {
     display: flex;
     flex-direction: column;
@@ -291,47 +278,10 @@
     min-width: 0;
   }
 
-  .tx__mbadge {
-    display: inline-block;
-    min-width: 18px;
-    margin-left: 4px;
-    padding: 0 6px;
-    font-size: 12px;
-    line-height: 18px;
-    color: #fff;
-    text-align: center;
-    background: var(--ds-primary-600);
-    border-radius: 9px;
-  }
-
   .tx__mchips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-  }
-
-  .tx__mfilters {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 16px;
-
-    nz-range-picker,
-    nz-select {
-      width: 100%;
-    }
-  }
-
-  .tx__mfilters-label {
-    margin-top: 6px;
-    color: var(--ds-text-description);
-  }
-
-  .tx__mfilters-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 12px;
   }
 
   .tx__mday {
@@ -341,19 +291,6 @@
     margin: 12px 0 6px;
     font-size: 13px;
     color: var(--ds-text-description);
-
-    span:first-child::first-letter {
-      text-transform: uppercase;
-    }
-  }
-
-  .tx__mcards {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    background: #fff;
-    border: 1px solid var(--ds-neutral-200);
-    border-radius: 8px;
   }
 
   .tx__mcard {

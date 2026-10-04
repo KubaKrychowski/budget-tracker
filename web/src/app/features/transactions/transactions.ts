@@ -905,11 +905,12 @@ export class Transactions {
     return groups;
   });
 
-  /** „wtorek, 30 września 2026” — nagłówek grupy dnia na telefonie. */
+  /** „Wtorek, 30 września 2026” — nagłówek grupy dnia na telefonie. */
   private dayLabel(iso: string): string {
     const [y, m, d] = iso.split('-').map(Number);
-    return new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    const label = new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       .format(new Date(y, m - 1, d));
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   protected clearFilters(): void {

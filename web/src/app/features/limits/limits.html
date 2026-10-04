@@ -142,7 +142,7 @@
 
         <!-- ── Podsumowanie ───────────────────────────────────────────────────────────── -->
         <h2 class="lim__caption">{{ 'limits.summary' | translate }}</h2>
-        <div class="lim__metrics">
+        <div class="lim__metrics m-tiles">
           <nz-statistic
             [nzTitle]="'limits.metrics.spentInLimited' | translate"
             [nzValue]="d.limits.length > 0 ? money(d.spentInLimited) + ' z ' + money(d.limitTotal) : '—'"
