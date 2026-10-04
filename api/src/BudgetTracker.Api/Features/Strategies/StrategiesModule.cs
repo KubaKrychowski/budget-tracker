@@ -18,6 +18,7 @@ public static class StrategiesModule
     public static IServiceCollection AddStrategies(this IServiceCollection services)
     {
         services.AddScoped<StrategiesBudgetScope>();
+        services.AddScoped<StrategyApplyPlanner>();
 
         services.AddScoped<ListStrategiesQueryHandler>();
         services.AddScoped<GetStrategyQueryHandler>();
@@ -25,6 +26,9 @@ public static class StrategiesModule
         services.AddScoped<CreateStrategyCommandHandler>();
         services.AddScoped<SaveStrategyCommandHandler>();
         services.AddScoped<DeleteStrategyCommandHandler>();
+        services.AddScoped<GetStrategyApplyPreviewQueryHandler>();
+        services.AddScoped<ApplyStrategyCommandHandler>();
+        services.AddScoped<GetStrategyReferencesQueryHandler>();
         return services;
     }
 
@@ -64,6 +68,29 @@ public static class StrategiesModule
             .Produces<StrategyResponseDto>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound);
+
+        app.MapGet("/api/strategies/{id:guid}/apply", async (
+            Guid id, GetStrategyApplyPreviewQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, ct)))
+            .WithName("GetStrategyApplyPreview")
+            .Produces<StrategyApplyPreviewResponseDto>()
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapGet("/api/strategies/{id:guid}/references", async (
+            Guid id, GetStrategyReferencesQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, ct)))
+            .WithName("GetStrategyReferences")
+            .Produces<StrategyReferencesResponseDto>()
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapPost("/api/strategies/{id:guid}/apply", async (
+            Guid id, ApplyStrategyRequestDto request, ApplyStrategyCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, request, ct)))
+            .WithName("ApplyStrategy")
+            .Produces<ApplyStrategyResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
 
         app.MapDelete("/api/strategies/{id:guid}", async (Guid id, DeleteStrategyCommandHandler handler, CancellationToken ct) =>
         {

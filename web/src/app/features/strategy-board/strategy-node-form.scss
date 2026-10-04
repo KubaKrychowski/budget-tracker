@@ -47,6 +47,26 @@
     width: 100%;
   }
 
+  &__warn {
+    color: var(--ds-warning-600, #d48806);
+  }
+
+  &__apply {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border-radius: 4px;
+    background: var(--ds-primary-50, #dcf0e0);
+    font-size: 12px;
+    color: var(--ds-neutral-600);
+
+    strong {
+      font-size: 13px;
+      color: var(--ds-neutral-900);
+    }
+  }
+
   &__outcome {
     padding: 12px 14px;
     border-radius: 4px;

@@ -222,6 +222,52 @@ public sealed class StrategySimulatorTests
     }
 
     [Fact]
+    public void A_one_off_expense_action_subtracts_cash_in_the_month_it_fires()
+    {
+        var result = Run(
+        [
+            Node("raise", StrategyNodeType.Trigger, M(2026, 12)),
+            BudgetAction(StrategyNodeType.CreateEpisodicOrder, 3_000m, "Remont", categoryId: Guid.NewGuid()) with { Id = "repair" },
+            Node("s", StrategyNodeType.Surplus, amount: 1_000m),
+        ], [Edge("raise", "repair")], cash: 5_000m, months: 6);
+
+        Assert.Equal(M(2026, 12), result.Nodes.Single(n => n.NodeId == "repair").FiredIn);
+        Assert.Equal(5_000m + 3 * 1_000m, result.Months[2].Cash + 3_000m);
+        Assert.Equal(5_000m + 6 * 1_000m - 3_000m, result.FinalCash);
+    }
+
+    private static bool IsMissingParameter(StrategyNode action) =>
+        StrategyGraphAnalyzer.Analyze([Node("t", StrategyNodeType.Trigger, M(2026, 10)), action], [Edge("t", action.Id)])
+            .Any(p => p is { NodeId: var id, Kind: StrategyProblemKind.MissingParameter } && id == action.Id);
+
+    private static StrategyNode BudgetAction(
+        StrategyNodeType type, decimal? amount = null, string title = "", DateOnly? month = null,
+        Guid? categoryId = null, Guid? orderId = null) =>
+        new("a", type, title, 0, 0, month, amount, null, null, null, null, null, null, categoryId, orderId);
+
+    [Fact]
+    public void A_budget_action_is_complete_only_with_the_parameters_it_needs_to_be_applied()
+    {
+        var category = Guid.NewGuid();
+        var order = Guid.NewGuid();
+
+        Assert.True(IsMissingParameter(BudgetAction(StrategyNodeType.SetSavingsGoal)));
+        Assert.False(IsMissingParameter(BudgetAction(StrategyNodeType.SetSavingsGoal, 700m)));
+
+        Assert.True(IsMissingParameter(BudgetAction(StrategyNodeType.CreateReservation, 500m)));
+        Assert.False(IsMissingParameter(BudgetAction(StrategyNodeType.CreateReservation, 500m, "Wakacje")));
+
+        Assert.True(IsMissingParameter(BudgetAction(StrategyNodeType.SetLimit, 900m)));
+        Assert.False(IsMissingParameter(BudgetAction(StrategyNodeType.SetLimit, 900m, categoryId: category)));
+
+        Assert.True(IsMissingParameter(BudgetAction(StrategyNodeType.EndStandingOrder, orderId: order)));
+        Assert.False(IsMissingParameter(BudgetAction(StrategyNodeType.EndStandingOrder, month: M(2027, 7), orderId: order)));
+
+        Assert.True(IsMissingParameter(BudgetAction(StrategyNodeType.CreateEpisodicOrder, 500m, "Remont")));
+        Assert.False(IsMissingParameter(BudgetAction(StrategyNodeType.CreateEpisodicOrder, 500m, "Remont", categoryId: category)));
+    }
+
+    [Fact]
     public void A_cycle_that_does_not_pass_through_wait_is_reported_and_does_not_hang()
     {
         var result = Run(

@@ -163,6 +163,9 @@ public static class StrategySimulator
                         case StrategyNodeType.PayOffLoan:
                             PayOff();
                             break;
+                        case StrategyNodeType.CreateEpisodicOrder:
+                            cash -= node.Amount!.Value;
+                            break;
                     }
 
                     firedIn.TryAdd(id, month);

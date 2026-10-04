@@ -173,6 +173,28 @@ public sealed class StrategiesTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Saving_round_trips_the_category_and_standing_order_references_through_jsonb()
+    {
+        var created = await NewAsync();
+        var category = Guid.NewGuid();
+        var order = Guid.NewGuid();
+        var nodes = new[]
+        {
+            NodeDto("limit", StrategyNodeType.SetLimit, amount: 1_500m, threshold: 85m) with { CategoryId = category },
+            NodeDto("end", StrategyNodeType.EndStandingOrder, October) with { StandingOrderId = order },
+            NodeDto("plain", StrategyNodeType.Surplus, amount: 100m),
+        };
+
+        await Save().HandleAsync(created.Id, Request(nodes), default);
+        _db.ChangeTracker.Clear();
+        var loaded = await Get().HandleAsync(created.Id, default);
+
+        Assert.Equal((category, null), (loaded.Nodes.Single(n => n.Id == "limit").CategoryId, (Guid?)null));
+        Assert.Equal(order, loaded.Nodes.Single(n => n.Id == "end").StandingOrderId);
+        Assert.Null(loaded.Nodes.Single(n => n.Id == "plain").CategoryId);
+    }
+
+    [Fact]
     public async Task Saving_trims_the_name_and_snaps_months_to_the_first_day()
     {
         var created = await NewAsync();

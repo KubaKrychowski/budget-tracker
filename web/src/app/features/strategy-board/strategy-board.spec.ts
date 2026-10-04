@@ -12,7 +12,7 @@ import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { pl_PL, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { APP_ICONS } from '../../core/icons';
 import {
-  Strategy, StrategyEdge, StrategyNode, StrategyProblem, StrategyResult,
+  Strategy, StrategyEdge, StrategyNode, StrategyProblem, StrategyReferences, StrategyResult,
 } from '../../core/api/models/strategies';
 import { StrategyBoard } from './strategy-board';
 
@@ -25,6 +25,8 @@ interface BoardApi {
   onDeleteSelected(event: { nodeIds: string[]; groupIds: string[]; connectionIds: string[] }): void;
   onMoveNodes(event: { nodes: { id: string; position: { x: number; y: number } }[] }): void;
   updateNode(node: StrategyNode): void;
+  changeType(id: string, type: string): void;
+  incomingTypesOf(id: string): string[];
   save(): Promise<void>;
   discard(): void;
   nodes(): readonly StrategyNode[];
@@ -43,7 +45,7 @@ describe('StrategyBoard', () => {
 
   const node = (over: Partial<StrategyNode>): StrategyNode => ({
     id: 'x', type: 'Trigger', title: '', x: 0, y: 0, month: null, amount: null, rate: null, installment: null,
-    mode: null, metric: null, comparison: null, threshold: null, ...over,
+    mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, ...over,
   });
 
   const nodes: StrategyNode[] = [
@@ -78,9 +80,18 @@ describe('StrategyBoard', () => {
   const text = (): string => (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
   const nodeCount = (): number => fixture.nativeElement.querySelectorAll('.f-node').length;
 
+  const references: StrategyReferences = {
+    categories: [{ id: 'c1', name: 'Jedzenie' }],
+    standingOrders: [{ id: 'o1', name: 'Rata kredytu', expectedAmount: 880 }],
+  };
+
   const settle = async (body: Strategy = strategy()): Promise<void> => {
     fixture.detectChanges();
     http.match((r) => r.url === '/api/strategies/s1' && r.method === 'GET').forEach((r) => r.flush(body));
+    fixture.detectChanges();
+    await Promise.resolve();
+    fixture.detectChanges();
+    http.match((r) => r.url === '/api/strategies/s1/references').forEach((r) => r.flush(references));
     await fixture.whenStable();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -122,6 +133,7 @@ describe('StrategyBoard', () => {
         title: 'Strategie',
         errors: { loadFailed: 'Nie udało się wczytać strategii', saveFailed: 'Nie udało się zapisać zmian' },
         board: {
+          apply: 'Zastosuj w budżecie…',
           lead: 'Połącz zdarzenia z akcjami.',
           params: 'Parametry', discard: 'Odrzuć zmiany', save: 'Zapisz strategię', unsaved: 'Są niezapisane zmiany',
           saved: 'Strategia zapisana.',
@@ -130,7 +142,7 @@ describe('StrategyBoard', () => {
           problem: { NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.', MissingParameter: 'Brakuje parametru.' },
           yes: 'tak', no: 'nie', edgeLabel: 'Połączenie: {{from}} → {{to}}', perMonth: '{{amount}} / mies.',
           sim: { title: 'Symulacja', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
-          palette: { title: 'Dodaj kafelek', tabs: { events: 'Zdarzenia', actions: 'Akcje', controls: 'Warunki' }, search: 'Szukaj', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}' },
+          palette: { title: 'Dodaj kafelek', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}', categories: { event: { title: 'Zdarzenie', hint: '' }, action: { title: 'Akcja', hint: '' }, control: { title: 'Warunek', hint: '' } } },
           types: { Trigger: 'Zdarzenie', Income: 'Wpływ', Overpay: 'Nadpłać kredyt', PayOffLoan: 'Spłać resztę', Condition: 'Warunek', Wait: 'Czekaj', End: 'Koniec', IncreaseSurplus: 'Zwiększ nadwyżkę' },
           hints: {}, mode: { ReduceInstallment: 'Obniż ratę' }, metric: { CashMinusDebt: 'Gotówka − dług' },
         },
@@ -262,6 +274,44 @@ describe('StrategyBoard', () => {
     expect(api().nodes().map((n) => n.id)).not.toContain('check');
     expect(api().edges().map((e) => e.id)).toEqual([]);
     expect(api().nodes()).toHaveLength(nodes.length - 1);
+  });
+
+  it('zmiana rodzaju akcji na zdarzenie zrywa strzałkę wchodzącą, a zmiana na warunek daje jej wyjściu etykietę', async () => {
+    await settle();
+    expect(api().incomingTypesOf('overpay')).toEqual(['Income']);
+
+    api().changeType('overpay', 'Trigger');
+    expect(api().nodes().find((n) => n.id === 'overpay')?.type).toBe('Trigger');
+    expect(api().edges().map((e) => e.id)).toEqual(['e2', 'e3', 'e4', 'e5']);
+    expect(api().dirty()).toBe(true);
+
+    api().changeType('payoff', 'Condition');
+    expect(api().nodes().find((n) => n.id === 'payoff')?.metric).toBe('CashMinusDebt');
+  });
+
+  it('„Zastosuj w budżecie” jest wyłączone bez akcji „do budżetu” albo z niezapisanymi zmianami', async () => {
+    const applyButton = (): HTMLButtonElement =>
+      [...fixture.nativeElement.querySelectorAll('button')].find((b) => (b as HTMLElement).textContent?.includes('Zastosuj w budżecie')) as HTMLButtonElement;
+
+    await settle();
+    expect(applyButton().disabled).toBe(true);
+
+    api().addNode('SetSavingsGoal', { x: 100, y: 200 });
+    fixture.detectChanges();
+    expect(applyButton().disabled).toBe(true);
+
+    api().discard();
+    fixture.detectChanges();
+    expect(applyButton().disabled).toBe(true);
+  });
+
+  it('z zapisaną akcją „do budżetu” przycisk „Zastosuj w budżecie” jest aktywny', async () => {
+    const goal = node({ id: 'goal', type: 'SetSavingsGoal', title: 'Cel', amount: 700 });
+    await settle(strategy({ nodes: [...nodes, goal] }));
+
+    const button = [...fixture.nativeElement.querySelectorAll('button')]
+      .find((b) => (b as HTMLElement).textContent?.includes('Zastosuj w budżecie')) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
   });
 
   it('przesunięcie kafelka zapisuje nową pozycję i oznacza zmianę', async () => {

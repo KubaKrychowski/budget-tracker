@@ -37,6 +37,14 @@
           <button nz-button nzType="primary" [disabled]="!dirty() || busy()" [nzLoading]="busy()" (click)="save()">
             {{ 'strategies.board.save' | translate }}
           </button>
+          <button
+            nz-button
+            [disabled]="dirty() || busy() || !hasBudgetActions()"
+            [title]="(dirty() ? 'strategies.board.applySaveFirst' : hasBudgetActions() ? 'strategies.board.applyHint' : 'strategies.board.applyNone') | translate"
+            (click)="applyOpen.set(true)"
+          >
+            {{ 'strategies.board.apply' | translate }}
+          </button>
         </div>
         @if (dirty()) {
           <span class="sb__unsaved">{{ 'strategies.board.unsaved' | translate }}</span>
@@ -170,7 +178,10 @@
             [node]="node"
             [outcome]="formOutcome()"
             [problems]="problemsByNodeOf(node.id)"
+            [incomingTypes]="incomingTypesOf(node.id)"
+            [references]="references() ?? null"
             (changed)="updateNode($event)"
+            (typeChanged)="changeType(node.id, $event)"
             (removed)="removeNode(node.id)"
             (closed)="closeForm()" />
         } @else if (selectedEdge(); as edge) {
@@ -198,12 +209,16 @@
             <button type="button" class="sb__link" (click)="panel.set('palette')">← {{ 'strategies.board.palette.title' | translate }}</button>
           </div>
         } @else {
-          <app-strategy-palette [selectedType]="selectedNode()?.type ?? null" (add)="addNode($event)" />
+          <app-strategy-palette (add)="addNode($event)" />
         }
       </aside>
     </div>
   } @else {
     <nz-spin [nzSpinning]="loading()" />
+  }
+
+  @if (saved(); as strategy) {
+    <app-strategy-apply [strategyId]="strategy.id" [open]="applyOpen()" (closed)="applyOpen.set(false)" />
   }
 
   <nz-modal

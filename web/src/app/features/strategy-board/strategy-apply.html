@@ -1,0 +1,48 @@
+<nz-modal
+  [nzVisible]="open()"
+  [nzTitle]="'strategies.apply.title' | translate"
+  [nzWidth]="560"
+  [nzOkText]="'strategies.apply.ok' | translate: { count: count() }"
+  [nzCancelText]="'strategies.apply.cancel' | translate"
+  [nzOkDisabled]="count() === 0"
+  [nzOkLoading]="busy()"
+  (nzOnOk)="apply()"
+  (nzOnCancel)="closed.emit()"
+>
+  <ng-container *nzModalContent>
+    <nz-spin [nzSpinning]="loading()">
+      @if (failed(); as problem) {
+        <nz-alert nzType="error" nzShowIcon [nzMessage]="problem" />
+      } @else if (preview(); as data) {
+        @if (data.items.length === 0) {
+          <nz-alert nzType="info" nzShowIcon [nzMessage]="'strategies.apply.empty' | translate" />
+        } @else {
+          <nz-alert
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="alertKey() | translate: { count: count(), budget: data.budgetName }"
+            [nzDescription]="'strategies.apply.alertBody' | translate"
+          />
+          <ul class="sap__list">
+            @for (item of data.items; track item.nodeId) {
+              <li class="sap__row" [class.sap__row--off]="!isApplicable(item)">
+                <input
+                  type="checkbox"
+                  class="sap__check"
+                  [id]="'apply-' + item.nodeId"
+                  [checked]="isSelected(item)"
+                  [disabled]="!isApplicable(item)"
+                  (change)="toggle(item)" />
+                <label class="sap__text" [for]="'apply-' + item.nodeId">
+                  <strong>{{ 'strategies.apply.items.' + item.type | translate: { name: title(item), amount: amount(item.amount) } }}</strong>
+                  <small>{{ note(item) }}</small>
+                </label>
+                <span class="sap__badge" [class]="'sap__badge sap__badge--' + item.status">{{ 'strategies.apply.status.' + item.status | translate }}</span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </nz-spin>
+  </ng-container>
+</nz-modal>

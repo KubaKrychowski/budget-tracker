@@ -24,7 +24,9 @@ namespace BudgetTracker.Api.Domain;
 /// <param name="Mode">Tryb rozliczenia nadpłaty.</param>
 /// <param name="Metric">Co porównuje warunek.</param>
 /// <param name="Comparison">Kierunek porównania warunku.</param>
-/// <param name="Threshold">Próg warunku.</param>
+/// <param name="Threshold">Próg warunku; przy limicie kategorii — od ilu procent limitu ostrzegać (domyślnie 80).</param>
+/// <param name="CategoryId">Publiczny identyfikator kategorii (limit kategorii, wydatek jednorazowy).</param>
+/// <param name="StandingOrderId">Publiczny identyfikator zlecenia stałego do zakończenia.</param>
 public sealed record StrategyNode(
     string Id,
     StrategyNodeType Type,
@@ -38,4 +40,6 @@ public sealed record StrategyNode(
     OverpaymentMode? Mode,
     StrategyConditionMetric? Metric,
     StrategyConditionComparison? Comparison,
-    decimal? Threshold);
+    decimal? Threshold,
+    Guid? CategoryId = null,
+    Guid? StandingOrderId = null);

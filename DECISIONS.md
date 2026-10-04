@@ -1470,3 +1470,34 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 > - Okno wyskakuje samo raz na sesję, gdy znika okładka logowania i są nieprzeczytane wydania; ikona gwiazdki w nagłówku
 >   (z czerwoną kropką) otwiera historię. Każde zamknięcie okna (przycisk, Esc, tło) oznacza wydania jako przeczytane.
 > - Błąd pobierania pliku zostawia listę pustą — „co nowego” nigdy nie blokuje aplikacji.
+
+> **REWIZJA — 2026-10-04: kafelki tablicy strategii — trzy kategorie i select „Rodzaj”** (makiety Figma „Strategia”: 388:361,
+> 388:626, 388:896; `strategy-node-meta.ts`, `strategy-palette`, `strategy-node-form`):
+> - Zamiast ~15 pozycji w palecie (zakładki Zdarzenia / Akcje / Warunki + wyszukiwarka) są **trzy kafelki: Zdarzenie, Akcja, Warunek**.
+>   Rodzaj (nadpłata, cel oszczędzania…) wybiera select „Rodzaj” w ustawieniach kafelka, z grupami (np. akcje: „Liczy symulacja” /
+>   „Zakłada w budżecie”). Model grafu i API bez zmian — rodzaj to nadal `StrategyNodeType`, istniejące strategie działają.
+> - Zmiana rodzaju (`retype` + `edgesAfterRetype`, czyste funkcje w `strategy-node-meta.ts`): zostają pola wspólne dla obu rodzajów,
+>   reszta jest czyszczona (nic nie zostaje po cichu w symulacji), a strzałki, których nowy rodzaj nie może mieć (wejście do zdarzenia,
+>   wyjście z „Koniec”), znikają; zmiana z/na warunek przepisuje etykiety tak/nie, nadmiarowe wyjścia warunku odpadają.
+> - Reguła „po wpływie nie ma limitu kategorii” przeniosła się z palety do selecta rodzajów: opcja jest wyszarzona, gdy do kafelka
+>   prowadzi strzałka z wpływu jednorazowego.
+> - Następny krok (osobny PR): akcje z grupy „Zakłada w budżecie” realnie zakładają obiekty po „Zastosuj w budżecie”, plus nowy rodzaj
+>   „Dodaj wydatek jednorazowy” (zlecenie epizodyczne).
+
+> **REWIZJA — 2026-10-04: strategie — „Zastosuj w budżecie” i akcje zakładające obiekty** (makiety Figma „Strategia”: 391:451, 392:451;
+> `Features/Strategies` — `StrategyApplyPlanner`, `ApplyStrategyCommandHandler`, `GetStrategyApplyPreviewQueryHandler`; `strategy-apply`):
+> - ⚠️ **Cel oszczędzania w aplikacji to JEDNA kwota miesięczna na budżet** (`SetSavingsGoal`), bez „kwoty docelowej” i terminu — wcześniejsza
+>   makieta kafelka z „Rodzajem celu” i „Terminem” była błędna. „Poduszka 15 000 zł” to rezerwacja albo węzeł bazowy `CushionGoal`, nie cel.
+> - Akcje z grupy „Zakłada w budżecie”: cel miesięczny, rezerwacja (nazwa = podpis kafelka, termin opcjonalny), limit kategorii
+>   (`CategoryId`, próg ostrzeżenia w `Threshold`, domyślnie 80), zakończenie zlecenia stałego (`StandingOrderId` + ostatni miesiąc)
+>   i NOWY rodzaj `CreateEpisodicOrder` (zlecenie epizodyczne; w symulacji odejmuje gotówkę w miesiącu wykonania, termin = ten miesiąc).
+>   Nowe pola kafelka siedzą w `jsonb`, więc migracja `AddStrategyNodeReferences` nie zmienia schematu.
+> - `POST /api/strategies/{id}/apply` woła TE SAME handlery co ekrany celów, rezerwacji, limitów i zleceń, więc obowiązują ich reguły
+>   (np. zamknięta historia limitów). Atomowość daje transakcja żądania (`RlsTransactionEndpointFilter`) — błąd jednej akcji cofa wszystkie.
+>   Stan akcji liczy się od nowa przy zastosowaniu, nie z okna sprzed minuty.
+> - Statusy: nowa / zmiana / już jest / czeka / niekompletna. „Czeka” = miesiąc wykonania akcji w SYMULACJI jeszcze nie nadszedł (miesiąc
+>   z symulacji, nie z kafelka). „Już jest”: cel i limit po kwocie (i progu), rezerwacja i zlecenie epizodyczne po nazwie, kwocie (i terminie),
+>   zlecenie stałe po tym, że już jest zakończone nie później niż w wybranym miesiącu. Zastosowanie działa na ZAPISANEJ strategii.
+> - Szablon „Kredyt i poduszka” jest uniwersalny: bez zlecenia stałego (wymagałoby wskazania konkretnego obiektu użytkownika); po spłacie
+>   kredytu zakłada cel miesięczny. Listy kategorii i zleceń do pól wyboru: `GET /api/strategies/{id}/references`.
+> - Nie ma jeszcze: wariantów i wykresu (etap 2), przycisku „zdarzenie nastąpiło” (etap 4).

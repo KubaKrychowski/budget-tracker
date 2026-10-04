@@ -5,6 +5,7 @@ export type StrategyNodeType =
   | 'Trigger' | 'Income' | 'Expense'
   | 'Surplus' | 'Loan' | 'CushionGoal'
   | 'IncreaseSurplus' | 'Overpay' | 'PayOffLoan' | 'SetSavingsGoal' | 'CreateReservation' | 'EndStandingOrder' | 'SetLimit'
+  | 'CreateEpisodicOrder'
   | 'Condition' | 'Wait' | 'End';
 
 /** Odpowiednik StrategyEdgeLabel — zwykłe połączenie albo wyjście warunku. */
@@ -42,7 +43,12 @@ export interface StrategyNode {
   readonly mode: OverpaymentMode | null;
   readonly metric: StrategyConditionMetric | null;
   readonly comparison: StrategyConditionComparison | null;
+  /** Próg warunku; przy limicie kategorii — od ilu procent limitu ostrzegać. */
   readonly threshold: number | null;
+  /** Kategoria (limit kategorii, wydatek jednorazowy). */
+  readonly categoryId: string | null;
+  /** Zlecenie stałe do zakończenia. */
+  readonly standingOrderId: string | null;
 }
 
 /** Odpowiednik StrategyEdgeRequestDto / StrategyEdgeResponseDto — strzałka między kafelkami. */
@@ -130,4 +136,44 @@ export interface StrategiesResponse {
   readonly selectedBudgetId: string | null;
   readonly budgets: BudgetOption[];
   readonly strategies: StrategyListItem[];
+}
+
+/** Odpowiednik StrategyApplyStatus — co by się stało z akcją „do budżetu” przy zastosowaniu. */
+export type StrategyApplyStatus = 'New' | 'Change' | 'Exists' | 'Waiting' | 'Incomplete';
+
+/** Odpowiednik StrategyApplyItemResponseDto — akcja w oknie „Zastosuj w budżecie”. */
+export interface StrategyApplyItem {
+  readonly nodeId: string;
+  readonly type: StrategyNodeType;
+  readonly title: string;
+  readonly amount: number | null;
+  readonly status: StrategyApplyStatus;
+  /** Miesiąc działania (limit, wydatek), ostatni miesiąc zlecenia albo termin rezerwacji. */
+  readonly month: string | null;
+  /** Kwota, którą akcja zastąpi (obecny cel albo limit). */
+  readonly currentAmount: number | null;
+}
+
+/** Odpowiednik StrategyApplyPreviewResponseDto. */
+export interface StrategyApplyPreview {
+  readonly budgetId: string;
+  readonly budgetName: string;
+  readonly items: StrategyApplyItem[];
+}
+
+/** Odpowiednik ApplyStrategyRequestDto. */
+export interface ApplyStrategyRequest {
+  readonly nodeIds: readonly string[];
+}
+
+/** Odpowiednik ApplyStrategyResponseDto. */
+export interface ApplyStrategyResponse {
+  readonly applied: string[];
+  readonly skipped: string[];
+}
+
+/** Odpowiednik StrategyReferencesResponseDto — obiekty budżetu, na które wskazują kafelki. */
+export interface StrategyReferences {
+  readonly categories: { readonly id: string; readonly name: string }[];
+  readonly standingOrders: { readonly id: string; readonly name: string; readonly expectedAmount: number }[];
 }

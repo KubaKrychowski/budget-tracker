@@ -1,50 +1,20 @@
 <div class="spal">
   <h2 class="spal__title">{{ 'strategies.board.palette.title' | translate }}</h2>
-
-  <div class="spal__tabs" role="tablist">
-    @for (t of tabs; track t) {
-      <button
-        type="button"
-        role="tab"
-        class="spal__tab"
-        [class.spal__tab--active]="tab() === t"
-        [attr.aria-selected]="tab() === t"
-        (click)="tab.set(t)"
-      >
-        {{ 'strategies.board.palette.tabs.' + t | translate }}
-      </button>
-    }
-  </div>
-
-  <input
-    nz-input
-    [attr.aria-label]="'strategies.board.palette.search' | translate"
-    [placeholder]="'strategies.board.palette.search' | translate"
-    [ngModel]="search()"
-    (ngModelChange)="search.set($event)" />
-
   <p class="spal__hint">{{ 'strategies.board.palette.hint' | translate }}</p>
 
-  @for (item of items(); track item.type) {
+  @for (item of items; track item.category) {
     <div class="spal__row">
-      <div
-        fExternalItem
-        class="spal__item"
-        [class.spal__item--off]="!!item.unavailable"
-        [fData]="item.type"
-        [fDisabled]="!!item.unavailable"
-      >
+      <div fExternalItem class="spal__item" [fData]="item.type">
         <span class="spal__grip" aria-hidden="true">⋮⋮</span>
         <span class="spal__text">
-          <strong>{{ item.label }}</strong>
-          <small>{{ item.unavailable ? (item.unavailable | translate) : hint(item.type) }}</small>
+          <strong>{{ 'strategies.board.palette.categories.' + item.category + '.title' | translate }}</strong>
+          <small>{{ 'strategies.board.palette.categories.' + item.category + '.hint' | translate }}</small>
         </span>
       </div>
       <button
         type="button"
         class="spal__add"
-        [disabled]="!!item.unavailable"
-        [attr.aria-label]="'strategies.board.palette.add' | translate: { name: item.label }"
+        [attr.aria-label]="'strategies.board.palette.add' | translate: { name: ('strategies.board.palette.categories.' + item.category + '.title' | translate) }"
         (click)="add.emit(item.type)"
       >
         +

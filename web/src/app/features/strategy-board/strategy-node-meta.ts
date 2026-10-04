@@ -1,18 +1,19 @@
-import { StrategyEdgeLabel, StrategyNode, StrategyNodeType } from '../../core/api/models/strategies';
+import { StrategyEdge, StrategyEdgeLabel, StrategyNode, StrategyNodeType } from '../../core/api/models/strategies';
 
 /** Rola kafelka na tablicy — decyduje o wyglądzie, wejściu i wyjściach. */
 export type NodeKind = 'event' | 'base' | 'action' | 'condition' | 'wait' | 'end';
 
-/** Zakładka palety „Dodaj kafelek”. */
-export type PaletteTab = 'events' | 'actions' | 'controls';
+/** Kategoria kafelka — trzy pozycje palety „Dodaj kafelek”; rodzaj w obrębie kategorii wybiera się w ustawieniach kafelka. */
+export type NodeCategory = 'event' | 'action' | 'control';
 
 /** Pola formularza węzła — rodzaj kafelka wybiera, które się pokazują. */
-export type NodeField = 'month' | 'amount' | 'rate' | 'installment' | 'mode' | 'condition';
+export type NodeField =
+  | 'month' | 'dueMonth' | 'amount' | 'rate' | 'installment' | 'mode' | 'condition' | 'category' | 'standingOrder' | 'warning';
 
 export interface NodeMeta {
   readonly type: StrategyNodeType;
   readonly kind: NodeKind;
-  readonly tab: PaletteTab;
+  readonly category: NodeCategory;
   readonly fields: readonly NodeField[];
 }
 
@@ -24,32 +25,66 @@ export interface NodeMeta {
  * wyjścia. Te same reguły egzekwuje analizator grafu po stronie API (`StrategyGraphAnalyzer`).
  */
 export const NODE_META: Readonly<Record<StrategyNodeType, NodeMeta>> = {
-  Trigger: { type: 'Trigger', kind: 'event', tab: 'events', fields: ['month'] },
-  Income: { type: 'Income', kind: 'event', tab: 'events', fields: ['month', 'amount'] },
-  Expense: { type: 'Expense', kind: 'event', tab: 'events', fields: ['month', 'amount'] },
-  Surplus: { type: 'Surplus', kind: 'base', tab: 'events', fields: ['amount'] },
-  Loan: { type: 'Loan', kind: 'base', tab: 'events', fields: ['month', 'amount', 'rate', 'installment'] },
-  CushionGoal: { type: 'CushionGoal', kind: 'base', tab: 'events', fields: ['amount'] },
-  IncreaseSurplus: { type: 'IncreaseSurplus', kind: 'action', tab: 'actions', fields: ['amount'] },
-  Overpay: { type: 'Overpay', kind: 'action', tab: 'actions', fields: ['amount', 'mode'] },
-  PayOffLoan: { type: 'PayOffLoan', kind: 'action', tab: 'actions', fields: [] },
-  SetSavingsGoal: { type: 'SetSavingsGoal', kind: 'action', tab: 'actions', fields: ['amount'] },
-  CreateReservation: { type: 'CreateReservation', kind: 'action', tab: 'actions', fields: ['amount'] },
-  EndStandingOrder: { type: 'EndStandingOrder', kind: 'action', tab: 'actions', fields: [] },
-  SetLimit: { type: 'SetLimit', kind: 'action', tab: 'actions', fields: ['amount'] },
-  Condition: { type: 'Condition', kind: 'condition', tab: 'controls', fields: ['condition'] },
-  Wait: { type: 'Wait', kind: 'wait', tab: 'controls', fields: [] },
-  End: { type: 'End', kind: 'end', tab: 'controls', fields: [] },
+  Trigger: { type: 'Trigger', kind: 'event', category: 'event', fields: ['month'] },
+  Income: { type: 'Income', kind: 'event', category: 'event', fields: ['month', 'amount'] },
+  Expense: { type: 'Expense', kind: 'event', category: 'event', fields: ['month', 'amount'] },
+  Surplus: { type: 'Surplus', kind: 'base', category: 'event', fields: ['amount'] },
+  Loan: { type: 'Loan', kind: 'base', category: 'event', fields: ['month', 'amount', 'rate', 'installment'] },
+  CushionGoal: { type: 'CushionGoal', kind: 'base', category: 'event', fields: ['amount'] },
+  IncreaseSurplus: { type: 'IncreaseSurplus', kind: 'action', category: 'action', fields: ['amount'] },
+  Overpay: { type: 'Overpay', kind: 'action', category: 'action', fields: ['amount', 'mode'] },
+  PayOffLoan: { type: 'PayOffLoan', kind: 'action', category: 'action', fields: [] },
+  SetSavingsGoal: { type: 'SetSavingsGoal', kind: 'action', category: 'action', fields: ['amount'] },
+  CreateReservation: { type: 'CreateReservation', kind: 'action', category: 'action', fields: ['amount', 'dueMonth'] },
+  EndStandingOrder: { type: 'EndStandingOrder', kind: 'action', category: 'action', fields: ['standingOrder', 'month'] },
+  SetLimit: { type: 'SetLimit', kind: 'action', category: 'action', fields: ['category', 'amount', 'warning'] },
+  CreateEpisodicOrder: { type: 'CreateEpisodicOrder', kind: 'action', category: 'action', fields: ['category', 'amount'] },
+  Condition: { type: 'Condition', kind: 'condition', category: 'control', fields: ['condition'] },
+  Wait: { type: 'Wait', kind: 'wait', category: 'control', fields: [] },
+  End: { type: 'End', kind: 'end', category: 'control', fields: [] },
 };
 
-/** Kafelki w kolejności, w jakiej pokazuje je paleta, pogrupowane po zakładkach. */
-export const PALETTE: Readonly<Record<PaletteTab, readonly StrategyNodeType[]>> = {
-  events: ['Trigger', 'Income', 'Expense', 'Surplus', 'Loan', 'CushionGoal'],
-  actions: ['IncreaseSurplus', 'Overpay', 'PayOffLoan', 'SetSavingsGoal', 'CreateReservation', 'EndStandingOrder', 'SetLimit'],
-  controls: ['Condition', 'Wait', 'End'],
+/** Grupa rodzajów w liście „Rodzaj” — klucz tłumaczenia to `strategies.board.groups.<key>`. */
+export interface TypeGroup {
+  readonly key: string;
+  readonly types: readonly StrategyNodeType[];
+}
+
+/**
+ * Kategorie kafelków: rodzaj domyślny nowego kafelka i grupy rodzajów do wyboru w ustawieniach (makieta Figma
+ * „Strategia”: 388:361, 388:626, 388:896). Grupa „budget” akcji to te, które po „Zastosuj w budżecie” zakładają
+ * w aplikacji prawdziwe obiekty; „simulated” liczy tylko symulacja.
+ */
+export const CATEGORIES: Readonly<Record<NodeCategory, { readonly default: StrategyNodeType; readonly groups: readonly TypeGroup[] }>> = {
+  event: {
+    default: 'Trigger',
+    groups: [
+      { key: 'events', types: ['Trigger', 'Income', 'Expense'] },
+      { key: 'base', types: ['Surplus', 'Loan', 'CushionGoal'] },
+    ],
+  },
+  action: {
+    default: 'IncreaseSurplus',
+    groups: [
+      { key: 'simulated', types: ['IncreaseSurplus', 'Overpay', 'PayOffLoan'] },
+      { key: 'budget', types: ['SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder', 'CreateEpisodicOrder'] },
+    ],
+  },
+  control: {
+    default: 'Condition',
+    groups: [{ key: 'flow', types: ['Condition', 'Wait', 'End'] }],
+  },
 };
 
-export const PALETTE_TABS: readonly PaletteTab[] = ['events', 'actions', 'controls'];
+export const CATEGORY_ORDER: readonly NodeCategory[] = ['event', 'action', 'control'];
+
+/** Domyślny próg ostrzeżenia limitu kategorii (procent) — ten sam co w API (`StrategyApplyPlanner`). */
+export const DEFAULT_WARNING_THRESHOLD = 80;
+
+/** Akcje, które po „Zastosuj w budżecie” zakładają w aplikacji prawdziwe obiekty. */
+export const BUDGET_ACTIONS: readonly StrategyNodeType[] = [
+  'SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder', 'CreateEpisodicOrder',
+];
 
 /** Czy do kafelka może prowadzić strzałka. */
 export const canReceive = (type: StrategyNodeType): boolean => {
@@ -64,13 +99,12 @@ export const canSend = (type: StrategyNodeType): boolean => {
 };
 
 /**
- * Powód, dla którego kafelek nie pasuje do zaznaczonego zdarzenia — klucz zasobu albo `null`, gdy pasuje.
- *
- * Jedyna reguła pierwszej wersji: wpływ jednorazowy nie zmienia wydatków, więc nie ma sensu ustawiać po nim limitu
- * kategorii (makieta: „premia nie zmienia wydatków”). Tabela zgodności rośnie razem z rodzajami zdarzeń.
+ * Powód, dla którego rodzaj nie pasuje do kafelka, z którego do niego prowadzi strzałka — klucz zasobu albo `null`,
+ * gdy pasuje. Jedyna reguła pierwszej wersji: wpływ jednorazowy nie zmienia wydatków, więc nie ma sensu ustawiać po nim
+ * limitu kategorii (makieta: „premia nie zmienia wydatków”). Tabela zgodności rośnie razem z rodzajami zdarzeń.
  */
-export const unavailableReason = (selected: StrategyNodeType | null, candidate: StrategyNodeType): string | null =>
-  selected === 'Income' && candidate === 'SetLimit' ? 'strategies.board.unavailable.incomeLimit' : null;
+export const unavailableReason = (incoming: readonly StrategyNodeType[], candidate: StrategyNodeType): string | null =>
+  candidate === 'SetLimit' && incoming.includes('Income') ? 'strategies.board.unavailable.incomeLimit' : null;
 
 /** Identyfikator złącza wejściowego węzła. */
 export const inputConnector = (nodeId: string): string => `${nodeId}-in`;
@@ -107,6 +141,67 @@ export const newNode = (type: StrategyNodeType, id: string, x: number, y: number
     mode: type === 'Overpay' ? 'ReduceInstallment' : null,
     metric: type === 'Condition' ? 'CashMinusDebt' : null,
     comparison: type === 'Condition' ? 'AtLeast' : null,
-    threshold: null,
+    threshold: type === 'SetLimit' ? DEFAULT_WARNING_THRESHOLD : null,
+    categoryId: null,
+    standingOrderId: null,
   };
+};
+
+/**
+ * Kafelek po zmianie rodzaju: zostają pola, które nowy rodzaj też ma (np. kwota przy zmianie „Zwiększ nadwyżkę” na
+ * „Nadpłać kredyt”), reszta jest czyszczona — nie zostaje po niej nic, co mogłoby wpłynąć na symulację po cichu.
+ */
+export const retype = (node: StrategyNode, type: StrategyNodeType, startMonth: string): StrategyNode => {
+  const fields = NODE_META[type].fields;
+  const keep = <T>(field: NodeField, value: T): T | null => (fields.includes(field) ? value : null);
+  const isCondition = type === 'Condition';
+  const thresholdKind = (t: StrategyNodeType): NodeField | null =>
+    NODE_META[t].fields.includes('condition') ? 'condition' : NODE_META[t].fields.includes('warning') ? 'warning' : null;
+  const sameThreshold = thresholdKind(node.type) === thresholdKind(type);
+  return {
+    ...node,
+    type,
+    month: fields.includes('month') ? (node.month ?? startMonth) : fields.includes('dueMonth') ? node.month : null,
+    amount: keep('amount', node.amount),
+    rate: keep('rate', node.rate),
+    installment: keep('installment', node.installment),
+    mode: type === 'Overpay' ? (node.mode ?? 'ReduceInstallment') : null,
+    metric: isCondition ? (node.metric ?? 'CashMinusDebt') : null,
+    comparison: isCondition ? (node.comparison ?? 'AtLeast') : null,
+    threshold: thresholdKind(type) === null ? null : sameThreshold ? node.threshold : type === 'SetLimit' ? DEFAULT_WARNING_THRESHOLD : null,
+    categoryId: keep('category', node.categoryId),
+    standingOrderId: keep('standingOrder', node.standingOrderId),
+  };
+};
+
+/**
+ * Strzałki po zmianie rodzaju kafelka `id` z `from` na `to`: znikają te, których nowy rodzaj nie może mieć
+ * (wejście do zdarzenia, wyjście z „Koniec”), a wyjścia przy zmianie z/na warunek dostają właściwe etykiety
+ * (warunek: tak i nie, reszta: zwykła strzałka) — nadmiarowe wyjścia warunku odpadają.
+ */
+export const edgesAfterRetype = (
+  edges: readonly StrategyEdge[], id: string, from: StrategyNodeType, to: StrategyNodeType,
+): StrategyEdge[] => {
+  let outgoing = 0;
+  const result: StrategyEdge[] = [];
+  for (const edge of edges) {
+    if (edge.to === id && !canReceive(to)) continue;
+    if (edge.from !== id) {
+      result.push(edge);
+      continue;
+    }
+    if (!canSend(to)) continue;
+    if ((from === 'Condition') === (to === 'Condition')) {
+      result.push(edge);
+      continue;
+    }
+    if (to === 'Condition') {
+      const label: StrategyEdgeLabel | null = outgoing === 0 ? 'Yes' : outgoing === 1 ? 'No' : null;
+      outgoing++;
+      if (label) result.push({ ...edge, label });
+    } else {
+      result.push({ ...edge, label: 'None' });
+    }
+  }
+  return result;
 };
