@@ -1470,3 +1470,16 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 > - Okno wyskakuje samo raz na sesję, gdy znika okładka logowania i są nieprzeczytane wydania; ikona gwiazdki w nagłówku
 >   (z czerwoną kropką) otwiera historię. Każde zamknięcie okna (przycisk, Esc, tło) oznacza wydania jako przeczytane.
 > - Błąd pobierania pliku zostawia listę pustą — „co nowego” nigdy nie blokuje aplikacji.
+
+> **REWIZJA — 2026-10-04: kafelki tablicy strategii — trzy kategorie i select „Rodzaj”** (makiety Figma „Strategia”: 388:361,
+> 388:626, 388:896; `strategy-node-meta.ts`, `strategy-palette`, `strategy-node-form`):
+> - Zamiast ~15 pozycji w palecie (zakładki Zdarzenia / Akcje / Warunki + wyszukiwarka) są **trzy kafelki: Zdarzenie, Akcja, Warunek**.
+>   Rodzaj (nadpłata, cel oszczędzania…) wybiera select „Rodzaj” w ustawieniach kafelka, z grupami (np. akcje: „Liczy symulacja” /
+>   „Zakłada w budżecie”). Model grafu i API bez zmian — rodzaj to nadal `StrategyNodeType`, istniejące strategie działają.
+> - Zmiana rodzaju (`retype` + `edgesAfterRetype`, czyste funkcje w `strategy-node-meta.ts`): zostają pola wspólne dla obu rodzajów,
+>   reszta jest czyszczona (nic nie zostaje po cichu w symulacji), a strzałki, których nowy rodzaj nie może mieć (wejście do zdarzenia,
+>   wyjście z „Koniec”), znikają; zmiana z/na warunek przepisuje etykiety tak/nie, nadmiarowe wyjścia warunku odpadają.
+> - Reguła „po wpływie nie ma limitu kategorii” przeniosła się z palety do selecta rodzajów: opcja jest wyszarzona, gdy do kafelka
+>   prowadzi strzałka z wpływu jednorazowego.
+> - Następny krok (osobny PR): akcje z grupy „Zakłada w budżecie” realnie zakładają obiekty po „Zastosuj w budżecie”, plus nowy rodzaj
+>   „Dodaj wydatek jednorazowy” (zlecenie epizodyczne).

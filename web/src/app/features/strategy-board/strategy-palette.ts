@@ -1,21 +1,19 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, output } from '@angular/core';
 import { FFlowModule } from '@foblex/flow';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { StrategyNodeType } from '../../core/api/models/strategies';
-import { PALETTE, PALETTE_TABS, PaletteTab, unavailableReason } from './strategy-node-meta';
+import { CATEGORIES, CATEGORY_ORDER, NodeCategory } from './strategy-node-meta';
 
-/** Pozycja palety: kafelek, który da się dodać, razem z powodem, dla którego akurat teraz się nie da. */
+/** Pozycja palety: kategoria i rodzaj, z jakim powstaje nowy kafelek (zmienia się w ustawieniach kafelka). */
 interface PaletteItem {
+  readonly category: NodeCategory;
   readonly type: StrategyNodeType;
-  readonly label: string;
-  readonly unavailable: string | null;
 }
 
 /**
- * Panel „Dodaj kafelek” (makieta Figma „Strategia”: 377:97) — zakładki, wyszukiwarka i kafelki do przeciągnięcia
- * na tablicę albo dodania przyciskiem „+”.
+ * Panel „Dodaj kafelek” (makieta Figma „Strategia”: 388:896) — trzy kategorie kafelków do przeciągnięcia na tablicę
+ * albo dodania przyciskiem „+”. Konkretny rodzaj (nadpłata, cel oszczędzania…) wybiera się potem selectem
+ * w ustawieniach kafelka, więc paleta nie rośnie razem z liczbą rodzajów.
  *
  * ⚠️ Element z `fExternalItem` jest poza `<f-flow>` w DOM, ale biblioteka łączy go z tablicą przez wstrzykiwanie —
  * dlatego komponent MUSI stać w szablonie komponentu, który ma `provideFFlow` w `providers`. Samo upuszczenie obsługuje
@@ -23,35 +21,15 @@ interface PaletteItem {
  */
 @Component({
   selector: 'app-strategy-palette',
-  imports: [FormsModule, FFlowModule, NzInputModule, TranslatePipe],
+  imports: [FFlowModule, TranslatePipe],
   templateUrl: './strategy-palette.html',
   styleUrl: './strategy-palette.scss',
 })
 export class StrategyPalette {
-  private readonly translate = inject(TranslateService);
-
-  /** Rodzaj zaznaczonego kafelka — od niego zależy, które pozycje są niedostępne. */
-  readonly selectedType = input<StrategyNodeType | null>(null);
-
   readonly add = output<StrategyNodeType>();
 
-  protected readonly tabs = PALETTE_TABS;
-  protected readonly tab = signal<PaletteTab>('events');
-  protected readonly search = signal('');
-
-  protected readonly items = computed<readonly PaletteItem[]>(() => {
-    const query = this.search().trim().toLocaleLowerCase();
-    const selected = this.selectedType();
-    return PALETTE[this.tab()]
-      .map((type) => ({
-        type,
-        label: this.translate.instant(`strategies.board.types.${type}`) as string,
-        unavailable: unavailableReason(selected, type),
-      }))
-      .filter((item) => !query || item.label.toLocaleLowerCase().includes(query));
-  });
-
-  protected hint(type: StrategyNodeType): string {
-    return this.translate.instant(`strategies.board.hints.${type}`);
-  }
+  protected readonly items: readonly PaletteItem[] = CATEGORY_ORDER.map((category) => ({
+    category,
+    type: CATEGORIES[category].default,
+  }));
 }

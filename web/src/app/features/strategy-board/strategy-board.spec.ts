@@ -25,6 +25,8 @@ interface BoardApi {
   onDeleteSelected(event: { nodeIds: string[]; groupIds: string[]; connectionIds: string[] }): void;
   onMoveNodes(event: { nodes: { id: string; position: { x: number; y: number } }[] }): void;
   updateNode(node: StrategyNode): void;
+  changeType(id: string, type: string): void;
+  incomingTypesOf(id: string): string[];
   save(): Promise<void>;
   discard(): void;
   nodes(): readonly StrategyNode[];
@@ -130,7 +132,7 @@ describe('StrategyBoard', () => {
           problem: { NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.', MissingParameter: 'Brakuje parametru.' },
           yes: 'tak', no: 'nie', edgeLabel: 'Połączenie: {{from}} → {{to}}', perMonth: '{{amount}} / mies.',
           sim: { title: 'Symulacja', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
-          palette: { title: 'Dodaj kafelek', tabs: { events: 'Zdarzenia', actions: 'Akcje', controls: 'Warunki' }, search: 'Szukaj', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}' },
+          palette: { title: 'Dodaj kafelek', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}', categories: { event: { title: 'Zdarzenie', hint: '' }, action: { title: 'Akcja', hint: '' }, control: { title: 'Warunek', hint: '' } } },
           types: { Trigger: 'Zdarzenie', Income: 'Wpływ', Overpay: 'Nadpłać kredyt', PayOffLoan: 'Spłać resztę', Condition: 'Warunek', Wait: 'Czekaj', End: 'Koniec', IncreaseSurplus: 'Zwiększ nadwyżkę' },
           hints: {}, mode: { ReduceInstallment: 'Obniż ratę' }, metric: { CashMinusDebt: 'Gotówka − dług' },
         },
@@ -262,6 +264,19 @@ describe('StrategyBoard', () => {
     expect(api().nodes().map((n) => n.id)).not.toContain('check');
     expect(api().edges().map((e) => e.id)).toEqual([]);
     expect(api().nodes()).toHaveLength(nodes.length - 1);
+  });
+
+  it('zmiana rodzaju akcji na zdarzenie zrywa strzałkę wchodzącą, a zmiana na warunek daje jej wyjściu etykietę', async () => {
+    await settle();
+    expect(api().incomingTypesOf('overpay')).toEqual(['Income']);
+
+    api().changeType('overpay', 'Trigger');
+    expect(api().nodes().find((n) => n.id === 'overpay')?.type).toBe('Trigger');
+    expect(api().edges().map((e) => e.id)).toEqual(['e2', 'e3', 'e4', 'e5']);
+    expect(api().dirty()).toBe(true);
+
+    api().changeType('payoff', 'Condition');
+    expect(api().nodes().find((n) => n.id === 'payoff')?.metric).toBe('CashMinusDebt');
   });
 
   it('przesunięcie kafelka zapisuje nową pozycję i oznacza zmianę', async () => {

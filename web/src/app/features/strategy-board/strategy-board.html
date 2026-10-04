@@ -170,7 +170,9 @@
             [node]="node"
             [outcome]="formOutcome()"
             [problems]="problemsByNodeOf(node.id)"
+            [incomingTypes]="incomingTypesOf(node.id)"
             (changed)="updateNode($event)"
+            (typeChanged)="changeType(node.id, $event)"
             (removed)="removeNode(node.id)"
             (closed)="closeForm()" />
         } @else if (selectedEdge(); as edge) {
@@ -198,7 +200,7 @@
             <button type="button" class="sb__link" (click)="panel.set('palette')">← {{ 'strategies.board.palette.title' | translate }}</button>
           </div>
         } @else {
-          <app-strategy-palette [selectedType]="selectedNode()?.type ?? null" (add)="addNode($event)" />
+          <app-strategy-palette (add)="addNode($event)" />
         }
       </aside>
     </div>

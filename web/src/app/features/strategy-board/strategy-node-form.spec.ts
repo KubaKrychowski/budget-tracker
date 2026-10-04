@@ -55,7 +55,7 @@ describe('StrategyNodeForm', () => {
           mode: { ReduceInstallment: 'Obniż ratę', ShortenPeriod: 'Skróć okres' },
           metric: { CashMinusDebt: 'Gotówka − dług' },
           comparison: { AtLeast: 'jest co najmniej' },
-          form: { back: 'Dodaj kafelek', title: 'Podpis kafelka', remove: 'Usuń kafelek', done: 'Gotowe', month: 'Miesiąc', loanMonth: 'Miesiąc startu kredytu', rate: 'Oprocentowanie', installment: 'Rata', mode: 'Tryb rozliczenia', metric: 'Co porównujemy', comparison: 'Porównanie', threshold: 'Wartość' },
+          form: { type: { event: 'Rodzaj zdarzenia', action: 'Rodzaj akcji', control: 'Rodzaj warunku' }, back: 'Dodaj kafelek', title: 'Podpis kafelka', remove: 'Usuń kafelek', done: 'Gotowe', month: 'Miesiąc', loanMonth: 'Miesiąc startu kredytu', rate: 'Oprocentowanie', installment: 'Rata', mode: 'Tryb rozliczenia', metric: 'Co porównujemy', comparison: 'Porównanie', threshold: 'Wartość' },
           outcome: { met: 'Spełniony: {{month}}', notMet: 'Nie został spełniony', fired: 'Wykonany: {{month}}' },
           problem: { MissingParameter: 'Brakuje parametru.', NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.' },
         },
@@ -82,10 +82,39 @@ describe('StrategyNodeForm', () => {
     expect(ids()).not.toContain('node-amount');
   });
 
-  it('kafelek bez parametrów (spłata reszty) pokazuje tylko podpis', async () => {
+  it('kafelek bez parametrów (spłata reszty) pokazuje tylko rodzaj i podpis', async () => {
     await mount(node({ type: 'PayOffLoan', title: '', amount: null, mode: null }));
 
-    expect(ids()).toEqual(['node-title']);
+    expect(ids()).toEqual(['node-type', 'node-title']);
+  });
+
+  it('select rodzaju pokazuje bieżący rodzaj, a podpis nad nim zależy od kategorii kafelka', async () => {
+    await mount(node({ type: 'Overpay' }));
+
+    expect(text()).toContain('Rodzaj akcji');
+    expect(text()).toContain('Nadpłać kredyt');
+  });
+
+  it('rodzaje wybiera się w obrębie kategorii kafelka: akcja nie zamienia się w zdarzenie', async () => {
+    await mount(node({ type: 'Overpay' }));
+    const groups = (fixture.componentInstance as unknown as { typeGroups(): { key: string; types: { type: string }[] }[] }).typeGroups();
+
+    expect(groups.map((g) => g.key)).toEqual(['simulated', 'budget']);
+    expect(groups.flatMap((g) => g.types.map((t) => t.type))).toEqual([
+      'IncreaseSurplus', 'Overpay', 'PayOffLoan', 'SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder',
+    ]);
+  });
+
+  it('limit kategorii jest niedostępny, gdy do kafelka prowadzi wpływ jednorazowy', async () => {
+    fixture = TestBed.createComponent(StrategyNodeForm);
+    fixture.componentRef.setInput('node', node({ type: 'Overpay' }));
+    fixture.componentRef.setInput('incomingTypes', ['Income']);
+    fixture.detectChanges();
+    const groups = (fixture.componentInstance as unknown as { typeGroups(): { types: { type: string; unavailable: string | null }[] }[] }).typeGroups();
+    const types = groups.flatMap((g) => g.types);
+
+    expect(types.find((t) => t.type === 'SetLimit')?.unavailable).toBe('strategies.board.unavailable.incomeLimit');
+    expect(types.filter((t) => t.unavailable)).toHaveLength(1);
   });
 
   it('pokazuje, kiedy kafelek się wykonał albo warunek został spełniony', async () => {

@@ -1090,14 +1090,22 @@
       },
       "palette": {
         "title": "Dodaj kafelek",
-        "tabs": {
-          "events": "Zdarzenia",
-          "actions": "Akcje",
-          "controls": "Warunki"
-        },
-        "search": "Szukaj kafelków…",
-        "hint": "Przeciągnij na tablicę albo kliknij „+”. Kafelek dodany plusem trafia obok zaznaczonego i łączy się z nim.",
-        "add": "Dodaj kafelek: {{name}}"
+        "hint": "Przeciągnij na tablicę albo kliknij „+”. Kafelek dodany plusem trafia obok zaznaczonego i łączy się z nim. Rodzaj wybierzesz w ustawieniach kafelka.",
+        "add": "Dodaj kafelek: {{name}}",
+        "categories": {
+          "event": {
+            "title": "Zdarzenie",
+            "hint": "Co się dzieje i kiedy: podwyżka, premia, wydatek, kredyt, poduszka"
+          },
+          "action": {
+            "title": "Akcja",
+            "hint": "Co robisz po zdarzeniu: nadpłata, cel, rezerwacja, limit…"
+          },
+          "control": {
+            "title": "Warunek",
+            "hint": "Rozgałęzienie tak/nie, Czekaj i Koniec"
+          }
+        }
       },
       "paramsTitle": "Parametry strategii",
       "paramsOk": "Zastosuj",
@@ -1188,7 +1196,12 @@
         "comparison": "Porównanie",
         "threshold": "Wartość (zł)",
         "remove": "Usuń kafelek",
-        "done": "Gotowe"
+        "done": "Gotowe",
+        "type": {
+          "event": "Rodzaj zdarzenia",
+          "action": "Rodzaj akcji",
+          "control": "Rodzaj warunku"
+        }
       },
       "outcome": {
         "met": "Spełniony: {{month}}",
@@ -1202,6 +1215,13 @@
         "WaitDoesNotReturn": "„Czekaj” musi prowadzić z powrotem do warunku.",
         "Cycle": "Kafelek leży na pętli bez „Czekaj” — symulacja go pomija.",
         "Duplicate": "Symulator liczy tylko jeden kredyt i jedną poduszkę — ten kafelek jest pomijany."
+      },
+      "groups": {
+        "events": "Zdarzenia",
+        "base": "Stan wyjściowy",
+        "simulated": "Liczy symulacja",
+        "budget": "Zakłada w budżecie",
+        "flow": "Przebieg"
       }
     }
   },

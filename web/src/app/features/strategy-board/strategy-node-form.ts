@@ -13,7 +13,8 @@ import {
   OverpaymentMode, StrategyConditionComparison, StrategyConditionMetric, StrategyNode, StrategyNodeOutcome,
   StrategyProblemKind,
 } from '../../core/api/models/strategies';
-import { NODE_META, NodeField } from './strategy-node-meta';
+import { StrategyNodeType } from '../../core/api/models/strategies';
+import { CATEGORIES, NODE_META, NodeField, unavailableReason } from './strategy-node-meta';
 
 /** Najdłuższy podpis kafelka — ten sam co `StrategyGraphValidator` w API. */
 const MAX_TITLE_LENGTH = 100;
@@ -49,11 +50,24 @@ export class StrategyNodeForm {
   /** Problemy tego węzła do pokazania pod polami. */
   readonly problems = input<readonly StrategyProblemKind[]>([]);
 
+  /** Rodzaje kafelków, z których prowadzą strzałki do tego kafelka — od nich zależy, które rodzaje są niedostępne. */
+  readonly incomingTypes = input<readonly StrategyNodeType[]>([]);
+
   readonly changed = output<StrategyNode>();
+  /** Zmiana rodzaju to nie zwykła zmiana pola — rodzic musi jeszcze dopasować strzałki, więc idzie osobnym zdarzeniem. */
+  readonly typeChanged = output<StrategyNodeType>();
   readonly removed = output<void>();
   readonly closed = output<void>();
 
   protected readonly meta = computed(() => NODE_META[this.node().type]);
+
+  /** Grupy rodzajów z kategorii tego kafelka; rodzaj niedostępny w tym miejscu dostaje powód zamiast znikać z listy. */
+  protected readonly typeGroups = computed(() =>
+    CATEGORIES[this.meta().category].groups.map((group) => ({
+      key: group.key,
+      types: group.types.map((type) => ({ type, unavailable: unavailableReason(this.incomingTypes(), type) })),
+    })),
+  );
 
   protected readonly modes: readonly OverpaymentMode[] = ['ReduceInstallment', 'ShortenPeriod'];
   protected readonly metrics: readonly StrategyConditionMetric[] = ['Cash', 'Debt', 'CashMinusDebt'];

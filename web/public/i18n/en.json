@@ -1022,14 +1022,22 @@
       },
       "palette": {
         "title": "Add a tile",
-        "tabs": {
-          "events": "Events",
-          "actions": "Actions",
-          "controls": "Conditions"
-        },
-        "search": "Search tiles…",
-        "hint": "Drag onto the board or click “+”. A tile added with the plus lands next to the selected one and connects to it.",
-        "add": "Add a tile: {{name}}"
+        "hint": "Drag onto the board or click “+”. A tile added with the plus lands next to the selected one and connects to it. You pick the kind in the tile settings.",
+        "add": "Add a tile: {{name}}",
+        "categories": {
+          "event": {
+            "title": "Event",
+            "hint": "What happens and when: a raise, a bonus, an expense, a loan, a cushion"
+          },
+          "action": {
+            "title": "Action",
+            "hint": "What you do after an event: overpayment, goal, reservation, limit…"
+          },
+          "control": {
+            "title": "Condition",
+            "hint": "Yes/no branch, Wait and End"
+          }
+        }
       },
       "paramsTitle": "Strategy parameters",
       "paramsOk": "Apply",
@@ -1120,7 +1128,12 @@
         "comparison": "Comparison",
         "threshold": "Value (PLN)",
         "remove": "Delete the tile",
-        "done": "Done"
+        "done": "Done",
+        "type": {
+          "event": "Event kind",
+          "action": "Action kind",
+          "control": "Condition kind"
+        }
       },
       "outcome": {
         "met": "Met: {{month}}",
@@ -1134,6 +1147,13 @@
         "WaitDoesNotReturn": "“Wait” has to lead back to a condition.",
         "Cycle": "The tile is on a loop without “Wait” — the simulation skips it.",
         "Duplicate": "The simulator counts only one loan and one cushion — this tile is skipped."
+      },
+      "groups": {
+        "events": "Events",
+        "base": "Starting state",
+        "simulated": "Used by the simulation",
+        "budget": "Created in the budget",
+        "flow": "Flow"
       }
     }
   },

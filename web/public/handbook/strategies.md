@@ -15,22 +15,25 @@ w szablonie są przykładowe — wpisz własne w kafelkach.
 
 ### Tablica i kafelki
 
-Na tablicy układasz **kafelki** i łączysz je strzałkami. Kafelki bierzesz z panelu „Dodaj kafelek” po prawej:
-przeciągnij je na tablicę albo kliknij **„+”** — kafelek dodany plusem trafia obok zaznaczonego i od razu
-się z nim łączy. Są trzy zakładki:
+Na tablicy układasz **kafelki** i łączysz je strzałkami. W panelu „Dodaj kafelek” po prawej są trzy rodzaje kafelków:
+przeciągnij je na tablicę albo kliknij **„+”** — kafelek dodany plusem trafia obok zaznaczonego i od razu się z nim łączy.
+**Konkretny rodzaj wybierasz w ustawieniach kafelka**, w polu „Rodzaj” (po kliknięciu kafelka):
 
-- **Zdarzenia** — to, co dzieje się w konkretnym miesiącu albo stanowi punkt wyjścia:
+- **Zdarzenie** — to, co dzieje się w konkretnym miesiącu albo stanowi punkt wyjścia:
   - *Zdarzenie* (podwyżka, koniec zlecenia) — samo nic nie zmienia, uruchamia łańcuch akcji,
   - *Wpływ jednorazowy* (premia, wyrównanie) i *Wydatek jednorazowy* (ubezpieczenie) — dopisują albo odejmują
     kwotę od oszczędności w swoim miesiącu,
-  - *Nadwyżka miesięczna* — stała kwota odkładana co miesiąc,
-  - *Kredyt* — saldo, oprocentowanie roczne i rata; to z niego bierze się „dług” w symulacji,
-  - *Poduszka docelowa* — kwota, którą chcesz uzbierać.
-- **Akcje** — co robisz po zdarzeniu: *Zwiększ nadwyżkę*, *Nadpłać kredyt* (kwota i tryb: obniż ratę albo skróć
-  okres), *Spłać resztę kredytu*, a także *Załóż cel oszczędzania*, *Załóż rezerwację*, *Zakończ zlecenie stałe*
-  i *Ustaw limit kategorii*. Te cztery ostatnie to akcje „do zastosowania w budżecie” — w symulacji nic nie zmieniają.
-- **Warunki** — *Warunek* (porównuje oszczędności i dług, ma dwa wyjścia: **tak** i **nie**), *Czekaj*
+  - stan wyjściowy: *Nadwyżka miesięczna* (stała kwota odkładana co miesiąc), *Kredyt* (saldo, oprocentowanie
+    roczne i rata — z niego bierze się „dług” w symulacji) i *Poduszka docelowa* (kwota, którą chcesz uzbierać).
+- **Akcja** — co robisz po zdarzeniu. „Liczy symulacja”: *Zwiększ nadwyżkę*, *Nadpłać kredyt* (kwota i tryb: obniż ratę
+  albo skróć okres), *Spłać resztę kredytu*. „Zakłada w budżecie”: *Załóż cel oszczędzania*, *Załóż rezerwację*,
+  *Ustaw limit kategorii* i *Zakończ zlecenie stałe* — te cztery w symulacji nic nie zmieniają.
+- **Warunek** — *Warunek* (porównuje oszczędności i dług, ma dwa wyjścia: **tak** i **nie**), *Czekaj*
   (sprawdź ponownie w następnym miesiącu) i *Koniec* (znacznik „strategia zrealizowana”).
+
+Zmiana rodzaju zostawia pola, które nowy rodzaj też ma (np. kwotę), a strzałki, które przestają pasować, znikają — na
+przykład zdarzenie nie przyjmuje strzałki wchodzącej, a „Koniec” nie ma wychodzącej. Po wpływie jednorazowym nie da się
+wybrać limitu kategorii (premia nie zmienia wydatków).
 
 Kliknij kafelek, żeby zobaczyć jego ustawienia: podpis, miesiąc, kwoty. Pod ustawieniami widać, **kiedy
 w symulacji kafelek się wykonał** albo kiedy warunek został spełniony.

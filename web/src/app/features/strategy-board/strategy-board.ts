@@ -27,7 +27,7 @@ import {
   StrategyResult,
 } from '../../core/api/models/strategies';
 import {
-  canReceive, canSend, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector,
+  canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
 } from './strategy-node-meta';
 import { StrategyNodeForm } from './strategy-node-form';
 import { StrategyPalette } from './strategy-palette';
@@ -396,6 +396,20 @@ export class StrategyBoard {
     if (!source || !target || !canSend(source.type) || !canReceive(target.type)) return;
     if (this.edges().some((e) => e.from === from && e.to === to && e.label === label)) return;
     this.edges.update((all) => [...all, { id: `e${Math.random().toString(36).slice(2, 10)}`, from, to, label }]);
+  }
+
+  /** Rodzaje kafelków, z których prowadzą strzałki do kafelka `id`. */
+  protected incomingTypesOf(id: string): StrategyNodeType[] {
+    const byId = new Map(this.nodes().map((n) => [n.id, n.type]));
+    return this.edges().filter((e) => e.to === id).map((e) => byId.get(e.from)).filter((t): t is StrategyNodeType => !!t);
+  }
+
+  /** Zmienia rodzaj kafelka (select „Rodzaj” w ustawieniach): czyści pola, których nowy rodzaj nie ma, i dopasowuje strzałki. */
+  protected changeType(id: string, type: StrategyNodeType): void {
+    const current = this.nodes().find((n) => n.id === id);
+    if (!current || current.type === type) return;
+    this.nodes.update((all) => all.map((n) => (n.id === id ? retype(n, type, this.startMonth()) : n)));
+    this.edges.update((all) => edgesAfterRetype(all, id, current.type, type));
   }
 
   protected updateNode(next: StrategyNode): void {

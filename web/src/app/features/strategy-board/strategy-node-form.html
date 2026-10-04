@@ -7,6 +7,23 @@
   </header>
 
   <div class="snf__field">
+    <label class="snf__label" for="node-type">{{ 'strategies.board.form.type.' + meta().category | translate }}</label>
+    <nz-select nzId="node-type" [ngModel]="node().type" (ngModelChange)="typeChanged.emit($event)">
+      @for (group of typeGroups(); track group.key) {
+        <nz-option-group [nzLabel]="'strategies.board.groups.' + group.key | translate">
+          @for (item of group.types; track item.type) {
+            <nz-option
+              [nzValue]="item.type"
+              [nzLabel]="'strategies.board.types.' + item.type | translate"
+              [nzDisabled]="!!item.unavailable"
+              [nzTitle]="item.unavailable ? (item.unavailable | translate) : ('strategies.board.hints.' + item.type | translate)" />
+          }
+        </nz-option-group>
+      }
+    </nz-select>
+  </div>
+
+  <div class="snf__field">
     <label class="snf__label" for="node-title">{{ 'strategies.board.form.title' | translate }}</label>
     <input
       nz-input
