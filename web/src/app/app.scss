@@ -53,8 +53,11 @@
     line-height: 1.3;
   }
 
+  /* Kurczy się razem z nagłówkiem (min-width: 0 — inaczej flex nie zejdzie poniżej szerokości treści). */
   &__search {
-    max-width: 600px;
+    display: block;
+    flex: 0 1 600px;
+    min-width: 0;
     // Belka 24px: NG-ZORRO domyslnie daje 32px przez padding 4.6px w pionie.
     height: 36px;
     padding-top: 0;
@@ -112,9 +115,33 @@
   padding: 24px 0;
 }
 
+/* Telefon: logo i ikony w pierwszym wierszu, wyszukiwarka w drugim, na całą szerokość. */
 @media (max-width: 768px) {
   .app-header {
     flex-wrap: wrap;
     gap: 12px;
+    padding: 12px 16px;
+
+    &__search {
+      order: 1;
+      flex-basis: 100%;
+    }
+
+    &__version {
+      display: none;
+    }
+
+    &__icons {
+      gap: 0;
+    }
+
+    &__icon-link {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .app-main {
+    padding: 16px 0;
   }
 }

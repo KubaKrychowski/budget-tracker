@@ -1,8 +1,9 @@
 /* Wymiary i odstępy z makiety „Wyszukiwarka i ostatnie akcje" (strona Figma 311:2). */
 .smn {
   position: relative;
-  width: 600px;
-  max-width: 100%;
+  /* Szerokość (do 600px z makiety) ustala nagłówek przez `.app-header__search` — sztywne 600px tutaj rozpychało
+     całą stronę na telefonie, bo `max-width: 100%` odnosiło się do hosta bez własnej szerokości. */
+  width: 100%;
 
   &__field {
     width: 100%;

@@ -78,6 +78,12 @@
 
       // `marked` renderuje tabelę GFM jako zwykły <table> bez żadnego stylu — bez tego
       // wygląda jak kolumny tekstu, nie jak tabela (patrz komentarz w PR #20).
+      // Zrzuty ekranu w podręczniku mają rozmiar ekranu desktopowego — bez tego rozpychały stronę na telefonie.
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
       table {
         width: 100%;
         margin: 16px 0;
