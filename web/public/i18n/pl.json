@@ -1039,6 +1039,13 @@
       "alert": "Po tym miesiącu zlecenie nie będzie oczekiwane ani liczone w sumie. Przypięte transakcje zostają, nowe z importu nie będą się już przypinać.",
       "lastMonth": "Ostatni miesiąc zlecenia",
       "confirm": "Zakończ zlecenie"
+    },
+    "mobile": {
+      "group": {
+        "waiting": "Czeka ({{count}})",
+        "paid": "Zeszło ({{count}})",
+        "notDue": "Nie w tym miesiącu ({{count}})"
+      }
     }
   },
   "strategies": {

@@ -233,3 +233,87 @@
     margin-bottom: 8px;
   }
 }
+
+/* ── Telefon (makieta Figma „Mobile — Zlecenia stałe”) ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .so {
+    padding: 0 16px 24px;
+
+    &__metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+
+      > * {
+        padding: 12px;
+        background: #fff;
+        border: 1px solid var(--ds-neutral-200);
+        border-radius: 8px;
+      }
+    }
+
+    &__card {
+      padding: 16px;
+      border-color: var(--ds-neutral-200);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    &__mgroup {
+      margin: 16px 0 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ds-text-description);
+    }
+
+    &__mcards {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid var(--ds-neutral-200);
+      border-radius: 8px;
+    }
+
+    &__mcard {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--ds-neutral-200);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    &__mcard-main {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    &__mcard-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    &__mcard-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__mcard-state {
+      font-size: 13px;
+    }
+
+    &__mtotal {
+      margin: 12px 0 4px;
+    }
+  }
+}

@@ -971,6 +971,13 @@
       "alert": "After this month the order will not be expected or counted in the total. Linked transactions stay; new imports will no longer be linked.",
       "lastMonth": "Last month of the order",
       "confirm": "End standing order"
+    },
+    "mobile": {
+      "group": {
+        "waiting": "Waiting ({{count}})",
+        "paid": "Paid ({{count}})",
+        "notDue": "Not this month ({{count}})"
+      }
     }
   },
   "strategies": {

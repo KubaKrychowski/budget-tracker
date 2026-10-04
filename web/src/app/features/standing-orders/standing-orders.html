@@ -89,6 +89,56 @@
               </button>
             </div>
 
+            <!-- Kropka i opis stanu w oglądanym miesiącu — wspólne dla tabeli i karty na telefonie. -->
+            <ng-template #rowState let-row>
+              <span class="so__dot" [ngClass]="stateClass(row.state)"></span>
+              @switch (row.state) {
+                @case ('Paid') { {{ 'standingOrders.state.paid' | translate: { date: dayMonth(row.paidOn) } }} }
+                @case ('PaidDifferentAmount') {
+                  {{ 'standingOrders.state.paidDifferent' | translate: { date: dayMonth(row.paidOn), amount: money(row.paidAmount) } }}
+                }
+                @case ('Waiting') {
+                  @if (row.usualDay !== null) {
+                    {{ 'standingOrders.state.waitingUsual' | translate: { day: row.usualDay } }}
+                  } @else {
+                    {{ 'standingOrders.state.waiting' | translate }}
+                  }
+                }
+                @case ('Missed') { {{ 'standingOrders.state.missed' | translate }} }
+                @case ('Ended') { {{ 'standingOrders.state.ended' | translate: { month: romanMonth(row.endMonth) } }} }
+                @default { {{ 'standingOrders.state.notDue' | translate }} }
+              }
+            </ng-template>
+
+            <!-- Menu „⋯” zlecenia — wspólne dla wiersza tabeli i karty na telefonie. -->
+            <ng-template #rowActions let-row>
+              <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="rowMenu" nzTrigger="click"
+                [attr.aria-label]="'transactions.columns.actions' | translate">⋯</button>
+              <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item tabindex="0" [nzDisabled]="row.linkedCount === 0"
+                    (click)="goToLinked(row)" (keydown.enter)="goToLinked(row)">
+                    <strong>{{ 'standingOrders.goToLinked' | translate: { count: row.linkedCount } }}</strong>
+                  </li>
+                  <li nz-menu-item tabindex="0" (click)="openEditor(row)" (keydown.enter)="openEditor(row)">
+                    {{ 'standingOrders.change' | translate }}
+                  </li>
+                  @if (row.endMonth === null) {
+                    <li nz-menu-item tabindex="0" (click)="openEnd(row)" (keydown.enter)="openEnd(row)">
+                      {{ 'standingOrders.end' | translate }}
+                    </li>
+                  } @else {
+                    <li nz-menu-item tabindex="0" (click)="resume(row)" (keydown.enter)="resume(row)">
+                      {{ 'standingOrders.resume' | translate }}
+                    </li>
+                  }
+                  <li nz-menu-item nzDanger tabindex="0" (click)="remove(row)" (keydown.enter)="remove(row)">
+                    {{ 'standingOrders.remove' | translate }}
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
+            </ng-template>
+
             <!-- Wiersz zlecenia — ten sam dla trwających i zakończonych; zakończone są tylko wygaszone. -->
             <ng-template #orderRow let-row>
               <tr [class.so__ended]="row.state === 'Ended'">
@@ -103,58 +153,60 @@
                   @if (row.dueMonth !== null) { · {{ monthName(row.dueMonth) }} }
                 </td>
                 <td>
-                  <span class="so__dot" [ngClass]="stateClass(row.state)"></span>
-                  @switch (row.state) {
-                    @case ('Paid') { {{ 'standingOrders.state.paid' | translate: { date: dayMonth(row.paidOn) } }} }
-                    @case ('PaidDifferentAmount') {
-                      {{ 'standingOrders.state.paidDifferent' | translate: { date: dayMonth(row.paidOn), amount: money(row.paidAmount) } }}
-                    }
-                    @case ('Waiting') {
-                      @if (row.usualDay !== null) {
-                        {{ 'standingOrders.state.waitingUsual' | translate: { day: row.usualDay } }}
-                      } @else {
-                        {{ 'standingOrders.state.waiting' | translate }}
-                      }
-                    }
-                    @case ('Missed') { {{ 'standingOrders.state.missed' | translate }} }
-                    @case ('Ended') { {{ 'standingOrders.state.ended' | translate: { month: romanMonth(row.endMonth) } }} }
-                    @default { {{ 'standingOrders.state.notDue' | translate }} }
-                  }
+                  <ng-container *ngTemplateOutlet="rowState; context: { $implicit: row }" />
                 </td>
                 <td>
                   <!-- Menu wiersza (makiety 219:3, 229:13387): „Przejdź do powiązanych” pierwsza, bo najczęstsza;
                        zakończone zamiast „Zakończ” mają „Wznów”. -->
-                  <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="rowMenu" nzTrigger="click"
-                    [attr.aria-label]="'transactions.columns.actions' | translate">⋯</button>
-                  <nz-dropdown-menu #rowMenu="nzDropdownMenu">
-                    <ul nz-menu>
-                      <li nz-menu-item tabindex="0" [nzDisabled]="row.linkedCount === 0"
-                        (click)="goToLinked(row)" (keydown.enter)="goToLinked(row)">
-                        <strong>{{ 'standingOrders.goToLinked' | translate: { count: row.linkedCount } }}</strong>
-                      </li>
-                      <li nz-menu-item tabindex="0" (click)="openEditor(row)" (keydown.enter)="openEditor(row)">
-                        {{ 'standingOrders.change' | translate }}
-                      </li>
-                      @if (row.endMonth === null) {
-                        <li nz-menu-item tabindex="0" (click)="openEnd(row)" (keydown.enter)="openEnd(row)">
-                          {{ 'standingOrders.end' | translate }}
-                        </li>
-                      } @else {
-                        <li nz-menu-item tabindex="0" (click)="resume(row)" (keydown.enter)="resume(row)">
-                          {{ 'standingOrders.resume' | translate }}
-                        </li>
-                      }
-                      <li nz-menu-item nzDanger tabindex="0" (click)="remove(row)" (keydown.enter)="remove(row)">
-                        {{ 'standingOrders.remove' | translate }}
-                      </li>
-                    </ul>
-                  </nz-dropdown-menu>
+                  <ng-container *ngTemplateOutlet="rowActions; context: { $implicit: row }" />
                 </td>
               </tr>
             </ng-template>
 
             @if (d.orders.length === 0) {
               <nz-empty [nzNotFoundContent]="'standingOrders.table.empty' | translate" />
+            } @else if (viewport.isMobile()) {
+              <!-- Telefon (makieta „Mobile — Zlecenia stałe”): karty pogrupowane wg stanu zamiast tabeli. -->
+              <ng-template #orderCard let-row>
+                <li class="so__mcard" [class.so__ended]="row.state === 'Ended'">
+                  <div class="so__mcard-main">
+                    <div class="so__mcard-top">
+                      <span class="so__mcard-name">{{ row.name }}</span>
+                      <span class="amount">{{ money(row.expectedAmount) }} zł</span>
+                    </div>
+                    <span class="so__muted">
+                      {{ row.categoryName ?? '—' }} · {{ ('standingOrders.rhythm.' + row.rhythm) | translate }}
+                      @if (row.dueMonth !== null) { · {{ monthName(row.dueMonth) }} }
+                    </span>
+                    <span class="so__mcard-state"><ng-container *ngTemplateOutlet="rowState; context: { $implicit: row }" /></span>
+                  </div>
+                  <ng-container *ngTemplateOutlet="rowActions; context: { $implicit: row }" />
+                </li>
+              </ng-template>
+              @for (group of mobileGroups(); track group.key) {
+                <h4 class="so__mgroup">{{ ('standingOrders.mobile.group.' + group.key) | translate: { count: group.rows.length } }}</h4>
+                <ul class="so__mcards">
+                  @for (row of group.rows; track row.id) {
+                    <ng-container *ngTemplateOutlet="orderCard; context: { $implicit: row }" />
+                  }
+                </ul>
+              }
+              <p class="so__muted so__mtotal">
+                {{ 'standingOrders.table.total' | translate }}: <span class="amount">{{ money(d.monthlyTotal) }} zł</span>
+              </p>
+              @if (endedOrders().length > 0) {
+                <button nz-button nzType="link" nzSize="small" [attr.aria-expanded]="endedOpen()" (click)="endedOpen.set(!endedOpen())">
+                  <nz-icon [nzType]="endedOpen() ? 'caret-down' : 'caret-right'" />
+                  {{ 'standingOrders.table.ended' | translate: { count: endedOrders().length } }}
+                </button>
+                @if (endedOpen()) {
+                  <ul class="so__mcards">
+                    @for (row of endedOrders(); track row.id) {
+                      <ng-container *ngTemplateOutlet="orderCard; context: { $implicit: row }" />
+                    }
+                  </ul>
+                }
+              }
             } @else {
               <nz-table [nzData]="d.orders" [nzShowPagination]="false" [nzFrontPagination]="false" nzSize="middle">
                 <thead>
@@ -201,6 +253,8 @@
           </div>
 
           <!-- ── Ostatnio przypięte ─────────────────────────────────────────────────────── -->
+          <!-- Na telefonie bez tej karty (decyzja z makiety, 2026-10-04) — odpinanie zostaje na desktopie i na liście transakcji. -->
+          @if (!viewport.isMobile()) {
           <div class="so__card">
             <h3 class="so__card-title">{{ 'standingOrders.recent.title' | translate }}</h3>
             <p class="so__hint">{{ 'standingOrders.recent.hint' | translate }}</p>
@@ -225,6 +279,7 @@
             }
             <p class="so__hint">{{ 'standingOrders.recent.note' | translate }}</p>
           </div>
+          }
         </div>
       }
     </nz-spin>
