@@ -1,6 +1,6 @@
 import { StrategyEdge, StrategyNodeType } from '../../core/api/models/strategies';
 import {
-  CATEGORIES, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector,
+  BUDGET_ACTIONS, CATEGORIES, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector,
   parseInputConnector, parseOutputConnector, retype, unavailableReason,
 } from './strategy-node-meta';
 
@@ -37,6 +37,22 @@ describe('strategy-node-meta', () => {
     expect(parseOutputConnector(outputConnector('n1', 'Yes'))).toEqual({ nodeId: 'n1', label: 'Yes' });
     expect(parseOutputConnector(outputConnector('n1', 'No'))).toEqual({ nodeId: 'n1', label: 'No' });
     expect(parseInputConnector(inputConnector('n1'))).toBe('n1');
+  });
+
+  it('akcje „do budżetu” to dokładnie grupa „Zakłada w budżecie” i mają swoje pola', () => {
+    const group = CATEGORIES.action.groups.find((g) => g.key === 'budget')!.types;
+
+    expect([...BUDGET_ACTIONS].sort()).toEqual([...group].sort());
+    expect(NODE_META.SetLimit.fields).toEqual(['category', 'amount', 'warning']);
+    expect(NODE_META.EndStandingOrder.fields).toEqual(['standingOrder', 'month']);
+    expect(NODE_META.CreateReservation.fields).toEqual(['amount', 'dueMonth']);
+    expect(NODE_META.CreateEpisodicOrder.fields).toEqual(['category', 'amount']);
+  });
+
+  it('nowy limit dostaje domyślny próg ostrzeżenia, a rezerwacja nie dostaje terminu', () => {
+    expect(newNode('SetLimit', 'a', 0, 0, '2026-10-01').threshold).toBe(80);
+    expect(newNode('CreateReservation', 'a', 0, 0, '2026-10-01').month).toBeNull();
+    expect(newNode('EndStandingOrder', 'a', 0, 0, '2026-10-01').month).toBe('2026-10-01');
   });
 
   it('wejście nie jest wyjściem i odwrotnie', () => {
@@ -90,6 +106,31 @@ describe('strategy-node-meta', () => {
       expect([condition.metric, condition.comparison]).toEqual(['CashMinusDebt', 'AtLeast']);
       expect(retype(newNode('Trigger', 'a', 0, 0, '2026-10-01'), 'Income', '2026-11-01').month).toBe('2026-10-01');
       expect(retype({ ...surplus, month: null }, 'Trigger', '2026-11-01').month).toBe('2026-11-01');
+    });
+
+    it('limit kategorii zachowuje kwotę i kategorię przy zmianie na wydatek jednorazowy, ale nie próg', () => {
+      const limit = { ...newNode('SetLimit', 'a', 0, 0, '2026-10-01'), amount: 1500, threshold: 90, categoryId: 'c1' };
+
+      const expense = retype(limit, 'CreateEpisodicOrder', '2026-10-01');
+      expect([expense.amount, expense.categoryId, expense.threshold]).toEqual([1500, 'c1', null]);
+
+      const back = retype(expense, 'SetLimit', '2026-10-01');
+      expect([back.categoryId, back.threshold]).toEqual(['c1', 80]);
+    });
+
+    it('próg warunku nie przechodzi w próg ostrzeżenia limitu i odwrotnie', () => {
+      const condition = { ...newNode('Condition', 'a', 0, 0, '2026-10-01'), threshold: 9000 };
+
+      expect(retype(condition, 'SetLimit', '2026-10-01').threshold).toBe(80);
+      expect(retype({ ...condition, type: 'SetLimit', threshold: 95 }, 'Condition', '2026-10-01').threshold).toBeNull();
+    });
+
+    it('zlecenie stałe i jego miesiąc przeżywają tylko w „Zakończ zlecenie stałe”', () => {
+      const end = { ...newNode('EndStandingOrder', 'a', 0, 0, '2026-10-01'), standingOrderId: 'o1', month: '2027-07-01' };
+
+      const reservation = retype(end, 'CreateReservation', '2026-10-01');
+      expect([reservation.standingOrderId, reservation.month]).toEqual([null, '2027-07-01']);
+      expect(retype(end, 'Overpay', '2026-10-01').month).toBeNull();
     });
 
     it('zdarzenie zmienione na stan wyjściowy traci wyjście, a przyjęte wejście zachowuje', () => {

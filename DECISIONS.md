@@ -1483,3 +1483,21 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 >   prowadzi strzałka z wpływu jednorazowego.
 > - Następny krok (osobny PR): akcje z grupy „Zakłada w budżecie” realnie zakładają obiekty po „Zastosuj w budżecie”, plus nowy rodzaj
 >   „Dodaj wydatek jednorazowy” (zlecenie epizodyczne).
+
+> **REWIZJA — 2026-10-04: strategie — „Zastosuj w budżecie” i akcje zakładające obiekty** (makiety Figma „Strategia”: 391:451, 392:451;
+> `Features/Strategies` — `StrategyApplyPlanner`, `ApplyStrategyCommandHandler`, `GetStrategyApplyPreviewQueryHandler`; `strategy-apply`):
+> - ⚠️ **Cel oszczędzania w aplikacji to JEDNA kwota miesięczna na budżet** (`SetSavingsGoal`), bez „kwoty docelowej” i terminu — wcześniejsza
+>   makieta kafelka z „Rodzajem celu” i „Terminem” była błędna. „Poduszka 15 000 zł” to rezerwacja albo węzeł bazowy `CushionGoal`, nie cel.
+> - Akcje z grupy „Zakłada w budżecie”: cel miesięczny, rezerwacja (nazwa = podpis kafelka, termin opcjonalny), limit kategorii
+>   (`CategoryId`, próg ostrzeżenia w `Threshold`, domyślnie 80), zakończenie zlecenia stałego (`StandingOrderId` + ostatni miesiąc)
+>   i NOWY rodzaj `CreateEpisodicOrder` (zlecenie epizodyczne; w symulacji odejmuje gotówkę w miesiącu wykonania, termin = ten miesiąc).
+>   Nowe pola kafelka siedzą w `jsonb`, więc migracja `AddStrategyNodeReferences` nie zmienia schematu.
+> - `POST /api/strategies/{id}/apply` woła TE SAME handlery co ekrany celów, rezerwacji, limitów i zleceń, więc obowiązują ich reguły
+>   (np. zamknięta historia limitów). Atomowość daje transakcja żądania (`RlsTransactionEndpointFilter`) — błąd jednej akcji cofa wszystkie.
+>   Stan akcji liczy się od nowa przy zastosowaniu, nie z okna sprzed minuty.
+> - Statusy: nowa / zmiana / już jest / czeka / niekompletna. „Czeka” = miesiąc wykonania akcji w SYMULACJI jeszcze nie nadszedł (miesiąc
+>   z symulacji, nie z kafelka). „Już jest”: cel i limit po kwocie (i progu), rezerwacja i zlecenie epizodyczne po nazwie, kwocie (i terminie),
+>   zlecenie stałe po tym, że już jest zakończone nie później niż w wybranym miesiącu. Zastosowanie działa na ZAPISANEJ strategii.
+> - Szablon „Kredyt i poduszka” jest uniwersalny: bez zlecenia stałego (wymagałoby wskazania konkretnego obiektu użytkownika); po spłacie
+>   kredytu zakłada cel miesięczny. Listy kategorii i zleceń do pól wyboru: `GET /api/strategies/{id}/references`.
+> - Nie ma jeszcze: wariantów i wykresu (etap 2), przycisku „zdarzenie nastąpiło” (etap 4).

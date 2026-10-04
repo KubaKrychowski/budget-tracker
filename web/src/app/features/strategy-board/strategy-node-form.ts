@@ -11,10 +11,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { parseAmount } from '../../core/parse-amount';
 import {
   OverpaymentMode, StrategyConditionComparison, StrategyConditionMetric, StrategyNode, StrategyNodeOutcome,
-  StrategyProblemKind,
+  StrategyProblemKind, StrategyReferences,
 } from '../../core/api/models/strategies';
 import { StrategyNodeType } from '../../core/api/models/strategies';
-import { CATEGORIES, NODE_META, NodeField, unavailableReason } from './strategy-node-meta';
+import { BUDGET_ACTIONS, CATEGORIES, DEFAULT_WARNING_THRESHOLD, NODE_META, NodeField, unavailableReason } from './strategy-node-meta';
 
 /** Najdłuższy podpis kafelka — ten sam co `StrategyGraphValidator` w API. */
 const MAX_TITLE_LENGTH = 100;
@@ -53,6 +53,9 @@ export class StrategyNodeForm {
   /** Rodzaje kafelków, z których prowadzą strzałki do tego kafelka — od nich zależy, które rodzaje są niedostępne. */
   readonly incomingTypes = input<readonly StrategyNodeType[]>([]);
 
+  /** Kategorie i zlecenia stałe budżetu strategii do pól wyboru; `null`, zanim się wczytają. */
+  readonly references = input<StrategyReferences | null>(null);
+
   readonly changed = output<StrategyNode>();
   /** Zmiana rodzaju to nie zwykła zmiana pola — rodzic musi jeszcze dopasować strzałki, więc idzie osobnym zdarzeniem. */
   readonly typeChanged = output<StrategyNodeType>();
@@ -77,6 +80,39 @@ export class StrategyNodeForm {
   protected locale(): string {
     return this.translate.currentLang() || 'pl';
   }
+
+  /** Akcja, która po „Zastosuj w budżecie” zakłada w aplikacji prawdziwy obiekt — dostaje ramkę „Zastosuj w aplikacji”. */
+  protected readonly createsInBudget = computed(() => BUDGET_ACTIONS.includes(this.node().type));
+
+  /** Nazwa rezerwacji i wydatku to podpis kafelka — formularz pyta wtedy o „Nazwę”, nie o „Podpis kafelka”. */
+  protected readonly titleIsName = computed(() => ['CreateReservation', 'CreateEpisodicOrder'].includes(this.node().type));
+
+  protected readonly warning = computed(() => this.node().threshold ?? DEFAULT_WARNING_THRESHOLD);
+
+  /** Wskazany obiekt, którego nie ma już na liście (usunięty albo zakończony) — select pokazuje wtedy ostrzeżenie. */
+  protected readonly categoryMissing = computed(() => {
+    const id = this.node().categoryId;
+    const refs = this.references();
+    return !!id && !!refs && !refs.categories.some((c) => c.id === id);
+  });
+
+  protected readonly orderMissing = computed(() => {
+    const id = this.node().standingOrderId;
+    const refs = this.references();
+    return !!id && !!refs && !refs.standingOrders.some((o) => o.id === id);
+  });
+
+  /** Parametry tekstu ramki „Zastosuj w aplikacji” — kwota i nazwa z kafelka. */
+  protected readonly applyParams = computed(() => {
+    const n = this.node();
+    const refs = this.references();
+    return {
+      name: n.title.trim(),
+      amount: n.amount === null ? '—' : new Intl.NumberFormat(this.locale(), { maximumFractionDigits: 2 }).format(n.amount),
+      category: refs?.categories.find((c) => c.id === n.categoryId)?.name ?? '—',
+      order: refs?.standingOrders.find((o) => o.id === n.standingOrderId)?.name ?? '—',
+    };
+  });
 
   protected has(field: NodeField): boolean {
     return this.meta().fields.includes(field);

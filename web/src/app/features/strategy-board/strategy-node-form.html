@@ -24,7 +24,7 @@
   </div>
 
   <div class="snf__field">
-    <label class="snf__label" for="node-title">{{ 'strategies.board.form.title' | translate }}</label>
+    <label class="snf__label" for="node-title">{{ (titleIsName() ? 'strategies.board.form.name' : 'strategies.board.form.title') | translate }}</label>
     <input
       nz-input
       id="node-title"
@@ -37,7 +37,7 @@
   @if (has('month')) {
     <div class="snf__field">
       <label class="snf__label" for="node-month">{{
-        (node().type === 'Loan' ? 'strategies.board.form.loanMonth' : 'strategies.board.form.month') | translate
+        (node().type === 'Loan' ? 'strategies.board.form.loanMonth' : node().type === 'EndStandingOrder' ? 'strategies.board.form.lastMonth' : 'strategies.board.form.month') | translate
       }}</label>
       <nz-date-picker
         nzId="node-month"
@@ -45,6 +45,53 @@
         [nzAllowClear]="false"
         [ngModel]="monthDate()"
         (ngModelChange)="setMonth($event)" />
+    </div>
+  }
+
+  @if (has('dueMonth')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-due">{{ 'strategies.board.form.dueMonth' | translate }}</label>
+      <nz-date-picker nzId="node-due" nzMode="month" [nzAllowClear]="true" [ngModel]="monthDate()" (ngModelChange)="setMonth($event)" />
+    </div>
+  }
+
+  @if (has('category')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-category">{{ 'strategies.board.form.category' | translate }}</label>
+      <nz-select
+        nzId="node-category"
+        nzShowSearch
+        [nzPlaceHolder]="'strategies.board.form.categoryPlaceholder' | translate"
+        [ngModel]="node().categoryId"
+        (ngModelChange)="patch({ categoryId: $event })"
+      >
+        @for (c of references()?.categories ?? []; track c.id) {
+          <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+        }
+      </nz-select>
+      @if (categoryMissing()) {
+        <small class="snf__warn">{{ 'strategies.board.form.categoryMissing' | translate }}</small>
+      }
+    </div>
+  }
+
+  @if (has('standingOrder')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-order">{{ 'strategies.board.form.standingOrder' | translate }}</label>
+      <nz-select
+        nzId="node-order"
+        nzShowSearch
+        [nzPlaceHolder]="'strategies.board.form.standingOrderPlaceholder' | translate"
+        [ngModel]="node().standingOrderId"
+        (ngModelChange)="patch({ standingOrderId: $event })"
+      >
+        @for (o of references()?.standingOrders ?? []; track o.id) {
+          <nz-option [nzValue]="o.id" [nzLabel]="o.name" />
+        }
+      </nz-select>
+      @if (orderMissing()) {
+        <small class="snf__warn">{{ 'strategies.board.form.standingOrderMissing' | translate }}</small>
+      }
     </div>
   }
 
@@ -106,6 +153,21 @@
     </div>
   }
 
+  @if (has('warning')) {
+    <div class="snf__field">
+      <label class="snf__label" for="node-warning">{{ 'strategies.board.form.warning' | translate }}</label>
+      <nz-input-number
+        nzId="node-warning"
+        class="snf__number"
+        [nzMin]="1"
+        [nzMax]="100"
+        [nzStep]="5"
+        [nzPrecision]="0"
+        [ngModel]="warning()"
+        (ngModelChange)="patch({ threshold: $event })" />
+    </div>
+  }
+
   @if (has('condition')) {
     <div class="snf__field">
       <label class="snf__label" for="node-metric">{{ 'strategies.board.form.metric' | translate }}</label>
@@ -147,6 +209,13 @@
           {{ 'strategies.board.outcome.fired' | translate: { month: (result.firedIn | date: 'LLLL y' : undefined : locale()) } }}
         }
       </strong>
+    </div>
+  }
+
+  @if (createsInBudget()) {
+    <div class="snf__apply">
+      <strong>{{ 'strategies.board.form.applyTitle' | translate }}</strong>
+      <span>{{ 'strategies.board.applyInfo.' + node().type | translate: applyParams() }}</span>
     </div>
   }
 

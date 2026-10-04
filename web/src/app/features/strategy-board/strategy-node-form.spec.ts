@@ -7,7 +7,7 @@ import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { pl_PL, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { APP_ICONS } from '../../core/icons';
-import { StrategyNode, StrategyNodeOutcome, StrategyProblemKind } from '../../core/api/models/strategies';
+import { StrategyNode, StrategyNodeOutcome, StrategyProblemKind, StrategyReferences } from '../../core/api/models/strategies';
 import { StrategyNodeForm } from './strategy-node-form';
 
 registerLocaleData(pl);
@@ -18,7 +18,7 @@ describe('StrategyNodeForm', () => {
 
   const node = (over: Partial<StrategyNode> = {}): StrategyNode => ({
     id: 'n1', type: 'Overpay', title: 'Nadpłać kredyt', x: 0, y: 0, month: null, amount: 7000, rate: null,
-    installment: null, mode: 'ReduceInstallment', metric: null, comparison: null, threshold: null, ...over,
+    installment: null, mode: 'ReduceInstallment', metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, ...over,
   });
 
   const text = (): string => (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
@@ -26,11 +26,13 @@ describe('StrategyNodeForm', () => {
 
   const mount = async (
     value: StrategyNode, outcome: StrategyNodeOutcome | null = null, problems: StrategyProblemKind[] = [],
+    references: StrategyReferences | null = null,
   ): Promise<void> => {
     fixture = TestBed.createComponent(StrategyNodeForm);
     fixture.componentRef.setInput('node', value);
     fixture.componentRef.setInput('outcome', outcome);
     fixture.componentRef.setInput('problems', problems);
+    fixture.componentRef.setInput('references', references);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -55,7 +57,8 @@ describe('StrategyNodeForm', () => {
           mode: { ReduceInstallment: 'Obniż ratę', ShortenPeriod: 'Skróć okres' },
           metric: { CashMinusDebt: 'Gotówka − dług' },
           comparison: { AtLeast: 'jest co najmniej' },
-          form: { type: { event: 'Rodzaj zdarzenia', action: 'Rodzaj akcji', control: 'Rodzaj warunku' }, back: 'Dodaj kafelek', title: 'Podpis kafelka', remove: 'Usuń kafelek', done: 'Gotowe', month: 'Miesiąc', loanMonth: 'Miesiąc startu kredytu', rate: 'Oprocentowanie', installment: 'Rata', mode: 'Tryb rozliczenia', metric: 'Co porównujemy', comparison: 'Porównanie', threshold: 'Wartość' },
+          form: { name: 'Nazwa', dueMonth: 'Termin', lastMonth: 'Ostatni miesiąc zlecenia', category: 'Kategoria', standingOrder: 'Zlecenie', warning: 'Ostrzegaj od', applyTitle: 'Zastosuj w aplikacji', categoryMissing: 'Tej kategorii nie ma już na liście.', standingOrderMissing: 'Tego zlecenia nie ma już na liście.', type: { event: 'Rodzaj zdarzenia', action: 'Rodzaj akcji', control: 'Rodzaj warunku' }, back: 'Dodaj kafelek', title: 'Podpis kafelka', remove: 'Usuń kafelek', done: 'Gotowe', month: 'Miesiąc', loanMonth: 'Miesiąc startu kredytu', rate: 'Oprocentowanie', installment: 'Rata', mode: 'Tryb rozliczenia', metric: 'Co porównujemy', comparison: 'Porównanie', threshold: 'Wartość' },
+          applyInfo: { SetLimit: 'Ustawi limit {{amount}} zł dla „{{category}}”.', Overpay: 'x' },
           outcome: { met: 'Spełniony: {{month}}', notMet: 'Nie został spełniony', fired: 'Wykonany: {{month}}' },
           problem: { MissingParameter: 'Brakuje parametru.', NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.' },
         },
@@ -73,6 +76,54 @@ describe('StrategyNodeForm', () => {
     await mount(node({ type: 'Loan', month: '2026-10-01', amount: 18400, rate: 12, installment: 880 }));
     expect(ids()).toEqual(expect.arrayContaining(['node-title', 'node-month', 'node-amount', 'node-rate', 'node-installment']));
     expect(text()).toContain('Miesiąc startu kredytu');
+  });
+
+  const refs: StrategyReferences = {
+    categories: [{ id: 'c1', name: 'Jedzenie' }],
+    standingOrders: [{ id: 'o1', name: 'Rata kredytu', expectedAmount: 880 }],
+  };
+
+  it('limit kategorii ma kategorię, kwotę i próg ostrzeżenia oraz ramkę „Zastosuj w aplikacji”', async () => {
+    await mount(node({ type: 'SetLimit', title: '', amount: 1500, threshold: 90, categoryId: 'c1' }), null, [], refs);
+
+    expect(ids()).toEqual(expect.arrayContaining(['node-category', 'node-amount', 'node-warning']));
+    expect(text()).toContain('Zastosuj w aplikacji');
+    expect(text()).toContain('Ustawi limit 1500 zł dla „Jedzenie”.');
+  });
+
+  it('zakończenie zlecenia stałego ma zlecenie i ostatni miesiąc, a bez kwoty', async () => {
+    await mount(node({ type: 'EndStandingOrder', title: '', amount: null, month: '2027-07-01', standingOrderId: 'o1' }), null, [], refs);
+
+    expect(ids()).toEqual(expect.arrayContaining(['node-order', 'node-month']));
+    expect(ids()).not.toContain('node-amount');
+    expect(text()).toContain('Ostatni miesiąc zlecenia');
+  });
+
+  it('rezerwacja i wydatek jednorazowy pytają o „Nazwę”, a nie o podpis kafelka', async () => {
+    await mount(node({ type: 'CreateReservation', title: '', amount: 500 }), null, [], refs);
+    expect(text()).toContain('Nazwa');
+    expect(text()).not.toContain('Podpis kafelka');
+    expect(ids()).toContain('node-due');
+
+    await mount(node({ type: 'Overpay' }));
+    expect(text()).toContain('Podpis kafelka');
+  });
+
+  it('ostrzega, gdy wskazanej kategorii albo zlecenia nie ma już na liście', async () => {
+    await mount(node({ type: 'SetLimit', title: '', amount: 1500, categoryId: 'gone' }), null, [], refs);
+    expect(text()).toContain('Tej kategorii nie ma już na liście.');
+
+    await mount(node({ type: 'EndStandingOrder', title: '', amount: null, standingOrderId: 'gone' }), null, [], refs);
+    expect(text()).toContain('Tego zlecenia nie ma już na liście.');
+
+    await mount(node({ type: 'SetLimit', title: '', amount: 1500, categoryId: 'gone' }));
+    expect(text()).not.toContain('Tej kategorii nie ma już na liście.');
+  });
+
+  it('akcja, która niczego nie zakłada w budżecie, nie ma ramki „Zastosuj w aplikacji”', async () => {
+    await mount(node({ type: 'Overpay' }));
+
+    expect(text()).not.toContain('Zastosuj w aplikacji');
   });
 
   it('warunek ma trzy pola: co, porównanie i wartość', async () => {
@@ -101,7 +152,7 @@ describe('StrategyNodeForm', () => {
 
     expect(groups.map((g) => g.key)).toEqual(['simulated', 'budget']);
     expect(groups.flatMap((g) => g.types.map((t) => t.type))).toEqual([
-      'IncreaseSurplus', 'Overpay', 'PayOffLoan', 'SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder',
+      'IncreaseSurplus', 'Overpay', 'PayOffLoan', 'SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder', 'CreateEpisodicOrder',
     ]);
   });
 

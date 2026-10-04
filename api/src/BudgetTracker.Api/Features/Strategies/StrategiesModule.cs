@@ -28,6 +28,7 @@ public static class StrategiesModule
         services.AddScoped<DeleteStrategyCommandHandler>();
         services.AddScoped<GetStrategyApplyPreviewQueryHandler>();
         services.AddScoped<ApplyStrategyCommandHandler>();
+        services.AddScoped<GetStrategyReferencesQueryHandler>();
         return services;
     }
 
@@ -73,6 +74,13 @@ public static class StrategiesModule
             Results.Ok(await handler.HandleAsync(id, ct)))
             .WithName("GetStrategyApplyPreview")
             .Produces<StrategyApplyPreviewResponseDto>()
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapGet("/api/strategies/{id:guid}/references", async (
+            Guid id, GetStrategyReferencesQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, ct)))
+            .WithName("GetStrategyReferences")
+            .Produces<StrategyReferencesResponseDto>()
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapPost("/api/strategies/{id:guid}/apply", async (

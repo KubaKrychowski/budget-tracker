@@ -247,6 +247,22 @@ public sealed class StrategyApplyTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task References_list_the_budgets_categories_and_only_standing_orders_that_are_not_ended()
+    {
+        var ended = new StandingOrder(_budget.BusinessId, "Stary", 10m, StandingOrderRhythm.Monthly, null, _clock.GetUtcNow());
+        ended.End(October);
+        _db.StandingOrders.Add(ended);
+        await _db.SaveChangesAsync();
+        var strategy = await StrategyAsync(October);
+
+        var references = await new GetStrategyReferencesQueryHandler(_db, new LimitCategories(_db))
+            .HandleAsync(strategy.BusinessId, default);
+
+        Assert.Contains(references.Categories, c => c.Id == _food.BusinessId && c.Name == "Jedzenie");
+        Assert.Equal(["Abonament"], references.StandingOrders.Select(o => o.Name));
+    }
+
+    [Fact]
     public async Task An_unknown_strategy_is_not_found()
     {
         await Assert.ThrowsAsync<StrategyNotFoundException>(

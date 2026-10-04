@@ -24,11 +24,12 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 import {
   SaveStrategyRequest, Strategy, StrategyEdge, StrategyEdgeLabel, StrategyNode, StrategyNodeType, StrategyProblemKind,
-  StrategyResult,
+  StrategyReferences, StrategyResult,
 } from '../../core/api/models/strategies';
 import {
-  canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
+  BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
 } from './strategy-node-meta';
+import { StrategyApply } from './strategy-apply';
 import { StrategyNodeForm } from './strategy-node-form';
 import { StrategyPalette } from './strategy-palette';
 
@@ -74,7 +75,7 @@ interface BoardNode {
   imports: [
     DatePipe, FormsModule, RouterLink, FFlowModule,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzInputModule, NzInputNumberModule,
-    NzModalModule, NzSpinModule, TranslatePipe, StrategyNodeForm, StrategyPalette,
+    NzModalModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyNodeForm, StrategyPalette,
   ],
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
@@ -109,6 +110,19 @@ export class StrategyBoard {
 
   /** `value()` RZUCA w stanie błędu — patrz core/api/resource-value.ts. */
   private readonly loaded = valueOf(this.resource);
+
+  /** Kategorie i zlecenia stałe budżetu strategii — do pól wyboru w ustawieniach kafelków. */
+  private readonly referencesResource = httpResource<StrategyReferences>(() => {
+    const id = this.id();
+    return id && this.saved() ? `/api/strategies/${id}/references` : undefined;
+  });
+
+  protected readonly references = valueOf(this.referencesResource);
+
+  protected readonly applyOpen = signal(false);
+
+  /** Czy tablica ma akcje, które po „Zastosuj w budżecie” zakładają coś w aplikacji. */
+  protected readonly hasBudgetActions = computed(() => this.nodes().some((n) => BUDGET_ACTIONS.includes(n.type)));
 
   protected readonly loading = this.resource.isLoading;
   protected readonly failure = errorOf(this.resource);
@@ -268,10 +282,11 @@ export class StrategyBoard {
         return `${this.money(n.amount)} · ${n.rate ?? '—'}% · ${this.translate.instant('strategies.board.installmentShort', { amount: this.money(n.installment) })}`;
       case 'Overpay':
         return `${this.money(n.amount)} · ${this.translate.instant(`strategies.board.mode.${n.mode ?? 'ReduceInstallment'}`)}`;
+      case 'SetSavingsGoal': return this.translate.instant('strategies.board.perMonth', { amount: this.money(n.amount) });
       case 'CushionGoal':
-      case 'SetSavingsGoal':
       case 'CreateReservation':
-      case 'SetLimit': return this.money(n.amount);
+      case 'SetLimit':
+      case 'CreateEpisodicOrder': return this.money(n.amount);
       case 'Condition':
         return `${this.translate.instant(`strategies.board.metric.${n.metric ?? 'CashMinusDebt'}`)} ${n.comparison === 'AtMost' ? '≤' : '≥'} ${this.money(n.threshold)}`;
       default: return '';

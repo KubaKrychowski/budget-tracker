@@ -1136,7 +1136,8 @@
         "SetLimit": "Ustaw limit kategorii",
         "Condition": "Warunek",
         "Wait": "Czekaj",
-        "End": "Strategia zrealizowana"
+        "End": "Strategia zrealizowana",
+        "CreateEpisodicOrder": "Dodaj wydatek jednorazowy"
       },
       "hints": {
         "Trigger": "Podwyżka, koniec zlecenia — uruchamia akcje",
@@ -1154,7 +1155,8 @@
         "SetLimit": "Limit wydatków kategorii",
         "Condition": "Gotówka i dług z wyjściami tak i nie",
         "Wait": "Pętla: wraca do warunku w następnym miesiącu",
-        "End": "Oznacza osiągnięty cel"
+        "End": "Oznacza osiągnięty cel",
+        "CreateEpisodicOrder": "Tworzy zlecenie epizodyczne i odejmuje kwotę od gotówki"
       },
       "unavailable": {
         "incomeLimit": "Niedostępna: wpływ nie zmienia wydatków"
@@ -1167,9 +1169,10 @@
         "CushionGoal": "Kwota poduszki (zł)",
         "IncreaseSurplus": "Zmiana nadwyżki (zł / mies.)",
         "Overpay": "Kwota nadpłaty (zł)",
-        "SetSavingsGoal": "Kwota celu (zł)",
+        "SetSavingsGoal": "Kwota miesięczna (zł / mies.)",
         "CreateReservation": "Kwota rezerwacji (zł)",
-        "SetLimit": "Kwota limitu (zł)"
+        "SetLimit": "Kwota limitu (zł)",
+        "CreateEpisodicOrder": "Kwota wydatku (zł)"
       },
       "mode": {
         "ReduceInstallment": "Obniż ratę",
@@ -1201,7 +1204,18 @@
           "event": "Rodzaj zdarzenia",
           "action": "Rodzaj akcji",
           "control": "Rodzaj warunku"
-        }
+        },
+        "name": "Nazwa",
+        "dueMonth": "Termin (miesiąc, opcjonalnie)",
+        "lastMonth": "Ostatni miesiąc zlecenia",
+        "category": "Kategoria",
+        "categoryPlaceholder": "Wybierz kategorię",
+        "categoryMissing": "Tej kategorii nie ma już na liście — wybierz inną.",
+        "standingOrder": "Zlecenie",
+        "standingOrderPlaceholder": "Wybierz zlecenie stałe",
+        "standingOrderMissing": "Tego zlecenia nie ma już na liście (usunięte albo zakończone) — wybierz inne.",
+        "warning": "Ostrzegaj od (% limitu)",
+        "applyTitle": "Zastosuj w aplikacji"
       },
       "outcome": {
         "met": "Spełniony: {{month}}",
@@ -1222,6 +1236,76 @@
         "simulated": "Liczy symulacja",
         "budget": "Zakłada w budżecie",
         "flow": "Przebieg"
+      },
+      "apply": "Zastosuj w budżecie…",
+      "applySaveFirst": "Najpierw zapisz zmiany na tablicy — okno liczy zapisaną strategię.",
+      "applyHint": "Założy w budżecie cel, rezerwacje, limity i zlecenia z tablicy.",
+      "applyNone": "Na tablicy nie ma akcji, które coś zakładają w budżecie.",
+      "applyInfo": {
+        "SetSavingsGoal": "Ustawi miesięczny cel oszczędzania {{amount}} zł w budżecie. Podniesienie obowiązuje od bieżącego miesiąca, obniżenie od następnego.",
+        "CreateReservation": "Utworzy rezerwację „{{name}}” na {{amount}} zł. Rezerwacja o tej samej nazwie i kwocie, która już jest, zostanie pominięta.",
+        "SetLimit": "Ustawi limit {{amount}} zł dla kategorii „{{category}}” od miesiąca, w którym akcja się wykona; poprzedni limit zostanie zakończony.",
+        "EndStandingOrder": "Zakończy zlecenie „{{order}}” po wybranym miesiącu. Zlecenie, które już jest zakończone, zostanie pominięte.",
+        "CreateEpisodicOrder": "Utworzy zlecenie epizodyczne „{{name}}” na {{amount}} zł w kategorii „{{category}}”, z terminem w miesiącu wykonania akcji. W symulacji pomniejsza gotówkę w tym miesiącu."
+      }
+    },
+    "apply": {
+      "title": "Zastosuj strategię w budżecie",
+      "ok": "Zastosuj zaznaczone ({{count}})",
+      "cancel": "Anuluj",
+      "alert": {
+        "one": "Zmienisz {{count}} rzecz w budżecie „{{budget}}”",
+        "few": "Zmienisz {{count}} rzeczy w budżecie „{{budget}}”",
+        "many": "Zmienisz {{count}} rzeczy w budżecie „{{budget}}”",
+        "other": "Zmienisz {{count}} rzeczy w budżecie „{{budget}}”"
+      },
+      "alertBody": "Nic nie zmieni się bez zatwierdzenia. Akcje, których miesiąc jeszcze nie nadszedł, czekają, a te, które już są w budżecie, są pominięte.",
+      "empty": "Ta strategia nie ma akcji, które zakładają coś w budżecie.",
+      "loadFailed": "Nie udało się wczytać podglądu.",
+      "failed": "Nie udało się zastosować strategii — nic nie zostało zmienione.",
+      "done": "Zastosowano w budżecie: {{count}}.",
+      "status": {
+        "New": "nowa",
+        "Change": "zmiana",
+        "Exists": "już jest",
+        "Waiting": "czeka",
+        "Incomplete": "uzupełnij"
+      },
+      "items": {
+        "SetSavingsGoal": "Ustaw miesięczny cel oszczędzania {{amount}} zł",
+        "CreateReservation": "Załóż rezerwację „{{name}}” {{amount}} zł",
+        "SetLimit": "Ustaw limit kategorii {{amount}} zł",
+        "EndStandingOrder": "Zakończ zlecenie stałe",
+        "CreateEpisodicOrder": "Dodaj wydatek jednorazowy „{{name}}” {{amount}} zł"
+      },
+      "note": {
+        "SetSavingsGoal": {
+          "New": "Pierwszy cel w tym budżecie",
+          "Change": "Teraz {{current}} zł · podniesienie od bieżącego miesiąca, obniżenie od następnego"
+        },
+        "CreateReservation": {
+          "New": "Termin: {{month}}",
+          "Change": "Termin: {{month}}"
+        },
+        "SetLimit": {
+          "New": "Od {{month}}",
+          "Change": "Od {{month}} · poprzedni limit {{current}} zł zostanie zakończony"
+        },
+        "EndStandingOrder": {
+          "New": "Po {{month}}",
+          "Change": "Po {{month}} · {{current}} zł / mies."
+        },
+        "CreateEpisodicOrder": {
+          "New": "Zlecenie epizodyczne · termin {{month}}",
+          "Change": "Zlecenie epizodyczne · termin {{month}}"
+        }
+      },
+      "noteStatus": {
+        "Exists": "To już jest w budżecie",
+        "Waiting": "Czeka na swój miesiąc w symulacji",
+        "Incomplete": "Uzupełnij parametry kafelka na tablicy",
+        "New": "",
+        "Change": ""
       }
     }
   },

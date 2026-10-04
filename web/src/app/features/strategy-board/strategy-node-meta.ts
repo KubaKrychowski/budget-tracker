@@ -7,7 +7,8 @@ export type NodeKind = 'event' | 'base' | 'action' | 'condition' | 'wait' | 'end
 export type NodeCategory = 'event' | 'action' | 'control';
 
 /** Pola formularza węzła — rodzaj kafelka wybiera, które się pokazują. */
-export type NodeField = 'month' | 'amount' | 'rate' | 'installment' | 'mode' | 'condition';
+export type NodeField =
+  | 'month' | 'dueMonth' | 'amount' | 'rate' | 'installment' | 'mode' | 'condition' | 'category' | 'standingOrder' | 'warning';
 
 export interface NodeMeta {
   readonly type: StrategyNodeType;
@@ -34,9 +35,10 @@ export const NODE_META: Readonly<Record<StrategyNodeType, NodeMeta>> = {
   Overpay: { type: 'Overpay', kind: 'action', category: 'action', fields: ['amount', 'mode'] },
   PayOffLoan: { type: 'PayOffLoan', kind: 'action', category: 'action', fields: [] },
   SetSavingsGoal: { type: 'SetSavingsGoal', kind: 'action', category: 'action', fields: ['amount'] },
-  CreateReservation: { type: 'CreateReservation', kind: 'action', category: 'action', fields: ['amount'] },
-  EndStandingOrder: { type: 'EndStandingOrder', kind: 'action', category: 'action', fields: [] },
-  SetLimit: { type: 'SetLimit', kind: 'action', category: 'action', fields: ['amount'] },
+  CreateReservation: { type: 'CreateReservation', kind: 'action', category: 'action', fields: ['amount', 'dueMonth'] },
+  EndStandingOrder: { type: 'EndStandingOrder', kind: 'action', category: 'action', fields: ['standingOrder', 'month'] },
+  SetLimit: { type: 'SetLimit', kind: 'action', category: 'action', fields: ['category', 'amount', 'warning'] },
+  CreateEpisodicOrder: { type: 'CreateEpisodicOrder', kind: 'action', category: 'action', fields: ['category', 'amount'] },
   Condition: { type: 'Condition', kind: 'condition', category: 'control', fields: ['condition'] },
   Wait: { type: 'Wait', kind: 'wait', category: 'control', fields: [] },
   End: { type: 'End', kind: 'end', category: 'control', fields: [] },
@@ -65,7 +67,7 @@ export const CATEGORIES: Readonly<Record<NodeCategory, { readonly default: Strat
     default: 'IncreaseSurplus',
     groups: [
       { key: 'simulated', types: ['IncreaseSurplus', 'Overpay', 'PayOffLoan'] },
-      { key: 'budget', types: ['SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder'] },
+      { key: 'budget', types: ['SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder', 'CreateEpisodicOrder'] },
     ],
   },
   control: {
@@ -75,6 +77,14 @@ export const CATEGORIES: Readonly<Record<NodeCategory, { readonly default: Strat
 };
 
 export const CATEGORY_ORDER: readonly NodeCategory[] = ['event', 'action', 'control'];
+
+/** Domyślny próg ostrzeżenia limitu kategorii (procent) — ten sam co w API (`StrategyApplyPlanner`). */
+export const DEFAULT_WARNING_THRESHOLD = 80;
+
+/** Akcje, które po „Zastosuj w budżecie” zakładają w aplikacji prawdziwe obiekty. */
+export const BUDGET_ACTIONS: readonly StrategyNodeType[] = [
+  'SetSavingsGoal', 'CreateReservation', 'SetLimit', 'EndStandingOrder', 'CreateEpisodicOrder',
+];
 
 /** Czy do kafelka może prowadzić strzałka. */
 export const canReceive = (type: StrategyNodeType): boolean => {
@@ -131,7 +141,9 @@ export const newNode = (type: StrategyNodeType, id: string, x: number, y: number
     mode: type === 'Overpay' ? 'ReduceInstallment' : null,
     metric: type === 'Condition' ? 'CashMinusDebt' : null,
     comparison: type === 'Condition' ? 'AtLeast' : null,
-    threshold: null,
+    threshold: type === 'SetLimit' ? DEFAULT_WARNING_THRESHOLD : null,
+    categoryId: null,
+    standingOrderId: null,
   };
 };
 
@@ -143,17 +155,22 @@ export const retype = (node: StrategyNode, type: StrategyNodeType, startMonth: s
   const fields = NODE_META[type].fields;
   const keep = <T>(field: NodeField, value: T): T | null => (fields.includes(field) ? value : null);
   const isCondition = type === 'Condition';
+  const thresholdKind = (t: StrategyNodeType): NodeField | null =>
+    NODE_META[t].fields.includes('condition') ? 'condition' : NODE_META[t].fields.includes('warning') ? 'warning' : null;
+  const sameThreshold = thresholdKind(node.type) === thresholdKind(type);
   return {
     ...node,
     type,
-    month: fields.includes('month') ? (node.month ?? startMonth) : null,
+    month: fields.includes('month') ? (node.month ?? startMonth) : fields.includes('dueMonth') ? node.month : null,
     amount: keep('amount', node.amount),
     rate: keep('rate', node.rate),
     installment: keep('installment', node.installment),
     mode: type === 'Overpay' ? (node.mode ?? 'ReduceInstallment') : null,
     metric: isCondition ? (node.metric ?? 'CashMinusDebt') : null,
     comparison: isCondition ? (node.comparison ?? 'AtLeast') : null,
-    threshold: keep('condition', node.threshold),
+    threshold: thresholdKind(type) === null ? null : sameThreshold ? node.threshold : type === 'SetLimit' ? DEFAULT_WARNING_THRESHOLD : null,
+    categoryId: keep('category', node.categoryId),
+    standingOrderId: keep('standingOrder', node.standingOrderId),
   };
 };
 

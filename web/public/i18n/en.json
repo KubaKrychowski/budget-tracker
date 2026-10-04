@@ -1068,7 +1068,8 @@
         "SetLimit": "Set a category limit",
         "Condition": "Condition",
         "Wait": "Wait",
-        "End": "Strategy completed"
+        "End": "Strategy completed",
+        "CreateEpisodicOrder": "Add a one-off expense"
       },
       "hints": {
         "Trigger": "Raise, end of an order — starts actions",
@@ -1086,7 +1087,8 @@
         "SetLimit": "A category spending limit",
         "Condition": "Cash and debt with yes and no outputs",
         "Wait": "A loop: returns to the condition next month",
-        "End": "Marks the goal as reached"
+        "End": "Marks the goal as reached",
+        "CreateEpisodicOrder": "Creates an episodic order and subtracts the amount from cash"
       },
       "unavailable": {
         "incomeLimit": "Unavailable: income does not change spending"
@@ -1099,9 +1101,10 @@
         "CushionGoal": "Cushion amount (PLN)",
         "IncreaseSurplus": "Surplus change (PLN / mo.)",
         "Overpay": "Overpayment (PLN)",
-        "SetSavingsGoal": "Goal amount (PLN)",
+        "SetSavingsGoal": "Monthly amount (PLN / mo.)",
         "CreateReservation": "Reservation amount (PLN)",
-        "SetLimit": "Limit amount (PLN)"
+        "SetLimit": "Limit amount (PLN)",
+        "CreateEpisodicOrder": "Expense amount (PLN)"
       },
       "mode": {
         "ReduceInstallment": "Lower the installment",
@@ -1133,7 +1136,18 @@
           "event": "Event kind",
           "action": "Action kind",
           "control": "Condition kind"
-        }
+        },
+        "name": "Name",
+        "dueMonth": "Due month (optional)",
+        "lastMonth": "Last month of the order",
+        "category": "Category",
+        "categoryPlaceholder": "Pick a category",
+        "categoryMissing": "This category is no longer in the list — pick another.",
+        "standingOrder": "Standing order",
+        "standingOrderPlaceholder": "Pick a standing order",
+        "standingOrderMissing": "This order is no longer in the list (deleted or ended) — pick another.",
+        "warning": "Warn from (% of the limit)",
+        "applyTitle": "Apply in the app"
       },
       "outcome": {
         "met": "Met: {{month}}",
@@ -1154,6 +1168,74 @@
         "simulated": "Used by the simulation",
         "budget": "Created in the budget",
         "flow": "Flow"
+      },
+      "apply": "Apply to budget…",
+      "applySaveFirst": "Save the board first — the window works on the saved strategy.",
+      "applyHint": "Creates the goal, reservations, limits and orders from the board in the budget.",
+      "applyNone": "The board has no actions that create anything in the budget.",
+      "applyInfo": {
+        "SetSavingsGoal": "Sets the monthly savings goal to {{amount}} PLN in the budget. A raise applies from the current month, a cut from the next.",
+        "CreateReservation": "Creates the reservation “{{name}}” for {{amount}} PLN. A reservation with the same name and amount that already exists is skipped.",
+        "SetLimit": "Sets the {{amount}} PLN limit for “{{category}}” from the month the action runs; the previous limit is ended.",
+        "EndStandingOrder": "Ends the order “{{order}}” after the chosen month. An order that is already ended is skipped.",
+        "CreateEpisodicOrder": "Creates the episodic order “{{name}}” for {{amount}} PLN in “{{category}}”, due in the month the action runs. In the simulation it reduces cash that month."
+      }
+    },
+    "apply": {
+      "title": "Apply the strategy to the budget",
+      "ok": "Apply selected ({{count}})",
+      "cancel": "Cancel",
+      "alert": {
+        "one": "You will change {{count}} thing in the budget “{{budget}}”",
+        "other": "You will change {{count}} things in the budget “{{budget}}”"
+      },
+      "alertBody": "Nothing changes without your confirmation. Actions whose month has not come yet wait, and those already in the budget are skipped.",
+      "empty": "This strategy has no actions that create anything in the budget.",
+      "loadFailed": "Could not load the preview.",
+      "failed": "Could not apply the strategy — nothing was changed.",
+      "done": "Applied to the budget: {{count}}.",
+      "status": {
+        "New": "new",
+        "Change": "change",
+        "Exists": "exists",
+        "Waiting": "waiting",
+        "Incomplete": "incomplete"
+      },
+      "items": {
+        "SetSavingsGoal": "Set the monthly savings goal to {{amount}} PLN",
+        "CreateReservation": "Create the reservation “{{name}}” {{amount}} PLN",
+        "SetLimit": "Set a category limit of {{amount}} PLN",
+        "EndStandingOrder": "End the standing order",
+        "CreateEpisodicOrder": "Add the one-off expense “{{name}}” {{amount}} PLN"
+      },
+      "note": {
+        "SetSavingsGoal": {
+          "New": "The first goal in this budget",
+          "Change": "Now {{current}} PLN · a raise applies from the current month, a cut from the next"
+        },
+        "CreateReservation": {
+          "New": "Due: {{month}}",
+          "Change": "Due: {{month}}"
+        },
+        "SetLimit": {
+          "New": "From {{month}}",
+          "Change": "From {{month}} · the previous limit of {{current}} PLN is ended"
+        },
+        "EndStandingOrder": {
+          "New": "After {{month}}",
+          "Change": "After {{month}} · {{current}} PLN / mo."
+        },
+        "CreateEpisodicOrder": {
+          "New": "Episodic order · due {{month}}",
+          "Change": "Episodic order · due {{month}}"
+        }
+      },
+      "noteStatus": {
+        "Exists": "This is already in the budget",
+        "Waiting": "Waiting for its month in the simulation",
+        "Incomplete": "Fill in the tile parameters on the board",
+        "New": "",
+        "Change": ""
       }
     }
   },

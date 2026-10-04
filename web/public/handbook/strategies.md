@@ -27,7 +27,9 @@ przeciągnij je na tablicę albo kliknij **„+”** — kafelek dodany plusem t
     roczne i rata — z niego bierze się „dług” w symulacji) i *Poduszka docelowa* (kwota, którą chcesz uzbierać).
 - **Akcja** — co robisz po zdarzeniu. „Liczy symulacja”: *Zwiększ nadwyżkę*, *Nadpłać kredyt* (kwota i tryb: obniż ratę
   albo skróć okres), *Spłać resztę kredytu*. „Zakłada w budżecie”: *Załóż cel oszczędzania*, *Załóż rezerwację*,
-  *Ustaw limit kategorii* i *Zakończ zlecenie stałe* — te cztery w symulacji nic nie zmieniają.
+  *Ustaw limit kategorii*, *Zakończ zlecenie stałe* i *Dodaj wydatek jednorazowy* (zlecenie epizodyczne). Cztery pierwsze
+  w symulacji nic nie zmieniają; wydatek jednorazowy odejmuje kwotę od gotówki w miesiącu, w którym akcja się wykona.
+  Każda z nich ma w ustawieniach ramkę „Zastosuj w aplikacji” — mówi, co założy w budżecie.
 - **Warunek** — *Warunek* (porównuje oszczędności i dług, ma dwa wyjścia: **tak** i **nie**), *Czekaj*
   (sprawdź ponownie w następnym miesiącu) i *Koniec* (znacznik „strategia zrealizowana”).
 
@@ -80,6 +82,22 @@ Kafelek z czerwonym znacznikiem **!** ma problem, a nad tablicą pojawia się ba
 - jest drugi kredyt albo druga poduszka — liczony jest tylko pierwszy z każdego.
 
 Symulacja **pomija** kafelki z problemami, ale szkic zapisuje się mimo to.
+
+### Zastosuj w budżecie
+
+Przycisk **„Zastosuj w budżecie…”** zakłada w budżecie to, co planują akcje z grupy „Zakłada w budżecie”: miesięczny cel
+oszczędzania, rezerwacje, limity kategorii, zakończenie zlecenia stałego i wydatki jednorazowe. Okno liczy **zapisaną**
+strategię (przy niezapisanych zmianach przycisk jest wyłączony) i przy każdej akcji pokazuje status:
+
+- **nowa** — założy nowy obiekt, **zmiana** — zmieni to, co już jest (inna kwota celu albo limitu, zakończenie zlecenia),
+- **już jest** — to samo już jest w budżecie, więc akcja jest pominięta (dzięki temu dwukrotne zastosowanie niczego nie zdubluje),
+- **czeka** — miesiąc akcji w symulacji jeszcze nie nadszedł (np. limit po spłacie kredytu), zastosujesz ją później,
+- **uzupełnij** — akcja ma problem na tablicy (brakuje kwoty, kategorii albo zlecenia).
+
+Zaznaczone akcje są stosowane **razem albo wcale** — błąd jednej cofa wszystkie. Cel miesięczny działa jak na ekranie
+„Cele oszczędzania” (podniesienie od bieżącego miesiąca, obniżenie od następnego), a limit jak na ekranie limitów
+(historia zamkniętych miesięcy się nie zmienia). Zastosowania **nie da się cofnąć jednym kliknięciem** — zmiany cofniesz
+na ekranach celów, rezerwacji, limitów i zleceń.
 
 ### Zapis
 
