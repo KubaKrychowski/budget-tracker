@@ -13,7 +13,7 @@ namespace BudgetTracker.Identity.Services;
 
 /// <summary>
 /// Zakłada przy starcie klientów OAuth wymaganych przez resztę systemu: SPA Angulara (kod + PKCE)
-/// i <c>bt-cli</c> (kod + PKCE na loopbacku, klient publiczny — patrz DECISIONS.md). W Development zakłada też konta dev/demo — z TYM SAMYM identyfikatorem, którym
+/// <c>bt-cli</c> (kod + PKCE na loopbacku, klient publiczny — patrz DECISIONS.md) i aplikację mobilną (kod + PKCE, powrót przez własny schemat adresu). W Development zakłada też konta dev/demo — z TYM SAMYM identyfikatorem, którym
 /// <c>DevSeed</c>/<c>DemoSeed</c> w API oznaczają zaseedowane budżety (patrz <see cref="DeterministicGuid"/>),
 /// inaczej zalogowany dev/demo user nie zobaczyłby własnych danych. Idempotentne — sprawdza istnienie
 /// przed utworzeniem.
@@ -38,6 +38,7 @@ public sealed class OpenIddictSeeder(
         var appManager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
         await SeedSpaClientAsync(appManager, cancellationToken);
         await SeedCliClientAsync(appManager, cancellationToken);
+        await SeedMobileClientAsync(appManager, cancellationToken);
         await SeedAdminClientAsync(appManager, cancellationToken);
 
         if (environment.IsDevelopment())
@@ -206,6 +207,53 @@ public sealed class OpenIddictSeeder(
         foreach (var port in OAuthDefaults.CliLoopbackPorts) descriptor.RedirectUris.Add(new Uri(OAuthDefaults.CliRedirectUri(port)));
 
         if (await appManager.FindByClientIdAsync(OAuthDefaults.CliClientId, ct) is { } existing)
+        {
+            await appManager.UpdateAsync(existing, descriptor, ct);
+            return;
+        }
+
+        await appManager.CreateAsync(descriptor, ct);
+    }
+
+    /// <summary>
+    /// Aplikacja mobilna (Capacitor) jako klient PUBLICZNY: kod + PKCE, logowanie w systemowej przeglądarce i powrót przez
+    /// własny schemat adresu (RFC 8252). Uzgadniany przy KAŻDYM starcie, jak pozostali klienci.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Osobny klient, nie dodatkowe adresy SPA: ma refresh token, którego SPA świadomie nie dostaje. WebView nie
+    /// zrobi cichego iframe'a — ciasteczko sesji Identity żyje w systemowej przeglądarce, nie w aplikacji.</item>
+    /// <item>⚠️ Zgoda JAWNA: dowolna aplikacja na telefonie może zarejestrować ten sam schemat adresu, więc ekran zgody
+    /// to jedyny moment, w którym użytkownik widzi, komu daje dostęp. Ochroną samego kodu jest PKCE.</item>
+    /// </list>
+    /// </remarks>
+    private static async Task SeedMobileClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
+    {
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = OAuthDefaults.MobileClientId,
+            DisplayName = "Wydatki.com — aplikacja mobilna",
+            ClientType = ClientTypes.Public,
+            ConsentType = ConsentTypes.Explicit,
+            Permissions =
+            {
+                Permissions.Endpoints.Authorization,
+                Permissions.Endpoints.Token,
+                Permissions.Endpoints.EndSession,
+                Permissions.GrantTypes.AuthorizationCode,
+                Permissions.GrantTypes.RefreshToken,
+                Permissions.ResponseTypes.Code,
+                Permissions.Scopes.Email,
+                Permissions.Scopes.Profile,
+                Permissions.Prefixes.Scope + "offline_access",
+                Permissions.Prefixes.Scope + OAuthDefaults.ApiScope,
+            },
+            Requirements = { Requirements.Features.ProofKeyForCodeExchange },
+            RedirectUris = { new Uri(OAuthDefaults.MobileRedirectUri) },
+            PostLogoutRedirectUris = { new Uri(OAuthDefaults.MobilePostLogoutRedirectUri) },
+        };
+
+        if (await appManager.FindByClientIdAsync(OAuthDefaults.MobileClientId, ct) is { } existing)
         {
             await appManager.UpdateAsync(existing, descriptor, ct);
             return;

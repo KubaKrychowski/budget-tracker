@@ -5,6 +5,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe } from '@ngx-translate/core';
 import { IDENTITY_AUTHORITY } from '../../../app.config';
+import { AuthNavigation } from '../../../core/native/auth-navigation';
 
 /**
  * Dekoduje payload JWT (bez weryfikacji podpisu — to front, weryfikację robi biblioteka OIDC
@@ -34,6 +35,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 })
 export class AccountSecurity {
   private readonly oidcSecurityService = inject(OidcSecurityService);
+  private readonly authNavigation = inject(AuthNavigation);
 
   private readonly userData = toSignal(this.oidcSecurityService.userData$, { initialValue: null });
 
@@ -87,6 +89,6 @@ export class AccountSecurity {
 
   /** Ten sam mechanizm co przycisk wylogowania w nagłówku (`App.logout`) — RP-initiated logout. */
   protected logout(): void {
-    this.oidcSecurityService.logoff().subscribe();
+    this.authNavigation.signOut();
   }
 }

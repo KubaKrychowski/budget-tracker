@@ -24,11 +24,18 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, SpaOrigins s
     /// </remarks>
     private const string FrameablePath = "/connect/authorize";
 
+    /// <summary>
+    /// Cele przekierowań po formularzu spoza listy SPA: loopback <c>bt-cli</c> i własny schemat aplikacji mobilnej
+    /// (źródło CSP w postaci samego schematu, <c>com.wydatki.app:</c>).
+    /// </summary>
+    public static IEnumerable<string> NativeClientFormActionTargets =>
+        OAuthDefaults.CliLoopbackOrigins.Append(OAuthDefaults.MobileScheme + ":");
+
     private readonly string defaultPolicy = BuildContentSecurityPolicy(
-        spaOrigins.All, extraFormActionOrigins: OAuthDefaults.CliLoopbackOrigins);
+        spaOrigins.All, extraFormActionOrigins: NativeClientFormActionTargets);
 
     private readonly string frameablePolicy = BuildContentSecurityPolicy(
-        spaOrigins.All, frameableBy: spaOrigins.All, extraFormActionOrigins: OAuthDefaults.CliLoopbackOrigins);
+        spaOrigins.All, frameableBy: spaOrigins.All, extraFormActionOrigins: NativeClientFormActionTargets);
 
     public Task InvokeAsync(HttpContext context)
     {

@@ -21,6 +21,8 @@ import { apiBaseUrlInterceptor } from './core/api/api-base-url.interceptor';
 import { pendingRequestsInterceptor } from './core/auth-splash/pending-requests';
 import { runtimeConfig } from './core/runtime-config';
 import { provideMarkdown } from 'ngx-markdown';
+import { isNativeApp, nativeAuthConfig } from './core/native/native-auth';
+import { provideNativeAuth } from './core/native/provide-native-auth';
 
 registerLocaleData(pl);
 
@@ -30,6 +32,12 @@ registerLocaleData(pl);
  * zmiany hasła/2FA, które mieszkają wyłącznie po stronie Identity (Razor), nie w Angularze.
  */
 export const IDENTITY_AUTHORITY = runtimeConfig().identityAuthority;
+
+/**
+ * Aplikacja mobilna (Capacitor) loguje się jako osobny klient: systemowa przeglądarka, powrót deep linkiem
+ * i refresh token zamiast cichego iframe'a — patrz `core/native/native-auth.ts` i DECISIONS.md §7.
+ */
+const NATIVE = isNativeApp();
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -55,7 +63,7 @@ export const appConfig: ApplicationConfig = {
     // Wymaga trampoliny `public/silent-renew.html` zarejestrowanej jako dodatkowy redirect_uri
     // klienta SPA w OpenIddictSeeder.
     provideAuth({
-      config: {
+      config: NATIVE ? nativeAuthConfig(IDENTITY_AUTHORITY) : {
         authority: IDENTITY_AUTHORITY,
         redirectUrl: `${window.location.origin}/auth-callback`,
         postLogoutRedirectUri: `${window.location.origin}/`,
@@ -71,7 +79,8 @@ export const appConfig: ApplicationConfig = {
         // Dane użytkownika front bierze z id_tokenu (userData$), nie z osobnego wywołania userinfo.
         autoUserInfo: false,
       },
-    }, withAppInitializerAuthCheck()),
+    }, ...(NATIVE ? [] : [withAppInitializerAuthCheck()])),
+    ...provideNativeAuth(),
     // NG-ZORRO animuje dropdowny, tooltipy i datepickery — bez tego komponenty
     // overlayowe potrafią zostać w stanie pośrednim.
     provideAnimationsAsync(),

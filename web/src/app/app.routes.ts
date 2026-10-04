@@ -1,17 +1,17 @@
 import { Routes } from '@angular/router';
-import { autoLoginPartialRoutesGuard } from 'angular-auth-oidc-client';
+import { appAuthGuard } from './core/native/provide-native-auth';
 
 /**
  * Cała aplikacja pod jednym strażnikiem logowania — niezalogowany użytkownik nigdy nie widzi
  * powłoki (`App`), tylko przekierowanie do ekranu logowania BudgetTracker.Identity. `auth-callback`
  * jest CELOWO wewnątrz tej samej gałęzi: to na ten adres wraca przeglądarka po zalogowaniu z kodem
  * autoryzacyjnym w query stringu, a strażnik sam go rozpoznaje i wymienia na token, zanim
- * jakikolwiek ekran się wyrenderuje.
+ * jakikolwiek ekran się wyrenderuje. W aplikacji mobilnej kod wraca deep linkiem, nie tym adresem (`appAuthGuard`).
  */
 export const routes: Routes = [
   {
     path: '',
-    canActivate: [autoLoginPartialRoutesGuard],
+    canActivate: [appAuthGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'auth-callback', redirectTo: 'dashboard' },

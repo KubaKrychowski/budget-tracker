@@ -93,6 +93,11 @@ resource "azurerm_linux_web_app" "api" {
       # Front woła API z innego originu (Static Web Apps), więc bez tej listy przeglądarka odrzuci każde
       # żądanie. Landing tu NIE jest wymieniony — to strona statyczna, która nie rozmawia z API.
       Cors__Origins__0 = local.front_url
+
+      # WebView aplikacji mobilnej (Capacitor): Android serwuje ją spod https://localhost, iOS spod capacitor://localhost.
+      # Muszą się zgadzać z OAuthDefaults.MobileWebViewOrigins w BudgetTracker.Identity.
+      Cors__Origins__1 = "https://localhost"
+      Cors__Origins__2 = "capacitor://localhost"
     },
     {
       APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string

@@ -944,6 +944,24 @@ wysokości komponentów w całej apce, więc nie „poprawiaj" tego z powrotem b
 **Platformy:** web + mobile. Mobile służy głównie do podglądu; import to zadanie „przy biurku". Responsywny web
 wystarczy na MVP (NG-ZORRO: `responsiveLayout` stack/scroll). NIE natywna apka mobilna na tym etapie.
 
+> **REWIZJA (2026-10-04): jest aplikacja mobilna — Capacitor, Android i iOS.** Ten sam front Angulara w WebView,
+> bez osobnego kodu ekranów (`web/android`, `web/ios`, `web/capacitor.config.ts`, build `production,mobile`).
+> Odrzucone: PWA (nie trafia do sklepów, na iOS ograniczone), NativeScript (NG-ZORRO tam nie działa),
+> Ionic (nowa biblioteka UI obok NG-ZORRO bez realnej potrzeby).
+>
+> Logowanie to osobny klient publiczny `budgettracker-mobile`, nie dodatkowe adresy SPA (RFC 8252):
+> - strona logowania otwiera się w **systemowej przeglądarce** (Custom Tabs / SFSafariViewController), nie w WebView —
+>   apka nie widzi hasła, a 2FA i ekrany Identity działają bez zmian;
+> - powrót przez własny schemat `com.wydatki.app:/auth-callback`, zgoda **jawna** (schemat może przejąć inna apka);
+> - **refresh token** (`offline_access`), wbrew decyzji dla SPA. Cichy iframe w apce nie zadziała: ciasteczko sesji
+>   Identity żyje w przeglądarce systemowej, nie w WebView. Tokeny w localStorage WebView (sandbox apki), bo
+>   sessionStorage ginie, gdy system zabije proces w tle;
+> - originy WebView (`https://localhost`, `capacitor://localhost`) są w CORS API i Identity, ale NIE na liście SPA,
+>   więc nie dostają `frame-ancestors` ani zgody na powrót po open redirect.
+>
+> Ekrany Identity otwierane z „Konto i bezpieczeństwo" (2FA, hasło, usunięcie konta) otwierają się w przeglądarce
+> i po zakończeniu wracają do wersji webowej, nie do apki — do poprawy, jeśli będzie przeszkadzać.
+
 **Stepper importu (NG-ZORRO `nz-steps`), 4 kroki:**
 1. **Źródło** — wybór konta/banku (determinuje parser). Warunek: źródło wybrane.
 2. **Plik** — upload CSV (`nz-upload`). Wstępny parse. Zły format → status kroku `error` z komunikatem
