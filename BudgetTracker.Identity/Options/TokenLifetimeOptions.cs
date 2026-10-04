@@ -7,7 +7,8 @@ namespace BudgetTracker.Identity.Options;
 /// </summary>
 /// <remarks>
 /// SPA nie używa refresh tokena (odnawia sesję ukrytym iframe'em na ciasteczku Identity), więc
-/// <see cref="RefreshToken"/> dotyczy wyłącznie <c>bt-cli</c>. Wartości to <see cref="TimeSpan"/> w formacie
+/// <see cref="RefreshToken"/> dotyczy <c>bt-cli</c> i aplikacji mobilnej — po tym czasie bez użycia
+/// telefon wymaga ponownego logowania. Wartości to <see cref="TimeSpan"/> w formacie
 /// konfiguracji <c>"00:15:00"</c>.
 /// </remarks>
 public sealed class TokenLifetimeOptions

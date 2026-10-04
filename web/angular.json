@@ -67,6 +67,24 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "mobile": {
+              "outputPath": "dist/mobile",
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public",
+                  "ignore": [
+                    "config.json",
+                    "staticwebapp.config.json",
+                    "silent-renew.html"
+                  ]
+                },
+                {
+                  "glob": "config.json",
+                  "input": "mobile"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

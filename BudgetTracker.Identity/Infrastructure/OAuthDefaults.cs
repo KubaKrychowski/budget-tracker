@@ -32,6 +32,33 @@ public static class OAuthDefaults
     /// <summary>Originy loopback klienta <c>bt-cli</c> — potrzebne w <c>form-action</c> CSP, bo logowanie kończy się przekierowaniem na nie.</summary>
     public static IEnumerable<string> CliLoopbackOrigins => CliLoopbackPorts.Select(port => $"http://127.0.0.1:{port}");
 
+    /// <summary>Aplikacja mobilna (Capacitor, Android i iOS) — ten sam front co SPA, ale jako osobny klient publiczny.</summary>
+    public const string MobileClientId = "budgettracker-mobile";
+
+    /// <summary>
+    /// Własny schemat adresów aplikacji mobilnej (RFC 8252 §7.1: odwrócona domena). Pod nim system operacyjny oddaje
+    /// przekierowanie z przeglądarki z powrotem do aplikacji.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Zaszyty też w <c>web/capacitor.config.ts</c> (appId), w <c>web/src/app/core/native/native-auth.ts</c>,
+    /// w <c>AndroidManifest.xml</c> i w <c>Info.plist</c> — OpenIddict porównuje <c>redirect_uri</c> DOSŁOWNIE.
+    /// </remarks>
+    public const string MobileScheme = "com.wydatki.app";
+
+    public const string MobileRedirectUri = MobileScheme + ":/auth-callback";
+
+    public const string MobilePostLogoutRedirectUri = MobileScheme + ":/logout";
+
+    /// <summary>
+    /// Originy, z których WebView Capacitora woła discovery i endpoint tokenu (fetch, więc CORS): Android serwuje
+    /// aplikację spod <c>https://localhost</c>, iOS spod <c>capacitor://localhost</c>.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Idą WYŁĄCZNIE do CORS, nie do listy SPA — ta decyduje też o <c>frame-ancestors</c> i o open redirectach,
+    /// a <c>https://localhost</c> to adres, pod którym może stać cokolwiek na komputerze użytkownika.
+    /// </remarks>
+    public static readonly string[] MobileWebViewOrigins = ["https://localhost", "capacitor://localhost"];
+
     /// <summary>Klient serwisowy (client credentials), którym serwer tożsamości wywołuje endpointy /api/admin API budżetu.</summary>
     public const string AdminClientId = "budgettracker-admin";
 

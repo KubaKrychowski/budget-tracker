@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Observable, catchError, finalize, map, of, shareReplay } from 'rxjs';
+import { AuthNavigation } from '../native/auth-navigation';
 
 /**
  * Wspólny punkt odzyskiwania sesji po odpowiedzi 401 z API — odświeżenie tokenu albo powrót na logowanie.
@@ -13,6 +14,7 @@ import { Observable, catchError, finalize, map, of, shareReplay } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class SessionRecovery {
   private readonly oidc = inject(OidcSecurityService);
+  private readonly navigation = inject(AuthNavigation);
 
   private inFlight: Observable<boolean> | null = null;
   private signingIn = false;
@@ -42,6 +44,6 @@ export class SessionRecovery {
     if (this.signingIn) return;
     this.signingIn = true;
     this.oidc.logoffLocal();
-    this.oidc.authorize();
+    this.navigation.signIn();
   }
 }

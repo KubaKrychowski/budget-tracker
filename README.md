@@ -87,6 +87,28 @@ Zrzuty ekranu na stronie pochodzą z `DemoSeed` (zmyśleni sprzedawcy), nigdy z 
 patrz `plans/landing-page.md` i sekcja „Dane" niżej. Jak je odtworzyć, opisuje
 `web/projects/landing/README.md`.
 
+### Aplikacja mobilna (Android, iOS)
+
+Ten sam front w Capacitorze (`web/android`, `web/ios`), zawsze na **produkcji** — adresy w `web/mobile/config.json`.
+Logowanie idzie przez systemową przeglądarkę i wraca deep linkiem `com.wydatki.app:/auth-callback`
+(dlaczego tak — `DECISIONS.md` §7, rewizja z 2026-10-04).
+
+```bash
+cd web && npm run build:mobile
+```
+
+Build `production,mobile` + `cap sync`. Potem Android Studio (`npx cap open android`) albo z linii poleceń:
+
+```bash
+cd web/android && ./gradlew assembleDebug
+```
+
+- Capacitor 8 wymaga **JDK 21**. Jeśli `JAVA_HOME` wskazuje starsze, ustaw je na JDK z Android Studio
+  (`C:\Program Files\Android\Android Studio\jbr`).
+- iOS buduje się wyłącznie na macOS z Xcode (`npx cap open ios`).
+- Apka zaloguje się dopiero na Identity i API wdrożonych z klientem `budgettracker-mobile` i originami WebView
+  w CORS — inaczej zostaje na okładce z błędem CORS w konsoli.
+
 Sprawdzenie, czy baza faktycznie odpowiada — `GET /health/db` zwraca `{"database":"up"}`.
 Jeśli dostajesz błąd połączenia, prawie zawsze znaczy to, że kontener nie chodzi, a nie że kod jest zły.
 

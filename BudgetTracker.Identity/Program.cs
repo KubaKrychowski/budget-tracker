@@ -280,11 +280,12 @@ builder.Services.AddSingleton<SpaOrigins>();
 
 // SPA odpytuje discovery/JWKS i wymienia kod na token przez fetch() z INNEGO originu
 // (localhost:4200/4310) — to podlega CORS, w przeciwieństwie do przekierowania na /connect/authorize
-// (pełna nawigacja, CORS jej nie dotyczy). Te same originy co zarejestrowane redirect_uris klienta SPA.
+// (pełna nawigacja, CORS jej nie dotyczy). Te same originy co zarejestrowane redirect_uris klienta SPA
+// plus WebView aplikacji mobilnej: loguje się w systemowej przeglądarce, ale kod wymienia fetch()-em z WebView.
 const string spaCors = CorsPolicies.Spa;
 builder.Services.AddOptions<CorsOptions>().Configure<SpaOrigins>((cors, spa) =>
     cors.AddPolicy(spaCors, policy => policy
-        .WithOrigins([.. spa.All])
+        .WithOrigins([.. spa.All, .. OAuthDefaults.MobileWebViewOrigins])
         .AllowAnyHeader()
         .AllowAnyMethod()));
 

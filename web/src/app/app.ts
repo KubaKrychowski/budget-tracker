@@ -14,6 +14,7 @@ import { RecentScreens } from './core/search/recent-screens';
 import { SearchMenu } from './core/search-menu/search-menu';
 import { Terminal } from './core/terminal/terminal';
 import { TerminalService } from './core/terminal/terminal.service';
+import { AuthNavigation } from './core/native/auth-navigation';
 
 @Component({
   imports: [
@@ -27,6 +28,7 @@ import { TerminalService } from './core/terminal/terminal.service';
 export class App {
   private readonly router = inject(Router);
   private readonly oidcSecurityService = inject(OidcSecurityService);
+  private readonly authNavigation = inject(AuthNavigation);
   private readonly recentScreens = inject(RecentScreens);
   protected readonly terminal = inject(TerminalService);
   protected readonly changelog = inject(ChangelogService);
@@ -49,7 +51,7 @@ export class App {
    */
   protected logout(): void {
     this.clearLocalAppState();
-    this.oidcSecurityService.logoff().subscribe();
+    this.authNavigation.signOut();
   }
 
   /**
