@@ -9,7 +9,8 @@
     "test": "ng test",
     "lint": "ng lint && node scripts/check-tables.mjs",
     "build:mobile": "ng build --configuration production,mobile && cap sync",
-    "android": "npm run build:mobile && cap open android"
+    "android": "npm run build:mobile && node scripts/run-android.mjs",
+    "android:studio": "npm run build:mobile && cap open android"
   },
   "private": true,
   "packageManager": "npm@10.9.8",

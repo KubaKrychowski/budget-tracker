@@ -94,17 +94,16 @@ Logowanie idzie przez systemową przeglądarkę i wraca deep linkiem `com.wydatk
 (dlaczego tak — `DECISIONS.md` §7, rewizja z 2026-10-04).
 
 ```bash
-cd web && npm run build:mobile
+cd web && npm run android
 ```
 
-Build `production,mobile` + `cap sync`. Potem Android Studio (`npx cap open android`) albo z linii poleceń:
+Build `production,mobile`, `cap sync`, APK debug i start na emulatorze (`scripts/run-android.mjs`). Bierze pierwszy
+podłączony telefon albo działający emulator, a gdy nie ma żadnego — uruchamia pierwszy AVD. Konkretny cel:
+`npm run android -- --target <id>` (lista: `npx native-run android --list`). `npm run android:studio` otwiera
+projekt w Android Studio.
 
-```bash
-cd web/android && ./gradlew assembleDebug
-```
-
-- Capacitor 8 wymaga **JDK 21**. Jeśli `JAVA_HOME` wskazuje starsze, ustaw je na JDK z Android Studio
-  (`C:\Program Files\Android\Android Studio\jbr`).
+- Nie `cap run android`: na Windowsie wywołuje `./gradlew` i pada na „'gradlew' is not recognized”.
+- Capacitor 8 wymaga **JDK 21**. Skrypt sam bierze JDK z Android Studio, gdy `JAVA_HOME` wskazuje starsze.
 - iOS buduje się wyłącznie na macOS z Xcode (`npx cap open ios`).
 - Apka zaloguje się dopiero na Identity i API wdrożonych z klientem `budgettracker-mobile` i originami WebView
   w CORS — inaczej zostaje na okładce z błędem CORS w konsoli.
