@@ -104,3 +104,9 @@ na ekranach celów, rezerwacji, limitów i zleceń.
 Zmiany na tablicy nie zapisują się same — przycisk **„Zapisz strategię”** wysyła całość, a **„Odrzuć zmiany”**
 wraca do ostatniego zapisu. Przycisk **„Parametry”** zmienia nazwę, miesiąc startu, oszczędności na początku
 i horyzont. Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w budżecie.
+
+### Terminal (CLI)
+
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (patrz temat „Terminal”): `strategy list`,
+`get`, `create`, `save`, `simulate`, `delete`, `references`, `apply-preview` i `apply`. Graf idzie jako JSON w fladze
+`--json`, a `strategy apply <id> --node-ids a,b` zakłada w budżecie wskazane akcje — tak samo atomowo jak okno.

@@ -1,4 +1,7 @@
+using BudgetTracker.Api.Features.Cli;
+using BudgetTracker.Api.Features.Cli.Services;
 using BudgetTracker.Api.Features.Strategies.Commands;
+using BudgetTracker.Api.Features.Strategies.Consts;
 using BudgetTracker.Api.Features.Strategies.Contracts;
 using BudgetTracker.Api.Features.Strategies.Queries;
 using BudgetTracker.Api.Features.Strategies.Services;
@@ -102,5 +105,78 @@ public static class StrategiesModule
             .Produces(StatusCodes.Status404NotFound);
 
         return app;
+    }
+
+    /// <summary>Komendy CLI (issue #25) — te same handlery co endpointy REST wyżej.</summary>
+    public static CliCommandRegistry MapStrategiesCli(this CliCommandRegistry registry)
+    {
+        const string BudgetIdHelp = "BusinessId budżetu; pomiń dla budżetu domyślnego.";
+        const string GraphHelp =
+            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[].";
+
+        registry.Register("strategy", "list", "Strategie budżetu (nazwa, liczba zdarzeń i akcji, data zmiany).",
+            "strategy list [--budget-id <guid>]",
+            [CliFlag.Optional("budget-id", BudgetIdHelp)],
+            async (sp, args, ct) => await sp.GetRequiredService<ListStrategiesQueryHandler>()
+                .HandleAsync(args.GetGuidFlag("budget-id"), ct));
+
+        registry.Register("strategy", "get", "Strategia z całym grafem i policzonym wynikiem symulacji.",
+            "strategy get <id>", [],
+            async (sp, args, ct) => await sp.GetRequiredService<GetStrategyQueryHandler>().HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("strategy", "create", "Zakłada strategię: pustą (Blank) albo z szablonu (LoanAndCushion).",
+            "strategy create --name <nazwa> [--template Blank|LoanAndCushion] [--budget-id <guid>]",
+            [
+                CliFlag.Optional("budget-id", BudgetIdHelp),
+                CliFlag.Required("name", "Nazwa strategii (do 100 znaków)."),
+                CliFlag.Optional("template", "Szablon startowy: Blank (domyślnie) albo LoanAndCushion."),
+            ],
+            async (sp, args, ct) => await sp.GetRequiredService<CreateStrategyCommandHandler>().HandleAsync(
+                new CreateStrategyRequestDto(
+                    args.GetGuidFlag("budget-id"), args.GetRequiredFlag("name"),
+                    args.GetEnumFlag("template", StrategyTemplate.Blank)),
+                ct));
+
+        registry.Register("strategy", "save", "Zapisuje całą strategię (parametry i graf) — jak „Zapisz strategię” na tablicy.",
+            "strategy save <id> --json '<strategia>'",
+            [CliFlag.Required("json", GraphHelp)],
+            async (sp, args, ct) => await sp.GetRequiredService<SaveStrategyCommandHandler>()
+                .HandleAsync(args.GetGuid(0), args.GetRequiredJsonFlag<SaveStrategyRequestDto>("json"), ct));
+
+        registry.Register("strategy", "simulate", "Liczy symulację niezapisanego grafu — niczego nie zapisuje.",
+            "strategy simulate --json '<strategia>'",
+            [CliFlag.Required("json", GraphHelp)],
+            async (sp, args, ct) => await sp.GetRequiredService<SimulateStrategyQueryHandler>()
+                .HandleAsync(args.GetRequiredJsonFlag<SaveStrategyRequestDto>("json"), ct));
+
+        registry.Register("strategy", "delete", "Usuwa strategię (to, co z niej założono w budżecie, zostaje).",
+            "strategy delete <id>", [],
+            async (sp, args, ct) =>
+            {
+                var id = args.GetGuid(0);
+                await sp.GetRequiredService<DeleteStrategyCommandHandler>().HandleAsync(id, ct);
+                return new { deleted = true, id };
+            });
+
+        registry.Register("strategy", "references", "Kategorie i niezakończone zlecenia stałe budżetu strategii (do pól kafelków).",
+            "strategy references <id>", [],
+            async (sp, args, ct) => await sp.GetRequiredService<GetStrategyReferencesQueryHandler>()
+                .HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("strategy", "apply-preview", "Co zastosowanie strategii założyłoby w budżecie (statusy akcji).",
+            "strategy apply-preview <id>", [],
+            async (sp, args, ct) => await sp.GetRequiredService<GetStrategyApplyPreviewQueryHandler>()
+                .HandleAsync(args.GetGuid(0), ct));
+
+        registry.Register("strategy", "apply", "Zakłada w budżecie wskazane akcje strategii (wszystkie albo żadna).",
+            "strategy apply <id> --node-ids <id1,id2,...>",
+            [CliFlag.Required("node-ids", "Identyfikatory kafelków (z „strategy apply-preview”) rozdzielone przecinkami.")],
+            async (sp, args, ct) => await sp.GetRequiredService<ApplyStrategyCommandHandler>().HandleAsync(
+                args.GetGuid(0),
+                new ApplyStrategyRequestDto(
+                    args.GetRequiredFlag("node-ids").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)),
+                ct));
+
+        return registry;
     }
 }

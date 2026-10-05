@@ -1519,3 +1519,7 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 > - Szablon „Kredyt i poduszka” jest uniwersalny: bez zlecenia stałego (wymagałoby wskazania konkretnego obiektu użytkownika); po spłacie
 >   kredytu zakłada cel miesięczny. Listy kategorii i zleceń do pól wyboru: `GET /api/strategies/{id}/references`.
 > - Nie ma jeszcze: wariantów i wykresu (etap 2), przycisku „zdarzenie nastąpiło” (etap 4).
+
+> **REWIZJA — 2026-10-05: strategie w CLI** (`StrategiesModule.MapStrategiesCli`): rzeczownik `strategy` z komendami `list`, `get`, `create`,
+> `save`, `simulate`, `delete`, `references`, `apply-preview`, `apply` — te same handlery co endpointy REST, więc ta sama walidacja i atomowość.
+> Graf przy `save` i `simulate` idzie jako surowy JSON w `--json` (jak reguły przy `rule create`).
