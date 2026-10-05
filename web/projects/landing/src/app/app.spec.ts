@@ -55,18 +55,35 @@ describe('Landing', () => {
     expect(text()).not.toContain('Załóż konto');
   });
 
-  it('każdy link wychodzący prowadzi do publicznego repo, aplikacji albo profilu autora', () => {
+  it('każdy link wychodzący prowadzi do publicznego repo, aplikacji, jej wydań albo profilu autora', () => {
     // ⚠️ Sprawdzamy KONKRETNE adresy, nie samo „github.com". Słabsza wersja przepuściła kiedyś adres
     // repozytorium PRYWATNEGO — link dawał 404 każdemu, kto nie jest autorem. Lista zostaje zamknięta.
     const allowed = [
       'https://github.com/KubaKrychowski/budget-tracker',
       'https://app.wydatki.com',
       'https://www.linkedin.com/in/kuba-krychowski/',
+      'https://github.com/KubaKrychowski/budget-tracker/releases',
+      'https://github.com/KubaKrychowski/budget-tracker/releases/latest/download/wydatki.apk',
     ];
     const links = [...fixture.nativeElement.querySelectorAll('a[href^="http"]')] as HTMLAnchorElement[];
 
     expect(links.length).toBeGreaterThan(0);
     expect(links.every((a) => allowed.includes(a.getAttribute('href') ?? ''))).toBe(true);
+  });
+
+  it('aplikację na Androida pobiera się z NAJNOWSZEGO wydania, a iPhone dostaje wersję webową', () => {
+    // ⚠️ Stały adres `releases/latest/download/wydatki.apk` — link do konkretnej wersji zestarzałby się po
+    // pierwszym nowym wydaniu, a workflow release-android.yml zawsze nazywa plik wydatki.apk.
+    const section = fixture.nativeElement.querySelector('#aplikacja') as HTMLElement;
+    const hrefs = [...section.querySelectorAll('a[href]')].map((a: Element) => a.getAttribute('href'));
+
+    expect(hrefs).toContain('https://github.com/KubaKrychowski/budget-tracker/releases/latest/download/wydatki.apk');
+    expect(section.textContent).toContain('Pobierz na Androida');
+    expect(section.textContent).toContain('iPhone');
+    expect(hrefs).toContain('https://app.wydatki.com');
+
+    const nav = [...fixture.nativeElement.querySelectorAll('.bar__nav a')].map((a: Element) => a.getAttribute('href'));
+    expect(nav).toContain('#aplikacja');
   });
 
   it('osoba z zaproszeniem ma jak się zalogować, a główne wezwanie to prośba o dostęp', () => {

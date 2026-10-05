@@ -108,6 +108,27 @@ projekt w Android Studio.
 - Apka zaloguje się dopiero na Identity i API wdrożonych z klientem `budgettracker-mobile` i originami WebView
   w CORS — inaczej zostaje na okładce z błędem CORS w konsoli.
 
+#### Wydanie APK (do pobrania z landingu)
+
+Landing linkuje do `…/releases/latest/download/wydatki.apk`. Wydanie robi workflow `release-android.yml`
+po wypchnięciu taga `android-v<wersja>` — z `main`, bo workflow musi istnieć w otagowanym commicie:
+
+```bash
+git tag android-v2.1
+```
+
+```bash
+git push origin android-v2.1
+```
+
+Numer wersji (`versionName`) bierze się z taga, a `versionCode` z numeru przebiegu workflow, więc rośnie sam.
+
+**Klucz podpisu — jednorazowo.** Generujesz go u siebie (keytool jest w JDK Android Studio) i wpisujesz do sekretów
+repozytorium: `ANDROID_KEYSTORE_B64` (plik w base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+`ANDROID_KEY_PASSWORD`. ⚠️ Plik klucza i hasła trzymaj też w bezpiecznej kopii poza komputerem: bez nich
+nie da się wydać aktualizacji — telefon odrzuci nową wersję podpisaną innym kluczem, a użytkownik musiałby
+odinstalować aplikację. Klucz nigdy nie trafia do repo (`*.jks` jest w `web/android/.gitignore`).
+
 Sprawdzenie, czy baza faktycznie odpowiada — `GET /health/db` zwraca `{"database":"up"}`.
 Jeśli dostajesz błąd połączenia, prawie zawsze znaczy to, że kontener nie chodzi, a nie że kod jest zły.
 
