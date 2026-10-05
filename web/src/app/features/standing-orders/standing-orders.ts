@@ -23,6 +23,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActiveBudget } from '../../core/active-budget';
 import { BudgetSwitcher } from '../../core/budget-switcher/budget-switcher';
+import { Viewport } from '../../core/layout/viewport';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
@@ -98,6 +99,9 @@ export class StandingOrders {
   private readonly errorMessages = inject(ErrorMessages);
   private readonly activeBudget = inject(ActiveBudget);
 
+  /** Telefon: zlecenia jako karty pogrupowane wg stanu (makieta Figma „Mobile — Zlecenia stałe”). */
+  protected readonly viewport = inject(Viewport);
+
   private readonly queryParams = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
   });
@@ -159,6 +163,19 @@ export class StandingOrders {
   protected readonly missed = computed(() => this.activeOrders().filter((o) => o.state === 'Missed'));
   /** Zlecenia, które zeszły w innej kwocie niż zwykle. */
   protected readonly different = computed(() => this.activeOrders().filter((o) => o.state === 'PaidDifferentAmount'));
+
+  /**
+   * Telefon: grupy zamiast kolumny „W tym miesiącu” — najpierw to, co jeszcze czeka (także niezapłacone),
+   * potem to, co zeszło, na końcu zlecenia, których termin nie wypada w oglądanym miesiącu. Pustych grup nie ma.
+   */
+  protected readonly mobileGroups = computed(() => {
+    const active = this.activeOrders();
+    return [
+      { key: 'waiting', rows: active.filter((o) => o.state === 'Waiting' || o.state === 'Missed') },
+      { key: 'paid', rows: active.filter((o) => o.state === 'Paid' || o.state === 'PaidDifferentAmount') },
+      { key: 'notDue', rows: active.filter((o) => o.state === 'NotDue') },
+    ].filter((g) => g.rows.length > 0);
+  });
 
   // ── Nawigacja ────────────────────────────────────────────────────────────────────────
 

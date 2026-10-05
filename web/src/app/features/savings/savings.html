@@ -149,15 +149,44 @@
       }
 
       <!-- ── Podsumowanie ───────────────────────────────────────────────────────────────-->
+      @if (viewport.isMobile() && goal(); as active) {
+        <!-- Telefon (makieta „Mobile — Cele oszczędzania”): bieżący miesiąc z paskiem do celu, a pod nim akcje celu —
+             karta „Twój cel” z prawej kolumny desktopu jest na telefonie ukryta, żeby nie dublować kwoty. -->
+        <div class="sav__mmonth">
+          <span class="sav__hint">{{ 'savings.mobile.thisMonth' | translate }}</span>
+          <span class="sav__mmonth-value amount">
+            {{ 'savings.mobile.ofGoal' | translate: { deposited: money(current()?.deposited), goal: money(active.amount) } }}
+          </span>
+          <div class="sav__bar"><div class="sav__bar-fill" [style.width.%]="currentPercent()"></div></div>
+          <div class="sav__mmonth-row">
+            <span class="sav__hint">{{ 'savings.goalSince' | translate: { month: monthLabel(active.startedOn) } }}</span>
+            <button nz-button nzType="link" nzSize="small" (click)="openGoalModal()">{{ 'savings.changeGoal' | translate }}</button>
+          </div>
+          @if (data()?.raiseSuggestion; as suggestion) {
+            <p class="sav__suggestion">
+              {{ 'savings.raiseSuggestion' | translate: { count: data()?.proofCount ?? 0, headroom: money(suggestion.headroom) } }}
+            </p>
+            <button nz-button nzType="primary" (click)="raiseGoal()">
+              {{ 'savings.raiseGoal' | translate: { amount: money(suggestion.suggestedAmount) } }}
+            </button>
+          }
+          <button nz-button nzType="link" nzDanger nzSize="small" class="sav__mmonth-end" (click)="endGoal()">
+            {{ 'savings.endGoal' | translate }}
+          </button>
+        </div>
+      }
+
       <h2 class="sav__caption">{{ 'savings.summary' | translate }}</h2>
-      <div class="sav__metrics">
+      <div class="sav__metrics m-tiles">
         <nz-statistic
+          class="sav__metric--desktop"
           [nzTitle]="'savings.metrics.thisMonth' | translate"
           [nzValue]="current()?.goal
             ? (money(current()?.deposited) + ' / ' + money(current()?.goal))
             : money(current()?.deposited)"
           [nzSuffix]="'dashboard.currency' | translate" />
         <nz-statistic
+          class="sav__metric--desktop"
           [nzTitle]="'savings.metrics.goal' | translate"
           [nzValue]="goal() ? money(goal()?.amount) : '—'"
           [nzSuffix]="goal() ? ('dashboard.currency' | translate) : ''" />
@@ -187,6 +216,29 @@
           <p class="sav__hint">
             {{ (goal() ? 'savings.chart.legend' : 'savings.chart.noGoalHint') | translate }}
           </p>
+          @if (viewport.isMobile()) {
+            <!-- Telefon: mały wykres słupkowy miesiąc vs cel (decyzja z makiety, 2026-10-04). -->
+            <div class="sav__mbars" role="img" [attr.aria-label]="'savings.chart.caption' | translate">
+              @if (monthBars().goalLine; as line) {
+                <div class="sav__mbars-goal" [style.bottom.%]="line"></div>
+              }
+              @for (bar of monthBars().bars; track bar.month) {
+                <div class="sav__mbars-col" [title]="bar.title">
+                  <div class="sav__mbars-track">
+                    <div class="sav__mbars-bar" [class.sav__mbars-bar--met]="bar.met" [style.height.%]="bar.height"></div>
+                  </div>
+                  <span class="sav__mbars-label">{{ bar.label }}</span>
+                </div>
+              }
+            </div>
+            @if (goal(); as active) {
+              <div class="sav__mbars-legend">
+                <span><i class="sav__mbars-key sav__mbars-key--met"></i>{{ 'savings.mobile.legendMet' | translate }}</span>
+                <span><i class="sav__mbars-key"></i>{{ 'savings.mobile.legendBelow' | translate }}</span>
+                <span>- - - {{ 'savings.mobile.legendGoal' | translate: { amount: money(active.amount) } }}</span>
+              </div>
+            }
+          } @else {
           <apx-chart
             [series]="chart().series"
             [chart]="chart().chart"
@@ -198,6 +250,7 @@
             [legend]="chart().legend"
             [dataLabels]="chart().dataLabels"
           />
+          }
         }
 
 
@@ -208,6 +261,37 @@
 
         @if (months().length === 0) {
           <nz-empty [nzNotFoundContent]="'savings.months.empty' | translate" />
+        } @else if (viewport.isMobile()) {
+          <!-- Telefon: lista zamiast tabeli — miesiąc, odłożone / cel, werdykt. Stuknięcie = transakcje miesiąca. -->
+          <ul class="sav__mlist m-list">
+            @for (m of visibleMonths(); track m.month) {
+              <li>
+                <button type="button" class="sav__mlist-row" (click)="showInTransactions(m)">
+                  <span class="sav__mlist-main">
+                    <span>{{ monthLabel(m.month) }}</span>
+                    <span class="sav__hint amount">
+                      {{ m.goal === null ? money(m.deposited) : money(m.deposited) + ' / ' + money(m.goal) }}
+                    </span>
+                  </span>
+                  @if (isCurrent(m) && m.verdict === 'GoalMissed') {
+                    <nz-tag nzColor="processing">{{ 'savings.verdict.inProgress' | translate }}</nz-tag>
+                  } @else {
+                    @switch (m.verdict) {
+                      @case ('Proof') { <nz-tag nzColor="success">{{ 'savings.verdict.proof' | translate }}</nz-tag> }
+                      @case ('GoalMet') { <nz-tag nzColor="default">{{ 'savings.verdict.goalMet' | translate }}</nz-tag> }
+                      @case ('GoalMissed') { <nz-tag nzColor="warning">{{ 'savings.verdict.missed' | translate }}</nz-tag> }
+                      @default { <span class="sav__hint">{{ 'savings.verdict.noGoal' | translate }}</span> }
+                    }
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+          @if (months().length > 3) {
+            <button nz-button nzType="link" (click)="showAllMonths.set(!showAllMonths())">
+              {{ (showAllMonths() ? 'savings.mobile.showLess' : 'savings.mobile.showAll') | translate: { count: months().length } }}
+            </button>
+          }
         } @else {
           <nz-table #monthsTable [nzData]="months()" [nzPageSize]="12" nzSize="small">
             <thead>
@@ -336,6 +420,19 @@
 
             @if (reservationRows().length === 0) {
               <p class="sav__hint">{{ 'reservations.tileEmpty' | translate }}</p>
+            } @else if (viewport.isMobile()) {
+              <!-- Telefon: pasek na rezerwację zamiast pierścieni — na 360px etykiety pierścieni się nie mieszczą. -->
+              <ul class="sav__mres">
+                @for (r of reservationRows(); track r.id) {
+                  <li class="sav__mres-row">
+                    <span class="sav__mres-top">
+                      <span>{{ r.name }}</span>
+                      <span class="sav__hint amount">{{ wholeMoney(r.collected) }} / {{ wholeMoney(r.amount) }} {{ 'dashboard.currency' | translate }}</span>
+                    </span>
+                    <div class="sav__bar"><div class="sav__bar-fill" [style.width.%]="reservationFill(r)"></div></div>
+                  </li>
+                }
+              </ul>
             } @else {
               <!-- ⚠️ JEDEN wykres o pierścieniach współśrodkowych, nie rząd osobnych kółek.
                    Ten kształt jest treścią: rezerwacje dzielą JEDNĄ pulę, a osobne kółka

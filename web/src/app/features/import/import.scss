@@ -178,12 +178,28 @@
     flex: 1 1 auto;
     width: 100%;
   }
+
+  /* Przy `align-items: flex-start` panel brałby szerokość treści (600px), a nie ekranu. */
+  .imp__panel {
+    align-self: stretch;
+  }
+
+  /* Telefon: źródło i budżet jedno pod drugim, na całą szerokość — dwa pola po 224px się nie mieszczą. */
+  .control-row {
+    flex-direction: column;
+
+    .source-control, .budget-control {
+      width: 100%;
+    }
+  }
 }
 
 .control-row {
   display: flex;
   width: 600px;
+  max-width: 100%;
   justify-content: space-between;
+  gap: 16px;
 
   .source-control, .budget-control {
     width: 224px;

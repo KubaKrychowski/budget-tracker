@@ -142,7 +142,7 @@
 
         <!-- ── Podsumowanie ───────────────────────────────────────────────────────────── -->
         <h2 class="lim__caption">{{ 'limits.summary' | translate }}</h2>
-        <div class="lim__metrics">
+        <div class="lim__metrics m-tiles">
           <nz-statistic
             [nzTitle]="'limits.metrics.spentInLimited' | translate"
             [nzValue]="d.limits.length > 0 ? money(d.spentInLimited) + ' z ' + money(d.limitTotal) : '—'"
@@ -192,6 +192,52 @@
 
             @if (d.limits.length === 0 && d.readOnly) {
               <nz-empty [nzNotFoundContent]="'limits.table.empty' | translate" />
+            } @else if (d.limits.length > 0 && viewport.isMobile()) {
+              <!-- Telefon (makieta „Mobile — Limity”): karta na kategorię zamiast tabeli. Zmień/Usuń pod „⋯”. -->
+              <ul class="lim__mcards">
+                @for (row of d.limits; track row.id) {
+                  <li class="lim__mcard">
+                    <div class="lim__mcard-top">
+                      <span class="lim__mcard-name">{{ row.categoryName }}</span>
+                      <span class="lim__mcard-percent" [class.lim__over]="row.state === 'Over'">{{ row.percent }}%</span>
+                      @if (!d.readOnly) {
+                        <button nz-button nzType="text" nzSize="small" nz-dropdown [nzDropdownMenu]="limitMenu" nzTrigger="click"
+                          [attr.aria-label]="'transactions.columns.actions' | translate"><nz-icon nzType="more" /></button>
+                        <nz-dropdown-menu #limitMenu="nzDropdownMenu">
+                          <ul nz-menu>
+                            <li nz-menu-item tabindex="0" (click)="openEditor(row)" (keydown.enter)="openEditor(row)">
+                              {{ 'limits.change' | translate }}
+                            </li>
+                            <li nz-menu-item nzDanger tabindex="0" (click)="remove(row)" (keydown.enter)="remove(row)">
+                              {{ 'limits.remove' | translate }}
+                            </li>
+                          </ul>
+                        </nz-dropdown-menu>
+                      }
+                    </div>
+                    <div class="lim__track" [attr.aria-label]="'limits.table.thresholdLabel' | translate: { threshold: row.warningThreshold }">
+                      <div
+                        class="lim__fill"
+                        [class.lim__fill--warning]="row.state === 'Warning'"
+                        [class.lim__fill--over]="row.state === 'Over'"
+                        [style.width.%]="fillWidth(row)"
+                      ></div>
+                      <div class="lim__marker" [style.left.%]="row.warningThreshold"></div>
+                    </div>
+                    <div class="lim__mcard-bottom">
+                      <span class="amount">{{ 'limits.mobile.spentOf' | translate: { spent: money(row.spent), limit: money(row.limit) } }}</span>
+                      <span class="amount" [class.lim__over]="row.remaining < 0">
+                        {{ (row.remaining < 0 ? 'limits.mobile.over' : 'limits.mobile.left') | translate: { amount: money(row.remaining < 0 ? -row.remaining : row.remaining) } }}
+                      </span>
+                    </div>
+                    @if (row.nextLimit !== null && row.nextValidFrom) {
+                      <span class="lim__next">
+                        {{ 'limits.table.nextLimit' | translate: { month: monthRoman(row.nextValidFrom), amount: money(row.nextLimit) } }}
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
             } @else if (d.limits.length > 0) {
               <nz-table #limitsTable [nzData]="d.limits" [nzPageSize]="20" nzSize="middle">
                 <thead>

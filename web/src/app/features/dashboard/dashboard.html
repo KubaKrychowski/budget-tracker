@@ -20,7 +20,9 @@
 
     <!-- „Ostatnie akcje" — ekrany, na których byłeś (makieta „Wyszukiwarka i ostatnie akcje”, ramka 1).
          Przy pustej historii kafle wracają do pierwszych kroków; pusta karta na najczęściej
-         otwieranym ekranie wyglądałaby jak awaria. -->
+         otwieranym ekranie wyglądałaby jak awaria.
+         Na telefonie bez tej sekcji (decyzja z makiety, 2026-10-04) — jej rolę przejmuje dolny pasek. -->
+    @if (!viewport.isMobile()) {
     <section class="dash__section dash__boxed">
       <div class="dash__recent-head">
         <div>
@@ -52,6 +54,7 @@
         }
       </div>
     </section>
+    }
 
     <section class="dash__section dash__boxed">
       <h2 class="dash__caption">{{ 'dashboard.configuration' | translate }}</h2>
@@ -134,7 +137,7 @@
           }
         </div>
       } @else {
-        <div class="dash__metrics">
+        <div class="dash__metrics m-tiles">
           <nz-statistic
             [nzTitle]="'dashboard.metrics.totalExpenses' | translate"
             [nzValue]="money(data()?.metrics?.totalExpenses)"
@@ -190,6 +193,23 @@
         <div class="card">
           @if (isBlank()) {
             <nz-skeleton [nzActive]="true" [nzTitle]="false" [nzParagraph]="{ rows: 6 }" />
+          } @else if (hasDataInPeriod() && viewport.isMobile()) {
+            <!-- Telefon: lista z paskami zamiast wykresu słupkowego — przy 360px etykiety osi się nie mieszczą. -->
+            <ul class="dash__mcats">
+              @for (row of categoryRows(); track row.index) {
+                <li>
+                  <button type="button" class="dash__mcat" (click)="openCategory(row.index)">
+                    <span class="dash__mcat-top">
+                      <span class="dash__mcat-name">{{ row.name }}</span>
+                      <span class="amount">{{ money(row.amount) }} {{ 'dashboard.currency' | translate }}</span>
+                    </span>
+                    <span class="dash__mcat-track">
+                      <span class="dash__mcat-bar" [style.width.%]="row.width" [style.background]="row.color"></span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
           } @else if (hasDataInPeriod()) {
             <apx-chart
               [series]="categoryChart().series"

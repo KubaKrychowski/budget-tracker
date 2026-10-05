@@ -310,6 +310,13 @@
       "descriptionPlaceholder": "Co to było — np. „rozrząd i klocki”",
       "save": "Zapisz zlecenie",
       "saved": "Zapisano zlecenie epizodyczne „{{name}}”."
+    },
+    "mobile": {
+      "filters": "Filtry",
+      "period": "Okres",
+      "anyCategory": "Wszystkie kategorie",
+      "showResults": "Pokaż wyniki",
+      "balance": "Saldo {{amount}}"
     }
   },
   "currencies": {
@@ -652,6 +659,9 @@
         "updated": "Zapisano kategorię.",
         "deleted": "Usunięto kategorię."
       }
+    },
+    "mobile": {
+      "allSections": "Wszystkie ustawienia"
     }
   },
   "confirmDialog": {
@@ -752,6 +762,15 @@
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać oszczędności"
+    },
+    "mobile": {
+      "thisMonth": "Odłożone w tym miesiącu",
+      "ofGoal": "{{deposited}} z {{goal}} zł",
+      "showAll": "Pokaż wszystkie ({{count}})",
+      "showLess": "Pokaż mniej",
+      "legendMet": "Cel osiągnięty",
+      "legendBelow": "Poniżej celu",
+      "legendGoal": "cel {{amount}} zł"
     }
   },
   "reservations": {
@@ -921,6 +940,11 @@
     },
     "errors": {
       "loadFailed": "Nie udało się wczytać limitów"
+    },
+    "mobile": {
+      "spentOf": "{{spent}} z {{limit}} zł",
+      "left": "Zostało {{amount}} zł",
+      "over": "Ponad limit o {{amount}} zł"
     }
   },
   "standingOrders": {
@@ -1025,6 +1049,13 @@
       "alert": "Po tym miesiącu zlecenie nie będzie oczekiwane ani liczone w sumie. Przypięte transakcje zostają, nowe z importu nie będą się już przypinać.",
       "lastMonth": "Ostatni miesiąc zlecenia",
       "confirm": "Zakończ zlecenie"
+    },
+    "mobile": {
+      "group": {
+        "waiting": "Czeka ({{count}})",
+        "paid": "Zeszło ({{count}})",
+        "notDue": "Nie w tym miesiącu ({{count}})"
+      }
     }
   },
   "strategies": {
@@ -1506,5 +1537,13 @@
       "model-training": "Zbiór uczący, wersje i aktywacja",
       "handbook": "Jak działa aplikacja, temat po temacie"
     }
+  },
+  "mobileNav": {
+    "label": "Nawigacja główna",
+    "dashboard": "Dashboard",
+    "limits": "Limity",
+    "goals": "Cele",
+    "standingOrders": "Zlecenia stałe",
+    "more": "Więcej"
   }
 }

@@ -260,3 +260,66 @@
   .recent { grid-template-columns: 1fr auto; }
   .recent__cat { display: none; }
 }
+
+/* ── Telefon (makieta Figma „Mobile — Dashboard”) ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Pola jedno pod drugim, etykieta nad kontrolką — stałe 340/255px nie mieszczą się w 360px. */
+  .dash__field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .dash__control {
+    width: 100%;
+  }
+
+  .dash__mcats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .dash__mcat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 0;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .dash__mcat-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .dash__mcat-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dash__mcat-track {
+    display: block;
+    height: 6px;
+    overflow: hidden;
+    background: var(--ds-neutral-100);
+    border-radius: 3px;
+  }
+
+  .dash__mcat-bar {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+  }
+}

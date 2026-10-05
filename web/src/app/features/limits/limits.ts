@@ -9,6 +9,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
@@ -26,6 +27,7 @@ import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 import { LimitRow, LimitsResponse } from '../../core/api/models/limits';
+import { Viewport } from '../../core/layout/viewport';
 
 /** Próg ostrzeżenia nowego limitu — ten sam co domyślny po stronie serwera (`LimitWarning.DefaultThreshold`). */
 const DEFAULT_WARNING_THRESHOLD = 80;
@@ -41,7 +43,7 @@ const DEFAULT_WARNING_THRESHOLD = 80;
   selector: 'app-limits',
   imports: [
     CommonModule, FormsModule, RouterLink, BudgetSwitcher,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzEmptyModule, NzIconModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDropdownModule, NzEmptyModule, NzIconModule,
     NzInputNumberModule, NzModalModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule,
     TranslatePipe,
   ],
@@ -60,6 +62,9 @@ export class Limits {
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly errorMessages = inject(ErrorMessages);
   private readonly activeBudget = inject(ActiveBudget);
+
+  /** Telefon: karty zamiast tabeli (makieta Figma „Mobile — Limity”). */
+  protected readonly viewport = inject(Viewport);
 
   private readonly queryParams = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,

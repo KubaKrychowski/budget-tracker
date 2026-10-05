@@ -308,6 +308,13 @@
       "descriptionPlaceholder": "What it was — e.g. “timing belt and brake pads”",
       "save": "Save order",
       "saved": "One-off order “{{name}}” saved."
+    },
+    "mobile": {
+      "filters": "Filters",
+      "period": "Period",
+      "anyCategory": "All categories",
+      "showResults": "Show results",
+      "balance": "Balance {{amount}}"
     }
   },
   "currencies": {
@@ -584,6 +591,9 @@
         "updated": "Category saved.",
         "deleted": "Category deleted."
       }
+    },
+    "mobile": {
+      "allSections": "All settings"
     }
   },
   "confirmDialog": {
@@ -684,6 +694,15 @@
     },
     "errors": {
       "loadFailed": "Could not load the savings data"
+    },
+    "mobile": {
+      "thisMonth": "Saved this month",
+      "ofGoal": "{{deposited}} of {{goal}} PLN",
+      "showAll": "Show all ({{count}})",
+      "showLess": "Show less",
+      "legendMet": "Goal met",
+      "legendBelow": "Below goal",
+      "legendGoal": "goal {{amount}} PLN"
     }
   },
   "reservations": {
@@ -853,6 +872,11 @@
     },
     "errors": {
       "loadFailed": "Could not load limits"
+    },
+    "mobile": {
+      "spentOf": "{{spent}} of {{limit}} PLN",
+      "left": "{{amount}} PLN left",
+      "over": "{{amount}} PLN over the limit"
     }
   },
   "standingOrders": {
@@ -957,6 +981,13 @@
       "alert": "After this month the order will not be expected or counted in the total. Linked transactions stay; new imports will no longer be linked.",
       "lastMonth": "Last month of the order",
       "confirm": "End standing order"
+    },
+    "mobile": {
+      "group": {
+        "waiting": "Waiting ({{count}})",
+        "paid": "Paid ({{count}})",
+        "notDue": "Not this month ({{count}})"
+      }
     }
   },
   "strategies": {
@@ -1436,5 +1467,13 @@
       "model-training": "Training set, versions and activation",
       "handbook": "How the app works, topic by topic"
     }
+  },
+  "mobileNav": {
+    "label": "Main navigation",
+    "dashboard": "Dashboard",
+    "limits": "Limits",
+    "goals": "Goals",
+    "standingOrders": "Standing orders",
+    "more": "More"
   }
 }

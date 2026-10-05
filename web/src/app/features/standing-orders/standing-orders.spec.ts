@@ -12,6 +12,8 @@ import { StandingOrderPin, StandingOrderRow, StandingOrdersResponse } from '../.
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogOptions } from '../../core/confirm-dialog/confirm-dialog-options';
 import { StandingOrders } from './standing-orders';
+import { Viewport } from '../../core/layout/viewport';
+import { WritableSignal } from '@angular/core';
 
 class FakeConfirmDialogService {
   lastOptions: ConfirmDialogOptions | null = null;
@@ -383,5 +385,47 @@ describe('StandingOrders', () => {
     const unpinning = api().unpin(response().recent[0]);
     http.expectOne((r) => r.method === 'DELETE' && r.url === '/api/standing-orders/pins/t1').flush(null);
     await unpinning;
+  });
+
+  describe('na telefonie (makieta „Mobile — Zlecenia stałe”)', () => {
+    beforeEach(() => {
+      (TestBed.inject(Viewport) as unknown as { mobile: WritableSignal<boolean> }).mobile.set(true);
+      TestBed.inject(TranslateService).setTranslation('pl', {
+        standingOrders: {
+          mobile: { group: { waiting: 'Czeka ({{count}})', paid: 'Zeszło ({{count}})', notDue: 'Nie w tym miesiącu ({{count}})' } },
+        },
+      }, true);
+    });
+
+    const orders = [
+      row({ id: 'o1', name: 'Czynsz', state: 'PaidDifferentAmount', paidAmount: 2350 }),
+      row({ id: 'o2', name: 'Kredyt', state: 'Waiting', paidOn: null, paidAmount: null, expectedAmount: 653 }),
+      row({ id: 'o3', name: 'Internet', state: 'Missed', paidOn: null, paidAmount: null, expectedAmount: 60 }),
+      row({ id: 'o4', name: 'OC samochodu', state: 'NotDue', rhythm: 'Yearly', dueMonth: 5, paidOn: null, paidAmount: null }),
+    ];
+
+    const groups = (): { title: string; names: string[] }[] =>
+      [...fixture.nativeElement.querySelectorAll('.so__mgroup')].map((h: HTMLElement) => ({
+        title: h.textContent!.trim(),
+        names: [...(h.nextElementSibling as HTMLElement).querySelectorAll('.so__mcard-name')].map((n) => n.textContent!.trim()),
+      }));
+
+    it('grupuje zlecenia: najpierw czekające (także niezapłacone), potem zapłacone, na końcu poza miesiącem', async () => {
+      await settle(response({ orders }));
+
+      expect(groups()).toEqual([
+        { title: 'Czeka (2)', names: ['Kredyt', 'Internet'] },
+        { title: 'Zeszło (1)', names: ['Czynsz'] },
+        { title: 'Nie w tym miesiącu (1)', names: ['OC samochodu'] },
+      ]);
+      expect(fixture.nativeElement.querySelector('nz-table')).toBeNull();
+    });
+
+    it('karta ma menu „⋯” jak wiersz tabeli, a „Ostatnio przypięte” nie ma', async () => {
+      await settle(response({ orders }));
+
+      expect(fixture.nativeElement.querySelectorAll('.so__mcard [nz-dropdown]').length).toBe(4);
+      expect(text()).not.toContain('standingOrders.recent.title');
+    });
   });
 });

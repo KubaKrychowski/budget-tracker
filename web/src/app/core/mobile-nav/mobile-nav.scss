@@ -1,0 +1,110 @@
+/* Wymiary z makiety „Mobile — Dashboard” (pasek 390×~84, element 78×64, pigułka 16/4). */
+.mnav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 900;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0 calc(8px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid var(--ds-neutral-200);
+
+  &__item {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 6px 0;
+    color: var(--ds-neutral-500);
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    &--active {
+      color: var(--ds-primary-600);
+
+      .mnav__pill {
+        background: var(--ds-primary-100);
+      }
+    }
+  }
+
+  &__pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 16px;
+    font-size: 22px;
+    border-radius: 16px;
+  }
+
+  &__label {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__dot {
+    position: absolute;
+    top: 2px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    background: var(--ds-error-500);
+    border-radius: 50%;
+
+    &--inline {
+      position: static;
+    }
+  }
+}
+
+.mnav-sheet {
+  &__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    color: var(--ds-text-primary);
+    text-align: left;
+    background: #fff;
+    border: none;
+    border-bottom: 1px solid var(--ds-neutral-200);
+    cursor: pointer;
+
+    &--danger {
+      color: var(--ds-error-500);
+    }
+  }
+
+  &__icon {
+    flex: none;
+    font-size: 22px;
+    color: var(--ds-neutral-500);
+  }
+
+  &__label {
+    flex: 1 1 auto;
+  }
+
+  &__chevron {
+    color: var(--ds-neutral-500);
+  }
+}

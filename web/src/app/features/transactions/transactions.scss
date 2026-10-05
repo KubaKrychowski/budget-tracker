@@ -253,3 +253,125 @@
     }
   }
 }
+
+/* ── Telefon (makieta Figma „Mobile — Lista transakcji”) ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .tx {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .tx__mtoolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0 12px;
+  }
+
+  .tx__mtoolbar-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tx__msearch {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .tx__mchips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tx__mday {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 12px 0 6px;
+    font-size: 13px;
+    color: var(--ds-text-description);
+  }
+
+  .tx__mcard {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 8px 10px 12px;
+    border-bottom: 1px solid var(--ds-neutral-200);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .tx__mcard-main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .tx__mcard-desc {
+    overflow: hidden;
+    font-weight: 500;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .tx__mcard-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .tx__mcard-cat {
+    margin: 0;
+  }
+
+  /* Status pod opisem mniejszy niż w tabeli — dzieli wiersz z kategorią. */
+  .tx__mcard-meta ::ng-deep .ant-badge-status-text {
+    font-size: 12px;
+  }
+
+  .tx__mcard-right {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .tx__mcard-amount {
+    font-weight: 500;
+  }
+
+  .tx__mcard-balance {
+    font-size: 12px;
+    color: var(--ds-text-description);
+  }
+
+  .tx__medit {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 6px;
+
+    nz-date-picker,
+    nz-select,
+    nz-input-number {
+      width: 100%;
+    }
+  }
+
+  .tx__mpager {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0;
+  }
+}

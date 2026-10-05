@@ -1,0 +1,69 @@
+<nav class="mnav" [attr.aria-label]="'mobileNav.label' | translate">
+  @for (tab of tabs; track tab.route) {
+    <a
+      class="mnav__item"
+      [routerLink]="tab.route"
+      routerLinkActive="mnav__item--active"
+      #rla="routerLinkActive"
+      [attr.aria-current]="rla.isActive ? 'page' : null"
+    >
+      <span class="mnav__pill"><img [src]="tab.svg" width="24" height="24" alt="" /></span>
+      <span class="mnav__label">{{ tab.labelKey | translate }}</span>
+    </a>
+  }
+  <button
+    type="button"
+    class="mnav__item"
+    [class.mnav__item--active]="moreActive()"
+    [attr.aria-expanded]="moreOpen()"
+    (click)="moreOpen.set(true)"
+  >
+    <span class="mnav__pill">
+      <nz-icon nzType="more" />
+      @if (changelog.hasUnread()) {
+        <span class="mnav__dot" [attr.aria-label]="'changelog.unread' | translate"></span>
+      }
+    </span>
+    <span class="mnav__label">{{ 'mobileNav.more' | translate }}</span>
+  </button>
+</nav>
+
+<!-- Arkusz „Więcej” (makieta „Mobile — menu Więcej”): ekrany spoza paska i to, co na desktopie siedzi w ikonach nagłówka. -->
+<nz-drawer
+  [nzVisible]="moreOpen()"
+  (nzOnClose)="moreOpen.set(false)"
+  nzPlacement="bottom"
+  nzHeight="auto"
+  [nzClosable]="false"
+  [nzTitle]="'mobileNav.more' | translate"
+  [nzBodyStyle]="{ padding: '0' }"
+  nzWrapClassName="mnav-sheet"
+>
+  <ng-container *nzDrawerContent>
+    <ul class="mnav-sheet__list">
+      @for (item of moreItems; track item.id) {
+        <li>
+          <button
+            type="button"
+            class="mnav-sheet__row"
+            [class.mnav-sheet__row--danger]="item.danger"
+            (click)="select(item)"
+          >
+            @if (item.svg) {
+              <img class="mnav-sheet__icon" [src]="item.svg" width="24" height="24" alt="" />
+            } @else {
+              <nz-icon class="mnav-sheet__icon" [nzType]="item.icon!" />
+            }
+            <span class="mnav-sheet__label">{{ item.labelKey | translate }}</span>
+            @if (item.id === 'changelog' && changelog.hasUnread()) {
+              <span class="mnav__dot mnav__dot--inline" [attr.aria-label]="'changelog.unread' | translate"></span>
+            }
+            @if (!item.danger) {
+              <nz-icon class="mnav-sheet__chevron" nzType="right" />
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  </ng-container>
+</nz-drawer>

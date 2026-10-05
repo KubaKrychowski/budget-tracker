@@ -962,6 +962,18 @@ wystarczy na MVP (NG-ZORRO: `responsiveLayout` stack/scroll). NIE natywna apka m
 > Ekrany Identity otwierane z „Konto i bezpieczeństwo" (2FA, hasło, usunięcie konta) otwierają się w przeglądarce
 > i po zakończeniu wracają do wersji webowej, nie do apki — do poprawy, jeśli będzie przeszkadzać.
 
+> **REWIZJA (2026-10-04): widok mobilny poniżej 768 px** (apka i przeglądarka w telefonie; desktop bez zmian).
+> Makiety: Figma, strona „Mobile (propozycja)”. Ekran wybiera szablon przez `Viewport.isMobile()`, nie samo CSS —
+> tabele 1280 px nie dają się sensownie ścisnąć.
+> - **Nawigacja:** dolny pasek Dashboard / Limity / Cele / Zlecenia stałe / Więcej. Lista transakcji jest w „Więcej” —
+>   z telefonu ważniejsze są limity, cele i zlecenia niż ogólna lista. W nagłówku zostaje podręcznik i wyszukiwarka;
+>   „Co nowego”, terminal, ustawienia i wylogowanie są w „Więcej”.
+> - **Ikony:** kolorowe ikony sekcji z `public/icons`, reszta z Ant Design — te same co w aplikacji.
+> - **Świadomie pominięte na telefonie:** „Ostatnie akcje” na dashboardzie, „Ostatnio przypięte transakcje”
+>   w zleceniach, zaznaczanie wielu transakcji i akcje masowe. Cele dostają mały wykres słupkowy zamiast liniowego.
+> - Wspólne klocki (`m-tiles`, `m-list`, `m-sheet-form`, `m-count`) są globalne w `styles.scss`: powielone w ekranach
+>   przekraczały budżet rozmiaru stylu komponentu.
+
 **Stepper importu (NG-ZORRO `nz-steps`), 4 kroki:**
 1. **Źródło** — wybór konta/banku (determinuje parser). Warunek: źródło wybrane.
 2. **Plik** — upload CSV (`nz-upload`). Wstępny parse. Zły format → status kroku `error` z komunikatem

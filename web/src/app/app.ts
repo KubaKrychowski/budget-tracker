@@ -14,12 +14,14 @@ import { RecentScreens } from './core/search/recent-screens';
 import { SearchMenu } from './core/search-menu/search-menu';
 import { Terminal } from './core/terminal/terminal';
 import { TerminalService } from './core/terminal/terminal.service';
+import { MobileNav } from './core/mobile-nav/mobile-nav';
+import { Viewport } from './core/layout/viewport';
 import { AuthNavigation } from './core/native/auth-navigation';
 
 @Component({
   imports: [
     RouterLink, RouterOutlet, FormsModule,
-    NzIconModule, TranslatePipe, SearchMenu, Terminal, AuthSplashScreen,
+    NzIconModule, TranslatePipe, SearchMenu, Terminal, AuthSplashScreen, MobileNav,
   ],
   selector: 'app-root',
   styleUrl: './app.scss',
@@ -31,6 +33,9 @@ export class App {
   private readonly authNavigation = inject(AuthNavigation);
   private readonly recentScreens = inject(RecentScreens);
   protected readonly terminal = inject(TerminalService);
+
+  /** Telefon: dolny pasek nawigacji zamiast ikon nagłówka (makiety Figma „Mobile (propozycja)”). */
+  protected readonly viewport = inject(Viewport);
   protected readonly changelog = inject(ChangelogService);
 
   /** Okładka na czas logowania — patrz `AuthSplash`. Powłoka pod nią jest `inert`, więc fokus nie ucieka za okładkę. */

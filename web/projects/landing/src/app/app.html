@@ -10,6 +10,7 @@
     <nav class="bar__nav" aria-label="Główna">
       <a class="bar__link" href="#jak">Jak to działa</a>
       <a class="bar__link" href="#dane">Twoje dane</a>
+      <a class="bar__link" href="#aplikacja">Aplikacja</a>
       <a class="bar__link" href="#autor">Kto za tym stoi</a>
       <a class="bar__link" [href]="appUrl">Zaloguj się</a>
       <a class="btn btn--small" href="#beta">Poproś o dostęp</a>
@@ -33,7 +34,9 @@
         <a class="btn" href="#beta">Poproś o dostęp do bety</a>
         <a class="link" href="#jak">Zobacz, jak to działa</a>
       </div>
-      <p class="hero__meta">Zamknięta beta, na zaproszenie. Darmowa.</p>
+      <p class="hero__meta">
+        Zamknięta beta, na zaproszenie. Darmowa. Jest też <a href="#aplikacja">aplikacja na Androida</a>.
+      </p>
     </div>
 
     <figure class="shot hero__shot">
@@ -246,6 +249,61 @@
           </form>
         }
       </div>
+    </div>
+  </section>
+
+  <!-- ── Aplikacja na telefon (makieta Figma „Landing — 7b. Aplikacja na telefon”) ─────────────────
+       Pod formularzem bety, bo aplikacja wymaga konta z bety. Plik leży w wydaniach na GitHubie, nie na landingu.
+       iPhone dostaje wersję webową — App Store wymaga konta Apple Developer (decyzja z 2026-10-05). -->
+  <section class="wrap section phone-app" id="aplikacja" aria-labelledby="aplikacja-title">
+    <figure class="phone-app__shot">
+      <img
+        src="screens/mobile-dashboard.jpg"
+        width="780"
+        height="1688"
+        loading="lazy"
+        alt="Podsumowanie w aplikacji na telefonie: kafelki z wydatkami i przychodami oraz dolny pasek z limitami, celami i zleceniami."
+      />
+      <figcaption>Dane demonstracyjne.</figcaption>
+    </figure>
+
+    <div class="phone-app__text">
+      <p class="phone-app__eyebrow">Aplikacja na Androida</p>
+      <h2 id="aplikacja-title">Wydatki.com w telefonie</h2>
+      <p class="section-lead">
+        Limity, cele i stałe opłaty zawsze pod ręką. To ta sama aplikacja co w przeglądarce — logujesz się tym
+        samym kontem z bety.
+      </p>
+
+      <div class="phone-app__cta">
+        <a class="btn" [href]="apkUrl">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 4v11M7 10l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Pobierz na Androida
+        </a>
+        <span class="phone-app__meta">Plik APK, ok. 6 MB · Android 7.0 lub nowszy</span>
+      </div>
+
+      <h3>Jak zainstalować</h3>
+      <ol class="phone-app__steps">
+        <li>Pobierz plik na telefonie z Androidem.</li>
+        <li>Otwórz go. Android zapyta, czy pozwolić przeglądarce instalować aplikacje — zgódź się raz.</li>
+        <li>Uruchom Wydatki.com i zaloguj się kontem z bety.</li>
+      </ol>
+
+      <div class="phone-app__ios">
+        <strong>Masz iPhone'a?</strong>
+        <p>
+          Aplikacji w App Store jeszcze nie ma. Otwórz <a [href]="appUrl">app.wydatki.com</a> w Safari i wybierz
+          „Udostępnij → Do ekranu początkowego” — działa jak aplikacja.
+        </p>
+      </div>
+
+      <p class="phone-app__note">
+        Plik pochodzi z <a [href]="releasesUrl" rel="noopener noreferrer" target="_blank">wydań projektu na GitHubie</a>
+        — kod jest otwarty, więc każdy może sprawdzić, co instaluje.
+      </p>
     </div>
   </section>
 

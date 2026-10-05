@@ -33,6 +33,7 @@ import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.s
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageHeader } from '../../core/page-header/page-header';
+import { Viewport } from '../../core/layout/viewport';
 import { Rules } from './rules/rules';
 import { Categories } from './categories/categories';
 import { Training } from './training/training';
@@ -54,6 +55,9 @@ const AccountTab = 'account';
 const AccountTabIndex = 4;
 
 /** Zakładka wskazana w adresie, albo 0 (budżety), gdy parametru nie ma lub jest nieznany. */
+/** Budżety nie mają własnego `?tab=` na desktopie (to zakładka domyślna) — na telefonie odróżnia sekcję od listy. */
+const MobileBudgetsTab = 'budgets';
+
 const TabIndexByParam: Record<string, number> = {
   [TrainingTab]: TrainingTabIndex,
   [RulesTab]: RulesTabIndex,
@@ -171,9 +175,45 @@ export class Settings {
   private readonly activeBudget = inject(ActiveBudget);
   private readonly router = inject(Router);
 
+  /** Telefon: lista sekcji zamiast zakładek, budżety jako karty (makieta Figma „Mobile — Ustawienia”). */
+  protected readonly viewport = inject(Viewport);
+
+  /** Sekcje ustawień na liście telefonu — w kolejności zakładek desktopu. */
+  protected readonly mobileSections = [
+    { index: 0, labelKey: 'settings.tabs.budgets', icon: 'wallet' },
+    { index: TrainingTabIndex, labelKey: 'settings.tabs.training', icon: 'experiment' },
+    { index: RulesTabIndex, labelKey: 'settings.tabs.rules', svg: 'icons/popraw-kategorie-azure.svg' },
+    { index: CategoriesTabIndex, labelKey: 'settings.tabs.categories', icon: 'tags' },
+    { index: 4, labelKey: 'settings.tabs.account', icon: 'setting' },
+  ] as const;
+
+  /** Telefon: lista sekcji, dopóki adres nie wskazuje sekcji — wejście z menu „Więcej” trafia na listę. */
+  protected readonly mobileMenu = signal(!this.route.snapshot.queryParamMap.has('tab'));
+
+  protected openMobileSection(index: number): void {
+    this.activeTab.set(index);
+    this.mobileMenu.set(false);
+    // Krok nawigacji (bez `replaceUrl`): systemowe „wstecz” na telefonie ma wrócić z sekcji na listę.
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: TabParamByIndex[index] ?? MobileBudgetsTab },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected backToMobileMenu(): void {
+    this.mobileMenu.set(true);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
   /**
    * Zakładka, z którą ekran się otwiera. Czytana z adresu RAZ, przy tworzeniu komponentu —
-   * to wartość początkowa dla `nz-tabs`, nie wiązanie dwustronne.
+   * to wartość początkowa `activeTab`.
    *
    * Bez `?tab=` w adresie nie dałoby się wrócić na „Dane treningowe": breadcrumb z listy
    * transakcji („Ustawienia / Dane treningowe / Lista transakcji") prowadziłby na ekran

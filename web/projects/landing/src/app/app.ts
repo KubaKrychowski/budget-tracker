@@ -60,6 +60,16 @@ export class App {
    */
   protected readonly appUrl = 'https://app.wydatki.com';
 
+  /**
+   * Aplikacja na Androida — podpisany APK z NAJNOWSZEGO wydania na GitHubie (workflow `release-android.yml`).
+   * Stały adres: plik w każdym wydaniu nazywa się `wydatki.apk`, a `latest` zawsze wskazuje świeże wydanie,
+   * więc nowa wersja aplikacji nie wymaga zmiany landingu.
+   */
+  protected readonly apkUrl = 'https://github.com/KubaKrychowski/budget-tracker/releases/latest/download/wydatki.apk';
+
+  /** Lista wydań — dla kogoś, kto chce sprawdzić, skąd pochodzi plik, zanim go zainstaluje. */
+  protected readonly releasesUrl = 'https://github.com/KubaKrychowski/budget-tracker/releases';
+
   private readonly document = inject(DOCUMENT);
 
   /**

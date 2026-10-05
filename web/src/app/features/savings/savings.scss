@@ -171,3 +171,196 @@
     width: 100%;
   }
 }
+
+/* ── Telefon (makieta Figma „Mobile — Cele oszczędzania”) ──────────────────────────────────── */
+@media (max-width: 768px) {
+  .sav {
+    padding: 0 16px 24px;
+
+    /* Kwotę miesiąca i celu pokazuje karta miesiąca — w kafelkach zostają dowody i rok. */
+    &__metric--desktop {
+      display: none;
+    }
+
+    /* Najpierw zobowiązania (rezerwacje), potem historia (wykres, miesiące) — kolejność z makiety. */
+    &__col:last-child {
+      order: -1;
+    }
+
+    &__goal {
+      display: none;
+    }
+
+    &__mmonth {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 16px 0 0;
+      padding: 14px 16px;
+      background: #fff;
+      border: 1px solid var(--ds-neutral-200);
+      border-radius: 8px;
+
+      .sav__hint {
+        margin: 0;
+      }
+    }
+
+    &__mmonth-value {
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    &__mmonth-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    &__mmonth-end {
+      align-self: flex-start;
+      padding: 0;
+    }
+
+    &__bar {
+      height: 8px;
+      overflow: hidden;
+      background: var(--ds-neutral-100);
+      border-radius: 4px;
+    }
+
+    &__bar-fill {
+      height: 100%;
+      background: var(--ds-primary-500);
+      border-radius: 4px;
+    }
+
+    &__mres {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0 0 12px;
+      padding: 0;
+      list-style: none;
+    }
+
+    &__mres-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    &__mres-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Mały wykres słupkowy: tor stałej wysokości, linia celu przerywana na całą szerokość. */
+    &__mbars {
+      position: relative;
+      display: flex;
+      gap: 4px;
+      height: 120px;
+      padding-bottom: 18px;
+    }
+
+    &__mbars-goal {
+      position: absolute;
+      right: 0;
+      left: 0;
+      margin-bottom: 18px;
+      border-top: 1px dashed var(--ds-neutral-500);
+      transform: translateY(1px);
+    }
+
+    &__mbars-col {
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+      align-items: center;
+      min-width: 0;
+    }
+
+    &__mbars-track {
+      display: flex;
+      flex: 1 1 auto;
+      align-items: flex-end;
+      justify-content: center;
+      width: 100%;
+    }
+
+    &__mbars-bar {
+      width: 70%;
+      max-width: 18px;
+      background: var(--ds-warn-500);
+      border-radius: 3px 3px 0 0;
+
+      &--met {
+        background: var(--ds-primary-500);
+      }
+    }
+
+    &__mbars-label {
+      position: absolute;
+      bottom: 0;
+      font-size: 10px;
+      color: var(--ds-text-description);
+    }
+
+    &__mbars-col {
+      position: relative;
+    }
+
+    &__mbars-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--ds-text-description);
+    }
+
+    &__mbars-key {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 4px;
+      background: var(--ds-warn-500);
+      border-radius: 2px;
+
+      &--met {
+        background: var(--ds-primary-500);
+      }
+    }
+
+    &__mlist-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      text-align: left;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--ds-neutral-200);
+      cursor: pointer;
+    }
+
+    &__mlist li:last-child &__mlist-row {
+      border-bottom: none;
+    }
+
+    &__mlist-main {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-width: 0;
+
+      .sav__hint {
+        margin: 0;
+      }
+    }
+  }
+}
