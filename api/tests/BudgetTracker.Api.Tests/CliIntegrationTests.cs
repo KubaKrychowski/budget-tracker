@@ -9,6 +9,7 @@ using BudgetTracker.Api.Features.Dashboard;
 using BudgetTracker.Api.Features.EpisodicOrders;
 using BudgetTracker.Api.Features.Limits;
 using BudgetTracker.Api.Features.Savings;
+using BudgetTracker.Api.Features.Strategies;
 using BudgetTracker.Api.Features.StandingOrders;
 using BudgetTracker.Api.Features.Transactions;
 using BudgetTracker.Api.Infrastructure;
@@ -70,6 +71,7 @@ public sealed class CliIntegrationTests : IAsyncLifetime
         services.AddLimits();
         services.AddStandingOrders();
         services.AddEpisodicOrders();
+        services.AddStrategies();
         _services = services.BuildServiceProvider();
 
         var registry = new CliCommandRegistry()
@@ -79,6 +81,7 @@ public sealed class CliIntegrationTests : IAsyncLifetime
             .MapStandingOrdersCli()
             .MapEpisodicOrdersCli()
             .MapSavingsCli()
+            .MapStrategiesCli()
             .MapBudgetsCli()
             .MapTransactionsCli();
         _dispatcher = new CliCommandDispatcher(registry);
@@ -191,6 +194,41 @@ public sealed class CliIntegrationTests : IAsyncLifetime
             BodyOf(await Run($"dashboard show --budget-id {budget.BusinessId}")));
 
         Assert.Equal(1100m, dashboard.Metrics.BudgetBalance);
+    }
+
+    [Fact]
+    public async Task Strategy_create_save_i_get_widza_sie_nawzajem_a_apply_zaklada_rezerwacje()
+    {
+        var budget = await SeedBudgetAsync();
+
+        var created = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyResponseDto>(BodyOf(await Run(
+            $"strategy create --budget-id {budget.BusinessId} --name \"Plan CLI\" --template LoanAndCushion")));
+        Assert.NotEmpty(created.Nodes);
+
+        var json = "{\"name\":\"Plan CLI\",\"startMonth\":\"2026-09-01\",\"startCash\":1000,\"horizonMonths\":12,"
+            + "\"nodes\":[{\"id\":\"t\",\"type\":\"Trigger\",\"title\":\"Start\",\"x\":0,\"y\":0,\"month\":\"2026-09-01\"},"
+            + "{\"id\":\"r\",\"type\":\"CreateReservation\",\"title\":\"Wakacje\",\"x\":0,\"y\":0,\"amount\":500}],"
+            + "\"edges\":[{\"id\":\"e\",\"from\":\"t\",\"to\":\"r\",\"label\":\"None\"}]}";
+        await Run($"strategy save {created.Id} --json '{json}'");
+
+        var loaded = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyResponseDto>(
+            BodyOf(await Run($"strategy get {created.Id}")));
+        Assert.Equal(["t", "r"], loaded.Nodes.Select(n => n.Id));
+
+        var preview = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyApplyPreviewResponseDto>(
+            BodyOf(await Run($"strategy apply-preview {created.Id}")));
+        Assert.Equal(Features.Strategies.Consts.StrategyApplyStatus.New, preview.Items.Single().Status);
+
+        await Run($"strategy apply {created.Id} --node-ids r");
+        Assert.Equal("Wakacje", (await _db.SavingsReservations.SingleAsync()).Name);
+
+        var list = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategiesResponseDto>(
+            BodyOf(await Run($"strategy list --budget-id {budget.BusinessId}")));
+        Assert.Single(list.Strategies);
+
+        await Run($"strategy delete {created.Id}");
+        Assert.Empty(Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategiesResponseDto>(
+            BodyOf(await Run($"strategy list --budget-id {budget.BusinessId}"))).Strategies);
     }
 
     [Fact]

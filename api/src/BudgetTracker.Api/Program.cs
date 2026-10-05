@@ -289,6 +289,7 @@ var cli = new CliCommandRegistry()
     .MapStandingOrdersCli()
     .MapEpisodicOrdersCli()
     .MapSavingsCli()
+    .MapStrategiesCli()
     .MapBudgetsCli()
     .MapTransactionsCli()
     .MapSearchCli();
