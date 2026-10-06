@@ -10,6 +10,8 @@ import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
 import { APP_ICONS } from '../../core/icons';
 import { BudgetListItem } from '../../core/api/models/budget-list-item';
 import { Settings } from './settings';
+import { Viewport } from '../../core/layout/viewport';
+import { AppUpdateService } from '../../core/app-update/app-update.service';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogOptions } from '../../core/confirm-dialog/confirm-dialog-options';
 
@@ -463,5 +465,59 @@ describe('Settings', () => {
     // Wyłączony budżet dalej daje się edytować, resetować i usuwać — blokada dotyczy
     // wyłącznie dopisywania nowych danych.
     expect(actions).toEqual(['edit', 'savingsLink', 'enable', 'reset', 'delete']);
+  });
+});
+
+/** Telefon: lista sekcji. „O aplikacji” (ręczne sprawdzanie wersji) jest tylko w aplikacji na Androida. */
+describe('Settings — lista sekcji na telefonie', () => {
+  const setup = async (supported: boolean): Promise<ComponentFixture<Settings>> => {
+    await TestBed.configureTestingModule({
+      imports: [Settings],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: '**', children: [] }]),
+        provideNoopAnimations(),
+        provideTranslateService(),
+        provideNzIcons(APP_ICONS),
+        provideNzI18n(pl_PL),
+        provideNzDateFnsAdapter(),
+        { provide: Viewport, useValue: { isMobile: () => true } },
+        { provide: AppUpdateService, useValue: { isSupported: supported } },
+      ],
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('pl', {
+      settings: { tabs: { budgets: 'Budżety', training: 'Dane treningowe', rules: 'Reguły', categories: 'Kategorie', account: 'Konto', about: 'O aplikacji' } },
+    });
+    translate.use('pl');
+    const fixture = TestBed.createComponent(Settings);
+    fixture.detectChanges();
+    // Lista budżetów pyta API od razu; bez odpowiedzi `whenStable` wisi (patrz web/CLAUDE.md).
+    TestBed.inject(HttpTestingController).match(() => true).forEach((r) => r.flush({ budgets: [], retentionDays: 14 }));
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    return fixture;
+  };
+
+  const labels = (fixture: ComponentFixture<Settings>): string[] =>
+    [...(fixture.nativeElement as HTMLElement).querySelectorAll('.set__msection-label')].map((l) => l.textContent?.trim() ?? '');
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).match(() => true);
+  });
+
+  it('w aplikacji na Androida ostatnim wierszem jest „O aplikacji”', async () => {
+    const fixture = await setup(true);
+
+    expect(labels(fixture)).toEqual(['Budżety', 'Dane treningowe', 'Reguły', 'Kategorie', 'Konto', 'O aplikacji']);
+  });
+
+  it('w przeglądarce i na iPhonie wiersza „O aplikacji” nie ma', async () => {
+    const fixture = await setup(false);
+
+    expect(labels(fixture)).not.toContain('O aplikacji');
+    expect(labels(fixture)).toHaveLength(5);
   });
 });

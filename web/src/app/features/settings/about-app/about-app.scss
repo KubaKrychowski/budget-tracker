@@ -1,0 +1,45 @@
+.abt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.abt__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #d9e8dd;
+  border-radius: 8px;
+}
+
+.abt__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+
+  dt {
+    color: #78877c;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 500;
+    color: #252b27;
+  }
+}
+
+.abt__new {
+  font-weight: 600;
+  color: #2f7a45;
+}
+
+.abt__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
