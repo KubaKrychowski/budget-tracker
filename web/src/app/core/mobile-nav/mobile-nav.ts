@@ -57,7 +57,7 @@ export class MobileNav {
   protected readonly moreItems: readonly MoreItem[] = [
     { id: 'transactions', labelKey: 'actions.transactionList', route: '/transactions', svg: 'icons/lista-transakcji-azure.svg' },
     { id: 'episodic', labelKey: 'actions.episodicOrders', route: '/episodic-orders', svg: 'icons/wydatki-epizodyczne-azure.svg' },
-    { id: 'strategies', labelKey: 'actions.strategies', route: '/strategies', icon: 'apartment' },
+    { id: 'strategies', labelKey: 'actions.strategies', route: '/strategies', svg: 'icons/strategia-oszczedzania-azure.svg' },
     { id: 'import', labelKey: 'actions.importStatement', route: '/import', svg: 'icons/import-azure.svg' },
     { id: 'changelog', labelKey: 'changelog.open', icon: 'star' },
     { id: 'terminal', labelKey: 'terminal.openTerminal', icon: 'code' },
