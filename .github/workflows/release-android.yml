@@ -36,6 +36,13 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # "Co nowego" czyta web/public/changelog.json. Tag bez wpisu o tej wersji zostawiał w aplikacji stare okno
+      # (przy 2.2-2.4 nikt nie dopisal wpisow), wiec brak wpisu zatrzymuje wydanie, zanim cokolwiek sie zbuduje.
+      - name: Wpis w "Co nowego"
+        run: |
+          VERSION="${GITHUB_REF_NAME#android-v}"
+          node -e 'const v=process.argv[1];const l=require("./web/public/changelog.json");if(l[0]?.id!==v){console.error("::error::Najnowszy wpis w web/public/changelog.json to "+l[0]?.id+", a wydanie to "+v+". Dopisz wpis dla "+v+" na poczatku pliku.");process.exit(1)}' "$VERSION"
+
       - run: npm ci
         working-directory: web
 
