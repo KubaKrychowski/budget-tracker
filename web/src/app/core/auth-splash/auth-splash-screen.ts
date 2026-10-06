@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap } from 'rxjs';
+import { AppVersion } from '../app-version';
 import { AuthSplashStatus } from './auth-splash';
 
 /**
@@ -22,6 +23,7 @@ export class AuthSplashScreen {
   readonly status = input.required<AuthSplashStatus>();
 
   private readonly translate = inject(TranslateService);
+  private readonly appVersion = inject(AppVersion);
 
   private readonly texts = toSignal(
     toObservable(this.status).pipe(
@@ -31,6 +33,10 @@ export class AuthSplashScreen {
   );
 
   protected readonly title = computed(() => this.texts()?.['app.title'] ?? '');
-  protected readonly version = computed(() => this.texts()?.['app.version'] ?? '');
+  /** Numer z aplikacji natywnej, a w przeglądarce napis z tłumaczeń (patrz `AppVersion`). */
+  protected readonly version = computed(() => {
+    const native = this.appVersion.native();
+    return native ? this.appVersion.label(native) : (this.texts()?.['app.version'] ?? '');
+  });
   protected readonly message = computed(() => this.texts()?.[`auth.splash.${this.status()}`] ?? '');
 }

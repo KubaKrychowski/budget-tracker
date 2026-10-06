@@ -10,7 +10,7 @@
     <img class="app-header__logo" src="icons/logo.svg" width="48" height="48" alt="BudgetTracker" />
     <span class="app-header__names">
       <span class="app-header__title">{{ 'app.title' | translate }}</span>
-      <span class="app-header__version">{{ 'app.version' | translate }}</span>
+      <span class="app-header__version">{{ appVersion.native() ? appVersion.label(appVersion.native()!) : ('app.version' | translate) }}</span>
     </span>
   </a>
 

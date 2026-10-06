@@ -18,6 +18,7 @@ import { MobileNav } from './core/mobile-nav/mobile-nav';
 import { Viewport } from './core/layout/viewport';
 import { AppUpdateBanner } from './core/app-update/app-update-banner';
 import { AppUpdateService } from './core/app-update/app-update.service';
+import { AppVersion } from './core/app-version';
 import { AuthNavigation } from './core/native/auth-navigation';
 
 @Component({
@@ -41,6 +42,7 @@ export class App {
 
   /** Apka na Androida sprawdza, czy jest nowsze wydanie (pasek „Jest nowa wersja”). W przeglądarce nic nie robi. */
   private readonly appUpdates = inject(AppUpdateService);
+  protected readonly appVersion = inject(AppVersion);
   private readonly checkForUpdates = afterNextRender(() => this.appUpdates.start());
   protected readonly changelog = inject(ChangelogService);
 
