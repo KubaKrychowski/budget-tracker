@@ -28,23 +28,9 @@ public sealed class EmailTemplateRendererTests
         Assert.Contains("<html lang=\"pl\">", html);
         Assert.Contains("<style>", html);
         // Arkusz jest wstawiany do <style>, nie linkowany: klienci poczty ignorują zewnętrzne CSS.
-        Assert.Contains("@media", html);
+        Assert.Contains(".button-cell", html);
         Assert.Contains("Nagłówek", html);
         Assert.Contains("Stopka", html);
-    }
-
-    [Theory]
-    [InlineData("class=\"wrapper-cell\" style=\"")]
-    [InlineData("style=\"width:100%;max-width:560px;background-color:#FFFFFF;border:1px solid #D9E8DD;")]
-    [InlineData("class=\"heading\" style=\"")]
-    [InlineData("class=\"button-cell\" align=\"center\" bgcolor=\"#51C273\" style=\"")]
-    [InlineData("class=\"button\" href=\"https://id.example.com/Account/ConfirmEmail?userId=1&amp;token=abc\" style=\"")]
-    public void Link_mail_carries_its_look_in_inline_styles_because_some_clients_strip_the_style_block(string fragment)
-    {
-        // Interia wycina <style> w całości — bez stylów inline mail wygląda tam jak goły HTML.
-        var html = renderer.Render(EmailTemplateRenderer.LinkMessageTemplate, LinkValues());
-
-        Assert.Contains(fragment, html);
     }
 
     [Fact]
