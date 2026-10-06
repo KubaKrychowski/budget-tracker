@@ -141,3 +141,15 @@
 .res__contribution-source {
   color: #8c8c8c;
 }
+
+.res__table-wrap {
+  overflow-x: auto;
+}
+
+/* Telefon: tabela trzyma szerokość i przewija się w bok. Kolumna akcji ma do czterech przycisków bez zawijania,
+   więc ściśnięta do ekranu rozpychała całą stronę. */
+@media (max-width: 768px) {
+  .res__table-wrap ::ng-deep .ant-table table {
+    min-width: 860px;
+  }
+}

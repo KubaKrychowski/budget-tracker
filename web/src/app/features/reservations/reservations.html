@@ -88,6 +88,8 @@
       @if (rows().length === 0) {
         <nz-empty [nzNotFoundContent]="'reservations.empty' | translate" />
       } @else {
+        <!-- Na telefonie tabela przewija się w bok we własnym kontenerze, zamiast rozpychać całą stronę. -->
+        <div class="res__table-wrap">
         <nz-table #table [nzData]="rows()" [nzPageSize]="10" nzSize="small">
           <thead>
             <tr>
@@ -151,6 +153,7 @@
             }
           </tbody>
         </nz-table>
+        </div>
       }
     </nz-spin>
   }
