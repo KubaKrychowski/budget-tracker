@@ -1531,6 +1531,7 @@
       "reservations": "Pieniądze zajęte na konkretny wydatek",
       "standing-orders": "Powtarzalne zobowiązania i ich rytm",
       "episodic-orders": "Wydatki jednorazowe, planowane i przeszłe",
+      "strategies": "Kredyt, nadpłata i poduszka — symulacja na tablicy",
       "dashboard": "Podsumowanie okresu i wykresy",
       "create-budget": "Nowy budżet, opcjonalnie z oszczędnościowym",
       "category-rules": "Wzorce nadające kategorie przy imporcie",

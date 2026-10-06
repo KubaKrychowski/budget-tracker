@@ -33,6 +33,17 @@
   color: #78877c;
 }
 
+.cat__table-wrap {
+  overflow-x: auto;
+}
+
+/* Telefon: tabela trzyma szerokość i przewija się w bok — inaczej rozpychała stronę do ~650 px. */
+@media (max-width: 768px) {
+  .cat__table-wrap ::ng-deep .ant-table table {
+    min-width: 640px;
+  }
+}
+
 .cat__editor-alert {
   display: block;
   margin-bottom: 16px;

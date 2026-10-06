@@ -125,7 +125,7 @@ interface SelectionPayload {
     TranslatePipe, EnumTranslatePipe,
   ],
   templateUrl: './transactions.html',
-  styleUrl: './transactions.scss',
+  styleUrls: ['./transactions.scss', './transactions.mobile.scss'],
 })
 export class Transactions {
   /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */

@@ -147,3 +147,25 @@
     color: var(--ds-neutral-600);
   }
 }
+
+/* Telefon: przycisk „Nowa strategia" pod nagłówkiem, akcje wiersza pod nazwą — obok siebie ściskały tekst
+   do połowy ekranu. */
+@media (max-width: 768px) {
+  .str {
+    &__head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    &__title {
+      font-size: 22px;
+    }
+
+    &__row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+    }
+  }
+}

@@ -98,6 +98,17 @@ body {
   .ant-statistic-content {
     font-size: 18px;
   }
+
+  // Alert z przyciskiem (`nzAction`): przycisk schodzi pod treść. Obok niej zabierał szerokość, a opis zostawał
+  // w kolumnie na jeden znak (dashboard bez transakcji, remis priorytetów reguł, dane treningowe).
+  .ant-alert {
+    flex-wrap: wrap;
+  }
+
+  .ant-alert-action {
+    flex-basis: 100%;
+    margin: 12px 0 0;
+  }
 }
 
 // ── Widok mobilny: wspólne klocki ekranów (makiety Figma „Mobile (propozycja)”) ───────────────────────────

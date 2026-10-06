@@ -1461,6 +1461,7 @@
       "reservations": "Money set aside for a specific expense",
       "standing-orders": "Recurring commitments and their rhythm",
       "episodic-orders": "One-off expenses, planned and past",
+      "strategies": "Loan, overpayment and cushion — simulated on a board",
       "dashboard": "Period summary and charts",
       "create-budget": "A new budget, optionally with a savings one",
       "category-rules": "Patterns that assign categories on import",

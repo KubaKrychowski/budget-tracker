@@ -16,70 +16,73 @@
   </button>
 </div>
 
-<nz-spin [nzSpinning]="loading()">
-  <!-- ⚠️ Paginacja WIDOCZNA (patrz scripts/check-tables.mjs): `[nzShowPagination]="false"` chowa tylko
-       kontrolkę, a tabela dalej tnie do 10 wierszy. -->
-  <nz-table
-    #categoriesTable
-    [nzData]="categories()"
-    [nzPageSize]="20"
-    nzSize="middle"
-    [nzNoResult]="'settings.categories.empty' | translate"
-  >
-    <thead>
-      <tr>
-        <th>{{ 'settings.categories.columns.name' | translate }}</th>
-        <th nzWidth="160px">{{ 'settings.categories.columns.type' | translate }}</th>
-        <th nzWidth="160px">{{ 'settings.categories.columns.scope' | translate }}</th>
-        <th>{{ 'settings.categories.columns.usage' | translate }}</th>
-        <th nzWidth="80px" class="cat__right">{{ 'settings.categories.columns.actions' | translate }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (category of categoriesTable.data; track category.id) {
+<!-- Na telefonie tabela przewija się w bok we własnym kontenerze, zamiast rozpychać całą stronę. -->
+<div class="cat__table-wrap">
+  <nz-spin [nzSpinning]="loading()">
+    <!-- ⚠️ Paginacja WIDOCZNA (patrz scripts/check-tables.mjs): `[nzShowPagination]="false"` chowa tylko
+         kontrolkę, a tabela dalej tnie do 10 wierszy. -->
+    <nz-table
+      #categoriesTable
+      [nzData]="categories()"
+      [nzPageSize]="20"
+      nzSize="middle"
+      [nzNoResult]="'settings.categories.empty' | translate"
+    >
+      <thead>
         <tr>
-          <td>{{ category.name }}</td>
-          <td>{{ 'settings.categories.type.' + category.type | translate }}</td>
-          <td>{{ (category.isShared ? 'settings.categories.scope.shared' : 'settings.categories.scope.own') | translate }}</td>
-          <td class="cat__usage">{{ usage(category) }}</td>
-          <td class="cat__right">
-            <!-- Kategorie wspólne nie mają menu: nie da się ich zmienić ani usunąć (API odpowie 409). -->
-            @if (!category.isShared) {
-              <button
-                nz-button
-                nzType="text"
-                nz-dropdown
-                [nzDropdownMenu]="rowMenu"
-                nzTrigger="click"
-                [attr.aria-label]="'settings.categories.columns.actions' | translate"
-              >
-                <nz-icon nzType="more" />
-              </button>
-              <nz-dropdown-menu #rowMenu="nzDropdownMenu">
-                <ul nz-menu>
-                  <li nz-menu-item tabindex="0" (click)="openEdit(category)" (keydown.enter)="openEdit(category)">
-                    {{ 'settings.budgets.actions.edit' | translate }}
-                  </li>
-                  <li
-                    nz-menu-item
-                    nzDanger
-                    tabindex="0"
-                    [nzDisabled]="category.inUse"
-                    [attr.title]="category.inUse ? ('settings.categories.delete.inUse' | translate) : null"
-                    (click)="!category.inUse && remove(category)"
-                    (keydown.enter)="!category.inUse && remove(category)"
-                  >
-                    {{ 'settings.categories.delete.confirm' | translate }}
-                  </li>
-                </ul>
-              </nz-dropdown-menu>
-            }
-          </td>
+          <th>{{ 'settings.categories.columns.name' | translate }}</th>
+          <th nzWidth="160px">{{ 'settings.categories.columns.type' | translate }}</th>
+          <th nzWidth="160px">{{ 'settings.categories.columns.scope' | translate }}</th>
+          <th>{{ 'settings.categories.columns.usage' | translate }}</th>
+          <th nzWidth="80px" class="cat__right">{{ 'settings.categories.columns.actions' | translate }}</th>
         </tr>
-      }
-    </tbody>
-  </nz-table>
-</nz-spin>
+      </thead>
+      <tbody>
+        @for (category of categoriesTable.data; track category.id) {
+          <tr>
+            <td>{{ category.name }}</td>
+            <td>{{ 'settings.categories.type.' + category.type | translate }}</td>
+            <td>{{ (category.isShared ? 'settings.categories.scope.shared' : 'settings.categories.scope.own') | translate }}</td>
+            <td class="cat__usage">{{ usage(category) }}</td>
+            <td class="cat__right">
+              <!-- Kategorie wspólne nie mają menu: nie da się ich zmienić ani usunąć (API odpowie 409). -->
+              @if (!category.isShared) {
+                <button
+                  nz-button
+                  nzType="text"
+                  nz-dropdown
+                  [nzDropdownMenu]="rowMenu"
+                  nzTrigger="click"
+                  [attr.aria-label]="'settings.categories.columns.actions' | translate"
+                >
+                  <nz-icon nzType="more" />
+                </button>
+                <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+                  <ul nz-menu>
+                    <li nz-menu-item tabindex="0" (click)="openEdit(category)" (keydown.enter)="openEdit(category)">
+                      {{ 'settings.budgets.actions.edit' | translate }}
+                    </li>
+                    <li
+                      nz-menu-item
+                      nzDanger
+                      tabindex="0"
+                      [nzDisabled]="category.inUse"
+                      [attr.title]="category.inUse ? ('settings.categories.delete.inUse' | translate) : null"
+                      (click)="!category.inUse && remove(category)"
+                      (keydown.enter)="!category.inUse && remove(category)"
+                    >
+                      {{ 'settings.categories.delete.confirm' | translate }}
+                    </li>
+                  </ul>
+                </nz-dropdown-menu>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </nz-spin>
+</div>
 
 <nz-modal
   [nzVisible]="editorOpen()"
