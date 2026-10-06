@@ -50,7 +50,9 @@ body.auth-page {
   align-content: start;
 }
 
-.auth-card > * { grid-column: 1 / -1; }
+/* ⚠️ `min-width: 0` — element siatki domyślnie nie zwęża się poniżej treści, więc szeroka tabela panelu
+   administracji rozpychała całą kartę i stronę poza ekran telefonu. */
+.auth-card > * { grid-column: 1 / -1; min-width: 0; }
 .auth-card > .auth-brand { grid-column: 1; grid-row: 1; align-self: center; }
 .auth-card > .auth-header { grid-column: 2; grid-row: 1; }
 
@@ -202,23 +204,35 @@ body.auth-page {
 body.admin-page { align-items: flex-start; padding-top: 56px; }
 .auth-card.auth-card-wide { max-width: 1100px; gap: 24px; }
 
-.admin-header { display: flex; align-items: center; justify-content: space-between; }
-.admin-header__links { display: inline-flex; align-items: center; gap: 24px; }
+.admin-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; }
+.admin-header__links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
 .admin-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; color: var(--ds-primary-600); }
 .admin-titles h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
 .admin-titles p { font-size: 14px; color: var(--ds-neutral-500); margin: 0; }
 
-.admin-tabs { display: flex; gap: 28px; border-bottom: 1px solid var(--ds-neutral-200); }
+/* Na wąskim ekranie zakładki przechodzą do drugiego wiersza w całości — wcześniej łamały się po słowie
+   („Prośby / o / dostęp”) i wypychały stronę w bok. Przewijanie w bok chowałoby aktywną „Historię”. */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  border-bottom: 1px solid var(--ds-neutral-200);
+}
 .admin-tab {
+  flex: none;
   padding-bottom: 8px;
   margin-bottom: -1px;
   font-size: 14px;
+  white-space: nowrap;
   color: var(--ds-neutral-500);
   text-decoration: none;
   border-bottom: 2px solid transparent;
 }
 .admin-tab.active { color: var(--ds-neutral-900); font-weight: 500; border-bottom-color: var(--ds-primary-500); }
+.admin-tab:focus-visible { outline: 2px solid var(--ds-primary-500); outline-offset: -2px; border-radius: 4px; }
 
+/* Tabela przewija się w bok we własnym kontenerze, zamiast rozpychać stronę. */
+.admin-table-wrap { overflow-x: auto; }
 .admin-table { width: 100%; border-collapse: collapse; }
 .admin-table th {
   text-align: left;
@@ -310,6 +324,15 @@ body.admin-page { align-items: flex-start; padding-top: 56px; }
 
 /* Dolna belka okna potwierdzenia: przyciski zawsze do prawej. */
 .dialog-footer { display: flex; justify-content: flex-end; gap: 12px; }
+
+/* Telefon: mniejsze marginesy karty (40 px z każdej strony zjadało ćwierć ekranu), a tabela dostaje
+   minimalną szerokość, żeby kolumny przewijały się w bok, zamiast łamać tekst po znaku. */
+@media (max-width: 576px) {
+  body.auth-page { padding: 12px; }
+  body.admin-page { padding-top: 12px; }
+  .auth-card { padding: 24px 20px; row-gap: 24px; }
+  .admin-table { min-width: 560px; }
+}
 
 .auth-select {
   height: 40px;

@@ -150,3 +150,28 @@
 .rul__search {
   width: 280px;
 }
+
+.rul__table-wrap {
+  overflow-x: auto;
+}
+
+/* Telefon: wyszukiwarka i przycisk pod tytułem, a tabela trzyma szerokość i przewija się w bok —
+   ściśnięta do ekranu łamała wzorce po kilka znaków, a wiersz rósł do kilkuset pikseli. */
+@media (max-width: 768px) {
+  .rul__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .rul__search {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  /* Szerokość jak na desktopie: przy węższej notatka łamała się na kilkanaście linii i wiersz rósł do 300 px. */
+  .rul__table-wrap ::ng-deep .ant-table table {
+    min-width: 1200px;
+  }
+}

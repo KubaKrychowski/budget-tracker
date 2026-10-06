@@ -6,8 +6,9 @@
   // Pasek „strzałka + tytuł" na górze mieszka teraz w `app-page-header`
   // (core/page-header) — to samo CSS wcześniej żyło tu jako `&__header`/`&__back`/
   // `&__title`, identycznie w trzech miejscach. Zostaje sam `&__crumbs`.
+  // Bez bocznego paddingu: okruszek stoi w `&__body`, który już ma 32 px — podwójny dawał wcięcie względem treści.
   &__crumbs {
-    padding: 4px 32px;
+    padding: 4px 0;
   }
 
   &__body {

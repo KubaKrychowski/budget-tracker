@@ -1,0 +1,30 @@
+/* Widok mobilny tablicy strategii — osobny arkusz, bo razem z desktopowym przekraczał budżet stylu
+   komponentu (angular.json, anyComponentStyle). Ładuje się po strategy-board.scss. */
+
+/* Telefon: tablica na całą szerokość, panel kafelków POD nią. Obok siebie panel (392 px) zabierał cały ekran,
+   a tablica dostawała 0 px — kafelków nie było widać. Przyciski nagłówka schodzą pod tytuł, który inaczej łamał
+   się w środku słowa. */
+@media (max-width: 768px) {
+  .sb__head,
+  .sb__area {
+    flex-direction: column;
+  }
+
+  .sb__head-actions {
+    align-items: flex-start;
+  }
+
+  .sb__buttons {
+    justify-content: flex-start;
+  }
+
+  .sb__flow {
+    height: 480px;
+  }
+
+  .sb__panel {
+    width: auto;
+    max-height: none;
+    border-left: 0;
+  }
+}

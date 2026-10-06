@@ -336,4 +336,15 @@ public sealed class StrategySimulatorTests
         Assert.Equal(250m, result.FinalCash);
         Assert.Equal(M(2026, 10), result.Nodes.Single(n => n.NodeId == "goal").FiredIn);
     }
+
+    [Fact]
+    public void Problem_kind_goes_to_the_client_as_a_NAME_not_a_number()
+    {
+        // Łapie brak konwertera na enumie: front mapuje nazwę na komunikat, więc liczba dawała surowy klucz
+        // tłumaczenia („strategies.board.problem.2”) zamiast opisu problemu.
+        var json = System.Text.Json.JsonSerializer.Serialize(
+            new Features.Strategies.Contracts.StrategyProblemResponseDto("plus", StrategyProblemKind.NoIncomingEdge));
+
+        Assert.Contains("\"NoIncomingEdge\"", json);
+    }
 }

@@ -79,7 +79,7 @@ interface BoardNode {
   ],
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
-  styleUrl: './strategy-board.scss',
+  styleUrls: ['./strategy-board.scss', './strategy-board.mobile.scss'],
 })
 export class StrategyBoard {
   /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */

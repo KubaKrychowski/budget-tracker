@@ -38,63 +38,66 @@
   </div>
 </div>
 
-<nz-spin [nzSpinning]="loading()">
-  <!-- ⚠️ Paginacja WIDOCZNA, jak w tabeli budżetów. `[nzShowPagination]="false"` tylko CHOWA
-       kontrolkę, a stronicowanie po 10 wierszy zostaje — na realnym zbiorze 148 reguł 138 z nich
-       było nieosiągalnych i nic tego nie sygnalizowało. -->
-  <nz-table
-    #rulesTable
-    [nzData]="visibleRules()"
-    [nzPageSize]="20"
-    nzSize="middle"
-    [nzNoResult]="(nothingMatches() ? 'settings.rules.noMatches' : 'settings.rules.empty') | translate"
-  >
-    <thead>
-      <tr>
-        <th nzWidth="110px">{{ 'settings.rules.columns.priority' | translate }}</th>
-        <th>{{ 'settings.rules.columns.pattern' | translate }}</th>
-        <th>{{ 'settings.rules.columns.typePattern' | translate }}</th>
-        <th nzWidth="120px">{{ 'settings.rules.columns.direction' | translate }}</th>
-        <th nzWidth="170px">{{ 'settings.rules.columns.category' | translate }}</th>
-        <th nzWidth="140px" class="rul__right">{{ 'settings.rules.columns.amountRange' | translate }}</th>
-        <th>{{ 'settings.rules.columns.note' | translate }}</th>
-        <th nzWidth="70px" class="rul__right">{{ 'settings.rules.columns.actions' | translate }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (rule of rulesTable.data; track rule.id) {
+<!-- Na telefonie tabela przewija się w bok we własnym kontenerze, zamiast rozpychać całą stronę. -->
+<div class="rul__table-wrap">
+  <nz-spin [nzSpinning]="loading()">
+    <!-- ⚠️ Paginacja WIDOCZNA, jak w tabeli budżetów. `[nzShowPagination]="false"` tylko CHOWA
+         kontrolkę, a stronicowanie po 10 wierszy zostaje — na realnym zbiorze 148 reguł 138 z nich
+         było nieosiągalnych i nic tego nie sygnalizowało. -->
+    <nz-table
+      #rulesTable
+      [nzData]="visibleRules()"
+      [nzPageSize]="20"
+      nzSize="middle"
+      [nzNoResult]="(nothingMatches() ? 'settings.rules.noMatches' : 'settings.rules.empty') | translate"
+    >
+      <thead>
         <tr>
-          <td class="tnum">{{ rule.priority }}</td>
-          <td><code class="rul__pattern">{{ rule.pattern ?? ('settings.rules.none' | translate) }}</code></td>
-          <td>
-            <code class="rul__pattern">
-              {{ rule.transactionTypePattern ?? ('settings.rules.none' | translate) }}
-            </code>
-          </td>
-          <td>{{ 'settings.rules.direction.' + rule.direction | translate }}</td>
-          <td><nz-tag>{{ rule.categoryName }}</nz-tag></td>
-          <td class="rul__right tnum">{{ range(rule) ?? ('settings.rules.none' | translate) }}</td>
-          <td class="rul__note">{{ rule.note ?? ('settings.rules.none' | translate) }}</td>
-          <td class="rul__right">
-            <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="rowMenu" nzTrigger="click">
-              <nz-icon nzType="more" />
-            </button>
-            <nz-dropdown-menu #rowMenu="nzDropdownMenu">
-              <ul nz-menu>
-                <li nz-menu-item tabindex="0" (click)="openEdit(rule)" (keydown.enter)="openEdit(rule)">
-                  {{ 'settings.budgets.actions.edit' | translate }}
-                </li>
-                <li nz-menu-item nzDanger tabindex="0" (click)="remove(rule)" (keydown.enter)="remove(rule)">
-                  {{ 'settings.rules.delete.confirm' | translate }}
-                </li>
-              </ul>
-            </nz-dropdown-menu>
-          </td>
+          <th nzWidth="110px">{{ 'settings.rules.columns.priority' | translate }}</th>
+          <th>{{ 'settings.rules.columns.pattern' | translate }}</th>
+          <th>{{ 'settings.rules.columns.typePattern' | translate }}</th>
+          <th nzWidth="120px">{{ 'settings.rules.columns.direction' | translate }}</th>
+          <th nzWidth="170px">{{ 'settings.rules.columns.category' | translate }}</th>
+          <th nzWidth="140px" class="rul__right">{{ 'settings.rules.columns.amountRange' | translate }}</th>
+          <th>{{ 'settings.rules.columns.note' | translate }}</th>
+          <th nzWidth="70px" class="rul__right">{{ 'settings.rules.columns.actions' | translate }}</th>
         </tr>
-      }
-    </tbody>
-  </nz-table>
-</nz-spin>
+      </thead>
+      <tbody>
+        @for (rule of rulesTable.data; track rule.id) {
+          <tr>
+            <td class="tnum">{{ rule.priority }}</td>
+            <td><code class="rul__pattern">{{ rule.pattern ?? ('settings.rules.none' | translate) }}</code></td>
+            <td>
+              <code class="rul__pattern">
+                {{ rule.transactionTypePattern ?? ('settings.rules.none' | translate) }}
+              </code>
+            </td>
+            <td>{{ 'settings.rules.direction.' + rule.direction | translate }}</td>
+            <td><nz-tag>{{ rule.categoryName }}</nz-tag></td>
+            <td class="rul__right tnum">{{ range(rule) ?? ('settings.rules.none' | translate) }}</td>
+            <td class="rul__note">{{ rule.note ?? ('settings.rules.none' | translate) }}</td>
+            <td class="rul__right">
+              <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="rowMenu" nzTrigger="click">
+                <nz-icon nzType="more" />
+              </button>
+              <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item tabindex="0" (click)="openEdit(rule)" (keydown.enter)="openEdit(rule)">
+                    {{ 'settings.budgets.actions.edit' | translate }}
+                  </li>
+                  <li nz-menu-item nzDanger tabindex="0" (click)="remove(rule)" (keydown.enter)="remove(rule)">
+                    {{ 'settings.rules.delete.confirm' | translate }}
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </nz-spin>
+</div>
 
 <nz-modal
   [nzVisible]="editorOpen()"

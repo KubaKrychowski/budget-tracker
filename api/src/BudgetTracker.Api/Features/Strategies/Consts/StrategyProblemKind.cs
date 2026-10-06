@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BudgetTracker.Api.Features.Strategies.Consts;
 
 /// <summary>Rodzaj problemu znalezionego w grafie strategii — pokazywany na węźle jako czerwony znacznik.</summary>
@@ -5,7 +7,10 @@ namespace BudgetTracker.Api.Features.Strategies.Consts;
 /// Problem to NIE błąd zapisu: szkic z problemami zapisuje się zawsze. Węzły z problemami (poza
 /// <see cref="EventWithoutChain"/> i <see cref="WaitDoesNotReturn"/>) symulator pomija, więc ich łańcuchy nic nie liczą.
 /// Wartości idą do klienta jako tekst, a klient mapuje je na komunikaty — backend nie zwraca treści dla użytkownika.
+/// ⚠️ Konwerter na TYPIE, bo aplikacja nie rejestruje globalnego <c>JsonStringEnumConverter</c>. Bez niego wartość szła
+/// jako liczba, a klient pokazywał surowy klucz tłumaczenia (<c>strategies.board.problem.1</c>).
 /// </remarks>
+[JsonConverter(typeof(JsonStringEnumConverter<StrategyProblemKind>))]
 public enum StrategyProblemKind
 {
     /// <summary>Węzeł wymaga parametru, którego nie ma (kwota, miesiąc, warunek…).</summary>
