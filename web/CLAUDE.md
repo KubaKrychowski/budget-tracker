@@ -46,6 +46,9 @@ Nie odpalaj `npm start` (4200 to serwer użytkownika). Do przeglądarki służy 
 
 ## Teksty i formatowanie
 
+- **Wydanie Androida = wpis w `public/changelog.json`.** Przed tagiem `android-v<wersja>` dopisz NA POCZĄTKU pliku wpis o tej wersji (pl i en,
+  `id` = numer z taga). „Co nowego” czyta ten plik, więc bez wpisu aplikacja pokazuje stare okno, a workflow `release-android.yml`
+  zatrzymuje wydanie.
 - Każdy tekst przez `| translate` / `TranslateService`, klucz dodany do **`public/i18n/pl.json` i `en.json`** jednocześnie.
   Klucze po angielsku, zagnieżdżone per ekran (`reservations.contribute.title`).
 - Kwoty w komórkach tabeli: klasa `.amount` / `.tnum` (cyfry tabelaryczne), wyrównanie do prawej.

@@ -1,5 +1,77 @@
 [
   {
+    "id": "2.4",
+    "date": "2026-10-06",
+    "pl": [
+      {
+        "title": "O aplikacji — sprawdź, czy jest nowa wersja",
+        "text": "W Ustawieniach (w aplikacji na Androida) zobaczysz, którą wersję masz, i sprawdzisz aktualizacje jednym dotknięciem. Pasek „Jest nowa wersja” pokazuje się teraz przy każdym uruchomieniu aplikacji.",
+        "link": "/settings?tab=about",
+        "linkLabel": "Otwórz „O aplikacji”"
+      }
+    ],
+    "en": [
+      {
+        "title": "About the app — check for a new version",
+        "text": "In Settings (in the Android app) you can see which version you have and check for updates with one tap. The “New version” bar now shows every time the app starts.",
+        "link": "/settings?tab=about",
+        "linkLabel": "Open “About the app”"
+      }
+    ]
+  },
+  {
+    "id": "2.3",
+    "date": "2026-10-06",
+    "pl": [
+      {
+        "title": "Strategie na telefonie",
+        "text": "Strategię przeglądasz jako listę kroków albo tablicę w pełnej skali, a ustawienia kafelka otwierają się od dołu ekranu.",
+        "link": "/strategies",
+        "linkLabel": "Otwórz Strategie"
+      },
+      {
+        "title": "Poprawki wyglądu na telefonie",
+        "text": "Tabele reguł i kategorii przewijają się w bok zamiast rozpychać ekran, a komunikaty z przyciskiem nie ściskają już tekstu."
+      }
+    ],
+    "en": [
+      {
+        "title": "Strategies on your phone",
+        "text": "View a strategy as a list of steps or as the board at full scale; tile settings open from the bottom of the screen.",
+        "link": "/strategies",
+        "linkLabel": "Open Strategies"
+      },
+      {
+        "title": "Phone layout fixes",
+        "text": "The rules and categories tables scroll sideways instead of stretching the screen, and messages with a button no longer squeeze the text."
+      }
+    ]
+  },
+  {
+    "id": "2.2",
+    "date": "2026-10-06",
+    "pl": [
+      {
+        "title": "Informacja o nowej wersji aplikacji",
+        "text": "Gdy wyjdzie nowsza wersja, pod nagłówkiem pojawi się pasek z przyciskiem pobrania. Dane i zalogowanie zostają."
+      },
+      {
+        "title": "Aplikacja na pełnym ekranie",
+        "text": "Treść nie chowa się już pod otworem na kamerę, a nagłówek nie rośnie ponad niego."
+      }
+    ],
+    "en": [
+      {
+        "title": "New app version notice",
+        "text": "When a newer version is out, a bar with a download button appears below the header. Your data and login stay."
+      },
+      {
+        "title": "Full-screen app",
+        "text": "Content no longer hides under the camera cutout, and the header no longer grows above it."
+      }
+    ]
+  },
+  {
     "id": "2.1",
     "date": "2026-10-03",
     "pl": [
