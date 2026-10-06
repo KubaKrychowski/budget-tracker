@@ -122,7 +122,8 @@
     gap: 12px;
     // Pod otworem na kamerę i zaokrąglonymi rogami (aplikacja pełnoekranowa, viewport-fit=cover). Capacitor 8
     // podaje odstęp jako --safe-area-inset-top, bo WebView Androida nie zawsze zgłasza env(); w przeglądarce oba = 0.
-    padding: calc(12px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 16px 12px;
+    // max, nie suma: otwór i zwykły odstęp się nie dodają — inaczej nagłówek rósł o cały odstęp ponad otwór.
+    padding: max(12px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 16px 12px;
 
     &__search {
       order: 1;
