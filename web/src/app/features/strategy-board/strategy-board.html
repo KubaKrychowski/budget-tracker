@@ -25,6 +25,42 @@
       </ng-template>
     </nz-alert>
   } @else if (saved()) {
+    @if (viewport.isMobile()) {
+      <header class="sb__mhead">
+        <div class="sb__mrow">
+          <h1 class="sb__title">{{ name() }}</h1>
+          <button
+            type="button"
+            class="sb__mmenu"
+            nz-dropdown
+            nzTrigger="click"
+            nzPlacement="bottomRight"
+            [nzDropdownMenu]="menu"
+            [attr.aria-label]="'strategies.board.mobile.menu' | translate"
+          >
+            ⋮
+          </button>
+        </div>
+        <p class="sb__mstatus">
+          @if (dirty()) {
+            <span class="sb__dot" aria-hidden="true"></span>{{ 'strategies.board.unsaved' | translate }} ·
+          }
+          {{ 'strategies.board.mobile.tiles' | translate: { count: nodes().length } }}
+        </p>
+        <nz-segmented class="sb__mmode" nzBlock [nzOptions]="modeOptions()" [ngModel]="mode()" (ngModelChange)="mode.set($event)" />
+      </header>
+      <nz-dropdown-menu #menu="nzDropdownMenu">
+        <ul nz-menu>
+          <li nz-menu-item tabindex="0" (click)="openParams()" (keydown.enter)="openParams()">{{ 'strategies.board.params' | translate }}</li>
+          <li nz-menu-item tabindex="0" [nzDisabled]="!dirty() || busy()" (click)="discard()" (keydown.enter)="discard()">
+            {{ 'strategies.board.discard' | translate }}
+          </li>
+          <li nz-menu-item tabindex="0" [nzDisabled]="dirty() || busy() || !hasBudgetActions()" (click)="applyOpen.set(true)" (keydown.enter)="applyOpen.set(true)">
+            {{ 'strategies.board.apply' | translate }}
+          </li>
+        </ul>
+      </nz-dropdown-menu>
+    } @else {
     <header class="sb__head">
       <div>
         <h1 class="sb__title">{{ name() }}</h1>
@@ -51,6 +87,7 @@
         }
       </div>
     </header>
+    }
 
     @if (problemNodes().length > 0) {
       <nz-alert
@@ -69,6 +106,7 @@
       </nz-alert>
     }
 
+    @if (showBoard()) {
     <div class="sb__area">
       <div class="sb__stage">
         <f-flow
@@ -81,7 +119,7 @@
           (fSelectionChange)="onSelection($event)"
           (fDeleteSelected)="onDeleteSelected($event)"
         >
-          <f-canvas fZoom>
+          <f-canvas fZoom (fCanvasChange)="onCanvasChange($event)">
             <f-connection-for-create />
 
             @for (edge of edges(); track edge.id) {
@@ -152,7 +190,20 @@
           </f-canvas>
         </f-flow>
 
+        @if (viewport.isMobile()) {
+          <div class="sb__zoom" role="group" [attr.aria-label]="'strategies.board.mobile.zoom' | translate">
+            <button type="button" [attr.aria-label]="'strategies.board.mobile.zoomOut' | translate" (click)="zoomBy(-zoomStep)">−</button>
+            <span class="sb__zoom-value">{{ scalePercent() }}%</span>
+            <button type="button" [attr.aria-label]="'strategies.board.mobile.zoomIn' | translate" (click)="zoomBy(zoomStep)">+</button>
+            <button type="button" class="sb__zoom-fit" (click)="fitAll()">{{ 'strategies.board.mobile.fit' | translate }}</button>
+          </div>
+          @if (!gestureSeen()) {
+            <div class="sb__gesture" aria-hidden="true">{{ 'strategies.board.mobile.gesture' | translate }}</div>
+          }
+        }
+
         @if (result(); as sim) {
+          @if (!viewport.isMobile()) {
           <div class="sb__chip" role="status">
             <strong>{{ 'strategies.board.sim.title' | translate }}</strong>
             @if (hasLoan()) {
@@ -169,10 +220,113 @@
             }
             <span>{{ 'strategies.board.sim.cash' | translate }}: {{ finalCash() }}</span>
           </div>
+          }
         }
       </div>
 
-      <aside class="sb__panel">
+      @if (!viewport.isMobile()) {
+        <aside class="sb__panel">
+          <ng-container *ngTemplateOutlet="panelBody" />
+        </aside>
+      }
+    </div>
+    } @else {
+      <div class="sb__list">
+        @for (chain of chains().chains; track chain.root.node.id) {
+          <section class="sb__chain">
+            <button type="button" class="sb__step sb__step--{{ chain.root.kind }}" [class.sb__step--problem]="chain.root.problems.length > 0" (click)="openNode(chain.root.node.id)">
+              <span class="sb__glyph" aria-hidden="true">{{ glyph(chain.root.kind) }}</span>
+              <span class="sb__text">
+                <strong class="sb__node-title">{{ chain.root.title }}</strong>
+                @if (chain.root.summary) {
+                  <small class="sb__node-summary">{{ chain.root.summary }}</small>
+                }
+              </span>
+              @if (chain.root.problems.length > 0) {
+                <span class="sb__badge sb__badge--inline" [attr.title]="'strategies.board.problemBadge' | translate">!</span>
+              }
+            </button>
+            @for (step of chain.steps; track step.view.node.id) {
+              <div class="sb__row" [style.padding-left.px]="step.depth * 20">
+                <span class="sb__rail" aria-hidden="true">{{ step.label === 'None' ? '↓' : ((step.label === 'Yes' ? 'strategies.board.yes' : 'strategies.board.no') | translate) }}</span>
+                <button type="button" class="sb__step sb__step--{{ step.view.kind }}" [class.sb__step--problem]="step.view.problems.length > 0" (click)="openNode(step.view.node.id)">
+                  <span class="sb__glyph" aria-hidden="true">{{ glyph(step.view.kind) }}</span>
+                  <span class="sb__text">
+                    <strong class="sb__node-title">{{ step.view.title }}</strong>
+                    @if (step.view.summary) {
+                      <small class="sb__node-summary">{{ step.view.summary }}</small>
+                    }
+                  </span>
+                  @if (step.view.problems.length > 0) {
+                    <span class="sb__badge sb__badge--inline" [attr.title]="'strategies.board.problemBadge' | translate">!</span>
+                  }
+                </button>
+              </div>
+            }
+            @if (canExtend(chain)) {
+              <button type="button" class="sb__add-step" (click)="openPaletteAfter(chainEnd(chain))">
+                {{ 'strategies.board.mobile.addStep' | translate }}
+              </button>
+            }
+          </section>
+        }
+
+        @if (chains().unlinked.length > 0) {
+          <section class="sb__chain">
+            <h2 class="sb__panel-title">{{ 'strategies.board.mobile.unlinked' | translate }}</h2>
+            @for (view of chains().unlinked; track view.node.id) {
+              <button type="button" class="sb__step sb__step--{{ view.kind }}" [class.sb__step--problem]="view.problems.length > 0" (click)="openNode(view.node.id)">
+                <span class="sb__glyph" aria-hidden="true">{{ glyph(view.kind) }}</span>
+                <span class="sb__text">
+                  <strong class="sb__node-title">{{ view.title }}</strong>
+                  @if (view.summary) {
+                    <small class="sb__node-summary">{{ view.summary }}</small>
+                  }
+                </span>
+                @if (view.problems.length > 0) {
+                  <span class="sb__badge sb__badge--inline" [attr.title]="'strategies.board.problemBadge' | translate">!</span>
+                }
+              </button>
+            }
+          </section>
+        }
+
+        @if (nodes().length === 0) {
+          <p class="sb__panel-hint">{{ 'strategies.board.mobile.empty' | translate }}</p>
+        }
+      </div>
+    }
+
+    @if (viewport.isMobile()) {
+      @if (result(); as sim) {
+        <div class="sb__sim" role="status">
+          <strong>{{ 'strategies.board.sim.title' | translate }}</strong>
+          @if (hasLoan()) {
+            <span>
+              {{ 'strategies.board.sim.loan' | translate }}
+              <b>{{ sim.loanPaidOffIn ? (sim.loanPaidOffIn | date: 'LLLL y' : undefined : locale()) : ('strategies.board.sim.never' | translate) }}</b>
+            </span>
+          }
+          @if (hasCushion()) {
+            <span>
+              {{ 'strategies.board.sim.cushion' | translate }}
+              <b>{{ sim.cushionReachedIn ? (sim.cushionReachedIn | date: 'LLLL y' : undefined : locale()) : ('strategies.board.sim.never' | translate) }}</b>
+            </span>
+          }
+          <span>{{ 'strategies.board.sim.cash' | translate }} <b>{{ finalCash() }}</b></span>
+        </div>
+      }
+
+      <div class="sb__bar">
+        <button nz-button (click)="openPalette()">{{ 'strategies.board.mobile.addTile' | translate }}</button>
+        <button nz-button nzType="primary" [disabled]="!dirty() || busy()" [nzLoading]="busy()" (click)="save()">
+          {{ 'strategies.board.mobile.save' | translate }}
+        </button>
+      </div>
+    }
+
+    <!-- Treść panelu bocznego: na desktopie stoi w <aside>, na telefonie w arkuszu od dołu (makieta 419:1593). -->
+    <ng-template #panelBody>
         @if (formNode(); as node) {
           <app-strategy-node-form
             [node]="node"
@@ -209,10 +363,23 @@
             <button type="button" class="sb__link" (click)="panel.set('palette')">← {{ 'strategies.board.palette.title' | translate }}</button>
           </div>
         } @else {
-          <app-strategy-palette (add)="addNode($event)" />
+          <app-strategy-palette (add)="onPaletteAdd($event)" />
         }
-      </aside>
-    </div>
+    </ng-template>
+
+    <nz-drawer
+      [nzVisible]="sheetOpen()"
+      nzPlacement="bottom"
+      nzHeight="auto"
+      [nzClosable]="false"
+      [nzBodyStyle]="{ padding: '8px 16px 24px' }"
+      nzWrapClassName="sb-sheet"
+      (nzOnClose)="closeSheet()"
+    >
+      <ng-container *nzDrawerContent>
+        <ng-container *ngTemplateOutlet="panelBody" />
+      </ng-container>
+    </nz-drawer>
   } @else {
     <nz-spin [nzSpinning]="loading()" />
   }

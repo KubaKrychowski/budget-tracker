@@ -1,6 +1,6 @@
 <div class="spal">
   <h2 class="spal__title">{{ 'strategies.board.palette.title' | translate }}</h2>
-  <p class="spal__hint">{{ 'strategies.board.palette.hint' | translate }}</p>
+  <p class="spal__hint">{{ (viewport.isMobile() ? 'strategies.board.mobile.paletteHint' : 'strategies.board.palette.hint') | translate }}</p>
 
   @for (item of items; track item.category) {
     <div class="spal__row">

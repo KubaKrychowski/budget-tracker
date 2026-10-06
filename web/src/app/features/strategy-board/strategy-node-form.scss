@@ -99,3 +99,10 @@
     color: var(--ds-error-500);
   }
 }
+
+/* Telefon: formularz stoi w arkuszu od dołu (makieta 419:1593) — przyciski stopki do prawej, jak w oknach dialogowych. */
+@media (max-width: 768px) {
+  .snf__foot {
+    justify-content: flex-end;
+  }
+}
