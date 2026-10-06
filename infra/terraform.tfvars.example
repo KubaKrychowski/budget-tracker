@@ -35,7 +35,8 @@ communication_service_name = "acs-wydatki-prod"
 # Puste = ta sama grupa co resource_group_name.
 # communication_service_resource_group_name = null
 
-# Musi nalezec do domeny podpietej do tego ACS. Guid odczytasz w Email Service jako mailFromSenderDomain.
+# Musi nalezec do domeny podpietej do tego ACS. Domena Azure: DoNotReply@<guid>.azurecomm.net (guid z
+# mailFromSenderDomain w Email Service). Wlasna domena: <uzytkownik>@<domena>, np. noreply@twojadomena.pl.
 email_sender_address = "DoNotReply@<guid>.azurecomm.net"
 
 # Wlasna domena. Puste = zostajemy na adresach Azure.

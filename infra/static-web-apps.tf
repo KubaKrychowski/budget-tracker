@@ -17,6 +17,12 @@ resource "azurerm_static_web_app" "front" {
   sku_size = "Free"
 
   tags = local.tags
+
+  # ⚠️ Połączenie z repozytorium GitHub powstaje poza Terraformem (wdrożenie przez GitHub Actions), a bez
+  # tokena provider nie umie go odtworzyć. Bez tego plan chce je zerwać (`repository_url` -> null).
+  lifecycle {
+    ignore_changes = [repository_url, repository_branch]
+  }
 }
 
 resource "azurerm_static_web_app" "landing" {
@@ -28,4 +34,9 @@ resource "azurerm_static_web_app" "landing" {
   sku_size = "Free"
 
   tags = local.tags
+
+  # Jak wyżej: połączenie z GitHubem jest poza Terraformem.
+  lifecycle {
+    ignore_changes = [repository_url, repository_branch]
+  }
 }

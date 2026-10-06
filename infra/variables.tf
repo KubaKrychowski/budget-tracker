@@ -168,8 +168,9 @@ variable "email_sender_address" {
 
     ⚠️ Musi należeć do domeny podpiętej do tego zasobu ACS — inaczej wysyłka jest odrzucana. Przy domenie
     zarządzanej przez Azure ma postać `DoNotReply@<guid>.azurecomm.net`; `<guid>` odczytasz w zasobie
-    Email Service jako `mailFromSenderDomain`. Prowider Terraforma nie ma źródła danych na domeny poczty,
-    więc trzeba to podać wprost.
+    Email Service jako `mailFromSenderDomain`. Przy własnej domenie (zweryfikowanej w Email Service i
+    podpiętej do ACS) to `<użytkownik>@<domena>`, np. `noreply@wydatki.com`. Prowider Terraforma nie ma
+    źródła danych na domeny poczty, więc trzeba to podać wprost.
   EOT
   type        = string
 }
