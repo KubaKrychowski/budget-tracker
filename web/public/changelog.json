@@ -1,5 +1,41 @@
 [
   {
+    "id": "2.5",
+    "date": "2026-10-06",
+    "pl": [
+      {
+        "title": "Prawdziwy numer wersji na ekranie logowania",
+        "text": "Okładka logowania pokazuje numer zainstalowanej aplikacji, a nie stałe „v.2.1”."
+      },
+      {
+        "title": "Rezerwacje na telefonie",
+        "text": "Tabela rezerwacji przewija się w bok zamiast rozpychać ekran.",
+        "link": "/savings/reservations",
+        "linkLabel": "Otwórz rezerwacje"
+      },
+      {
+        "title": "„Co nowego” znów jest aktualne",
+        "text": "Okno z historią zmian pokazuje wszystkie wydania, także te, o których wcześniej nie było wzmianki."
+      }
+    ],
+    "en": [
+      {
+        "title": "The real version number on the login screen",
+        "text": "The login cover shows the number of the installed app instead of a fixed “v.2.1”."
+      },
+      {
+        "title": "Reservations on your phone",
+        "text": "The reservations table scrolls sideways instead of stretching the screen.",
+        "link": "/savings/reservations",
+        "linkLabel": "Open reservations"
+      },
+      {
+        "title": "“What’s new” is up to date again",
+        "text": "The change history window shows every release, including the ones that were missing before."
+      }
+    ]
+  },
+  {
     "id": "2.4",
     "date": "2026-10-06",
     "pl": [
