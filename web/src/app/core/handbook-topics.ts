@@ -12,6 +12,7 @@ export interface HandbookTopic {
  * dla tekstów UI: treść dla użytkownika nie siedzi w kodzie.
  */
 export const HANDBOOK_TOPICS: readonly HandbookTopic[] = [
+  { key: 'getting-started', labelKey: 'handbook.topics.gettingStarted', file: 'handbook/getting-started.md' },
   { key: 'dashboard', labelKey: 'handbook.topics.dashboard', file: 'handbook/dashboard.md' },
   { key: 'budgets', labelKey: 'handbook.topics.budgets', file: 'handbook/budgets.md' },
   { key: 'import', labelKey: 'handbook.topics.import', file: 'handbook/import.md' },

@@ -1,75 +1,74 @@
-## Strategie
+## Strategie: kredyt, nadpłata, poduszka
 
-Strategia to plan na kilkanaście miesięcy do przodu — na przykład „nadpłacę kredyt premią i zbuduję poduszkę”.
-Układasz go z klocków na tablicy, a aplikacja liczy z nich, ile będziesz miał oszczędności i ile długu
-w każdym kolejnym miesiącu. Strategia **niczego nie zmienia w budżecie**: to plan i symulacja, nie dane z wyciągów.
+Strategia to **plan na kilkanaście miesięcy do przodu** — na przykład „nadpłacę kredyt premią i zbuduję poduszkę finansową”. Układasz go z klocków (kafelków) na tablicy, a aplikacja **na bieżąco liczy**, ile będziesz miał oszczędności i ile długu w każdym kolejnym miesiącu.
 
-> To **szacunek do planowania, nie porada finansowa.** Odsetki liczone są według rzeczywistej liczby dni
-> (rok 365 dni), bank może naliczać inaczej o kilka złotych.
+> 🧪 Strategia **niczego nie zmienia w Twoim budżecie**, dopóki sam o to nie poprosisz. To plan i symulacja, nie dane z wyciągów.
 
-### Lista strategii
+> ⚠️ To **szacunek do planowania, nie porada finansowa.** Odsetki liczone są według rzeczywistej liczby dni (rok = 365 dni), więc bank może naliczać inaczej o kilka złotych.
 
-W menu „Wszystkie funkcje” wejdź w **Strategie**. Strategie należą do budżetu — przełącznik budżetu na górze
-pokazuje strategie wybranego. Nową strategię zakładasz **pustą** albo z szablonu „Kredyt i poduszka”. Liczby
-w szablonie są przykładowe — wpisz własne w kafelkach.
+### Szybki start: wypróbuj szablon
+
+Najłatwiej zacząć od gotowego przykładu:
+
+1. Wejdź w **Strategie** (pasek wyszukiwania albo menu „Wszystkie funkcje”).
+2. W ramce **Nowa strategia** kliknij **Z szablonu: kredyt i poduszka**.
+3. Podmień przykładowe liczby na własne — kliknij kafelek i wpisz swoje kwoty.
+
+![Lista strategii wybranego budżetu z przyciskami Otwórz i Usuń oraz ramką „Nowa strategia”](handbook/images/strategies-list.png)
+
+Strategie należą do **budżetu** — przełącznik budżetu na górze pokazuje strategie wybranego. Zamiast szablonu możesz też zacząć od **pustej tablicy**.
 
 ### Tablica i kafelki
 
-Na tablicy układasz **kafelki** i łączysz je strzałkami. W panelu „Dodaj kafelek” po prawej są trzy rodzaje kafelków:
-przeciągnij je na tablicę albo kliknij **„+”** — kafelek dodany plusem trafia obok zaznaczonego i od razu się z nim łączy.
-**Konkretny rodzaj wybierasz w ustawieniach kafelka**, w polu „Rodzaj” (po kliknięciu kafelka):
+![Tablica strategii: kafelki połączone strzałkami, panel „Dodaj kafelek” po prawej i wynik symulacji na dole](handbook/images/strategies-board.png)
 
-- **Zdarzenie** — to, co dzieje się w konkretnym miesiącu albo stanowi punkt wyjścia:
+Na tablicy układasz **kafelki** i łączysz je strzałkami. Czytasz ją od lewej do prawej: najpierw **zdarzenie** („co się dzieje i kiedy”), potem **akcja** („co z tym robię”), a w razie potrzeby **warunek** („jeśli… to…”).
+
+W panelu **Dodaj kafelek** po prawej są trzy rodzaje. Przeciągnij kafelek na tablicę albo kliknij **+** — taki kafelek pojawi się obok zaznaczonego i od razu się z nim połączy. **Konkretny rodzaj wybierasz w ustawieniach kafelka**, w polu „Rodzaj”.
+
+- **Zdarzenie** — punkt wyjścia albo coś, co dzieje się w konkretnym miesiącu:
   - *Zdarzenie* (podwyżka, koniec zlecenia) — samo nic nie zmienia, uruchamia łańcuch akcji,
-  - *Wpływ jednorazowy* (premia, wyrównanie) i *Wydatek jednorazowy* (ubezpieczenie) — dopisują albo odejmują
-    kwotę od oszczędności w swoim miesiącu,
-  - stan wyjściowy: *Nadwyżka miesięczna* (stała kwota odkładana co miesiąc), *Kredyt* (saldo, oprocentowanie
-    roczne i rata — z niego bierze się „dług” w symulacji) i *Poduszka docelowa* (kwota, którą chcesz uzbierać).
-- **Akcja** — co robisz po zdarzeniu. „Liczy symulacja”: *Zwiększ nadwyżkę*, *Nadpłać kredyt* (kwota i tryb: obniż ratę
-  albo skróć okres), *Spłać resztę kredytu*. „Zakłada w budżecie”: *Załóż cel oszczędzania*, *Załóż rezerwację*,
-  *Ustaw limit kategorii*, *Zakończ zlecenie stałe* i *Dodaj wydatek jednorazowy* (zlecenie epizodyczne). Cztery pierwsze
-  w symulacji nic nie zmieniają; wydatek jednorazowy odejmuje kwotę od gotówki w miesiącu, w którym akcja się wykona.
-  Każda z nich ma w ustawieniach ramkę „Zastosuj w aplikacji” — mówi, co założy w budżecie.
-- **Warunek** — *Warunek* (porównuje oszczędności i dług, ma dwa wyjścia: **tak** i **nie**), *Czekaj*
-  (sprawdź ponownie w następnym miesiącu) i *Koniec* (znacznik „strategia zrealizowana”).
+  - *Wpływ jednorazowy* (premia) i *Wydatek jednorazowy* (ubezpieczenie) — dodają albo odejmują kwotę w swoim miesiącu,
+  - stan wyjściowy: *Nadwyżka miesięczna* (stała kwota odkładana co miesiąc), *Kredyt* (saldo, oprocentowanie roczne i rata) i *Poduszka docelowa* (kwota, którą chcesz uzbierać).
+- **Akcja** — co robisz po zdarzeniu.
+  - **Liczy symulacja:** *Zwiększ nadwyżkę*, *Nadpłać kredyt* (kwota i tryb: obniż ratę albo skróć okres), *Spłać resztę kredytu*.
+  - **Zakłada w budżecie:** *Załóż cel oszczędzania*, *Załóż rezerwację*, *Ustaw limit kategorii*, *Zakończ zlecenie stałe* i *Dodaj wydatek jednorazowy*.
+- **Warunek** — *Warunek* (porównuje oszczędności i dług, ma dwa wyjścia: **tak** i **nie**), *Czekaj* (sprawdź ponownie w następnym miesiącu) i *Koniec* (znacznik „strategia zrealizowana”).
 
-Zmiana rodzaju zostawia pola, które nowy rodzaj też ma (np. kwotę), a strzałki, które przestają pasować, znikają — na
-przykład zdarzenie nie przyjmuje strzałki wchodzącej, a „Koniec” nie ma wychodzącej. Po wpływie jednorazowym nie da się
-wybrać limitu kategorii (premia nie zmienia wydatków).
+### Ustawienia kafelka
 
-Kliknij kafelek, żeby zobaczyć jego ustawienia: podpis, miesiąc, kwoty. Pod ustawieniami widać, **kiedy
-w symulacji kafelek się wykonał** albo kiedy warunek został spełniony.
+Kliknij kafelek, żeby zobaczyć jego ustawienia po prawej: rodzaj, podpis, kwoty, miesiąc. Pod ustawieniami zobaczysz, **kiedy w symulacji kafelek się wykonał** (np. „Wykonany: maj 2027”).
+
+![Ustawienia zaznaczonego kafelka akcji „Nadpłać kredyt”: rodzaj, podpis, kwota nadpłaty i tryb rozliczenia](handbook/images/strategies-tile.png)
+
+Zmiana rodzaju zostawia pola, które nowy rodzaj też ma (np. kwotę), a strzałki, które przestają pasować, znikają. Na przykład zdarzenie nie przyjmuje strzałki wchodzącej, a „Koniec” nie ma wychodzącej.
 
 ### Łączenie kafelków
 
-Strzałkę prowadzisz od kropki na prawej krawędzi kafelka do kropki na lewej krawędzi następnego — myszą
-(przeciągnij) albo klawiaturą: zaznacz kafelek, naciśnij **C**, strzałkami wybierz cel i **Enter**. Warunek ma dwie
-kropki: górna to „tak”, dolna to „nie”. Zdarzenia i kafelki stanu wyjściowego nie mają wejścia (nic do nich nie
-prowadzi), a „Koniec” nie ma wyjścia.
+Strzałkę prowadzisz od kropki na **prawej** krawędzi kafelka do kropki na **lewej** krawędzi następnego:
 
-Strzałkę lub kafelek usuniesz klawiszem **Delete** albo przyciskiem w panelu. Tablicę przesuwasz przeciąganiem tła,
-a kółkiem myszy przybliżasz.
+- **myszą** — przeciągnij,
+- **klawiaturą** — zaznacz kafelek, naciśnij **C**, strzałkami wybierz cel i potwierdź **Enterem**.
+
+**Warunek** ma dwie kropki: górna to „tak”, dolna to „nie”. Strzałkę lub kafelek usuniesz klawiszem **Delete** albo przyciskiem w panelu. Tablicę przesuwasz przeciąganiem tła, a kółkiem myszy ją przybliżasz.
 
 ### Jak liczy się symulacja
 
-Symulacja idzie miesiąc po miesiącu, od miesiąca startu przez wybrany horyzont (domyślnie 24 miesiące).
-W każdym miesiącu kolejność jest taka:
+Symulacja idzie miesiąc po miesiącu — od miesiąca startu przez wybrany horyzont (domyślnie 24 miesiące). W każdym miesiącu kolejność jest taka:
 
 1. zaczyna się kredyt (jeśli to jego miesiąc),
 2. wykonują się zdarzenia tego miesiąca i akcje, które z nich wynikają,
 3. naliczają się odsetki i spływa rata,
 4. dopisuje się nadwyżka miesięczna,
-5. na koniec sprawdzane są warunki i akcje, które z nich wynikają.
+5. na końcu sprawdzane są warunki i akcje, które z nich wynikają.
 
 Dzięki temu nadpłata w maju liczy odsetki od niższego salda już za maj, a podwyżka ze stycznia działa od stycznia.
 
-**Rata zmniejsza dług, ale nie odejmuje oszczędności** — przyjmujemy, że nadwyżka jest już liczona po racie.
-Nadpłata w trybie „obniż ratę” zmniejsza ratę proporcjonalnie do spłaconej części długu, a w trybie „skróć okres”
-zostawia ratę bez zmian. Gdy warunek nie jest spełniony i prowadzi przez „Czekaj”, zostanie sprawdzony jeszcze raz
-w następnym miesiącu — to jedyna dozwolona pętla.
+> ℹ️ **Rata zmniejsza dług, ale nie odejmuje oszczędności** — zakładamy, że nadwyżka jest już liczona po racie. Nadpłata w trybie „obniż ratę” zmniejsza ratę proporcjonalnie do spłaconej części długu, a w trybie „skróć okres” zostawia ratę bez zmian.
 
-Na dole tablicy widać **wynik**: kiedy kredyt zostanie spłacony, kiedy osiągniesz poduszkę (dopiero gdy dług jest
-zerowy) i ile będzie oszczędności na koniec.
+Gdy warunek nie jest spełniony i prowadzi przez „Czekaj”, zostanie sprawdzony jeszcze raz w następnym miesiącu — to jedyna dozwolona pętla.
+
+Na dole tablicy widać **wynik**: kiedy kredyt zostanie spłacony, kiedy osiągniesz poduszkę (dopiero gdy dług jest zerowy) i ile będzie oszczędności na koniec.
 
 ### Problemy na tablicy
 
@@ -85,28 +84,34 @@ Symulacja **pomija** kafelki z problemami, ale szkic zapisuje się mimo to.
 
 ### Zastosuj w budżecie
 
-Przycisk **„Zastosuj w budżecie…”** zakłada w budżecie to, co planują akcje z grupy „Zakłada w budżecie”: miesięczny cel
-oszczędzania, rezerwacje, limity kategorii, zakończenie zlecenia stałego i wydatki jednorazowe. Okno liczy **zapisaną**
-strategię (przy niezapisanych zmianach przycisk jest wyłączony) i przy każdej akcji pokazuje status:
+Plan możesz **zamienić w prawdziwe zmiany** przyciskiem **Zastosuj w budżecie…**. Założy on w budżecie to, co planują akcje z grupy „Zakłada w budżecie”: miesięczny cel oszczędzania, rezerwacje, limity kategorii, zakończenie zlecenia stałego i wydatki jednorazowe.
 
-- **nowa** — założy nowy obiekt, **zmiana** — zmieni to, co już jest (inna kwota celu albo limitu, zakończenie zlecenia),
-- **już jest** — to samo już jest w budżecie, więc akcja jest pominięta (dzięki temu dwukrotne zastosowanie niczego nie zdubluje),
-- **czeka** — miesiąc akcji w symulacji jeszcze nie nadszedł (np. limit po spłacie kredytu), zastosujesz ją później,
-- **uzupełnij** — akcja ma problem na tablicy (brakuje kwoty, kategorii albo zlecenia).
+![Okno „Zastosuj strategię w budżecie” z listą akcji i ich statusami](handbook/images/strategies-apply.png)
 
-Zaznaczone akcje są stosowane **razem albo wcale** — błąd jednej cofa wszystkie. Cel miesięczny działa jak na ekranie
-„Cele oszczędzania” (podniesienie od bieżącego miesiąca, obniżenie od następnego), a limit jak na ekranie limitów
-(historia zamkniętych miesięcy się nie zmienia). Zastosowania **nie da się cofnąć jednym kliknięciem** — zmiany cofniesz
-na ekranach celów, rezerwacji, limitów i zleceń.
+Okno liczy **zapisaną** strategię (przy niezapisanych zmianach przycisk jest wyłączony) i przy każdej akcji pokazuje status:
+
+| Status | Znaczenie |
+|---|---|
+| **nowa** | Założy nowy obiekt w budżecie. |
+| **zmiana** | Zmieni to, co już jest (inna kwota celu albo limitu, zakończenie zlecenia). |
+| **już jest** | To samo już jest w budżecie — akcja zostanie pominięta (dwukrotne zastosowanie niczego nie zdubluje). |
+| **czeka** | Miesiąc akcji w symulacji jeszcze nie nadszedł (np. limit po spłacie kredytu) — zastosujesz ją później. |
+| **uzupełnij** | Akcja ma problem na tablicy (brakuje kwoty, kategorii albo zlecenia). |
+
+Zaznacz akcje, które chcesz zastosować, i potwierdź. Są stosowane **razem albo wcale** — błąd jednej cofa wszystkie.
+
+> ⚠️ **Zastosowania nie da się cofnąć jednym kliknięciem.** Zmiany cofniesz osobno na ekranach celów, rezerwacji, limitów i zleceń.
 
 ### Zapis
 
-Zmiany na tablicy nie zapisują się same — przycisk **„Zapisz strategię”** wysyła całość, a **„Odrzuć zmiany”**
-wraca do ostatniego zapisu. Przycisk **„Parametry”** zmienia nazwę, miesiąc startu, oszczędności na początku
-i horyzont. Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w budżecie.
+Zmiany na tablicy **nie zapisują się same**:
+
+- **Zapisz strategię** — wysyła całość,
+- **Odrzuć zmiany** — wraca do ostatniego zapisu,
+- **Parametry** — zmienia nazwę, miesiąc startu, oszczędności na początku i horyzont.
+
+Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w budżecie.
 
 ### Terminal (CLI)
 
-Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (patrz temat „Terminal”): `strategy list`,
-`get`, `create`, `save`, `simulate`, `delete`, `references`, `apply-preview` i `apply`. Graf idzie jako JSON w fladze
-`--json`, a `strategy apply <id> --node-ids a,b` zakłada w budżecie wskazane akcje — tak samo atomowo jak okno.
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `save`, `simulate`, `delete`, `references`, `apply-preview` i `apply`.

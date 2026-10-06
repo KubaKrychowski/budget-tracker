@@ -1491,6 +1491,7 @@
     "searchPlaceholder": "Szukaj w podręczniku",
     "noResults": "Nic nie pasuje do wyszukiwanej frazy.",
     "topics": {
+      "gettingStarted": "Pierwsze kroki — zacznij tutaj",
       "dashboard": "Pulpit i podsumowanie",
       "budgets": "Budżety",
       "import": "Import wyciągu z banku",

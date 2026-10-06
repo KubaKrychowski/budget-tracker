@@ -1,40 +1,50 @@
 ## Budżety
 
-Budżet to **abstrakcyjny zbiór zasad grupowania zaimportowanych transakcji** — nie „konto" ani
-„miesiąc kalendarzowy". Każdy budżet ma nazwę, walutę, miesiąc początkowy i saldo początkowe, i od
-tego momentu zbiera importowane wyciągi, limity, zlecenia i cele oszczędzania.
+**Budżet to „pojemnik” na Twoje finanse** — zbiera importowane wyciągi, limity, zlecenia i cele oszczędzania. Nie musi odpowiadać jednemu miesiącowi ani jednemu kontem bankowemu: to Ty decydujesz, co w nim trzymasz. Każdy budżet ma nazwę, walutę, miesiąc początkowy i saldo początkowe.
 
-### Po co więcej niż jeden budżet
+### Jak utworzyć budżet
 
-Kilka budżetów pozwala porównać warianty tych samych danych (np. „co by było, gdyby ten wydatek
-trafił do innej kategorii") albo rozdzielić różne konta bankowe. Import CSV działa **w obrębie
-budżetu** — ten sam wyciąg da się wgrać na inny budżet bez konfliktu duplikatów.
+![Formularz tworzenia budżetu: nazwa, bilans początkowy, waluta i opcja budżetu oszczędnościowego](handbook/images/budgets-create.png)
 
-### Powiązany budżet oszczędnościowy
+1. Na pulpicie wybierz **Utwórz budżet** (albo wpisz „budżet” w pasku wyszukiwania).
+2. Wpisz **nazwę** (np. „Domowy”), **bilans początkowy** (ile masz na koncie na starcie) i wybierz **walutę**.
+3. Jeśli masz osobne konto oszczędnościowe, zaznacz **„Dodaj połączony budżet oszczędnościowy”** — o tym niżej.
+4. Kliknij **Zakończ**.
 
-Jeśli masz osobne konto oszczędnościowe, zaimportuj je jako **osobny budżet** i połącz je z
-budżetem głównym przy tworzeniu (opcja „Dodaj połączony budżet oszczędnościowy") albo później w
-edycji. Powiązanie pozwala:
+### Po co więcej niż jeden budżet?
 
-- oznaczyć w Ustawieniach **regułę przelewu** (fragment tytułu + zakres kwoty), która rozpoznaje
-  własne przelewy między obydwoma budżetami — takie transakcje nie liczą się do wydatków ani
-  przychodów żadnego z nich (ale zostają w historii transakcji, oznaczone jako „Transfer");
-- zobaczyć na ekranie **Cele oszczędzania** prawdziwy bilans konta oszczędnościowego, zamiast
-  szacunku z samej kategorii.
+- **Rozdzielasz konta** — np. jeden budżet na konto osobiste, drugi na wspólne.
+- **Porównujesz warianty** — ten sam wyciąg możesz wgrać na dwa budżety i sprawdzić, „co by było, gdyby” wydatek trafił do innej kategorii.
 
-Bez powiązania ekran celów oszczędzania jest zablokowany — samo oznaczenie kategorii „Oszczędności"
-nie wystarcza do policzenia realnego stanu konta.
+Import działa **w obrębie jednego budżetu**: ten sam plik wgrany na inny budżet nie jest uznawany za duplikat.
 
-### Cykl życia budżetu (Ustawienia → Budżety)
+### Budżet oszczędnościowy
 
-![Lista budżetów w Ustawieniach z otwartym menu akcji: Edytuj, Wyłącz, Zresetuj, Usuń](handbook/images/budgets-list.png)
+Masz osobne konto, na które odkładasz pieniądze? Zaimportuj je jako **osobny budżet** i połącz z głównym — przy tworzeniu (opcja „Dodaj połączony budżet oszczędnościowy”) albo później, w menu budżetu → **Reguły powiązania**.
 
-| Operacja | Co robi | Co zostaje |
+Dzięki temu:
+
+- własne przelewy między kontami **nie psują statystyk** — nie liczą się ani do wydatków, ani do przychodów (zostają w historii z oznaczeniem „Transfer”),
+- ekran **Cele oszczędzania** pokazuje prawdziwy stan konta oszczędnościowego.
+
+Połączenie wymaga **reguły przelewu**: fragmentu tytułu przelewu (np. „przelew własny”) i zakresu kwoty. Po niej aplikacja rozpoznaje, które transakcje to przelewy między Twoimi kontami.
+
+> ⚠️ **Bez powiązanego budżetu oszczędnościowego ekran „Cele oszczędzania” jest zablokowany** — samo oznaczenie kategorii „Oszczędności” nie wystarcza do policzenia realnego stanu konta.
+
+### Zarządzanie budżetami
+
+Listę budżetów znajdziesz w **Ustawieniach → Budżety**. Przy każdym budżecie jest menu **⋮** z akcjami:
+
+![Lista budżetów w Ustawieniach z otwartym menu akcji: Edytuj, Reguły powiązania, Wyłącz, Zresetuj, Usuń](handbook/images/budgets-list.png)
+
+| Akcja | Co robi | Co zostaje |
 |---|---|---|
-| **Wyłączenie** | zamyka budżet na nowy import i nowe transakcje | wszystko, budżet nadal widoczny |
-| **Reset** | usuwa transakcje, importy i limity | nazwa, waluta, miesiąc, saldo, cel i rezerwacje |
-| **Usunięcie** | to co reset, plus cele i rezerwacje | budżet wraca po przywróceniu przez określony czas |
-| **Przywrócenie** | cofa usunięcie budżetu i jego danych | — |
+| **Edytuj** | Zmienia dane budżetu (np. nazwę). | Wszystko. |
+| **Reguły powiązania** | Ustawia powiązanie z budżetem oszczędnościowym i regułę przelewu. | Wszystko. |
+| **Wyłącz** | Zamyka budżet na nowe importy i transakcje. | Wszystko — budżet nadal widać. Można go z powrotem włączyć. |
+| **Zresetuj** | Czyści transakcje, importy i limity. | Nazwa, waluta, miesiąc, saldo, cel i rezerwacje. |
+| **Usuń** | To, co reset, plus cele i rezerwacje. | Budżet można **przywrócić** przez ograniczony czas (domyślnie 30 dni). |
 
-Wyłączenie **nie** blokuje edycji, resetu, usunięcia ani przywrócenia — to celowe, żeby dało się z
-niego wyjść bez ponownego włączania.
+> 💡 Wyłączenie **nie blokuje** edycji, resetu, usunięcia ani przywrócenia — dzięki temu zawsze da się z wyłączonego budżetu „wyjść”, bez konieczności ponownego włączania.
+
+> ⚠️ **Reset i usunięcie kasują transakcje.** Zanim klikniesz, upewnij się, że to właściwy budżet.
