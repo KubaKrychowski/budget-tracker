@@ -38,6 +38,11 @@
     </button>
   }
   <!-- `activeTab()`, a nie stała z adresu: na telefonie sekcję wybiera lista, nie pasek zakładek. -->
+  @if (activeTab() === aboutTabIndex) {
+    <section class="set__section">
+      <app-about-app />
+    </section>
+  } @else {
   <nz-tabs class="set__tabs" [nzSelectedIndex]="activeTab()" (nzSelectedIndexChange)="onTabChange($event)">
     <nz-tab [nzTitle]="'settings.tabs.budgets' | translate">
       <section class="set__section">
@@ -354,6 +359,7 @@
       </section>
     </nz-tab>
   </nz-tabs>
+  }
   }
 </div>
 

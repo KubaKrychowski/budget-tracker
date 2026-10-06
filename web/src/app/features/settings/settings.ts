@@ -38,6 +38,8 @@ import { Rules } from './rules/rules';
 import { Categories } from './categories/categories';
 import { Training } from './training/training';
 import { AccountSecurity } from './account-security/account-security';
+import { AboutApp } from './about-app/about-app';
+import { AppUpdateService } from '../../core/app-update/app-update.service';
 import { valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
 
@@ -53,6 +55,9 @@ const CategoriesTab = 'categories';
 const CategoriesTabIndex = 3;
 const AccountTab = 'account';
 const AccountTabIndex = 4;
+/** „O aplikacji”: tylko w aplikacji na Androida i tylko na liście sekcji telefonu — na desktopie nie ma zakładki. */
+const AboutTab = 'about';
+const AboutTabIndex = 5;
 
 /** Zakładka wskazana w adresie, albo 0 (budżety), gdy parametru nie ma lub jest nieznany. */
 /** Budżety nie mają własnego `?tab=` na desktopie (to zakładka domyślna) — na telefonie odróżnia sekcję od listy. */
@@ -63,6 +68,7 @@ const TabIndexByParam: Record<string, number> = {
   [RulesTab]: RulesTabIndex,
   [CategoriesTab]: CategoriesTabIndex,
   [AccountTab]: AccountTabIndex,
+  [AboutTab]: AboutTabIndex,
 };
 
 /** Parametr adresu dla indeksu zakładki, albo `null` dla domyślnej. */
@@ -71,6 +77,7 @@ const TabParamByIndex: Record<number, string> = {
   [RulesTabIndex]: RulesTab,
   [CategoriesTabIndex]: CategoriesTab,
   [AccountTabIndex]: AccountTab,
+  [AboutTabIndex]: AboutTab,
 };
 
 /**
@@ -162,7 +169,7 @@ function startOfDay(date: Date): number {
     NzAlertModule, NzBadgeModule, NzButtonModule, NzDatePickerModule, NzDropdownModule,
     NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule, NzModalModule, NzSelectModule,
     NzSpinModule, NzTableModule, NzTabsModule, TranslatePipe, NzBreadCrumbComponent, NzBreadCrumbItemComponent,
-    RangeFilter, PageHeader, Rules, Categories, Training, AccountSecurity,
+    RangeFilter, PageHeader, Rules, Categories, Training, AccountSecurity, AboutApp,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',
@@ -179,12 +186,18 @@ export class Settings {
   protected readonly viewport = inject(Viewport);
 
   /** Sekcje ustawień na liście telefonu — w kolejności zakładek desktopu. */
+  private readonly appUpdates = inject(AppUpdateService);
+
+  protected readonly aboutTabIndex = AboutTabIndex;
+
   protected readonly mobileSections = [
     { index: 0, labelKey: 'settings.tabs.budgets', icon: 'wallet' },
     { index: TrainingTabIndex, labelKey: 'settings.tabs.training', icon: 'experiment' },
     { index: RulesTabIndex, labelKey: 'settings.tabs.rules', svg: 'icons/popraw-kategorie-azure.svg' },
     { index: CategoriesTabIndex, labelKey: 'settings.tabs.categories', icon: 'tags' },
     { index: 4, labelKey: 'settings.tabs.account', icon: 'setting' },
+    // Sprawdzanie wersji działa tylko w aplikacji na Androida (makieta Figma 420:1542).
+    ...(this.appUpdates.isSupported ? [{ index: AboutTabIndex, labelKey: 'settings.tabs.about', icon: 'download' }] : []),
   ] as const;
 
   /** Telefon: lista sekcji, dopóki adres nie wskazuje sekcji — wejście z menu „Więcej” trafia na listę. */
@@ -219,8 +232,13 @@ export class Settings {
    * transakcji („Ustawienia / Dane treningowe / Lista transakcji") prowadziłby na ekran
    * otwarty na budżetach.
    */
-  protected readonly initialTab =
-    TabIndexByParam[this.route.snapshot.queryParamMap.get('tab') ?? ''] ?? 0;
+  protected readonly initialTab = this.initialTabFromUrl();
+
+  /** `?tab=about` poza aplikacją na Androida nie ma dokąd prowadzić — wtedy zostają budżety. */
+  private initialTabFromUrl(): number {
+    const index = TabIndexByParam[this.route.snapshot.queryParamMap.get('tab') ?? ''] ?? 0;
+    return index === AboutTabIndex && !this.appUpdates.isSupported ? 0 : index;
+  }
 
   /** Która zakładka jest otwarta TERAZ — steruje leniwym montowaniem „Danych treningowych". */
   protected readonly activeTab = signal(this.initialTab);

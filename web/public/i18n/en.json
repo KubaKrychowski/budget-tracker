@@ -353,7 +353,8 @@
       "budgets": "Budgets",
       "training": "Training data",
       "categories": "Categories",
-      "account": "Account & security"
+      "account": "Account & security",
+      "about": "About the app"
     },
     "training": {
       "caption": "Training data",
@@ -594,6 +595,27 @@
     },
     "mobile": {
       "allSections": "All settings"
+    },
+    "about": {
+      "installed": "Installed version",
+      "latest": "Latest version",
+      "checkedAt": "Last checked",
+      "check": "Check for updates",
+      "checkAgain": "Check again",
+      "retry": "Try again",
+      "download": "Download version {{latest}}",
+      "upToDate": {
+        "title": "You have the latest version",
+        "body": "Version {{version}} is up to date."
+      },
+      "available": {
+        "title": "A new version is available",
+        "body": "Version {{latest}} is ready to download. Android will ask to update — your data and login stay."
+      },
+      "error": {
+        "title": "Could not check for updates",
+        "body": "Check your internet connection and try again."
+      }
     }
   },
   "confirmDialog": {

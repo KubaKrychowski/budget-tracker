@@ -82,4 +82,73 @@ describe('Pasek aktualizacji aplikacji', () => {
     expect(text(await render('android-v2.2'))).not.toContain('Jest nowa wersja');
     expect(text(await render('android-v2.3'))).toContain('2.3 · masz 2.1');
   });
+
+  describe('sprawdzanie ręczne i start aplikacji', () => {
+    const service = () => TestBed.inject(AppUpdateService);
+    const flush = async (tag: string) => {
+      await Promise.resolve();
+      http.expectOne(ReleaseUrl).flush({ tag_name: tag, assets: [{ name: 'wydatki.apk', browser_download_url: 'https://github.com/x/wydatki.apk' }] });
+    };
+
+    it('zimny start pyta GitHuba mimo świeżego sprawdzenia, a powrót z tła nie', async () => {
+      vi.spyOn(service() as unknown as { isAndroidApp: () => boolean }, 'isAndroidApp').mockReturnValue(true);
+      let onResume: () => void = () => undefined;
+      vi.spyOn(service() as unknown as { listenForResume: (cb: () => void) => void }, 'listenForResume')
+        .mockImplementation((cb) => { onResume = cb; });
+      localStorage.setItem('bt-app-update.checked-at', String(Date.now() - 60_000));
+
+      service().start();
+      await flush('android-v2.2');
+      await new Promise((r) => setTimeout(r));
+      // Blokada godzinna dalej działa przy powrocie z tła: minuta po sprawdzeniu nie pyta drugi raz.
+      onResume();
+      await Promise.resolve();
+
+      http.expectNone(ReleaseUrl);
+      expect(service().status()).toBe('available');
+    });
+
+    it('ręczne sprawdzenie pokazuje pasek także po zamknięciu go krzyżykiem dla tej wersji', async () => {
+      const fixture = await render('android-v2.2');
+      (fixture.nativeElement.querySelector('.upd__close') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(text(fixture)).not.toContain('Jest nowa wersja');
+
+      const checking = service().checkNow();
+      await flush('android-v2.2');
+      await checking;
+      fixture.detectChanges();
+
+      expect(text(fixture)).toContain('2.2 · masz 2.1');
+    });
+
+    it('zapisuje wynik: aktualna wersja, nowa wersja i błąd sieci', async () => {
+      let checking = service().checkNow();
+      expect(service().status()).toBe('checking');
+      await flush('android-v2.1');
+      await checking;
+      expect(service().status()).toBe('upToDate');
+      expect(service().installed()).toBe('2.1');
+      expect(service().checkedAt()).not.toBeNull();
+
+      checking = service().checkNow();
+      await flush('android-v2.3');
+      await checking;
+      expect([service().status(), service().latest()]).toEqual(['available', '2.3']);
+
+      checking = service().checkNow();
+      await Promise.resolve();
+      http.expectOne(ReleaseUrl).flush({}, { status: 500, statusText: 'Server Error' });
+      await checking;
+      expect(service().status()).toBe('error');
+    });
+
+    it('wydanie, które nie jest wydaniem Androida, to błąd, a nie „masz najnowszą”', async () => {
+      const checking = service().checkNow();
+      await flush('v9.9');
+      await checking;
+
+      expect(service().status()).toBe('error');
+    });
+  });
 });

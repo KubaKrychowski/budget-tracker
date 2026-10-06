@@ -357,7 +357,8 @@
       "training": "Dane treningowe",
       "rules": "Reguły predykatu",
       "categories": "Kategorie",
-      "account": "Konto i bezpieczeństwo"
+      "account": "Konto i bezpieczeństwo",
+      "about": "O aplikacji"
     },
     "training": {
       "caption": "Dane treningowe",
@@ -662,6 +663,27 @@
     },
     "mobile": {
       "allSections": "Wszystkie ustawienia"
+    },
+    "about": {
+      "installed": "Zainstalowana wersja",
+      "latest": "Najnowsza wersja",
+      "checkedAt": "Ostatnie sprawdzenie",
+      "check": "Sprawdź aktualizacje",
+      "checkAgain": "Sprawdź ponownie",
+      "retry": "Spróbuj ponownie",
+      "download": "Pobierz wersję {{latest}}",
+      "upToDate": {
+        "title": "Masz najnowszą wersję",
+        "body": "Wersja {{version}} jest aktualna."
+      },
+      "available": {
+        "title": "Jest nowa wersja aplikacji",
+        "body": "Wersja {{latest}} jest gotowa do pobrania. Android zapyta o aktualizację — dane i zalogowanie zostają."
+      },
+      "error": {
+        "title": "Nie udało się sprawdzić aktualizacji",
+        "body": "Sprawdź połączenie z internetem i spróbuj ponownie."
+      }
     }
   },
   "confirmDialog": {

@@ -1,0 +1,65 @@
+<div class="abt">
+  <!-- Alert na górze treści (reguła alertów), jego rodzaj mówi, czym skończyło się ostatnie sprawdzenie. -->
+  @switch (updates.status()) {
+    @case ('upToDate') {
+      <nz-alert
+        nzType="success"
+        nzShowIcon
+        [nzMessage]="'settings.about.upToDate.title' | translate"
+        [nzDescription]="'settings.about.upToDate.body' | translate: { version: updates.installed() }"
+      />
+    }
+    @case ('available') {
+      <nz-alert
+        nzType="info"
+        nzShowIcon
+        [nzMessage]="'settings.about.available.title' | translate"
+        [nzDescription]="'settings.about.available.body' | translate: { latest: updates.latest() }"
+      />
+    }
+    @case ('error') {
+      <nz-alert
+        nzType="error"
+        nzShowIcon
+        [nzMessage]="'settings.about.error.title' | translate"
+        [nzDescription]="'settings.about.error.body' | translate"
+      />
+    }
+  }
+
+  <dl class="abt__card">
+    <div class="abt__row">
+      <dt>{{ 'settings.about.installed' | translate }}</dt>
+      <dd>{{ updates.installed() ?? '—' }}</dd>
+    </div>
+    <div class="abt__row">
+      <dt>{{ 'settings.about.latest' | translate }}</dt>
+      <dd [class.abt__new]="updates.status() === 'available'">{{ updates.latest() ?? '—' }}</dd>
+    </div>
+    <div class="abt__row">
+      <dt>{{ 'settings.about.checkedAt' | translate }}</dt>
+      <dd>
+        @if (updates.checkedAt(); as at) {
+          {{ at | date: 'd.MM.y, HH:mm' : undefined : locale() }}
+        } @else {
+          —
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <div class="abt__actions">
+    @if (updates.status() === 'available') {
+      <button nz-button nzType="primary" nzBlock nzSize="large" (click)="updates.update()">
+        {{ 'settings.about.download' | translate: { latest: updates.latest() } }}
+      </button>
+      <button nz-button nzBlock nzSize="large" (click)="check()">
+        {{ 'settings.about.checkAgain' | translate }}
+      </button>
+    } @else {
+      <button nz-button nzType="primary" nzBlock nzSize="large" [nzLoading]="updates.status() === 'checking'" (click)="check()">
+        {{ (updates.status() === 'error' ? 'settings.about.retry' : 'settings.about.check') | translate }}
+      </button>
+    }
+  </div>
+</div>
