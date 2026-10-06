@@ -1,29 +1,43 @@
 ## Pulpit i podsumowanie
 
-Pulpit pokazuje stan wybranego budżetu na dziś oraz podsumowanie okresu, który ustawisz w polu
-„Okres" — domyślnie ostatnie 30 dni.
+Pulpit to pierwszy ekran, który zobaczysz po zalogowaniu. W jednym miejscu pokazuje, **ile masz teraz na koncie**, **ile wydałeś** w ostatnim czasie i **na co poszły pieniądze**.
 
-![Pulpit: kafle podsumowania, podział wydatków na kategorie i wykres stanu budżetu](handbook/images/dashboard-overview.png)
+![Pulpit: skróty do ostatnich ekranów, wybór budżetu i okresu, kafle podsumowania oraz dwa wykresy](handbook/images/dashboard-overview.png)
 
-### Co widać na kaflach
+> 🧭 **Pierwszy raz w aplikacji?** Zacznij od tematu **Pierwsze kroki — zacznij tutaj**: przeprowadzi Cię od utworzenia budżetu do pierwszych liczb na pulpicie.
 
-- **Suma zaimportowanych wydatków i przychodów** w wybranym okresie.
-- **Aktualny stan budżetu** — bilans na dany dzień (saldo początkowe plus wszystko, co wydarzyło
-  się do tej daty), a nie suma wydatków z okresu. Dlatego zmiana zakresu dat nie zmienia tej liczby.
-- **Najdroższa kategoria** i **największy wydatek** w okresie.
+### Skróty na górze ekranu
 
-### Wykres „Stan budżetu"
+- **Pasek wyszukiwania** — wpisz nazwę ekranu, budżetu albo akcji (np. „limity”), a aplikacja przeniesie Cię od razu na miejsce.
+- **Ikony po prawej:** gwiazdka — „Co nowego”, książka — ten podręcznik, ikona terminala — wiersz poleceń (temat **Terminal**), koło zębate — Ustawienia.
+- **„Ostatnie akcje”** — kafelki z ekranami, na których byłeś ostatnio. Jednym kliknięciem wracasz tam, gdzie skończyłeś.
 
-Linia pokazuje bilans dzień po dniu, licząc od salda otwarcia budżetu. Nie miesza się z limitami
-wydatków — to inna wielkość (limity dotyczą tego, ile *wolno* wydać w kategorii; wykres pokazuje,
-ile *zostało* na koncie).
+### Wybór budżetu i okresu
 
-### Który budżet widzę?
+W ramce **Konfiguracja** wybierasz:
 
-Wybór budżetu jest wspólny dla całej aplikacji: zmiana na pulpicie przenosi się na inne ekrany
-(transakcje, cele oszczędzania, limity...), a przeładowanie strony pamięta ostatni wybór.
+- **Budżet** — pulpit pokazuje dane tylko jednego budżetu naraz. Wybór pamięta cała aplikacja: gdy zmienisz budżet tutaj, ten sam będzie wybrany na ekranach Transakcje, Limity czy Cele oszczędzania. Po odświeżeniu strony też zostanie zapamiętany.
+- **Okres** — zakres dat do podsumowania. Domyślnie ostatnie 30 dni.
+
+### Co oznaczają liczby w podsumowaniu
+
+| Kafel | Co pokazuje |
+|---|---|
+| **Suma zaimportowanych wydatków** | Ile wydałeś w wybranym okresie. |
+| **Suma zaimportowanych przychodów** | Ile wpłynęło w wybranym okresie. |
+| **Aktualny stan budżetu** | Ile jest „na koncie” **na dziś** (saldo początkowe plus wszystko, co się wydarzyło do tej pory). |
+| **Najdroższa kategoria** | Kategoria, w której wydałeś najwięcej w okresie. |
+| **Największy wydatek w okresie** | Pojedyncza najwyższa transakcja. |
+
+> 💡 **Dlaczego zmiana dat nie zmienia „Aktualnego stanu budżetu”?** Bo to stan na dziś, a nie suma z okresu. Pozostałe kafle liczą się tylko dla wybranych dat.
+
+### Wykresy
+
+- **Podział wydatków na kategorie** — słupki pokazują, które kategorie pochłaniają najwięcej pieniędzy.
+- **Stan budżetu** — linia pokazuje, jak zmieniało się Twoje saldo dzień po dniu. Możesz przybliżać wykres (ikony lupy i strzałek w prawym górnym rogu wykresu) i przesuwać go.
+
+> ℹ️ Wykres „Stan budżetu” pokazuje, **ile zostało na koncie**. To coś innego niż limity wydatków, które mówią, **ile wolno wydać** w danej kategorii.
 
 ### Budżet wyłączony
 
-Wyłączony budżet nadal jest widoczny na pulpicie — historię ogląda się także po jego zamknięciu.
-Ekran oznacza go tagiem i gasi kafle, które dopisywałyby do niego nowe dane.
+Wyłączony budżet nadal widać na pulpicie — historię możesz oglądać także po jego zamknięciu. Ekran oznacza go tagiem i wygasza akcje, które dopisywałyby do niego nowe dane.

@@ -1,27 +1,54 @@
 ## Zlecenia epizodyczne
 
-Zlecenie epizodyczne to zaplanowany, jednorazowy wydatek (np. „Nowy laptop") — następca dawnej flagi
-„duży wydatek". Ma dwa stany:
+Zlecenie epizodyczne to **jednorazowy, większy wydatek** — nowy laptop, pralka, serwis auta. Możesz go **zaplanować z wyprzedzeniem** albo **oznaczyć jako już zrealizowany**. To następca dawnej flagi „duży wydatek”.
 
-- **Zaplanowane** — kategoria, orientacyjna kwota i termin, zanim wydatek się wydarzy.
-- **Zrealizowane** — wskazuje konkretną transakcję z importu; kwotę, datę i kategorię bierze WŁAŚNIE
-  z niej, nie z planu. Plan zostaje widoczny nawet po realizacji, żeby dało się cofnąć „do
-  zaplanowanych", jeśli oznaczenie było pomyłką.
+![Lista zaplanowanych zleceń epizodycznych z menu akcji: Załóż cel oszczędzania, Oznacz jako kupione, Zmień, Usuń](handbook/images/episodic-orders-list.png)
 
-![Zaplanowane zlecenia epizodyczne z paskiem postępu oszczędzania i menu akcji](handbook/images/episodic-orders-list.png)
+### Dwa stany zlecenia
 
-### Realizację można oznaczyć z dwóch miejsc
+- 🗓️ **Zaplanowane** — masz kategorię, orientacyjną kwotę i termin, ale wydatek jeszcze się nie wydarzył. To Twoja „lista rzeczy do kupienia”.
+- ✅ **Zrealizowane** — wskazujesz **konkretną transakcję z importu**. Kwotę, datę i kategorię aplikacja bierze wtedy **z niej**, nie z planu.
 
-Z listy transakcji („Oznacz jako zrealizowane zlecenie") albo z samego ekranu zleceń. Oznaczenie z
-listy transakcji nie wymaga wskazania budżetu — serwer bierze budżet z samej transakcji, bo lista
-może pokazywać kilka budżetów naraz.
+Plan zostaje widoczny nawet po realizacji. Dzięki temu, jeśli oznaczenie było pomyłką, cofniesz je z powrotem do „zaplanowanych”.
 
-### Powiązanie z celami oszczędzania
+### Jak dodać zlecenie
 
-„Załóż cel oszczędzania" przy zleceniu epizodycznym tworzy zwykłą rezerwację na ekranie Cele
-oszczędzania, którą to zlecenie **rządzi**: zmiana kwoty lub terminu planu przepisuje nierozliczoną
-rezerwację, usunięcie zlecenia ją zabiera, a „Oznacz jako kupione" rozlicza ją zakupem — nie
-wypłatą z oszczędności, więc zwykłe warunki wypłaty z ekranu rezerwacji tu nie obowiązują.
+Kliknij **Dodaj zlecenie** na ekranie Zlecenia epizodyczne.
 
-Jeśli transakcja zrealizowanego zlecenia zniknie (np. przez reset budżetu), zlecenie wraca do stanu
-ukrytego, a nie kasowanego — przywrócenie transakcji przywraca też je.
+![Formularz: przełącznik Zaplanowane / Już zrealizowane, nazwa, opis, kategoria, kwota i termin](handbook/images/episodic-orders-form.png)
+
+1. Wybierz **Zaplanowane** (albo **Już zrealizowane**, jeśli zakup już się odbył).
+2. Wpisz **nazwę** (np. „Nowy laptop”) i, opcjonalnie, **opis**.
+3. Wybierz **kategorię** i wpisz **kwotę**.
+4. Ustaw **termin (miesiąc)** — albo zaznacz **„Bez terminu — kupię, kiedy będzie okazja”**.
+5. Kliknij **Zapisz zlecenie**.
+
+### Co zobaczysz na ekranie
+
+U góry kafle: **Zaplanowane** (suma planowanych zakupów), **Uzbierane w rezerwacjach**, **Zrealizowane w tym roku** i **Bez oszczędzania** (ile planów nie ma jeszcze odkładanych pieniędzy). Poniżej dwie karty — **Zaplanowane** i **Zrealizowane** — oraz lista **Zrealizowane ostatnio**.
+
+### Menu akcji (⋯) przy zaplanowanym zleceniu
+
+| Akcja | Co robi |
+|---|---|
+| **Załóż cel oszczędzania** | Tworzy rezerwację na ekranie „Cele oszczędzania”, z tą samą kwotą i terminem. |
+| **Oznacz jako kupione…** | Wskazujesz transakcję, którą kupiłeś — zlecenie przechodzi do zrealizowanych. |
+| **Zmień** | Edycja planu. |
+| **Usuń** | Usuwa zlecenie (i rezerwację, jeśli ją założyłeś z tego zlecenia). |
+
+### Dwa sposoby na „zrealizowane”
+
+1. Na tym ekranie: **Oznacz jako kupione…**.
+2. Na liście transakcji: w menu ⋮ przy transakcji wybierz **Oznacz jako zlecenie epizodyczne…**. Nie musisz wskazywać budżetu — aplikacja weźmie go z samej transakcji.
+
+### Zlecenie i oszczędzanie
+
+**Załóż cel oszczędzania** tworzy zwykłą rezerwację w „Celach oszczędzania”, ale to zlecenie **nią rządzi**:
+
+- zmiana kwoty lub terminu w planie **przepisuje** nierozliczoną rezerwację,
+- usunięcie zlecenia **zabiera** rezerwację,
+- **Oznacz jako kupione** rozlicza rezerwację zakupem — nie jest to wypłata z oszczędności, więc zwykłe warunki wypłaty z ekranu rezerwacji tu nie obowiązują.
+
+> ℹ️ Jeśli transakcja zrealizowanego zlecenia zniknie (np. po resecie budżetu), zlecenie nie jest kasowane — wraca do stanu ukrytego. Gdy przywrócisz transakcję, przywróci się też zlecenie.
+
+> 💡 Wydatki epizodyczne **liczą się do limitu** kategorii, bo to nadal zwykłe wydatki.

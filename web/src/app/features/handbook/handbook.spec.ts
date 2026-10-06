@@ -59,12 +59,12 @@ describe('Handbook', () => {
     const harness = await RouterTestingHarness.create('/handbook');
     harness.detectChanges();
 
-    flushHandbookFiles({ 'handbook/dashboard.md': '## Pulpit i podsumowanie' });
+    flushHandbookFiles({ 'handbook/getting-started.md': '## Pierwsze kroki' });
     await flushMicrotasks();
     harness.detectChanges();
 
     const html = harness.routeNativeElement?.innerHTML ?? '';
-    expect(html).toContain('Pulpit i podsumowanie');
+    expect(html).toContain('Pierwsze kroki');
   });
 
   it('?topic= wczytuje właściwy plik i podświetla właściwą pozycję w liście', async () => {
@@ -86,12 +86,12 @@ describe('Handbook', () => {
     const harness = await RouterTestingHarness.create('/handbook?topic=nieistniejacy');
     harness.detectChanges();
 
-    flushHandbookFiles({ 'handbook/dashboard.md': '## Pulpit i podsumowanie' });
+    flushHandbookFiles({ 'handbook/getting-started.md': '## Pierwsze kroki' });
     await flushMicrotasks();
     harness.detectChanges();
 
     const selected = harness.routeNativeElement?.querySelector('.hb__topic--selected');
-    expect(selected?.textContent?.trim()).toBe('handbook.topics.dashboard');
+    expect(selected?.textContent?.trim()).toBe('handbook.topics.gettingStarted');
   });
 
   describe('wyszukiwarka', () => {
