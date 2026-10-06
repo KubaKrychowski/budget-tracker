@@ -3,7 +3,11 @@
     <nz-breadcrumb-item>
       <a routerLink="/dashboard">{{ 'dashboard.breadcrumb' | translate }}</a>
     </nz-breadcrumb-item>
-    <nz-breadcrumb-item>{{ 'strategies.title' | translate }}</nz-breadcrumb-item>
+    <!-- Ikona przy BIEŻĄCEJ sekcji, jak na limitach i celach. -->
+    <nz-breadcrumb-item>
+      <img class="str__crumb-icon" src="icons/strategia-oszczedzania-azure.svg" alt="" width="20" height="20" />
+      {{ 'strategies.title' | translate }}
+    </nz-breadcrumb-item>
   </nz-breadcrumb>
 
   @if (failure(); as problem) {

@@ -16,12 +16,14 @@ import { Terminal } from './core/terminal/terminal';
 import { TerminalService } from './core/terminal/terminal.service';
 import { MobileNav } from './core/mobile-nav/mobile-nav';
 import { Viewport } from './core/layout/viewport';
+import { AppUpdateBanner } from './core/app-update/app-update-banner';
+import { AppUpdateService } from './core/app-update/app-update.service';
 import { AuthNavigation } from './core/native/auth-navigation';
 
 @Component({
   imports: [
     RouterLink, RouterOutlet, FormsModule,
-    NzIconModule, TranslatePipe, SearchMenu, Terminal, AuthSplashScreen, MobileNav,
+    NzIconModule, TranslatePipe, SearchMenu, Terminal, AuthSplashScreen, MobileNav, AppUpdateBanner,
   ],
   selector: 'app-root',
   styleUrl: './app.scss',
@@ -36,6 +38,10 @@ export class App {
 
   /** Telefon: dolny pasek nawigacji zamiast ikon nagłówka (makiety Figma „Mobile (propozycja)”). */
   protected readonly viewport = inject(Viewport);
+
+  /** Apka na Androida sprawdza, czy jest nowsze wydanie (pasek „Jest nowa wersja”). W przeglądarce nic nie robi. */
+  private readonly appUpdates = inject(AppUpdateService);
+  private readonly checkForUpdates = afterNextRender(() => this.appUpdates.start());
   protected readonly changelog = inject(ChangelogService);
 
   /** Okładka na czas logowania — patrz `AuthSplash`. Powłoka pod nią jest `inert`, więc fokus nie ucieka za okładkę. */

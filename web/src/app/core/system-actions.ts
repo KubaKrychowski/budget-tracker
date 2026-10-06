@@ -89,7 +89,9 @@ export const SYSTEM_ACTIONS: readonly SystemAction[] = [
   {
     key: 'strategies',
     labelKey: 'actions.strategies',
+    // Własna ikona sekcji. `icon` zostaje jako zapas, gdyby plik zniknął z `public/icons/`.
     icon: 'apartment',
+    svg: 'icons/strategia-oszczedzania-azure.svg',
     route: '/strategies',
     quickAction: false,
     group: 'planning',

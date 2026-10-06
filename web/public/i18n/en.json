@@ -1475,5 +1475,11 @@
     "goals": "Goals",
     "standingOrders": "Standing orders",
     "more": "More"
+  },
+  "appUpdate": {
+    "title": "A new version of the app is available",
+    "versions": "{{latest}} · you have {{current}}",
+    "update": "Update",
+    "dismiss": "Hide until the next version"
   }
 }

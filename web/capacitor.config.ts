@@ -14,6 +14,13 @@ const config: CapacitorConfig = {
   appId: 'com.wydatki.app',
   appName: 'Wydatki.com',
   webDir: 'dist/mobile/browser',
+  plugins: {
+    // Tryb pełnoekranowy obsługuje MainActivity.java, a treść celowo ignoruje otwór na kamerę. Wtyczka SystemBars
+    // dokładała margines nad WebView (na WebView < 140), czyli pas w miejscu ukrytego paska statusu.
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
+  },
 };
 
 export default config;

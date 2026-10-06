@@ -1,6 +1,11 @@
 .str {
   padding: 16px 24px 48px;
 
+  /* Ikona okruszka siedzi na linii tekstu — jak na limitach i celach. */
+  &__crumb-icon {
+    vertical-align: text-bottom;
+  }
+
   /* Karta „Konfiguracja" — ten sam wygląd co na ekranie limitów (makieta 203:3). */
   &__config {
     margin: 16px 0;

@@ -1545,5 +1545,11 @@
     "goals": "Cele",
     "standingOrders": "Zlecenia stałe",
     "more": "Więcej"
+  },
+  "appUpdate": {
+    "title": "Jest nowa wersja aplikacji",
+    "versions": "{{latest}} · masz {{current}}",
+    "update": "Zaktualizuj",
+    "dismiss": "Zamknij do następnej wersji"
   }
 }
