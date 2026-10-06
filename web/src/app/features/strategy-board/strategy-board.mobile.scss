@@ -1,30 +1,246 @@
 /* Widok mobilny tablicy strategii — osobny arkusz, bo razem z desktopowym przekraczał budżet stylu
-   komponentu (angular.json, anyComponentStyle). Ładuje się po strategy-board.scss. */
+   komponentu (angular.json, anyComponentStyle). Ładuje się po strategy-board.scss.
 
-/* Telefon: tablica na całą szerokość, panel kafelków POD nią. Obok siebie panel (392 px) zabierał cały ekran,
-   a tablica dostawała 0 px — kafelków nie było widać. Przyciski nagłówka schodzą pod tytuł, który inaczej łamał
-   się w środku słowa. */
+   Makiety Figma, strona „Mobile (propozycja)”: tablica 417:1610, lista kroków 419:1350, arkusz kafelka 419:1593.
+   Panel boczny (392 px) zabierał całą szerokość, a tablica dostawała 0 px — na telefonie jego treść stoi w arkuszu od dołu. */
 @media (max-width: 768px) {
-  .sb__head,
-  .sb__area {
+  .sb {
+    padding: 0 16px 16px;
+  }
+
+  .sb__mhead {
+    display: flex;
     flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
   }
 
-  .sb__head-actions {
-    align-items: flex-start;
+  .sb__mrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    .sb__title {
+      margin: 0;
+      font-size: 20px;
+    }
   }
 
-  .sb__buttons {
-    justify-content: flex-start;
+  .sb__mmenu {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    line-height: 1;
+    background: #fff;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .sb__mstatus {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ds-neutral-600);
+  }
+
+  .sb__dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    background: var(--ds-warn-300);
+    border-radius: 50%;
+  }
+
+  .sb__area {
+    overflow: hidden;
+    border-radius: 8px;
   }
 
   .sb__flow {
-    height: 480px;
+    height: 440px;
   }
 
-  .sb__panel {
-    width: auto;
-    max-height: none;
-    border-left: 0;
+  .sb__zoom {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid var(--ds-neutral-300);
+    border-radius: 4px;
+
+    button {
+      min-width: 28px;
+      height: 28px;
+      padding: 0 4px;
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+  }
+
+  .sb__zoom-fit {
+    color: var(--ds-primary-600);
+  }
+
+  .sb__gesture {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    z-index: 3;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #fff;
+    white-space: nowrap;
+    pointer-events: none;
+    background: rgba(37, 43, 39, 0.85);
+    border-radius: 12px;
+    transform: translateX(-50%);
+  }
+
+  /* Lista kroków: każde zdarzenie to karta, a pod nim kroki za strzałkami; gałęzie warunku są wcięte. */
+  .sb__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sb__chain {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 8px;
+  }
+
+  .sb__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sb__rail {
+    flex: none;
+    width: 28px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ds-neutral-600);
+    text-align: center;
+  }
+
+  .sb__step {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+    padding: 10px 12px;
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--ds-neutral-300);
+    border-radius: 4px;
+    cursor: pointer;
+
+    &--event,
+    &--base {
+      padding: 0;
+      background: none;
+      border: 0;
+    }
+
+    &--condition,
+    &--wait {
+      border: 1px dashed var(--ds-warn-300);
+    }
+
+    &--problem {
+      border-color: var(--ds-error-500);
+    }
+  }
+
+  .sb__step--event .sb__glyph,
+  .sb__step--base .sb__glyph,
+  .sb__step--end .sb__glyph {
+    width: 40px;
+    height: 40px;
+    color: #fff;
+    background: var(--ds-neutral-900);
+    border-radius: 50%;
+  }
+
+  .sb__step--condition .sb__glyph {
+    font-weight: 600;
+    color: var(--ds-warn-300);
+  }
+
+  .sb__badge--inline {
+    position: static;
+    flex: none;
+    margin-left: auto;
+  }
+
+  .sb__add-step {
+    padding: 8px;
+    color: var(--ds-primary-600);
+    cursor: pointer;
+    background: var(--ds-primary-50);
+    border: 1px dashed var(--ds-primary-600);
+    border-radius: 4px;
+  }
+
+  .sb__sim {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ds-neutral-600);
+    background: #fff;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 8px;
+
+    strong {
+      font-size: 14px;
+      color: var(--ds-neutral-900);
+    }
+
+    span {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    b {
+      font-weight: 500;
+      color: var(--ds-neutral-900);
+    }
+  }
+
+  /* Pasek akcji przyklejony nad dolną nawigacją (core/mobile-nav, ok. 75 px). */
+  .sb__bar {
+    position: sticky;
+    bottom: calc(75px + env(safe-area-inset-bottom));
+    z-index: 5;
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    margin: 12px -16px 0;
+    background: #fff;
+    border-top: 1px solid var(--ds-neutral-200);
+
+    button {
+      flex: 1;
+    }
   }
 }

@@ -70,3 +70,10 @@
     }
   }
 }
+
+/* Telefon: kafelków nie przeciąga się na tablicę, tylko dodaje „+” — uchwyt przeciągania byłby mylący. */
+@media (max-width: 768px) {
+  .spal__grip {
+    display: none;
+  }
+}

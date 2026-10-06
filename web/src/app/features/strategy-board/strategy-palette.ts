@@ -1,7 +1,8 @@
-import { Component, output } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { FFlowModule } from '@foblex/flow';
 import { TranslatePipe } from '@ngx-translate/core';
 import { StrategyNodeType } from '../../core/api/models/strategies';
+import { Viewport } from '../../core/layout/viewport';
 import { CATEGORIES, CATEGORY_ORDER, NodeCategory } from './strategy-node-meta';
 
 /** Pozycja palety: kategoria i rodzaj, z jakim powstaje nowy kafelek (zmienia się w ustawieniach kafelka). */
@@ -27,6 +28,9 @@ interface PaletteItem {
 })
 export class StrategyPalette {
   readonly add = output<StrategyNodeType>();
+
+  /** Na telefonie nie przeciąga się kafelków na tablicę — tylko „+”. */
+  protected readonly viewport = inject(Viewport);
 
   protected readonly items: readonly PaletteItem[] = CATEGORY_ORDER.map((category) => ({
     category,

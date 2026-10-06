@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -6,13 +6,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom, map } from 'rxjs';
 import {
-  FCanvasComponent, FCreateConnectionEvent, FCreateNodeEvent, FDeleteSelectedEvent, FFlowModule, FMoveNodesEvent,
+  FCanvasChangeEvent, FCanvasComponent, FCreateConnectionEvent, FCreateNodeEvent, FDeleteSelectedEvent, FFlowModule, FMoveNodesEvent,
   FSelectionChangeEvent, provideFFlow, withA11y, withConnectionFlow,
 } from '@foblex/flow';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzDrawerModule } from 'ng-zorro-antd/drawer';
+import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -21,6 +25,7 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
+import { Viewport } from '../../core/layout/viewport';
 import { parseAmount } from '../../core/parse-amount';
 import {
   SaveStrategyRequest, Strategy, StrategyEdge, StrategyEdgeLabel, StrategyNode, StrategyNodeType, StrategyProblemKind,
@@ -29,6 +34,7 @@ import {
 import {
   BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
 } from './strategy-node-meta';
+import { buildChains, Chain } from './strategy-chains';
 import { StrategyApply } from './strategy-apply';
 import { StrategyNodeForm } from './strategy-node-form';
 import { StrategyPalette } from './strategy-palette';
@@ -39,6 +45,11 @@ const SIMULATE_DEBOUNCE_MS = 400;
 /** Odstęp kafelków na tablicy, gdy kafelek dodaje przycisk „+” zamiast upuszczenia. */
 const GRID_X = 280;
 const GRID_Y = 110;
+
+/** Zakres powiększenia przyciskami „−” i „+” na telefonie (szczypnięcie ma własne granice w bibliotece). */
+const MIN_SCALE = 0.3;
+const MAX_SCALE = 2;
+const ZOOM_STEP = 0.2;
 
 /** Najdłuższa nazwa strategii — ta sama co `StrategyGraphValidator.MaxNameLength` w API. */
 const MAX_NAME_LENGTH = 100;
@@ -73,9 +84,9 @@ interface BoardNode {
 @Component({
   selector: 'app-strategy-board',
   imports: [
-    DatePipe, FormsModule, RouterLink, FFlowModule,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzInputModule, NzInputNumberModule,
-    NzModalModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyNodeForm, StrategyPalette,
+    DatePipe, NgTemplateOutlet, FormsModule, RouterLink, FFlowModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDrawerModule, NzDropdownModule, NzInputModule,
+    NzInputNumberModule, NzMenuModule, NzModalModule, NzSegmentedModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyNodeForm, StrategyPalette,
   ],
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
@@ -98,6 +109,8 @@ export class StrategyBoard {
   private readonly errorMessages = inject(ErrorMessages);
 
   private readonly canvas = viewChild(FCanvasComponent);
+
+  protected readonly viewport = inject(Viewport);
 
   private readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
     initialValue: this.route.snapshot.paramMap.get('id'),
@@ -300,8 +313,37 @@ export class StrategyBoard {
 
   protected readonly finalCash = computed(() => this.money(this.result()?.finalCash));
 
+  /** Po narysowaniu kafelków: na desktopie całość w oknie, na telefonie skala 1:1 od pierwszego kafelka (patrz niżej). */
   protected fitToScreen(): void {
-    this.canvas()?.fitToScreen({ x: 40, y: 40 }, false, false, 1);
+    if (this.viewport.isMobile()) this.showActualSize();
+    else this.canvas()?.fitToScreen({ x: 40, y: 40 }, false, false, 1);
+  }
+
+  /** „Dopasuj” z paska powiększenia — cała tablica w oknie, bez powiększania ponad 100%. */
+  protected fitAll(): void {
+    this.canvas()?.fitToScreen({ x: 16, y: 16 }, false, false, 1);
+  }
+
+  /**
+   * ⚠️ Telefon: skala 1:1, jak na desktopie, i widok na pierwszym kafelku. Dopasowanie całej tablicy do 358 px
+   * zmniejszało kafelki do nieczytelności (makieta „Mobile — Strategia: tablica”, 417:1610).
+   */
+  private showActualSize(): void {
+    const canvas = this.canvas();
+    const first = [...this.nodes()].sort((a, b) => a.x - b.x || a.y - b.y)[0];
+    if (!canvas || !first) return;
+    canvas.resetScale();
+    canvas.centerGroupOrNode(first.id, false, false);
+  }
+
+  protected zoomBy(step: number): void {
+    const canvas = this.canvas();
+    if (canvas) canvas.setScale(Math.min(MAX_SCALE, Math.max(MIN_SCALE, canvas.getScale() + step)));
+  }
+
+  protected onCanvasChange(event: FCanvasChangeEvent): void {
+    this.scalePercent.set(Math.round(event.scale * 100));
+    this.gestureSeen.set(true);
   }
 
   // ── Zaznaczenie i panel ──────────────────────────────────────────────────────────────
@@ -313,6 +355,80 @@ export class StrategyBoard {
   private readonly formDismissed = signal(false);
 
   protected readonly panel = signal<'palette' | 'problems'>('palette');
+
+  // ── Telefon: lista kroków, arkusz zamiast panelu bocznego (makieta „Mobile — Strategia”: 417:1610, 419:1350, 419:1593) ──
+
+  /** Widok na telefonie. Domyślnie lista kroków — palcem wygodniej edytować łańcuch niż celować w złącza tablicy. */
+  protected readonly mode = signal<'list' | 'board'>('list');
+  protected readonly showBoard = computed(() => !this.viewport.isMobile() || this.mode() === 'board');
+  protected readonly showList = computed(() => this.viewport.isMobile() && this.mode() === 'list');
+
+  protected readonly modeOptions = computed(() => [
+    { label: this.translate.instant('strategies.board.mobile.list'), value: 'list' },
+    { label: this.translate.instant('strategies.board.mobile.board'), value: 'board' },
+  ]);
+
+  protected readonly scalePercent = signal(100);
+
+  /** Podpowiedź o gestach znika po pierwszym przesunięciu albo przybliżeniu tablicy. */
+  protected readonly gestureSeen = signal(false);
+  protected readonly zoomStep = ZOOM_STEP;
+
+  protected readonly chains = computed(() => buildChains(this.viewNodes(), this.edges()));
+
+  /** Czy za łańcuchem jest gdzie dopiąć kolejny krok: kafelki „bazowe” i koniec nic nie wysyłają, a warunek ma tylko dwa wyjścia. */
+  protected canExtend(chain: Chain<BoardNode>): boolean {
+    const last = this.nodes().find((n) => n.id === this.chainEnd(chain));
+    return !!last && canSend(last.type) && this.freeBranch(last) !== null;
+  }
+
+  /** Kafelek, za którym dopina się „+ Dodaj krok”: ostatni krok łańcucha albo samo zdarzenie. */
+  protected chainEnd(chain: Chain<BoardNode>): string {
+    return chain.steps.at(-1)?.view.node.id ?? chain.root.node.id;
+  }
+
+  /** „Dodaj kafelek” z dolnego paska otwiera paletę w arkuszu. */
+  protected readonly paletteOpen = signal(false);
+
+  /** Arkusz od dołu: ustawienia kafelka, strzałki, lista problemów albo paleta — to, co na desktopie stoi w panelu po prawej. */
+  protected readonly sheetOpen = computed(
+    () => this.viewport.isMobile()
+      && (this.paletteOpen() || this.formNode() !== null || this.selectedEdge() !== null || this.panel() === 'problems'),
+  );
+
+  /** Zamknięcie arkusza (przeciągnięcie w dół, tło, „✕”): chowa to, co akurat w nim stoi. */
+  protected closeSheet(): void {
+    if (this.formNode()) this.closeForm();
+    else if (this.selectedEdge()) this.selectedConnectionIds.set([]);
+    this.panel.set('palette');
+    this.paletteOpen.set(false);
+  }
+
+  /** „+ Dodaj kafelek” z paska: wolny kafelek, bez dopinania do zaznaczonego. */
+  protected openPalette(): void {
+    this.selectedNodeIds.set([]);
+    this.selectedConnectionIds.set([]);
+    this.panel.set('palette');
+    this.paletteOpen.set(true);
+  }
+
+  /** „+ Dodaj krok” pod łańcuchem: nowy kafelek dopina się za ostatnim krokiem (tak jak „+” przy zaznaczonym na desktopie). */
+  protected openPaletteAfter(id: string): void {
+    this.selectedNodeIds.set([id]);
+    this.selectedConnectionIds.set([]);
+    this.formDismissed.set(true);
+    this.panel.set('palette');
+    this.paletteOpen.set(true);
+  }
+
+  /** Dodanie z palety: na telefonie arkusz od razu przechodzi do ustawień nowego kafelka. */
+  protected onPaletteAdd(type: StrategyNodeType): void {
+    const id = this.addNode(type);
+    if (this.viewport.isMobile()) {
+      this.paletteOpen.set(false);
+      this.openNode(id);
+    }
+  }
 
   protected readonly selectedNode = computed(() => {
     const ids = this.selectedNodeIds();
@@ -364,7 +480,7 @@ export class StrategyBoard {
   }
 
   /** Dodaje kafelek: z palety przez „+” (obok zaznaczonego, z automatycznym połączeniem) albo upuszczeniem (w miejscu upuszczenia). */
-  protected addNode(type: StrategyNodeType, at?: { x: number; y: number }): void {
+  protected addNode(type: StrategyNodeType, at?: { x: number; y: number }): string {
     const from = this.selectedNode();
     const position = at ?? this.freePosition();
     const node = newNode(type, this.uid(), Math.round(position.x), Math.round(position.y), this.startMonth());
@@ -374,6 +490,7 @@ export class StrategyBoard {
       const label = this.freeBranch(from);
       if (label) this.addEdge(from.id, node.id, label);
     }
+    return node.id;
   }
 
   /** Wyjście, które nowa strzałka z kafelka może zająć: warunek ma tak i nie, reszta jedno. */

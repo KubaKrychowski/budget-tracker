@@ -5,12 +5,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideNzDateFnsAdapter } from 'ng-zorro-antd/core/time';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { pl_PL, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { APP_ICONS } from '../../core/icons';
+import { Viewport } from '../../core/layout/viewport';
 import {
   Strategy, StrategyEdge, StrategyNode, StrategyProblem, StrategyReferences, StrategyResult,
 } from '../../core/api/models/strategies';
@@ -42,6 +44,8 @@ interface BoardApi {
 describe('StrategyBoard', () => {
   let fixture: ComponentFixture<StrategyBoard>;
   let http: HttpTestingController;
+  /** Widok mobilny sterowany z testu — jsdom nie ma `matchMedia`, więc domyślnie jest desktop. */
+  const mobile = signal(false);
 
   const node = (over: Partial<StrategyNode>): StrategyNode => ({
     id: 'x', type: 'Trigger', title: '', x: 0, y: 0, month: null, amount: null, rate: null, installment: null,
@@ -99,6 +103,7 @@ describe('StrategyBoard', () => {
   };
 
   beforeEach(async () => {
+    mobile.set(false);
     /*
      * ⚠️ jsdom nie liczy układu, więc biblioteka tablicy zgłasza dla każdego złącza FF1006 („ukryte przez CSS”, geometria 0×0).
      * To fałszywy alarm środowiska testowego — przegląd w prawdziwej przeglądarce nie pokazuje żadnego ostrzeżenia.
@@ -119,6 +124,7 @@ describe('StrategyBoard', () => {
         provideNzIcons(APP_ICONS),
         provideNzI18n(pl_PL),
         provideNzDateFnsAdapter(),
+        { provide: Viewport, useValue: { isMobile: mobile.asReadonly() } },
         {
           provide: ActivatedRoute,
           useValue: { paramMap: of(convertToParamMap({ id: 's1' })), snapshot: { paramMap: convertToParamMap({ id: 's1' }) } },
@@ -140,6 +146,7 @@ describe('StrategyBoard', () => {
           problemsBanner: 'Problemy w tablicy: {{count}}', problemsBannerBody: 'Symulacja pomija kafelki.', showProblems: 'Pokaż problemy',
           problemsTitle: 'Problemy ({{count}})', openNode: 'Otwórz kafelek',
           problem: { NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.', MissingParameter: 'Brakuje parametru.' },
+          mobile: { list: 'Lista kroków', board: 'Tablica', menu: 'Menu', tiles: 'Kafelki: {{count}}', addTile: '+ Dodaj kafelek', save: 'Zapisz', addStep: '+ Dodaj krok', unlinked: 'Bez połączenia', empty: 'Pusto', zoom: 'Powiększenie', zoomOut: 'Pomniejsz', zoomIn: 'Powiększ', fit: 'Dopasuj', gesture: 'Przesuń palcem', paletteHint: 'Dotknij +' },
           yes: 'tak', no: 'nie', edgeLabel: 'Połączenie: {{from}} → {{to}}', perMonth: '{{amount}} / mies.',
           sim: { title: 'Symulacja', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
           palette: { title: 'Dodaj kafelek', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}', categories: { event: { title: 'Zdarzenie', hint: '' }, action: { title: 'Akcja', hint: '' }, control: { title: 'Warunek', hint: '' } } },
@@ -338,5 +345,87 @@ describe('StrategyBoard', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('Nie udało się wczytać strategii');
+  });
+
+  describe('na telefonie', () => {
+    const chains = (): string[] => [...fixture.nativeElement.querySelectorAll('.sb__chain')].map((c) => (c as HTMLElement).textContent!.replace(/s+/g, ' '));
+
+    it('domyślnie pokazuje listę kroków od zdarzeń, a nie tablicę', async () => {
+      mobile.set(true);
+      await settle();
+
+      expect(nodeCount()).toBe(0);
+      expect(fixture.nativeElement.querySelector('.sb__mmode')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.sb__panel')).toBeNull();
+      // Kredyt (kafelek bazowy) i Premia otwierają łańcuchy; „Koniec” nie ma strzałki wejściowej, więc jest osobno.
+      expect(chains().filter((c) => c.includes('Premia'))[0]).toContain('Nadpłać kredyt');
+      expect(chains().filter((c) => c.includes('Premia'))[0]).toMatch(/Warunek.*tak.*Spłać.*nie.*Czekaj/);
+      expect(chains().at(-1)).toContain('Bez połączenia');
+      expect(chains().at(-1)).toContain('Koniec');
+    });
+
+    it('przełączenie na „Tablica” rysuje kafelki, a „Lista kroków” je zdejmuje', async () => {
+      mobile.set(true);
+      await settle();
+      (fixture.componentInstance as unknown as { mode: { set(v: string): void } }).mode.set('board');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(nodeCount()).toBe(nodes.length);
+      expect(fixture.nativeElement.querySelector('.sb__zoom')).not.toBeNull();
+    });
+
+    it('dotknięcie kroku otwiera arkusz z ustawieniami kafelka', async () => {
+      mobile.set(true);
+      await settle();
+      const step = [...fixture.nativeElement.querySelectorAll('.sb__step')].find((b) => (b as HTMLElement).textContent!.includes('Nadpłać kredyt')) as HTMLElement;
+
+      step.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(document.body.querySelector('.sb-sheet .snf')).not.toBeNull();
+    });
+
+    it('„+ Dodaj krok” dopina nowy kafelek za ostatnim krokiem łańcucha i otwiera jego ustawienia', async () => {
+      mobile.set(true);
+      await settle();
+      const before = api().nodes().length;
+      const chain = [...fixture.nativeElement.querySelectorAll('.sb__chain')].find((c) => (c as HTMLElement).textContent!.includes('Premia')) as HTMLElement;
+
+      (chain.querySelector('.sb__add-step') as HTMLElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      ([...document.body.querySelectorAll('.spal__add')][1] as HTMLElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const added = api().nodes().at(-1)!;
+      expect(api().nodes()).toHaveLength(before + 1);
+      // Łańcuch Premii kończy się na „Czekaj” — nowy kafelek ma iść za nim, nie do losowego kafelka.
+      expect(api().edges().some((e) => e.from === 'wait' && e.to === added.id)).toBe(true);
+      expect(document.body.querySelector('.sb-sheet .snf')).not.toBeNull();
+    });
+
+    it('kafelek bazowy (kredyt) nie ma „+ Dodaj krok”, bo nic z niego nie wychodzi', async () => {
+      mobile.set(true);
+      await settle();
+      const loan = [...fixture.nativeElement.querySelectorAll('.sb__chain')].find((c) => (c as HTMLElement).textContent!.includes('Kredyt')) as HTMLElement;
+
+      expect(loan.querySelector('.sb__add-step')).toBeNull();
+    });
+  });
+
+  it('na desktopie nie ma przełącznika widoków, paska akcji ani listy kroków', async () => {
+    await settle();
+
+    expect(fixture.nativeElement.querySelector('.sb__mmode')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.sb__bar')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.sb__list')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.sb__panel')).not.toBeNull();
   });
 });
