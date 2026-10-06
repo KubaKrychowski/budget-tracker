@@ -107,6 +107,9 @@ projekt w Android Studio.
 - iOS buduje się wyłącznie na macOS z Xcode (`npx cap open ios`).
 - Apka zaloguje się dopiero na Identity i API wdrożonych z klientem `budgettracker-mobile` i originami WebView
   w CORS — inaczej zostaje na okładce z błędem CORS w konsoli.
+- Ikona i ekran startowy powstają z `public/icons/logo.svg`: `node scripts/app-icons.mjs` (źródła w `web/assets/`).
+- Zainstalowana apka sama pokazuje pasek „Jest nowa wersja”, gdy na GitHubie pojawi się nowsze wydanie
+  (`core/app-update`) — wersja debug ma numer 1.0, więc widzi go zawsze.
 
 #### Wydanie APK (do pobrania z landingu)
 

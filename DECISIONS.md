@@ -974,6 +974,15 @@ wystarczy na MVP (NG-ZORRO: `responsiveLayout` stack/scroll). NIE natywna apka m
 > - Wspólne klocki (`m-tiles`, `m-list`, `m-sheet-form`, `m-count`) są globalne w `styles.scss`: powielone w ekranach
 >   przekraczały budżet rozmiaru stylu komponentu.
 
+> **REWIZJA (2026-10-06): aplikacja na pełnym ekranie i aktualizacje z paska.**
+> - Pasek statusu i systemowe przyciski nawigacji są ukryte (wracają chwilowo po przeciągnięciu od krawędzi).
+>   Treść **ignoruje otwór na kamerę** — jak w React Native bez `SafeAreaView`; kamera może przykryć fragment
+>   nagłówka. Odsuwanie treści od otworu było próbowane i odrzucone: nagłówek rósł o całą wysokość otworu.
+> - Aktualizacje: apka na Androida porównuje swoją wersję z najnowszym wydaniem na GitHubie (najwyżej raz na
+>   godzinę) i pokazuje pasek „Jest nowa wersja”. „Zaktualizuj” pobiera APK; Android pyta o zgodę — poza Google
+>   Play tego kroku nie da się ominąć. Aktualizacje „na żywo” samego frontu (OTA) świadomie odłożone.
+> - Ikona aplikacji i ekran startowy z logo, generowane `node scripts/app-icons.mjs` (`@capacitor/assets`).
+
 **Stepper importu (NG-ZORRO `nz-steps`), 4 kroki:**
 1. **Źródło** — wybór konta/banku (determinuje parser). Warunek: źródło wybrane.
 2. **Plik** — upload CSV (`nz-upload`). Wstępny parse. Zły format → status kroku `error` z komunikatem
