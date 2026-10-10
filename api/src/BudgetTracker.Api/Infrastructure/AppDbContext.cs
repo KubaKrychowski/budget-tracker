@@ -38,6 +38,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<StandingOrder> StandingOrders => Set<StandingOrder>();
     public DbSet<EpisodicOrder> EpisodicOrders => Set<EpisodicOrder>();
     public DbSet<Strategy> Strategies => Set<Strategy>();
+    public DbSet<Receipt> Receipts => Set<Receipt>();
 
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<TransactionStatusDictionary> TransactionStatuses => Set<TransactionStatusDictionary>();
@@ -245,6 +246,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.ComplexCollection(x => x.Edges, ed => ed.ToJson());
             e.ComplexCollection(x => x.Variants, v => v.ToJson());
             e.HasIndex(x => x.BudgetBusinessId);
+
+            e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
+        });
+
+        b.Entity<Receipt>(e =>
+        {
+            e.Property(x => x.BlobName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.FileName).HasMaxLength(260).IsRequired();
+            e.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Merchant).HasMaxLength(200);
+            e.Property(x => x.Total).HasColumnType("numeric(18,2)");
+            e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+            e.HasIndex(x => x.TransactionBusinessId);
 
             e.HasIndex(x => x.UserId);
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);

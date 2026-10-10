@@ -82,4 +82,8 @@
   <data name="Strategy_Template_RaiseSurplus" xml:space="preserve"><value>Increase the surplus</value></data>
   <data name="Strategy_Template_Insurance" xml:space="preserve"><value>Insurance</value></data>
   <data name="Strategy_Template_Reservation" xml:space="preserve"><value>Insurance reservation</value></data>
+  <data name="Receipt_FileInvalid" xml:space="preserve"><value>The receipt must be a JPG, PNG, HEIC or PDF file between 1 byte and 10 MB.</value></data>
+  <data name="Receipt_FieldsInvalid" xml:space="preserve"><value>The merchant can have up to 200 characters and the total must be greater than zero.</value></data>
+  <data name="Receipt_TransactionInvalid" xml:space="preserve"><value>The selected transaction no longer exists. Refresh the list and try again.</value></data>
+  <data name="Receipt_ReaderUnavailable" xml:space="preserve"><value>Receipt reading is unavailable right now. Try again later.</value></data>
 </root>

@@ -229,7 +229,8 @@
       "amount": "Amount",
       "balance": "Balance after",
       "actions": "Actions",
-      "episodic": "One-off"
+      "episodic": "One-off",
+      "receipt": "Receipt"
     },
     "selection": {
       "count": "Selected: {{count}}",
@@ -251,7 +252,10 @@
       "delete": "Delete",
       "markEpisodic": "Mark as a one-off order…",
       "goToEpisodic": "Go to the one-off order",
-      "unpinSavingsTransfer": "Unpin transfer"
+      "unpinSavingsTransfer": "Unpin transfer",
+      "addReceipt": "Add a receipt to this transaction…",
+      "viewReceipt": "View receipt",
+      "deleteReceipt": "Delete receipt"
     },
     "savingsTransfer": {
       "badge": "Transfer",
@@ -315,6 +319,40 @@
       "anyCategory": "All categories",
       "showResults": "Show results",
       "balance": "Balance {{amount}}"
+    },
+    "receipt": {
+      "add": "Add receipt",
+      "title": "Add a receipt",
+      "reviewTitle": "Check the receipt reading",
+      "intro": "Upload a photo or PDF of the receipt — we will read the merchant, date and total.",
+      "privacy": "The photo is sent to Azure for reading and stored as an attachment to the transaction.",
+      "drop": "Drag a photo or PDF of the receipt here",
+      "hint": "JPG, PNG, HEIC or PDF · up to 10 MB",
+      "takePhoto": "Take a photo",
+      "reading": "Reading the receipt…",
+      "uncertain": "We are not sure about: {{fields}} — compare them with the receipt.",
+      "preview": "Receipt preview",
+      "merchant": "Merchant",
+      "date": "Date",
+      "total": "Total (PLN)",
+      "sure": "confident",
+      "check": "check",
+      "candidates": "Matching imported transactions",
+      "matchExact": "match",
+      "matchPossible": "possible",
+      "none": "None of them — save the receipt without linking it to a transaction",
+      "forTransaction": "The receipt will be attached to the transaction: {{date}} · {{description}} · {{amount}} PLN.",
+      "attach": "Attach to transaction",
+      "saveOnly": "Save receipt",
+      "cancel": "Cancel",
+      "saved": "Receipt saved.",
+      "savedAttached": "Receipt attached to the transaction.",
+      "tooLarge": "The file is too large — 10 MB at most.",
+      "unsupported": "Supported files are JPG, PNG, HEIC and PDF.",
+      "deleteHeader": "Delete the receipt \"{{name}}\"?",
+      "deleteDescription": "The file will be removed from storage. This cannot be undone.",
+      "deleted": "Receipt deleted.",
+      "noReceipts": "This transaction has no receipt."
     }
   },
   "currencies": {

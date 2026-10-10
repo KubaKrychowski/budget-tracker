@@ -38,5 +38,6 @@ public sealed class TransactionListItemReader(AppDbContext db)
         db.EpisodicOrders.Where(o => o.TransactionBusinessId == t.BusinessId).Select(o => o.Name).FirstOrDefault(),
         t.Confidence,
         t.SavingsTransferBudgetBusinessId,
-        t.BalanceAfter);
+        t.BalanceAfter,
+        db.Receipts.Count(r => r.TransactionBusinessId == t.BusinessId));
 }

@@ -81,6 +81,9 @@
             <span class="m-count">{{ activeFilterCount() }}</span>
           }
         </button>
+        <button nz-button nzType="primary" (click)="openReceipt(null)" [attr.aria-label]="'transactions.receipt.add' | translate">
+          <nz-icon nzType="paper-clip" />
+        </button>
       </div>
       @if (activeFilterCount() > 0) {
         <div class="tx__mchips">
@@ -224,6 +227,10 @@
           {{ 'transactions.selection.selectAllMatching' | translate: { count: total() } }}
         </button>
       }
+
+      <button nz-button nzType="primary" (click)="openReceipt(null)">
+        <nz-icon nzType="paper-clip" /> {{ 'transactions.receipt.add' | translate }}
+      </button>
 
       <!-- Fiolet #8075CD jest wprost z makiety — poza paletą motywu, stąd własna klasa. -->
       <button
@@ -407,7 +414,7 @@
         [nzShowSizeChanger]="true"
         [nzPageSizeOptions]="pageSizeOptions"
         (nzQueryParams)="onQueryParamsChange($event, txTable)"
-        [nzScroll]="{ x: '1280px' }"
+        [nzScroll]="{ x: '1380px' }"
         nzSize="small"
       >
         <thead>
@@ -507,6 +514,7 @@
             >
               {{ 'transactions.columns.balance' | translate }}
             </th>
+            <th nzWidth="100px" class="tx__center">{{ 'transactions.columns.receipt' | translate }}</th>
             <th nzWidth="72px" class="tx__center">{{ 'transactions.columns.actions' | translate }}</th>
           </tr>
         </thead>
@@ -586,6 +594,7 @@
                 </td>
                 <td class="tx__right">{{ item.balanceAfter === null ? '—' : money(item.balanceAfter) + ' PLN' }}</td>
                 <td class="tx__center">—</td>
+                <td class="tx__center">—</td>
               } @else {
                 <td>{{ day(item.date) }}</td>
                 <td [title]="item.description">{{ item.description }}</td>
@@ -605,6 +614,13 @@
                   {{ money(item.amount) }} PLN
                 </td>
                 <td class="tx__right">{{ item.balanceAfter === null ? '—' : money(item.balanceAfter) + ' PLN' }}</td>
+                <td class="tx__center">
+                  @if (item.receiptCount > 0) {
+                    <nz-tag nzColor="green"><nz-icon nzType="paper-clip" /> {{ item.receiptCount }}</nz-tag>
+                  } @else {
+                    —
+                  }
+                </td>
                 <td class="tx__center">
                   <button
                     nz-button
@@ -658,6 +674,18 @@
             <li nz-menu-item tabindex="0"
               (click)="unpinSavingsTransferMenuRow()" (keydown.enter)="unpinSavingsTransferMenuRow()">
               {{ 'transactions.rowMenu.unpinSavingsTransfer' | translate }}
+            </li>
+          }
+          <!-- Paragon: wiersz zna swój stan — bez paragonu proponuje dodanie, z paragonem podgląd i usunięcie. -->
+          <li nz-menu-item tabindex="0" (click)="addReceiptMenuRow()" (keydown.enter)="addReceiptMenuRow()">
+            {{ 'transactions.rowMenu.addReceipt' | translate }}
+          </li>
+          @if (menuRow()?.receiptCount) {
+            <li nz-menu-item tabindex="0" (click)="viewReceiptMenuRow()" (keydown.enter)="viewReceiptMenuRow()">
+              {{ 'transactions.rowMenu.viewReceipt' | translate }}
+            </li>
+            <li nz-menu-item tabindex="0" (click)="deleteReceiptMenuRow()" (keydown.enter)="deleteReceiptMenuRow()">
+              {{ 'transactions.rowMenu.deleteReceipt' | translate }}
             </li>
           }
           <!-- Usuwanie ostatnie — akcja nieodwracalna nie może sąsiadować z edycją. -->
@@ -771,4 +799,13 @@
         [ngModel]="episodicDescription()" (ngModelChange)="episodicDescription.set($event)"></textarea>
     </div>
   </nz-modal>
+
+  <!-- Dodawanie paragonu (OCR) — makieta Figma 432:6880. -->
+  <app-receipt-dialog
+    [open]="receiptOpen()"
+    [transaction]="receiptTransaction()"
+    [budgetIds]="budgetIds()"
+    (closed)="receiptOpen.set(false)"
+    (saved)="onReceiptSaved()"
+  />
 </div>
