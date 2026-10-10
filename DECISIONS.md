@@ -1605,3 +1605,25 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 > - **Ekran:** zielony ✓ zamiast ⚡ i fakt zamiast planu w opisie kafelka, pasek „Zdarzenia: N z M zrealizowane” nad tablicą, dopisek „od faktów”
 >   w chipie wyniku, ramka „Zdarzenie nastąpiło” w ustawieniach (kwota i miesiąc faktu, różnica w gotówce: wpływ większy to plus, wydatek większy
 >   to minus).
+
+## 15. Issues z błędów 500 (issue #29)
+
+**Decyzja (2026-10-10):** nieobsłużony wyjątek (HTTP 500) w API i w Identity zakłada issue w
+`KubaKrychowski/budget-tracker-2-boards` ze stack tracem i logami żądania. Kod jest wspólny: `shared/ErrorReporting/`,
+dołączany do obu projektów jako `Compile Include` z `Link` (bez osobnego projektu — workflow'y publikują każdy
+projekt osobno, a to oszczędza zmian w pipeline'ach).
+
+- **Włączenie:** tylko gdy jest `ErrorReporting__Token` (token GitHub z uprawnieniem „Issues: read and write" na
+  repo tablicy). Bez tokena nic się nie dzieje — Rider i testy nie wołają GitHuba. Token wyłącznie w sekretach.
+- **Kolejność handlerów:** `ErrorReportingExceptionHandler` jest zarejestrowany PO `DomainExceptionHandler`, więc
+  wyjątki domenowe (4xx) go nie dosięgają. Zawsze zwraca `false` — odpowiedź buduje standardowy mechanizm.
+- **Wysyłka w tle** (`Channel` + `BackgroundService`): awaria GitHuba nie spowalnia ani nie psuje odpowiedzi.
+- **Deduplikacja:** odcisk = typ wyjątku + 5 pierwszych ramek stosu bez numerów linii (komunikat NIE wchodzi do
+  odcisku — niesie wartości). Dwa poziomy: okno 60 min w pamięci procesu oraz wyszukanie OTWARTEGO issue ze
+  znacznikiem `BT-FP-<odcisk>`. Samo wyszukiwanie nie wystarcza, bo indeks GitHuba ma opóźnienie.
+- **Dane wrażliwe:** do issue nie trafiają nagłówki, ciało ani query string — tylko metoda i ścieżka. Stack trace,
+  komunikat i logi przechodzą przez `ErrorMasker` (e-maile, JWT, Bearer, `password=`/`token=`, IBAN, długie numery).
+  To siatka bezpieczeństwa, nie gwarancja: issue zostaje na GitHubie na zawsze.
+- **Logi:** `RecentLogBuffer` trzyma w pamięci 500 ostatnich linii (od Information); do issue idą linie tego samego
+  `TraceId`, a gdy ich brak — ostatnie ostrzeżenia i błędy.
+- **Nie zgłaszamy:** przerwanych żądań (`RequestAborted`).
