@@ -128,3 +128,4 @@ Konfiguracje w `.claude/launch.json` **katalogu nadrzędnego** (`workspace/`), u
 | Import CSV, parsery, deduplikacja | §6, §7 (stepper) |
 | Frontend: motyw, `parseAmount`, aktywny budżet | §7 |
 | Prywatne dane, makiety, breadcrumby | §10 |
+| Paragony (OCR, Azure Document Intelligence) | §15 |

@@ -18,6 +18,7 @@ namespace BudgetTracker.Api.Features.Transactions.Contracts;
 /// Saldo rachunku po operacji, jak podał je bank — kolumna „Saldo po operacji". <c>null</c> dla transakcji ręcznych i tych,
 /// dla których bank salda nie podał. ⚠️ To dana z wyciągu, a nie wynik naszego liczenia (patrz <see cref="Domain.Transaction.BalanceAfter"/>).
 /// </param>
+/// <param name="ReceiptCount">Ile paragonów przypięto do transakcji — kolumna „Paragon”, <c>0</c> = brak.</param>
 public sealed record TransactionListItemResponseDto(
     Guid Id,
     DateOnly Date,
@@ -30,4 +31,5 @@ public sealed record TransactionListItemResponseDto(
     string? EpisodicOrderName,
     decimal? Confidence,
     Guid? SavingsTransferBudgetId,
-    decimal? BalanceAfter = null);
+    decimal? BalanceAfter = null,
+    int ReceiptCount = 0);

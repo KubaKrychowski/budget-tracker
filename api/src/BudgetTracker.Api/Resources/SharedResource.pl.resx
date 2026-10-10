@@ -82,4 +82,8 @@
   <data name="Strategy_Template_RaiseSurplus" xml:space="preserve"><value>Zwiększ nadwyżkę</value></data>
   <data name="Strategy_Template_Insurance" xml:space="preserve"><value>Ubezpieczenie</value></data>
   <data name="Strategy_Template_Reservation" xml:space="preserve"><value>Rezerwacja na ubezpieczenie</value></data>
+  <data name="Receipt_FileInvalid" xml:space="preserve"><value>Paragon musi być plikiem JPG, PNG, HEIC albo PDF o rozmiarze od 1 bajta do 10 MB.</value></data>
+  <data name="Receipt_FieldsInvalid" xml:space="preserve"><value>Sprzedawca może mieć do 200 znaków, a suma musi być większa od zera.</value></data>
+  <data name="Receipt_TransactionInvalid" xml:space="preserve"><value>Wybrana transakcja już nie istnieje. Odśwież listę i spróbuj ponownie.</value></data>
+  <data name="Receipt_ReaderUnavailable" xml:space="preserve"><value>Odczyt paragonów jest teraz niedostępny. Spróbuj ponownie później.</value></data>
 </root>

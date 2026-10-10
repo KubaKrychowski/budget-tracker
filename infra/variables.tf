@@ -243,3 +243,30 @@ variable "app_service_sku" {
   type        = string
   default     = "B1"
 }
+
+variable "receipts_ocr_location" {
+  description = <<-EOT
+    Region uslugi OCR paragonow. To OSOBNA zmienna, bo quota na ten typ konta jest przyznawana per region i nie zawsze
+    pokrywa region grupy zasobow: w polandcentral tworzenie konta konczy sie bledem SpecialFeatureOrQuotaIdRequired
+    (dla F0 i S0). germanywestcentral (Frankfurt) dziala. Obraz paragonu wychodzi do tego regionu - patrz DECISIONS.md §15.
+  EOT
+  type        = string
+  default     = "germanywestcentral"
+}
+
+variable "receipts_ocr_sku" {
+  description = <<-EOT
+    Poziom uslugi OCR paragonow (Azure AI Document Intelligence).
+
+    F0 = darmowy, z limitem stron na miesiac i ograniczeniami (jedno konto F0 na subskrypcje danego rodzaju). S0 = platny,
+    rozliczany za strone (jeden paragon = jedna strona). Dokladny cennik sprawdz w kalkulatorze Azure przed zmiana.
+    Jesli F0 juz istnieje w subskrypcji, `apply` zakonczy sie bledem - wtedy ustaw S0.
+  EOT
+  type        = string
+  default     = "F0"
+
+  validation {
+    condition     = contains(["F0", "S0"], var.receipts_ocr_sku)
+    error_message = "Dozwolone: F0 albo S0."
+  }
+}

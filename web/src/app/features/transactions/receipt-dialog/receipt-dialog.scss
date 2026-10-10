@@ -1,0 +1,168 @@
+/* Dodawanie paragonu — makieta Figma 432:6880. Kolory tylko z tokenów design systemu. */
+.rcpt {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__intro {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ds-text-description);
+  }
+
+  &__camera {
+    display: none;
+  }
+
+  &__take {
+    align-self: flex-start;
+  }
+
+  &__columns {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* Podgląd obok pól — żeby sumę dało się porównać z paragonem bez przełączania okien. */
+  &__preview {
+    display: flex;
+    flex: 0 0 200px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    max-height: 320px;
+    padding: 12px;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--ds-text-description);
+    background: var(--ds-neutral-100);
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 6px;
+
+    img {
+      max-width: 100%;
+      max-height: 296px;
+      object-fit: contain;
+    }
+  }
+
+  &__fields {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  &__row {
+    display: flex;
+    gap: 12px;
+
+    > * {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    nz-date-picker,
+    nz-input-number {
+      width: 100%;
+    }
+  }
+
+  &__label {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+
+    nz-tag {
+      margin: 0;
+    }
+  }
+
+  &__heading {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  &__target {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ds-text-description);
+  }
+
+  &__candidates {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__candidate {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 6px;
+
+    input {
+      accent-color: var(--ds-primary-500);
+    }
+
+    label {
+      display: flex;
+      flex: 1 1 auto;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    &--on {
+      border-color: var(--ds-primary-500);
+    }
+  }
+
+  &__cdate {
+    color: var(--ds-text-description);
+  }
+
+  &__cdesc {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__camount {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .rcpt__columns {
+    flex-direction: column;
+  }
+
+  .rcpt__preview {
+    flex-basis: auto;
+    align-self: stretch;
+    max-height: 200px;
+  }
+}
