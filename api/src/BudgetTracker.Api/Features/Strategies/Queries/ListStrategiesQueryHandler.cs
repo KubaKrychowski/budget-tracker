@@ -29,7 +29,8 @@ public sealed class ListStrategiesQueryHandler(AppDbContext db, StrategiesBudget
             s.Name,
             s.Nodes.Count(n => n.Type is StrategyNodeType.Trigger or StrategyNodeType.Income or StrategyNodeType.Expense),
             s.Nodes.Count(n => n.Type is >= StrategyNodeType.IncreaseSurplus and <= StrategyNodeType.SetLimit),
-            s.UpdatedAt));
+            s.UpdatedAt,
+            s.Variants.Count));
 
         return new StrategiesResponseDto(budget, budgets, [.. rows]);
     }

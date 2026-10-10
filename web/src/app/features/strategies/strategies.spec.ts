@@ -39,6 +39,11 @@ interface StrategiesApi {
   create(): Promise<void>;
   remove(row: StrategyListItem): Promise<void>;
   creating(): string | null;
+  openDuplicate(row: StrategyListItem): void;
+  copyName: { set(v: string): void; (): string };
+  copyVariants: { set(v: boolean): void };
+  duplicate(): Promise<void>;
+  duplicating(): StrategyListItem | null;
 }
 
 /** Ekran „Wybierz strategię”. Strategie i ich liczniki liczy serwer — tu sprawdzamy, co ekran mówi i wysyła. */
@@ -54,6 +59,7 @@ describe('Strategies', () => {
     eventCount: 9,
     actionCount: 14,
     updatedAt: '2026-10-02T10:00:00+00:00',
+    variantCount: 0,
     ...over,
   });
 
@@ -114,6 +120,10 @@ describe('Strategies', () => {
         removed: 'Strategia usunięta.',
         removeConfirm: { header: 'Usunąć strategię „{{name}}”?', description: 'Zdarzenia: {{events}}, akcje: {{actions}}.' },
         noBudget: 'Utwórz najpierw budżet.',
+        duplicate: {
+          action: 'Duplikuj', title: 'Duplikuj strategię', alertTitle: 'Kopia nie jest zastosowana w budżecie.', alertBody: 'Zawiera graf.',
+          nameLabel: 'Nazwa kopii', copySuffix: 'kopia', variants: 'Skopiuj warianty ({{count}})', ok: 'Utwórz kopię',
+        },
         create: { title: 'Nowa strategia', nameLabel: 'Nazwa strategii', ok: 'Utwórz', cancel: 'Anuluj', templateNote: 'Szablon ma przykładowe liczby.', defaultNameLoan: 'Kredyt i poduszka', defaultNameBlank: 'Moja strategia' },
         errors: { loadFailed: 'Nie udało się wczytać strategii', saveFailed: 'Nie udało się zapisać zmian' },
       },
@@ -215,6 +225,76 @@ describe('Strategies', () => {
     await removal;
 
     expect(http.match((r) => r.method === 'DELETE')).toHaveLength(0);
+  });
+
+  describe('duplikowanie', () => {
+    const body = (): string => document.body.textContent!.replace(/\s+/g, ' ');
+
+    it('wiersz ma „Duplikuj”, a okno podpowiada nazwę kopii i ostrzega, że kopia nie jest zastosowana w budżecie', async () => {
+      await settle();
+      expect(text()).toContain('Duplikuj');
+
+      api().openDuplicate(item());
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(api().copyName()).toBe('Kredyt i poduszka 2027 (kopia)');
+      expect(body()).toContain('Kopia nie jest zastosowana w budżecie.');
+    });
+
+    it('wysyła nazwę i kopiuje warianty, gdy strategia je ma, a potem przechodzi na kopię', async () => {
+      await settle(response({ strategies: [item({ variantCount: 2 })] }));
+      const navigate = vi.spyOn(router, 'navigate');
+
+      api().openDuplicate(item({ variantCount: 2 }));
+      api().copyName.set('  Plan B ');
+      const done = api().duplicate();
+      const post = http.expectOne((r) => r.url === '/api/strategies/s1/duplicate' && r.method === 'POST');
+      expect(post.request.body).toEqual({ name: 'Plan B', copyVariants: true });
+      post.flush({ id: 'kopia' });
+      await done;
+
+      expect(navigate).toHaveBeenCalledWith(['/strategies', 'kopia']);
+    });
+
+    it('odznaczone „Skopiuj warianty” wysyła copyVariants: false', async () => {
+      await settle(response({ strategies: [item({ variantCount: 2 })] }));
+
+      api().openDuplicate(item({ variantCount: 2 }));
+      api().copyVariants.set(false);
+      const done = api().duplicate();
+      const post = http.expectOne((r) => r.url === '/api/strategies/s1/duplicate' && r.method === 'POST');
+      expect(post.request.body.copyVariants).toBe(false);
+      post.flush({ id: 'kopia' });
+      await done;
+    });
+
+    it('strategia bez wariantów nie pokazuje pola wyboru i nigdy nie prosi o kopię wariantów', async () => {
+      await settle();
+
+      api().openDuplicate(item());
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(body()).not.toContain('Skopiuj warianty');
+
+      const done = api().duplicate();
+      const post = http.expectOne((r) => r.url === '/api/strategies/s1/duplicate' && r.method === 'POST');
+      expect(post.request.body.copyVariants).toBe(false);
+      post.flush({ id: 'kopia' });
+      await done;
+    });
+
+    it('nie wysyła kopii bez nazwy', async () => {
+      await settle();
+
+      api().openDuplicate(item());
+      api().copyName.set('   ');
+      await api().duplicate();
+
+      expect(http.match((r) => r.url.endsWith('/duplicate'))).toHaveLength(0);
+    });
   });
 
   it('pokazuje błąd wczytania z możliwością ponowienia', async () => {

@@ -8,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
@@ -19,7 +20,7 @@ import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.s
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
 import {
-  CreateStrategyRequest, StrategiesResponse, Strategy, StrategyListItem, StrategyTemplate,
+  CreateStrategyRequest, DuplicateStrategyRequest, StrategiesResponse, Strategy, StrategyListItem, StrategyTemplate,
 } from '../../core/api/models/strategies';
 
 /** Najdłuższa nazwa strategii — ta sama co `StrategyGraphValidator.MaxNameLength` w API. */
@@ -31,14 +32,14 @@ const MAX_NAME_LENGTH = 100;
  * Lista strategii jednego budżeta, od ostatnio zmienionej, z założeniem nowej — pustej albo z szablonu „kredyt
  * i poduszka”. Sama strategia (tablica) jest na osobnym ekranie `/strategies/:id`.
  *
- * ⚠️ Nie ma jeszcze „Duplikuj” z makiety: API nie ma takiej operacji, a składanie jej z trzech żądań po stronie
- * klienta rozjeżdżałoby się przy pierwszym błędzie w środku. Wróci razem z nowym endpointem.
+ * „Duplikuj” (makieta 423:1353) woła jedną operację API (`POST /api/strategies/{id}/duplicate`), żeby kopia powstawała
+ * atomowo — składanie jej z kilku żądań po stronie klienta rozjeżdżałoby się przy pierwszym błędzie w środku.
  */
 @Component({
   selector: 'app-strategies',
   imports: [
     DatePipe, FormsModule, RouterLink, BudgetSwitcher,
-    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzInputModule, NzModalModule, NzSpinModule,
+    NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzCheckboxModule, NzInputModule, NzModalModule, NzSpinModule,
     TranslatePipe,
   ],
   templateUrl: './strategies.html',
@@ -134,6 +135,44 @@ export class Strategies {
       const created = await firstValueFrom(this.http.post<Strategy>('/api/strategies', body));
       this.creating.set(null);
       await this.router.navigate(['/strategies', created.id]);
+    } catch (err) {
+      this.message.error(this.errorMessages.of(err, 'strategies.errors.saveFailed'));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  // ── Duplikowanie ─────────────────────────────────────────────────────────────────────
+
+  protected readonly duplicating = signal<StrategyListItem | null>(null);
+  protected readonly copyName = signal('');
+  protected readonly copyVariants = signal(true);
+  protected readonly copyNameValid = computed(() => {
+    const name = this.copyName().trim();
+    return name.length > 0 && name.length <= MAX_NAME_LENGTH;
+  });
+
+  protected openDuplicate(row: StrategyListItem): void {
+    const suffix = this.translate.instant('strategies.duplicate.copySuffix');
+    this.copyName.set(`${row.name} (${suffix})`.slice(0, MAX_NAME_LENGTH));
+    this.copyVariants.set(true);
+    this.duplicating.set(row);
+  }
+
+  protected closeDuplicate(): void {
+    this.duplicating.set(null);
+  }
+
+  protected async duplicate(): Promise<void> {
+    const row = this.duplicating();
+    if (!row || !this.copyNameValid() || this.busy()) return;
+    const body: DuplicateStrategyRequest = { name: this.copyName().trim(), copyVariants: row.variantCount > 0 && this.copyVariants() };
+
+    this.busy.set(true);
+    try {
+      const copy = await firstValueFrom(this.http.post<Strategy>(`/api/strategies/${row.id}/duplicate`, body));
+      this.duplicating.set(null);
+      await this.router.navigate(['/strategies', copy.id]);
     } catch (err) {
       this.message.error(this.errorMessages.of(err, 'strategies.errors.saveFailed'));
     } finally {

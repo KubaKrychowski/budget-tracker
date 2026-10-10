@@ -16,6 +16,8 @@ Najłatwiej zacząć od gotowego przykładu:
 
 ![Lista strategii wybranego budżetu z przyciskami Otwórz i Usuń oraz ramką „Nowa strategia”](handbook/images/strategies-list.png)
 
+Przy każdej strategii jest też **Duplikuj**: tworzy kopię pod nową nazwą (domyślnie „… (kopia)”) z całym grafem, parametrami i — jeśli chcesz — wariantami, a potem otwiera ją na tablicy. Kopia jest niezależna od oryginału i **nie jest zastosowana w budżecie**: cele, rezerwacje i limity założone z oryginału zostają, jak były. To najprostszy sposób, żeby wypróbować dużą zmianę bez ryzyka dla działającego planu.
+
 Strategie należą do **budżetu** — przełącznik budżetu na górze pokazuje strategie wybranego. Zamiast szablonu możesz też zacząć od **pustej tablicy**.
 
 ### Tablica i kafelki
@@ -126,8 +128,16 @@ Zmiany na tablicy **nie zapisują się same**:
 - **Odrzuć zmiany** — wraca do ostatniego zapisu,
 - **Parametry** — zmienia nazwę, miesiąc startu, oszczędności na początku i horyzont.
 
+Gdy spróbujesz wyjść z tablicy (z menu, okruszków albo przyciskiem „wstecz”) z **niezapisanymi zmianami**, aplikacja zapyta, co zrobić, i wypisze, co się zmieniło (np. „dodane kafelki: 2”):
+
+- **Zostań na tablicy** — nic się nie dzieje,
+- **Odrzuć i wyjdź** — zmiany przepadają, zapisana wersja zostaje bez zmian,
+- **Zapisz i wyjdź** — zapisuje i wychodzi; gdy zapis się nie uda, zostajesz na tablicy.
+
+Zamknięcie karty albo odświeżenie strony z niezapisanymi zmianami pokazuje zwykłe pytanie przeglądarki.
+
 Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w budżecie.
 
 ### Terminal (CLI)
 
-Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a `apply-preview` i `apply` przyjmują `--variant-id`.
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `duplicate`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a `apply-preview` i `apply` przyjmują `--variant-id`.

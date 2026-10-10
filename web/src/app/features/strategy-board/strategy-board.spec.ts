@@ -39,6 +39,13 @@ interface BoardApi {
   toggleTile(change: { nodeId: string; disabled: boolean }): void;
   removeVariant(id: string): void;
   removeNode(id: string): void;
+  canLeave(): boolean | Promise<boolean>;
+  stay(): void;
+  discardAndLeave(): void;
+  saveAndLeave(): Promise<void>;
+  leaveOpen(): boolean;
+  changeLines(): string[];
+  onBeforeUnload(event: { preventDefault(): void }): void;
   variants(): readonly { id: string; name: string; disabledNodeIds: readonly string[] }[];
 }
 
@@ -157,6 +164,12 @@ describe('StrategyBoard', () => {
           errors: { required: 'Podaj nazwę.', tooLong: 'Za długa.', taken: 'Zajęta.' }, limit: 'Limit wariantów.',
         },
         errors: { loadFailed: 'Nie udało się wczytać strategii', saveFailed: 'Nie udało się zapisać zmian' },
+        leave: {
+          title: 'Wyjść bez zapisania?', alertTitle: 'Strategia „{{name}}” ma niezapisane zmiany.', body: 'Zmiany przepadną.',
+          stay: 'Zostań na tablicy', discard: 'Odrzuć i wyjdź', save: 'Zapisz i wyjdź',
+          changes: { nodesAdded: 'dodane kafelki: {{count}}', nodesRemoved: 'usunięte kafelki: {{count}}', nodesChanged: 'zmienione kafelki: {{count}}',
+            edgesAdded: 'dodane połączenia: {{count}}', edgesRemoved: 'usunięte połączenia: {{count}}', variantsChanged: 'zmiany w wariantach', paramsChanged: 'zmienione parametry strategii' },
+        },
         board: {
           apply: 'Zastosuj w budżecie…',
           lead: 'Połącz zdarzenia z akcjami.',
@@ -364,6 +377,116 @@ describe('StrategyBoard', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('Nie udało się wczytać strategii');
+  });
+
+  describe('wyjście z niezapisanymi zmianami', () => {
+    const modalText = (): string => document.body.textContent!.replace(/\s+/g, ' ');
+    const footerButton = (label: string): HTMLButtonElement =>
+      [...document.body.querySelectorAll<HTMLButtonElement>('.ant-modal-footer button')].find((b) => b.textContent!.includes(label))!;
+    /** Zwraca obietnicę w obiekcie — gołe `return answer` z funkcji async czekałoby na wybór użytkownika. */
+    const open = async (): Promise<{ answer: Promise<boolean> }> => {
+      const answer = Promise.resolve(api().canLeave());
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return { answer };
+    };
+
+    it('bez zmian wolno wyjść od razu, bez okna', async () => {
+      await settle();
+
+      expect(api().canLeave()).toBe(true);
+      expect(api().leaveOpen()).toBe(false);
+    });
+
+    it('ze zmianami otwiera okno z alertem i wypisaniem, co się zmieniło, a trasa czeka na wybór', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+      api().onMoveNodes({ nodes: [{ id: 'bonus', position: { x: 5, y: 6 } }] });
+      fixture.detectChanges();
+
+      const { answer } = await open();
+
+      expect(api().leaveOpen()).toBe(true);
+      expect(modalText()).toContain('Strategia „Kredyt i poduszka” ma niezapisane zmiany.');
+      expect(modalText()).toContain('dodane kafelki: 1');
+      expect(modalText()).toContain('zmienione kafelki: 1');
+      api().stay();
+      expect(await answer).toBe(false);
+    });
+
+    it('„Zostań na tablicy” nie wypuszcza, a zmiany zostają', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Zostań na tablicy').click();
+
+      expect(await answer).toBe(false);
+      expect(api().dirty()).toBe(true);
+      expect(api().leaveOpen()).toBe(false);
+    });
+
+    it('„Odrzuć i wyjdź” wypuszcza bez żadnego zapisu', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Odrzuć i wyjdź').click();
+
+      expect(await answer).toBe(true);
+      expect(http.match((r) => r.method === 'PUT')).toHaveLength(0);
+    });
+
+    it('„Zapisz i wyjdź” zapisuje strategię i dopiero potem wypuszcza', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Zapisz i wyjdź').click();
+      const put = http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT');
+      put.flush(strategy({ nodes: put.request.body.nodes }));
+
+      expect(await answer).toBe(true);
+      expect(api().dirty()).toBe(false);
+    });
+
+    it('nieudany zapis zostawia użytkownika na tablicy — inaczej zmiany przepadłyby po cichu', async () => {
+      // Łapie „Zapisz i wyjdź”, które wychodzi mimo błędu zapisu.
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Zapisz i wyjdź').click();
+      http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT').flush({}, { status: 500, statusText: 'Server Error' });
+
+      expect(await answer).toBe(false);
+      expect(api().dirty()).toBe(true);
+    });
+
+    it('zamknięcie karty z niezapisanymi zmianami jest anulowane, bez zmian — nie', async () => {
+      await settle();
+      const event = { preventDefault: vi.fn() };
+
+      api().onBeforeUnload(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+      api().onBeforeUnload(event);
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it('drugie pytanie przed odpowiedzią odrzuca pierwsze jako „zostań”', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const first = Promise.resolve(api().canLeave());
+      const second = Promise.resolve(api().canLeave());
+
+      expect(await first).toBe(false);
+      api().discardAndLeave();
+      expect(await second).toBe(true);
+    });
   });
 
   describe('warianty', () => {

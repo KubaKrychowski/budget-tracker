@@ -36,6 +36,8 @@ import {
 } from './strategy-node-meta';
 import { buildChains, Chain } from './strategy-chains';
 import { StrategyApply } from './strategy-apply';
+import { describeChanges, summarizeChanges } from './strategy-changes';
+import { LeaveAware } from './strategy-leave.guard';
 import { CompareSeries, StrategyCompare } from './strategy-compare';
 import { StrategyNodeForm } from './strategy-node-form';
 import { StrategyPalette } from './strategy-palette';
@@ -93,6 +95,9 @@ interface BoardNode {
  * listę i wybrany wariant, a symulacja pomija wyłączone kafelki. Wybrany wariant zmienia też to, co pokazuje chip wyniku
  * i co stosuje „Zastosuj w budżecie”.
  *
+ * Wyjście z niezapisanymi zmianami przechodzi przez okno „Wyjść bez zapisania?” (makieta 423:1340): strażnik trasy
+ * (`leaveStrategyGuard`) pyta `canLeave()`, a `beforeunload` łapie zamknięcie karty i odświeżenie.
+ *
  * Nie ma jeszcze: „zdarzenie nastąpiło” (etap 4), polskich komunikatów czytnika ekranu (biblioteka mówi po angielsku, ale
  * nazwy połączeń niosą już tytuły kafelków).
  */
@@ -107,8 +112,9 @@ interface BoardNode {
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
   styleUrls: ['./strategy-board.scss', './strategy-board.mobile.scss'],
+  host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
-export class StrategyBoard {
+export class StrategyBoard implements LeaveAware {
   /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
   protected readonly parseAmount = parseAmount;
   protected readonly maxNameLength = MAX_NAME_LENGTH;
@@ -740,6 +746,67 @@ export class StrategyBoard {
     this.startCash.set(this.draftCash() ?? 0);
     this.horizonMonths.set(this.draftHorizon() ?? 24);
     this.paramsOpen.set(false);
+  }
+
+  // ── Wyjście z niezapisanymi zmianami ─────────────────────────────────────────────────
+
+  protected readonly leaveOpen = signal(false);
+  private leaveResolver: ((leave: boolean) => void) | null = null;
+
+  /** Co zmieniło się od ostatniego zapisu — to, co wypisuje okno wyjścia. */
+  protected readonly changeLines = computed(() => {
+    const saved = this.saved();
+    if (!saved) return [];
+    const savedRequest: SaveStrategyRequest = {
+      name: saved.name,
+      startMonth: saved.startMonth,
+      startCash: saved.startCash,
+      horizonMonths: saved.horizonMonths,
+      nodes: saved.nodes,
+      edges: saved.edges,
+      variants: saved.variants.map(({ id, name, disabledNodeIds }) => ({ id, name, disabledNodeIds })),
+    };
+    return describeChanges(summarizeChanges(savedRequest, this.request()))
+      .map((line) => this.translate.instant(`strategies.leave.changes.${line.key}`, { count: line.count }));
+  });
+
+  /**
+   * Pytanie strażnika trasy: bez zmian wolno wyjść od razu, a przy niezapisanych otwiera się okno i trasa czeka na wybór.
+   *
+   * ⚠️ Drugie wywołanie przed odpowiedzią (np. szybkie kliknięcie innego odnośnika) odrzuca pierwsze pytanie jako „zostań” —
+   * inaczej wisiałaby obietnica, której nikt już nie rozstrzygnie.
+   */
+  canLeave(): boolean | Promise<boolean> {
+    if (!this.dirty()) return true;
+    this.finishLeave(false);
+    this.leaveOpen.set(true);
+    return new Promise<boolean>((resolve) => { this.leaveResolver = resolve; });
+  }
+
+  protected stay(): void {
+    this.finishLeave(false);
+  }
+
+  protected discardAndLeave(): void {
+    this.finishLeave(true);
+  }
+
+  /** Zapis nieudany zostawia użytkownika na tablicy — komunikat błędu pokazuje już `save()`. */
+  protected async saveAndLeave(): Promise<void> {
+    await this.save();
+    this.finishLeave(!this.dirty());
+  }
+
+  private finishLeave(leave: boolean): void {
+    this.leaveOpen.set(false);
+    const resolve = this.leaveResolver;
+    this.leaveResolver = null;
+    resolve?.(leave);
+  }
+
+  /** Zamknięcie karty i odświeżenie: przeglądarka pokazuje własne pytanie, jeśli obsługa zdarzenia je „anuluje”. */
+  protected onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.dirty()) event.preventDefault();
   }
 
   // ── Zapis ────────────────────────────────────────────────────────────────────────────

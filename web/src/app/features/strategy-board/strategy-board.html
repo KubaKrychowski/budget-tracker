@@ -438,6 +438,29 @@
   }
 
   <nz-modal
+    [nzVisible]="leaveOpen()"
+    [nzTitle]="'strategies.leave.title' | translate"
+    [nzFooter]="leaveFooter"
+    [nzMaskClosable]="false"
+    (nzOnCancel)="stay()"
+  >
+    <ng-container *nzModalContent>
+      <nz-alert
+        nzType="warning"
+        nzShowIcon
+        [nzMessage]="'strategies.leave.alertTitle' | translate: { name: name() }"
+        [nzDescription]="changeLines().join(' · ')" />
+      <p class="sb__panel-hint" style="margin-top: 16px">{{ 'strategies.leave.body' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+
+  <ng-template #leaveFooter>
+    <button nz-button [disabled]="busy()" (click)="stay()">{{ 'strategies.leave.stay' | translate }}</button>
+    <button nz-button nzDanger [disabled]="busy()" (click)="discardAndLeave()">{{ 'strategies.leave.discard' | translate }}</button>
+    <button nz-button nzType="primary" [nzLoading]="busy()" (click)="saveAndLeave()">{{ 'strategies.leave.save' | translate }}</button>
+  </ng-template>
+
+  <nz-modal
     [nzVisible]="renameId() !== null"
     [nzTitle]="'strategies.variants.renameTitle' | translate"
     [nzOkText]="'strategies.variants.renameOk' | translate"

@@ -1368,6 +1368,33 @@
       "never": "not within the horizon",
       "close": "Close",
       "monthsShort": "{{delta}} mo."
+    },
+    "duplicate": {
+      "action": "Duplicate",
+      "title": "Duplicate strategy",
+      "alertTitle": "The copy is not applied to the budget.",
+      "alertBody": "It contains the graph and the strategy parameters. Goals, reservations and limits stay as they are.",
+      "nameLabel": "Copy name",
+      "copySuffix": "copy",
+      "variants": "Copy variants ({{count}})",
+      "ok": "Create copy"
+    },
+    "leave": {
+      "title": "Leave without saving?",
+      "alertTitle": "The “{{name}}” strategy has unsaved changes.",
+      "body": "If you leave without saving, the changes on the board will be lost. The saved version of the strategy stays as it is.",
+      "stay": "Stay on the board",
+      "discard": "Discard and leave",
+      "save": "Save and leave",
+      "changes": {
+        "nodesAdded": "tiles added: {{count}}",
+        "nodesRemoved": "tiles removed: {{count}}",
+        "nodesChanged": "tiles changed: {{count}}",
+        "edgesAdded": "connections added: {{count}}",
+        "edgesRemoved": "connections removed: {{count}}",
+        "variantsChanged": "variants changed",
+        "paramsChanged": "strategy parameters changed"
+      }
     }
   },
   "episodicOrders": {

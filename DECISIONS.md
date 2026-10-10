@@ -1572,3 +1572,18 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 > - Wybrany wariant to tylko widok tablicy (nie jest zapisywany). Poza tym PR-em: „zdarzenie nastąpiło” (etap 4), „Duplikuj” strategię
 >   i ochrona przed opuszczeniem ekranu z niezapisanymi zmianami (osobny PR), changelog (etap 5). Zakładka „Wykres” z makiety nie powstała —
 >   wykres otwiera się z chipa wyniku, jak w makiecie okna.
+
+> **REWIZJA — 2026-10-10: strategie — „Duplikuj” i wyjście z niezapisanymi zmianami** (makiety Figma „Strategia”: 423:1353, 423:1340;
+> `DuplicateStrategyCommandHandler`, `strategy-leave.guard`, `strategy-changes`):
+> - **Duplikowanie to jedna operacja API** (`POST /api/strategies/{id}/duplicate`, `{ name, copyVariants }`), nie składanie kopii z kilku żądań
+>   po stronie klienta — przy błędzie w środku zostawałaby połowiczna strategia. Kopia ma własne listy węzłów, połączeń i wariantów (test
+>   „zmiana kopii nie rusza oryginału”), identyfikatory kafelków zostają (to adresy WEWNĄTRZ strategii) i trafia do tego samego budżetu.
+>   ⚠️ Kopia NIE jest „zastosowana w budżecie”: nic, co oryginał założył w celach, rezerwacjach czy limitach, nie jest powielane.
+>   Lista strategii niesie `VariantCount`, żeby okno pytało o kopiowanie wariantów tylko wtedy, gdy jakieś są. CLI: `strategy duplicate`.
+> - **Wyjście z tablicy z niezapisanymi zmianami** przechodzi przez strażnika trasy (`canDeactivate` → `StrategyBoard.canLeave()`),
+>   który otwiera okno „Wyjść bez zapisania?” z trzema wyborami; `beforeunload` łapie zamknięcie karty i odświeżenie (tego strażnik trasy
+>   nie widzi). „Zapisz i wyjdź” przy nieudanym zapisie zostawia na tablicy — inaczej zmiany przepadłyby po cichu. Drugie pytanie przed
+>   odpowiedzią odrzuca pierwsze jako „zostań”. Okno wypisuje, co się zmieniło (`summarizeChanges`): kafelki dodane/usunięte/zmienione
+>   (przesunięcie to zmiana), połączenia porównywane po początku, końcu i etykiecie (nowy identyfikator tej samej strzałki to nie zmiana),
+>   warianty i parametry.
+> - Nadal poza zakresem: „zdarzenie nastąpiło” (etap 4) i changelog (etap 5).
