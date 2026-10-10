@@ -20,7 +20,7 @@ public sealed class SaveStrategyCommandHandler(AppDbContext db, TimeProvider clo
             ?? throw new StrategyNotFoundException(id);
 
         strategy.Replace(
-            valid.Name, valid.StartMonth, valid.StartCash, valid.HorizonMonths, valid.Nodes, valid.Edges, clock.GetUtcNow());
+            valid.Name, valid.StartMonth, valid.StartCash, valid.HorizonMonths, valid.Nodes, valid.Edges, valid.Variants, clock.GetUtcNow());
         await db.SaveChangesAsync(ct);
 
         return StrategyMapping.ToResponse(strategy, StrategySimulator.Run(StrategyMapping.ToInput(strategy)));

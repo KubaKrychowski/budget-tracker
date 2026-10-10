@@ -31,7 +31,7 @@ public sealed class CreateStrategyCommandHandler(
         var graph = StrategyTemplates.Build(request.Template, start, key => localizer[key].Value);
 
         var strategy = new Strategy(budget, name, start, graph.StartCash, DefaultHorizonMonths, scope.Now(), currentUser.UserId);
-        strategy.Replace(name, start, graph.StartCash, DefaultHorizonMonths, graph.Nodes, graph.Edges, scope.Now());
+        strategy.Replace(name, start, graph.StartCash, DefaultHorizonMonths, graph.Nodes, graph.Edges, [], scope.Now());
 
         db.Strategies.Add(strategy);
         await db.SaveChangesAsync(ct);

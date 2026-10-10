@@ -1544,3 +1544,31 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 > **REWIZJA — 2026-10-05: strategie w CLI** (`StrategiesModule.MapStrategiesCli`): rzeczownik `strategy` z komendami `list`, `get`, `create`,
 > `save`, `simulate`, `delete`, `references`, `apply-preview`, `apply` — te same handlery co endpointy REST, więc ta sama walidacja i atomowość.
 > Graf przy `save` i `simulate` idzie jako surowy JSON w `--json` (jak reguły przy `rule create`).
+
+> **REWIZJA — 2026-10-10: strategie — warianty i wykres (etap 2)** (makiety Figma „Strategia”: tablica z wariantami 423:451, porównanie
+> 423:762; `Strategy.Variants`, `SimulateStrategyVariantsQueryHandler`, `strategy-variants-panel`, `strategy-compare`):
+> - **Wariant to LISTA WYŁĄCZONYCH KAFELKÓW tego samego grafu**, nie osobny graf ani osobne parametry (`StrategyVariant`: `Id`, `Name`,
+>   `DisabledNodeIds` w kolumnie `jsonb`, jak węzły i połączenia). „Bazowy” (brak wyłączeń) NIE jest zapisywany — istnieje zawsze.
+>   Dzięki temu zmiana kwoty w kafelku zmienia wynik wszystkich wariantów i nic się nie rozjeżdża. Cena: wariant nie może mieć innej
+>   kwoty podwyżki, tylko ją wyłączyć. Gdyby to było potrzebne, to osobna, większa zmiana modelu.
+> - ⚠️ **Wyłączony kafelek jest dla symulatora „zablokowany”** (`StrategyInput.DisabledNodeIds`, tak jak węzeł z problemem grafu), więc
+>   nie wykonuje się też to, do czego prowadzi wyłącznie on — wyłączone zdarzenie wyłącza cały swój łańcuch. Problemy grafu w wyniku
+>   liczone są dla CAŁEGO grafu: wariant ich nie ukrywa i nie dodaje.
+> - **Walidacja** (`StrategyVariantInvalidException` → 400): do 10 wariantów (`Strategy.MaxVariants`), nazwa 1–60 znaków niepowtarzalna bez
+>   względu na wielkość liter, niepowtarzalne identyfikatory, a wyłączony kafelek musi istnieć w grafie (identyfikator w CIELE żądania, którego
+>   nie ma = 400). Dlatego front zdejmuje usunięty kafelek z wyłączeń wszystkich wariantów (`pruneNode`). `Variants` w żądaniu jest
+>   opcjonalne — starszy klient zapisuje strategię bez wariantów i kasuje je.
+> - **Migracja `AddStrategyVariants`:** nowa kolumna `Variants` (jsonb) z domyślnym `[]` (EF podstawia `{}`, poprawione ręcznie) — istniejące
+>   strategie mają tylko wariant bazowy i liczą się tak jak wcześniej.
+> - **Symulacja wariantów jednym żądaniem:** `POST /api/strategies/simulate-variants` zwraca wynik bazowy i każdego wariantu (niczego nie
+>   zapisuje); tablica woła je zamiast `simulate` przy każdej zmianie, bo karty wariantów i porównanie pokazują wyniki obok siebie.
+>   `simulate` zostaje (CLI). Odpowiedź `GET/PUT` niesie wynik każdego wariantu.
+> - **„Zastosuj w budżecie” działa na wybranym wariancie** (`VariantId` w `POST /apply` i `?variantId=` w podglądzie): akcje wyłączone
+>   w wariancie nie trafiają na listę, a „czeka” liczy się z symulacji TEGO wariantu. CLI: `--variant-id` przy `apply-preview` i `apply`,
+>   komenda `strategy simulate-variants`.
+> - **Wykres to zwykłe SVG z tokenów aplikacji** (`strategy-compare`), bez biblioteki wykresów — nowa zależność dla jednego okna. Okno
+>   „Porównanie wariantów” (alert „to szacunek” pierwszym elementem) pokazuje gotówkę, dług albo gotówkę − dług oraz tabelę dat i kwot
+>   z różnicą względem bazowego; bez wariantów to „Przebieg symulacji” jednej serii.
+> - Wybrany wariant to tylko widok tablicy (nie jest zapisywany). Poza tym PR-em: „zdarzenie nastąpiło” (etap 4), „Duplikuj” strategię
+>   i ochrona przed opuszczeniem ekranu z niezapisanymi zmianami (osobny PR), changelog (etap 5). Zakładka „Wykres” z makiety nie powstała —
+>   wykres otwiera się z chipa wyniku, jak w makiecie okna.

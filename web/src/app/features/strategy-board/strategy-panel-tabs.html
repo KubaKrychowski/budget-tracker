@@ -1,0 +1,13 @@
+<div class="spt" role="tablist">
+  @for (tab of tabs; track tab.id) {
+    <button
+      type="button"
+      role="tab"
+      class="spt__tab"
+      [class.spt__tab--active]="active() === tab.id"
+      [attr.aria-selected]="active() === tab.id"
+      (click)="picked.emit(tab.id)">
+      {{ tab.label | translate }}
+    </button>
+  }
+</div>

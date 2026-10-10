@@ -26,6 +26,9 @@ public class Strategy(
     /// <summary>Najkrótszy horyzont symulacji w miesiącach.</summary>
     public const int MinHorizonMonths = 6;
 
+    /// <summary>Ile wariantów (poza bazowym) może mieć strategia — pasek wariantów i porównanie muszą się mieścić na ekranie.</summary>
+    public const int MaxVariants = 10;
+
     /// <summary>Najdłuższy horyzont symulacji — 5 lat wystarcza na kredyt konsumpcyjny i trzyma serię w ryzach.</summary>
     public const int MaxHorizonMonths = 60;
 
@@ -53,6 +56,9 @@ public class Strategy(
     /// <summary>Połączenia między kafelkami.</summary>
     public List<StrategyEdge> Edges { get; protected set; } = [];
 
+    /// <summary>Warianty — wyłączenia kafelków; „Bazowy” (bez wyłączeń) nie jest zapisywany, istnieje zawsze.</summary>
+    public List<StrategyVariant> Variants { get; protected set; } = [];
+
     public DateTimeOffset CreatedAt { get; protected set; } = createdAt;
 
     /// <summary>Ostatni zapis tablicy albo parametrów — do listy „zmieniona …”.</summary>
@@ -67,6 +73,7 @@ public class Strategy(
         int horizonMonths,
         IReadOnlyCollection<StrategyNode> nodes,
         IReadOnlyCollection<StrategyEdge> edges,
+        IReadOnlyCollection<StrategyVariant> variants,
         DateTimeOffset now)
     {
         Name = name;
@@ -75,6 +82,7 @@ public class Strategy(
         HorizonMonths = horizonMonths;
         Nodes = [.. nodes];
         Edges = [.. edges];
+        Variants = [.. variants];
         UpdatedAt = now;
     }
 }

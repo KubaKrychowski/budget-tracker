@@ -105,14 +105,14 @@ public sealed class StrategyApplyTests : IAsyncLifetime
         nodes.AddRange(actions);
         var edges = actions.Select(a => new StrategyEdge($"t-{a.Id}", "t", a.Id, StrategyEdgeLabel.None)).ToList();
         var strategy = new Strategy(_budget.BusinessId, "Plan", October, 1_000m, 24, _clock.GetUtcNow());
-        strategy.Replace("Plan", October, 1_000m, 24, nodes, edges, _clock.GetUtcNow());
+        strategy.Replace("Plan", October, 1_000m, 24, nodes, edges, [], _clock.GetUtcNow());
         _db.Strategies.Add(strategy);
         await _db.SaveChangesAsync();
         return strategy;
     }
 
     private async Task<StrategyApplyItemResponseDto> ItemAsync(Strategy strategy, string nodeId) =>
-        (await Preview().HandleAsync(strategy.BusinessId, default)).Items.Single(i => i.NodeId == nodeId);
+        (await Preview().HandleAsync(strategy.BusinessId, null, default)).Items.Single(i => i.NodeId == nodeId);
 
     // ── Podgląd ──────────────────────────────────────────────────────────────────────────
 
@@ -124,7 +124,7 @@ public sealed class StrategyApplyTests : IAsyncLifetime
             Action("goal", StrategyNodeType.SetSavingsGoal, 700m),
             Action("surplus", StrategyNodeType.IncreaseSurplus, 100m));
 
-        var preview = await Preview().HandleAsync(strategy.BusinessId, default);
+        var preview = await Preview().HandleAsync(strategy.BusinessId, null, default);
 
         Assert.Equal("Domowy", preview.BudgetName);
         Assert.Equal(["goal"], preview.Items.Select(i => i.NodeId));
@@ -266,6 +266,31 @@ public sealed class StrategyApplyTests : IAsyncLifetime
     public async Task An_unknown_strategy_is_not_found()
     {
         await Assert.ThrowsAsync<StrategyNotFoundException>(
-            () => Preview().HandleAsync(Guid.NewGuid(), default));
+            () => Preview().HandleAsync(Guid.NewGuid(), null, default));
+    }
+
+    [Fact]
+    public async Task A_variant_leaves_out_the_actions_it_disables_in_the_preview_and_does_not_apply_them()
+    {
+        // Łapie plan liczony bez wariantu: wyłączona akcja pojawiałaby się w oknie i dawała się zastosować, choć wariant
+        // „bez celu” miał ją pominąć.
+        var strategy = await StrategyAsync(
+            October,
+            Action("goal", StrategyNodeType.SetSavingsGoal, 700m),
+            Action("reservation", StrategyNodeType.CreateReservation, 500m, "Dach", October));
+        strategy.Replace(
+            strategy.Name, strategy.StartMonth, strategy.StartCash, strategy.HorizonMonths, strategy.Nodes, strategy.Edges,
+            [new StrategyVariant("v1", "Bez celu", ["goal"])], _clock.GetUtcNow());
+        await _db.SaveChangesAsync();
+
+        var baseItems = (await Preview().HandleAsync(strategy.BusinessId, null, default)).Items.Select(i => i.NodeId);
+        var variantItems = (await Preview().HandleAsync(strategy.BusinessId, "v1", default)).Items.Select(i => i.NodeId);
+        var applied = await Apply().HandleAsync(
+            strategy.BusinessId, new ApplyStrategyRequestDto(["goal", "reservation"], "v1"), default);
+
+        Assert.Equal(["goal", "reservation"], baseItems.Order());
+        Assert.Equal(["reservation"], variantItems);
+        Assert.Equal(["reservation"], applied.Applied);
+        Assert.Empty(_db.SavingsGoals);
     }
 }

@@ -66,6 +66,7 @@
   <data name="Strategy_NameRequired" xml:space="preserve"><value>Nazwij strategię (do 100 znaków).</value></data>
   <data name="Strategy_HorizonInvalid" xml:space="preserve"><value>Horyzont symulacji musi mieścić się między 6 a 60 miesiącami.</value></data>
   <data name="Strategy_GraphInvalid" xml:space="preserve"><value>Tablicy nie da się zapisać: ma powtórzony identyfikator, połączenie do nieistniejącego kafelka, kafelek połączony z samym sobą, etykietę tak/nie poza warunkiem, zbyt wiele elementów albo wartość spoza zakresu.</value></data>
+  <data name="Strategy_VariantInvalid" xml:space="preserve"><value>Nie można zapisać wariantów: wariant potrzebuje nazwy (do 60 znaków), której nie używa inny wariant, identyfikatory nie mogą się powtarzać, wariantów może być najwyżej 10, a wariant może wyłączać tylko kafelki, które są na tablicy.</value></data>
   <data name="Strategy_ApplyNothingSelected" xml:space="preserve"><value>Zaznacz co najmniej jedną akcję do zastosowania w budżecie.</value></data>
   <data name="Strategy_Template_Surplus" xml:space="preserve"><value>Nadwyżka miesięczna</value></data>
   <data name="Strategy_Template_Loan" xml:space="preserve"><value>Kredyt</value></data>

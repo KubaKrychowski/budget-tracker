@@ -1,0 +1,86 @@
+<nz-modal
+  [nzVisible]="open()"
+  [nzTitle]="(single() ? 'strategies.compare.titleSingle' : 'strategies.compare.title') | translate"
+  [nzWidth]="'min(900px, calc(100vw - 32px))'"
+  [nzFooter]="footer"
+  (nzOnCancel)="closed.emit()"
+>
+  <ng-container *nzModalContent>
+    <nz-alert
+      nzType="info"
+      nzShowIcon
+      [nzMessage]="'strategies.compare.alertTitle' | translate"
+      [nzDescription]="'strategies.compare.alertBody' | translate" />
+
+    <p class="scmp__caption">{{ 'strategies.compare.caption' | translate: { metric: metricName() } }}</p>
+
+    <div class="scmp__controls">
+      <nz-segmented [nzOptions]="metricOptions()" [ngModel]="metric()" (ngModelChange)="metric.set($event)" />
+      <ul class="scmp__legend">
+        @for (s of series(); track $index) {
+          <li>
+            <span class="scmp__swatch" [style.background]="color($index)"></span>
+            {{ s.name }}
+          </li>
+        }
+      </ul>
+    </div>
+
+    <svg
+      class="scmp__chart"
+      [attr.viewBox]="'0 0 ' + width + ' ' + height"
+      role="img"
+      [attr.aria-label]="'strategies.compare.chart' | translate: { metric: metricName() }">
+      @for (tick of chart().yTicks; track tick.y) {
+        <line class="scmp__grid" [attr.x1]="left" [attr.x2]="right" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+        <text class="scmp__label" text-anchor="end" [attr.x]="left - 8" [attr.y]="tick.y + 4">{{ tick.label }}</text>
+      }
+      @for (tick of chart().xTicks; track tick.x) {
+        <text class="scmp__label" text-anchor="middle" [attr.x]="tick.x" [attr.y]="baseline + 20">{{ tick.label }}</text>
+      }
+      @for (line of chart().lines; track $index) {
+        <polyline
+          fill="none"
+          stroke-width="2.5"
+          stroke-linejoin="round"
+          [attr.stroke]="line.color"
+          [attr.stroke-dasharray]="line.dash"
+          [attr.points]="line.points" />
+        <circle [attr.cx]="line.endX" [attr.cy]="line.endY" r="4" [attr.fill]="line.color" />
+        <text class="scmp__end" text-anchor="end" [attr.x]="line.endX" [attr.y]="line.endY - 10" [attr.fill]="line.color">{{ line.endLabel }}</text>
+      }
+    </svg>
+
+    <div class="scmp__scroll">
+      <table class="scmp__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'strategies.compare.measure' | translate }}</th>
+            @for (s of series(); track $index) {
+              <th scope="col" class="scmp__num">{{ s.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.label) {
+            <tr>
+              <th scope="row">{{ row.label }}</th>
+              @for (cell of row.cells; track $index) {
+                <td class="scmp__num">
+                  <strong>{{ cell.value }}</strong>
+                  @if (cell.delta) {
+                    <small>{{ cell.delta }}</small>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<ng-template #footer>
+  <button nz-button (click)="closed.emit()">{{ 'strategies.compare.close' | translate }}</button>
+</ng-template>

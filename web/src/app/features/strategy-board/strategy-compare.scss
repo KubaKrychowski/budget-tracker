@@ -1,0 +1,100 @@
+.scmp {
+  &__caption {
+    margin: 16px 0 12px;
+    font-size: 13px;
+    color: var(--ds-neutral-600);
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    color: var(--ds-neutral-600);
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  &__swatch {
+    width: 18px;
+    height: 3px;
+  }
+
+  &__chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 12px 0 8px;
+  }
+
+  &__grid {
+    stroke: var(--ds-neutral-100);
+    stroke-width: 1;
+  }
+
+  &__label {
+    font-size: 12px;
+    fill: var(--ds-neutral-600);
+  }
+
+  &__end {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  &__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--ds-neutral-100);
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+
+    th,
+    td {
+      padding: 9px 16px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th {
+      font-weight: 400;
+      color: var(--ds-neutral-600);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: var(--ds-neutral-50);
+    }
+
+    tbody th {
+      font-weight: 400;
+    }
+
+    td small {
+      display: block;
+      font-size: 12px;
+      color: var(--ds-neutral-600);
+    }
+  }
+
+  &__num {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+  }
+}

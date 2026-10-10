@@ -23,6 +23,9 @@
             [nzMessage]="alertKey() | translate: { count: count(), budget: data.budgetName }"
             [nzDescription]="'strategies.apply.alertBody' | translate"
           />
+          @if (variantName(); as variant) {
+            <p class="sap__variant">{{ 'strategies.apply.variant' | translate: { name: variant } }}</p>
+          }
           <ul class="sap__list">
             @for (item of data.items; track item.nodeId) {
               <li class="sap__row" [class.sap__row--off]="!isApplicable(item)">

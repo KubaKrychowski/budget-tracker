@@ -66,6 +66,7 @@
   <data name="Strategy_NameRequired" xml:space="preserve"><value>Name the strategy (up to 100 characters).</value></data>
   <data name="Strategy_HorizonInvalid" xml:space="preserve"><value>The simulation horizon must be between 6 and 60 months.</value></data>
   <data name="Strategy_GraphInvalid" xml:space="preserve"><value>The board cannot be saved: it has a duplicated id, a connection to a missing tile, a tile connected to itself, a yes/no label outside a condition, too many elements or a value out of range.</value></data>
+  <data name="Strategy_VariantInvalid" xml:space="preserve"><value>The variants cannot be saved: a variant needs a name (up to 60 characters) that no other variant uses, ids must not repeat, there can be at most 10 variants, and a variant can only disable tiles that exist on the board.</value></data>
   <data name="Strategy_ApplyNothingSelected" xml:space="preserve"><value>Select at least one action to apply to the budget.</value></data>
   <data name="Strategy_Template_Surplus" xml:space="preserve"><value>Monthly surplus</value></data>
   <data name="Strategy_Template_Loan" xml:space="preserve"><value>Loan</value></data>

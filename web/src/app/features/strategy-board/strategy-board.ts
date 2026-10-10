@@ -29,15 +29,23 @@ import { Viewport } from '../../core/layout/viewport';
 import { parseAmount } from '../../core/parse-amount';
 import {
   SaveStrategyRequest, Strategy, StrategyEdge, StrategyEdgeLabel, StrategyNode, StrategyNodeType, StrategyProblemKind,
-  StrategyReferences, StrategyResult,
+  StrategyReferences, StrategyResult, StrategyVariant, StrategyVariantsResult,
 } from '../../core/api/models/strategies';
 import {
   BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
 } from './strategy-node-meta';
 import { buildChains, Chain } from './strategy-chains';
 import { StrategyApply } from './strategy-apply';
+import { CompareSeries, StrategyCompare } from './strategy-compare';
 import { StrategyNodeForm } from './strategy-node-form';
 import { StrategyPalette } from './strategy-palette';
+import { PanelTab, StrategyPanelTabs } from './strategy-panel-tabs';
+import { StrategyVariantBar } from './strategy-variant-bar';
+import { StrategyVariantsPanel, VariantTile } from './strategy-variants-panel';
+import {
+  addVariant, canAddVariant, duplicateVariant, nameError, newVariantId, pruneNode, removeVariant, renameVariant, setNodeDisabled,
+  uniqueName, VariantNameError,
+} from './strategy-variants';
 
 /** Opóźnienie podglądu symulacji — żeby nie pytać serwera przy każdym pikselu przeciągania. */
 const SIMULATE_DEBOUNCE_MS = 400;
@@ -64,6 +72,8 @@ interface BoardNode {
   readonly receives: boolean;
   readonly sends: boolean;
   readonly problems: readonly StrategyProblemKind[];
+  /** Wyłączony w wybranym wariancie — symulacja go pomija. */
+  readonly disabled: boolean;
 }
 
 /**
@@ -72,21 +82,27 @@ interface BoardNode {
  *
  * Użytkownik układa na tablicy zdarzenia, akcje i warunki, a serwer liczy z nich gotówkę i dług miesiąc po miesiącu.
  * Ten komponent trzyma ROBOCZY stan tablicy (nazwa, parametry, kafelki, połączenia) i na bieżąco prosi serwer
- * o symulację (`POST /api/strategies/simulate`, nic nie zapisuje); „Zapisz” wysyła całość jednym `PUT`.
+ * o symulację bazowego wariantu i wszystkich wariantów (`POST /api/strategies/simulate-variants`, nic nie zapisuje);
+ * „Zapisz” wysyła całość jednym `PUT`.
  *
  * ⚠️ Biblioteka tablicy (`@foblex/flow`) NIE trzyma grafu — wszystko, co użytkownik zrobi (przesunięcie, połączenie,
  * upuszczenie z palety, usunięcie), wraca do tego komponentu jako zdarzenie, a on aktualizuje sygnały i dopiero
  * wtedy szablon rysuje nowy stan. Dzięki temu „Odrzuć zmiany” i symulacja mają jedno źródło prawdy.
  *
- * Nie ma jeszcze: „Zastosuj w budżecie” (etap 3), wariantów i wykresu (etap 2), polskich komunikatów czytnika ekranu
- * (biblioteka mówi po angielsku, ale nazwy połączeń niosą już tytuły kafelków).
+ * Warianty (makieta „Strategia”: 423:451, porównanie 423:762) to ten sam graf z wyłączonymi kafelkami: tablica trzyma ich
+ * listę i wybrany wariant, a symulacja pomija wyłączone kafelki. Wybrany wariant zmienia też to, co pokazuje chip wyniku
+ * i co stosuje „Zastosuj w budżecie”.
+ *
+ * Nie ma jeszcze: „zdarzenie nastąpiło” (etap 4), polskich komunikatów czytnika ekranu (biblioteka mówi po angielsku, ale
+ * nazwy połączeń niosą już tytuły kafelków).
  */
 @Component({
   selector: 'app-strategy-board',
   imports: [
     DatePipe, NgTemplateOutlet, FormsModule, RouterLink, FFlowModule,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDrawerModule, NzDropdownModule, NzInputModule,
-    NzInputNumberModule, NzMenuModule, NzModalModule, NzSegmentedModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyNodeForm, StrategyPalette,
+    NzInputNumberModule, NzMenuModule, NzModalModule, NzSegmentedModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyCompare, StrategyNodeForm,
+    StrategyPalette, StrategyPanelTabs, StrategyVariantBar, StrategyVariantsPanel,
   ],
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
@@ -150,8 +166,18 @@ export class StrategyBoard {
   protected readonly horizonMonths = signal(24);
   protected readonly nodes = signal<readonly StrategyNode[]>([]);
   protected readonly edges = signal<readonly StrategyEdge[]>([]);
-  protected readonly result = signal<StrategyResult | null>(null);
+  protected readonly variants = signal<readonly StrategyVariant[]>([]);
+  /** Wybrany wariant; `null` = bazowy. Nie jest częścią strategii — to tylko widok. */
+  protected readonly activeVariantId = signal<string | null>(null);
+  protected readonly baseResult = signal<StrategyResult | null>(null);
+  protected readonly variantResults = signal<Readonly<Record<string, StrategyResult>>>({});
   protected readonly busy = signal(false);
+
+  /** Wynik wybranego wariantu — to on rysuje chip, kafelki z problemami i „wynik kafelka” w ustawieniach. */
+  protected readonly result = computed<StrategyResult | null>(() => {
+    const id = this.activeVariantId();
+    return (id ? this.variantResults()[id] : null) ?? this.baseResult();
+  });
 
   private readonly request = computed<SaveStrategyRequest>(() => ({
     name: this.name().trim(),
@@ -160,6 +186,7 @@ export class StrategyBoard {
     horizonMonths: this.horizonMonths(),
     nodes: this.nodes(),
     edges: this.edges(),
+    variants: this.variants(),
   }));
 
   private readonly signature = computed(() => JSON.stringify(this.request()));
@@ -180,7 +207,7 @@ export class StrategyBoard {
     const saved = this.saved();
     if (!saved) return;
     if (signature === untracked(this.savedSignature)) {
-      untracked(() => this.result.set(saved.result));
+      untracked(() => this.adoptResults(saved.result, saved.variants.map((v) => ({ id: v.id, result: v.result }))));
       return;
     }
 
@@ -197,7 +224,11 @@ export class StrategyBoard {
     this.horizonMonths.set(strategy.horizonMonths);
     this.nodes.set(strategy.nodes);
     this.edges.set(strategy.edges);
-    this.result.set(strategy.result);
+    // Odpowiedź niesie wynik każdego wariantu — na tablicy zostają tylko pola żądania, bez `result`.
+    const variants = strategy.variants.map(({ id, name, disabledNodeIds }) => ({ id, name, disabledNodeIds }));
+    this.variants.set(variants);
+    if (this.activeVariantId() && !variants.some((v) => v.id === this.activeVariantId())) this.activeVariantId.set(null);
+    this.adoptResults(strategy.result, strategy.variants.map((v) => ({ id: v.id, result: v.result })));
     this.savedSignature.set(JSON.stringify({
       name: strategy.name.trim(),
       startMonth: strategy.startMonth,
@@ -205,20 +236,30 @@ export class StrategyBoard {
       horizonMonths: strategy.horizonMonths,
       nodes: strategy.nodes,
       edges: strategy.edges,
+      variants,
     }));
+  }
+
+  private adoptResults(base: StrategyResult, variants: readonly { id: string; result: StrategyResult }[]): void {
+    this.baseResult.set(base);
+    this.variantResults.set(Object.fromEntries(variants.map((v) => [v.id, v.result])));
   }
 
   private async runSimulation(body: SaveStrategyRequest): Promise<void> {
     const run = ++this.simulationRun;
     try {
-      const next = await firstValueFrom(this.http.post<StrategyResult>('/api/strategies/simulate', body));
-      if (run === this.simulationRun) this.result.set(next);
+      const next = await firstValueFrom(this.http.post<StrategyVariantsResult>('/api/strategies/simulate-variants', body));
+      if (run === this.simulationRun) this.adoptResults(next.base, next.variants);
     } catch {
       // Graf, którego nie da się policzyć, zostawia poprzedni wynik — komunikat dałby błysk przy każdym ruchu.
     }
   }
 
   // ── Widok tablicy ────────────────────────────────────────────────────────────────────
+
+  /** Kafelki wyłączone w wybranym wariancie. */
+  private readonly activeDisabled = computed<ReadonlySet<string>>(() =>
+    new Set(this.variants().find((v) => v.id === this.activeVariantId())?.disabledNodeIds ?? []));
 
   private readonly problemsByNode = computed(() => {
     const map = new Map<string, StrategyProblemKind[]>();
@@ -236,12 +277,19 @@ export class StrategyBoard {
       receives: canReceive(n.type),
       sends: canSend(n.type),
       problems: this.problemsByNode().get(n.id) ?? [],
+      disabled: this.activeDisabled().has(n.id),
     })));
 
   protected readonly problemNodes = computed(() => this.viewNodes().filter((n) => n.problems.length > 0));
 
   protected problemsByNodeOf(id: string): readonly StrategyProblemKind[] {
     return this.problemsByNode().get(id) ?? [];
+  }
+
+  /** Strzałka dotykająca kafelka wyłączonego w wybranym wariancie — rysowana blado, bo nic nią nie płynie. */
+  protected edgeOff(edge: StrategyEdge): boolean {
+    const disabled = this.activeDisabled();
+    return disabled.has(edge.from) || disabled.has(edge.to);
   }
 
   protected sourceConnector(edge: StrategyEdge): string {
@@ -393,7 +441,8 @@ export class StrategyBoard {
   /** Arkusz od dołu: ustawienia kafelka, strzałki, lista problemów albo paleta — to, co na desktopie stoi w panelu po prawej. */
   protected readonly sheetOpen = computed(
     () => this.viewport.isMobile()
-      && (this.paletteOpen() || this.formNode() !== null || this.selectedEdge() !== null || this.panel() === 'problems'),
+      && (this.paletteOpen() || this.variantsSheetOpen() || this.formNode() !== null || this.selectedEdge() !== null
+        || this.panel() === 'problems'),
   );
 
   /** Zamknięcie arkusza (przeciągnięcie w dół, tło, „✕”): chowa to, co akurat w nim stoi. */
@@ -402,10 +451,13 @@ export class StrategyBoard {
     else if (this.selectedEdge()) this.selectedConnectionIds.set([]);
     this.panel.set('palette');
     this.paletteOpen.set(false);
+    this.variantsSheetOpen.set(false);
+    this.panelTab.set('tiles');
   }
 
   /** „+ Dodaj kafelek” z paska: wolny kafelek, bez dopinania do zaznaczonego. */
   protected openPalette(): void {
+    this.panelTab.set('tiles');
     this.selectedNodeIds.set([]);
     this.selectedConnectionIds.set([]);
     this.panel.set('palette');
@@ -414,6 +466,7 @@ export class StrategyBoard {
 
   /** „+ Dodaj krok” pod łańcuchem: nowy kafelek dopina się za ostatnim krokiem (tak jak „+” przy zaznaczonym na desktopie). */
   protected openPaletteAfter(id: string): void {
+    this.panelTab.set('tiles');
     this.selectedNodeIds.set([id]);
     this.selectedConnectionIds.set([]);
     this.formDismissed.set(true);
@@ -448,12 +501,14 @@ export class StrategyBoard {
   });
 
   protected onSelection(event: FSelectionChangeEvent): void {
+    if (event.nodeIds.length > 0) this.panelTab.set('tiles');
     this.selectedNodeIds.set(event.nodeIds);
     this.selectedConnectionIds.set(event.connectionIds);
     this.formDismissed.set(false);
   }
 
   protected openNode(id: string): void {
+    this.panelTab.set('tiles');
     this.selectedNodeIds.set([id]);
     this.selectedConnectionIds.set([]);
     this.formDismissed.set(false);
@@ -551,6 +606,7 @@ export class StrategyBoard {
   protected removeNode(id: string): void {
     this.nodes.update((all) => all.filter((n) => n.id !== id));
     this.edges.update((all) => all.filter((e) => e.from !== id && e.to !== id));
+    this.variants.update((all) => pruneNode(all, id));
     this.selectedNodeIds.update((ids) => ids.filter((x) => x !== id));
   }
 
@@ -562,6 +618,94 @@ export class StrategyBoard {
   protected onDeleteSelected(event: FDeleteSelectedEvent): void {
     for (const id of event.nodeIds) this.removeNode(id);
     for (const id of event.connectionIds) this.removeEdge(id);
+  }
+
+  // ── Warianty ─────────────────────────────────────────────────────────────────────────
+
+  /** Zakładka panelu bocznego na desktopie; na telefonie warianty żyją w arkuszu (`variantsSheetOpen`). */
+  protected readonly panelTab = signal<PanelTab>('tiles');
+  protected readonly variantsSheetOpen = signal(false);
+  protected readonly compareOpen = signal(false);
+
+  protected readonly canAddVariant = computed(() => canAddVariant(this.variants()));
+  protected readonly activeVariant = computed(() => this.variants().find((v) => v.id === this.activeVariantId()) ?? null);
+
+  /** Zakładka „Warianty” ma sens tylko tam, gdzie panel ją pokazuje — na telefonie dopiero po otwarciu arkusza. */
+  protected readonly showVariantsPanel = computed(() =>
+    this.panelTab() === 'variants' && (!this.viewport.isMobile() || this.variantsSheetOpen()));
+
+  protected readonly variantTiles = computed<readonly VariantTile[]>(() =>
+    this.nodes().map((n) => ({ id: n.id, title: this.titleOf(n) })));
+
+  /** Serie do okna porównania: bazowy i każdy wariant, którego wynik już policzono. */
+  protected readonly compareSeries = computed<readonly CompareSeries[]>(() => {
+    const base = this.baseResult();
+    if (!base) return [];
+    const results = this.variantResults();
+    return [
+      { id: null, name: this.translate.instant('strategies.variants.base'), result: base },
+      ...this.variants().flatMap((v) => (results[v.id] ? [{ id: v.id, name: v.name, result: results[v.id] }] : [])),
+    ];
+  });
+
+  protected selectVariant(id: string | null): void {
+    this.activeVariantId.set(id);
+  }
+
+  /** Otwiera zakładkę „Warianty”: na desktopie w panelu po prawej, na telefonie w arkuszu od dołu. */
+  protected openVariantsPanel(): void {
+    this.panelTab.set('variants');
+    this.paletteOpen.set(false);
+    if (this.viewport.isMobile()) this.variantsSheetOpen.set(true);
+  }
+
+  protected setPanelTab(tab: PanelTab): void {
+    this.panelTab.set(tab);
+  }
+
+  /** „+ Nowy wariant”: wariant bez wyłączeń (jak bazowy) o wolnej nazwie, od razu wybrany — kafelki wyłącza się w panelu. */
+  protected addNewVariant(): void {
+    if (!this.canAddVariant()) return;
+    const id = newVariantId();
+    const name = uniqueName(this.translate.instant('strategies.variants.defaultName'), this.variants());
+    this.variants.update((all) => addVariant(all, { id, name, disabledNodeIds: [] }));
+    this.activeVariantId.set(id);
+    this.openVariantsPanel();
+  }
+
+  protected duplicateVariant(id: string): void {
+    const copy = newVariantId();
+    this.variants.update((all) => duplicateVariant(all, id, copy, this.translate.instant('strategies.variants.copySuffix')));
+    if (this.variants().some((v) => v.id === copy)) this.activeVariantId.set(copy);
+  }
+
+  protected removeVariant(id: string): void {
+    this.variants.update((all) => removeVariant(all, id));
+    if (this.activeVariantId() === id) this.activeVariantId.set(null);
+  }
+
+  /** Włącza albo wyłącza kafelek w WYBRANYM wariancie; bazowy nie ma wyłączeń, więc przełączników w nim nie ma. */
+  protected toggleTile(change: { readonly nodeId: string; readonly disabled: boolean }): void {
+    const id = this.activeVariantId();
+    if (id) this.variants.update((all) => setNodeDisabled(all, id, change.nodeId, change.disabled));
+  }
+
+  // Zmiana nazwy wariantu — okno z jednym polem.
+  protected readonly renameId = signal<string | null>(null);
+  protected readonly renameDraft = signal('');
+  protected readonly renameError = computed<VariantNameError | null>(() =>
+    this.renameId() === null ? null : nameError(this.renameDraft(), this.variants(), this.renameId()));
+
+  protected openRename(id: string): void {
+    this.renameDraft.set(this.variants().find((v) => v.id === id)?.name ?? '');
+    this.renameId.set(id);
+  }
+
+  protected applyRename(): void {
+    const id = this.renameId();
+    if (id === null || this.renameError() !== null) return;
+    this.variants.update((all) => renameVariant(all, id, this.renameDraft()));
+    this.renameId.set(null);
   }
 
   // ── Parametry strategii ──────────────────────────────────────────────────────────────

@@ -166,6 +166,11 @@
     &--problem {
       border-color: var(--ds-error-500);
     }
+
+    &--off {
+      opacity: 0.4;
+      border-style: dashed;
+    }
   }
 
   .sb__step--event .sb__glyph,

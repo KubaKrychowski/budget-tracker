@@ -53,7 +53,7 @@ describe('StrategyApply', () => {
           items: { SetSavingsGoal: 'Cel {{amount}}', CreateReservation: 'Rezerwacja „{{name}}”', SetLimit: 'Limit {{amount}}' },
           note: { SetSavingsGoal: { Change: 'Teraz {{current}}' } },
           noteStatus: { Exists: 'To już jest', Waiting: 'Czeka na miesiąc', Incomplete: 'Uzupełnij kafelek' },
-          done: 'Zastosowano: {{count}}.',
+          done: 'Zastosowano: {{count}}.', variant: 'Wariant: {{name}}',
         },
       },
     });
@@ -106,6 +106,28 @@ describe('StrategyApply', () => {
     const post = http.expectOne((r) => r.url === '/api/strategies/s1/apply' && r.method === 'POST');
     expect(post.request.body).toEqual({ nodeIds: ['b'] });
     post.flush({ applied: ['b'], skipped: [] });
+    await fixture.whenStable();
+  });
+
+  it('dla wariantu pyta o jego podgląd, pokazuje nazwę i wysyła identyfikator wariantu', async () => {
+    // Łapie stosowanie bazowego wariantu pod nazwą wybranego: bez variantId serwer policzyłby plan z wyłączonymi kafelkami.
+    fixture.componentRef.setInput('variantId', 'v 1');
+    fixture.componentRef.setInput('variantName', 'Bez celu');
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/api/strategies/s1/apply?variantId=v%201' && r.method === 'GET')
+      .flush(preview([item({ nodeId: 'a' })]));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(text()).toContain('Wariant: Bez celu');
+
+    okButton().click();
+    const post = http.expectOne((r) => r.url === '/api/strategies/s1/apply' && r.method === 'POST');
+    expect(post.request.body).toEqual({ nodeIds: ['a'], variantId: 'v 1' });
+    post.flush({ applied: ['a'], skipped: [] });
     await fixture.whenStable();
   });
 

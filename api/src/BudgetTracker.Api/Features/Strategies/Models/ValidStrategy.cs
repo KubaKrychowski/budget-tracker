@@ -9,4 +9,5 @@ public sealed record ValidStrategy(
     decimal StartCash,
     int HorizonMonths,
     IReadOnlyList<StrategyNode> Nodes,
-    IReadOnlyList<StrategyEdge> Edges);
+    IReadOnlyList<StrategyEdge> Edges,
+    IReadOnlyList<StrategyVariant> Variants);

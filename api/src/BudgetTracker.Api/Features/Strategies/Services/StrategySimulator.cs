@@ -30,6 +30,11 @@ namespace BudgetTracker.Api.Features.Strategies.Services;
 /// kolejny miesiąc, więc jest jedyną dozwoloną pętlą. Węzły z problemami grafu (<see cref="StrategyGraphAnalyzer"/>) nie
 /// wykonują się wcale.
 /// </para>
+/// <para>
+/// ⚠️ Kafelki wyłączone w wariancie (<see cref="StrategyInput.DisabledNodeIds"/>) traktowane są jak węzły z problemami:
+/// nie wykonują się, więc nie wykonuje się też to, do czego prowadzi wyłącznie one. Problemy grafu w wyniku liczone są
+/// dla CAŁEGO grafu — wariant nie ukrywa ani nie dodaje problemów.
+/// </para>
 /// </remarks>
 public static class StrategySimulator
 {
@@ -43,6 +48,7 @@ public static class StrategySimulator
                 or StrategyProblemKind.Cycle or StrategyProblemKind.Duplicate)
             .Select(p => p.NodeId)
             .ToHashSet();
+        if (input.DisabledNodeIds is { Count: > 0 }) blocked.UnionWith(input.DisabledNodeIds);
 
         var byId = input.Nodes.ToDictionary(n => n.Id);
         var next = input.Edges

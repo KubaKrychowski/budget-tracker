@@ -117,6 +117,7 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         StrategyNameRequiredException => (StatusCodes.Status400BadRequest, "Strategy_NameRequired"),
         StrategyHorizonInvalidException => (StatusCodes.Status400BadRequest, "Strategy_HorizonInvalid"),
         StrategyGraphInvalidException => (StatusCodes.Status400BadRequest, "Strategy_GraphInvalid"),
+        StrategyVariantInvalidException => (StatusCodes.Status400BadRequest, "Strategy_VariantInvalid"),
         StrategyApplyNothingSelectedException => (StatusCodes.Status400BadRequest, "Strategy_ApplyNothingSelected"),
 
         // Trzy razy ta sama historia: reguła zapisałaby się bez błędu i nigdy nie zadziałała.

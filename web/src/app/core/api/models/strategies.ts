@@ -91,6 +91,31 @@ export interface StrategyResult {
   readonly problems: StrategyProblem[];
 }
 
+/** Odpowiednik StrategyVariantRequestDto — wariant: te same kafelki, część z nich wyłączona. */
+export interface StrategyVariant {
+  readonly id: string;
+  readonly name: string;
+  /** Kafelki, które symulacja w tym wariancie pomija; „Bazowy” (bez wyłączeń) nie jest zapisywany. */
+  readonly disabledNodeIds: readonly string[];
+}
+
+/** Odpowiednik StrategyVariantResponseDto — wariant zapisanej strategii z wynikiem symulacji. */
+export interface StrategyVariantWithResult extends StrategyVariant {
+  readonly result: StrategyResult;
+}
+
+/** Odpowiednik StrategyVariantResultResponseDto — wynik jednego wariantu niezapisanego grafu. */
+export interface StrategyVariantResult {
+  readonly id: string;
+  readonly result: StrategyResult;
+}
+
+/** Odpowiednik StrategyVariantsResultResponseDto — wynik bazowy i wszystkich wariantów (`POST /api/strategies/simulate-variants`). */
+export interface StrategyVariantsResult {
+  readonly base: StrategyResult;
+  readonly variants: StrategyVariantResult[];
+}
+
 /** Odpowiednik StrategyResponseDto — strategia z policzonym wynikiem. */
 export interface Strategy {
   readonly id: string;
@@ -103,6 +128,7 @@ export interface Strategy {
   readonly nodes: StrategyNode[];
   readonly edges: StrategyEdge[];
   readonly result: StrategyResult;
+  readonly variants: StrategyVariantWithResult[];
 }
 
 /** Odpowiednik SaveStrategyRequestDto — cała strategia do zapisu albo podglądu symulacji. */
@@ -113,6 +139,7 @@ export interface SaveStrategyRequest {
   readonly horizonMonths: number;
   readonly nodes: readonly StrategyNode[];
   readonly edges: readonly StrategyEdge[];
+  readonly variants: readonly StrategyVariant[];
 }
 
 /** Odpowiednik CreateStrategyRequestDto. */
@@ -164,6 +191,8 @@ export interface StrategyApplyPreview {
 /** Odpowiednik ApplyStrategyRequestDto. */
 export interface ApplyStrategyRequest {
   readonly nodeIds: readonly string[];
+  /** Wariant, który stosujemy; brak = bazowy. */
+  readonly variantId?: string | null;
 }
 
 /** Odpowiednik ApplyStrategyResponseDto. */

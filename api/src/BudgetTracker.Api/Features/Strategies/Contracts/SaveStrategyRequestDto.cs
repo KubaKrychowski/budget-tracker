@@ -9,10 +9,12 @@ namespace BudgetTracker.Api.Features.Strategies.Contracts;
 /// <param name="HorizonMonths">Ile miesięcy liczyć, 6–60.</param>
 /// <param name="Nodes">Kafelki, do 200.</param>
 /// <param name="Edges">Połączenia, do 400.</param>
+/// <param name="Variants">Warianty (do 10, poza bazowym); pominięte = brak wariantów, jak w starszych klientach.</param>
 public sealed record SaveStrategyRequestDto(
     string Name,
     DateOnly StartMonth,
     decimal StartCash,
     int HorizonMonths,
     IReadOnlyList<StrategyNodeRequestDto> Nodes,
-    IReadOnlyList<StrategyEdgeRequestDto> Edges);
+    IReadOnlyList<StrategyEdgeRequestDto> Edges,
+    IReadOnlyList<StrategyVariantRequestDto>? Variants = null);

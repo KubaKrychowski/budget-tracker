@@ -82,13 +82,29 @@ Kafelek z czerwonym znacznikiem **!** ma problem, a nad tablicą pojawia się ba
 
 Symulacja **pomija** kafelki z problemami, ale szkic zapisuje się mimo to.
 
+### Warianty: „co jeśli”
+
+Wariant to **ta sama tablica z wyłączonymi kafelkami** — na przykład „bez podwyżki” albo „bez ubezpieczenia”. Dzięki temu bez kopiowania strategii sprawdzisz, co by się stało, gdyby czegoś zabrakło.
+
+Nad tablicą jest pasek **Wariant**: **Bazowy** (wszystkie kafelki włączone, istnieje zawsze) i Twoje warianty. Kliknij wariant, żeby go wybrać — wyłączone w nim kafelki robią się blade i przerywane, a wynik na dole tablicy dotyczy właśnie jego.
+
+1. Kliknij **+ Nowy wariant** — pojawi się wariant bez wyłączeń i od razu się wybierze.
+2. W panelu po prawej otwórz zakładkę **Warianty** i wyłącz kafelki przełącznikami.
+3. **Zapisz strategię** — warianty zapisują się razem z tablicą.
+
+W zakładce **Warianty** każda karta pokazuje wynik wariantu (spłata kredytu, oszczędności na koniec) i **różnicę względem bazowego**. Stąd też wariant **duplikujesz**, **zmieniasz mu nazwę** albo go **usuwasz**. Wariantów może być najwyżej 10, a nazwy muszą być różne.
+
+> ℹ️ Wyłączony kafelek zostaje w strategii i nie traci połączeń, ale **symulacja go pomija** — a razem z nim to, do czego prowadzi tylko on. Wyłączenie zdarzenia „Podwyżka” wyłącza więc też akcje, które po nim następują. Zmiana kwoty w kafelku zmienia wynik **wszystkich** wariantów, bo graf jest wspólny.
+
+Kliknij **Porównaj warianty** (obok wyniku na tablicy), żeby zobaczyć **wykres** gotówki, długu albo różnicy obu dla wszystkich wariantów naraz, a pod nim tabelę dat i kwot. Bez wariantów ten sam przycisk nazywa się **Pokaż wykres** i rysuje przebieg jednej strategii.
+
 ### Zastosuj w budżecie
 
 Plan możesz **zamienić w prawdziwe zmiany** przyciskiem **Zastosuj w budżecie…**. Założy on w budżecie to, co planują akcje z grupy „Zakłada w budżecie”: miesięczny cel oszczędzania, rezerwacje, limity kategorii, zakończenie zlecenia stałego i wydatki jednorazowe.
 
 ![Okno „Zastosuj strategię w budżecie” z listą akcji i ich statusami](handbook/images/strategies-apply.png)
 
-Okno liczy **zapisaną** strategię (przy niezapisanych zmianach przycisk jest wyłączony) i przy każdej akcji pokazuje status:
+Okno liczy **zapisaną** strategię (przy niezapisanych zmianach przycisk jest wyłączony) — i to **wybrany wariant**: akcje wyłączone w wariancie nie trafią na listę, a miesiące „czeka” liczone są z jego symulacji. Przy każdej akcji pokazuje status:
 
 | Status | Znaczenie |
 |---|---|
@@ -114,4 +130,4 @@ Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w bud�
 
 ### Terminal (CLI)
 
-Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `save`, `simulate`, `delete`, `references`, `apply-preview` i `apply`.
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a `apply-preview` i `apply` przyjmują `--variant-id`.

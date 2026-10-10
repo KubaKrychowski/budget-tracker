@@ -47,7 +47,7 @@ public sealed class ApplyStrategyCommandHandler(
 
         var applied = new List<string>();
         var skipped = new List<string>();
-        foreach (var item in await planner.PlanAsync(strategy, scope.CurrentMonth(), ct))
+        foreach (var item in await planner.PlanAsync(strategy, scope.CurrentMonth(), request.VariantId, ct))
         {
             if (!selected.Remove(item.Node.Id)) continue;
             if (item.Status is not (StrategyApplyStatus.New or StrategyApplyStatus.Change))

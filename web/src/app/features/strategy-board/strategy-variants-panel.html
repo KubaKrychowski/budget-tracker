@@ -1,0 +1,69 @@
+<div class="svp">
+  <p class="svp__hint">{{ 'strategies.variants.hint' | translate }}</p>
+
+  <ul class="svp__cards">
+    @for (card of cards(); track card.id ?? 'base') {
+      <li class="svp__card" [class.svp__card--active]="card.id === activeId()">
+        <div class="svp__head">
+          <button
+            type="button"
+            class="svp__pick"
+            [attr.aria-pressed]="card.id === activeId()"
+            (click)="picked.emit(card.id)">
+            {{ card.name }}
+          </button>
+          @if (card.id !== null) {
+            <span class="svp__actions">
+              <button type="button" class="svp__link" [disabled]="!canAdd()" (click)="duplicated.emit(card.id)">
+                {{ 'strategies.variants.duplicate' | translate }}
+              </button>
+              <button type="button" class="svp__link" (click)="renamed.emit(card.id)">
+                {{ 'strategies.variants.rename' | translate }}
+              </button>
+              <button type="button" class="svp__link svp__link--danger" (click)="removed.emit(card.id)">
+                {{ 'strategies.variants.remove' | translate }}
+              </button>
+            </span>
+          }
+        </div>
+        @if (card.loan) {
+          <small class="svp__line">{{ card.loan }}</small>
+        }
+        @if (card.cash) {
+          <small class="svp__line">
+            {{ card.cash }}
+            @if (card.delta) {
+              <span class="svp__delta">({{ card.delta }})</span>
+            }
+          </small>
+        }
+      </li>
+    }
+  </ul>
+
+  <button type="button" class="svp__add" [disabled]="!canAdd()" [attr.title]="canAdd() ? null : ('strategies.variants.limit' | translate)" (click)="added.emit()">
+    {{ 'strategies.variants.add' | translate }}
+  </button>
+
+  @if (active(); as variant) {
+    <h3 class="svp__subtitle">{{ 'strategies.variants.tilesTitle' | translate: { name: variant.name } }}</h3>
+    @if (tiles().length === 0) {
+      <p class="svp__hint">{{ 'strategies.variants.noTiles' | translate }}</p>
+    }
+    <ul class="svp__tiles">
+      @for (tile of tiles(); track tile.id) {
+        <li class="svp__tile" [class.svp__tile--off]="isOff(tile.id)">
+          <nz-switch
+            nzSize="small"
+            [ngModel]="!isOff(tile.id)"
+            [attr.aria-label]="'strategies.variants.toggle' | translate: { name: tile.title }"
+            (ngModelChange)="toggled.emit({ nodeId: tile.id, disabled: !$event })" />
+          <span>{{ tile.title }}</span>
+        </li>
+      }
+    </ul>
+    <p class="svp__hint">{{ 'strategies.variants.note' | translate }}</p>
+  } @else {
+    <p class="svp__hint">{{ 'strategies.variants.baseHint' | translate }}</p>
+  }
+</div>

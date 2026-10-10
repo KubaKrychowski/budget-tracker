@@ -22,6 +22,7 @@ public static class StrategyGraphValidator
     private const int MaxIdLength = 64;
     private const int MaxTitleLength = 100;
     public const int MaxNameLength = 100;
+    public const int MaxVariantNameLength = 60;
     private const decimal MaxAmount = 1_000_000_000_000m;
     private const double MaxCoordinate = 100_000d;
 
@@ -86,7 +87,41 @@ public static class StrategyGraphValidator
 
         return new ValidStrategy(
             name, new DateOnly(request.StartMonth.Year, request.StartMonth.Month, 1), request.StartCash,
-            request.HorizonMonths, domainNodes, domainEdges);
+            request.HorizonMonths, domainNodes, domainEdges, ValidateVariants(request.Variants ?? [], types.Keys.ToHashSet()));
+    }
+
+    /// <summary>Warianty: nazwa przycięta i niepowtarzalna bez względu na wielkość liter, wyłączone kafelki muszą istnieć.</summary>
+    private static List<StrategyVariant> ValidateVariants(
+        IReadOnlyList<StrategyVariantRequestDto> variants, IReadOnlySet<string> nodeIds)
+    {
+        if (variants.Count > Strategy.MaxVariants) throw new StrategyVariantInvalidException();
+
+        var result = new List<StrategyVariant>(variants.Count);
+        var ids = new HashSet<string>();
+        var names = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        foreach (var variant in variants)
+        {
+            var id = variant.Id?.Trim();
+            var name = variant.Name?.Trim();
+            if (string.IsNullOrEmpty(id) || id.Length > MaxIdLength || !ids.Add(id)) throw new StrategyVariantInvalidException();
+            if (string.IsNullOrEmpty(name) || name.Length > MaxVariantNameLength || !names.Add(name))
+            {
+                throw new StrategyVariantInvalidException();
+            }
+
+            var disabled = new List<string>();
+            var seen = new HashSet<string>();
+            foreach (var nodeId in variant.DisabledNodeIds ?? [])
+            {
+                var trimmed = nodeId?.Trim();
+                if (trimmed is null || !nodeIds.Contains(trimmed)) throw new StrategyVariantInvalidException();
+                if (seen.Add(trimmed)) disabled.Add(trimmed);
+            }
+
+            result.Add(new StrategyVariant(id, name, disabled));
+        }
+
+        return result;
     }
 
     private static bool IsFinite(double value) => double.IsFinite(value) && Math.Abs(value) <= MaxCoordinate;

@@ -11,7 +11,7 @@ namespace BudgetTracker.Api.Features.Strategies.Queries;
 public sealed class GetStrategyApplyPreviewQueryHandler(
     AppDbContext db, StrategyApplyPlanner planner, StrategiesBudgetScope scope)
 {
-    public async Task<StrategyApplyPreviewResponseDto> HandleAsync(Guid id, CancellationToken ct)
+    public async Task<StrategyApplyPreviewResponseDto> HandleAsync(Guid id, string? variantId, CancellationToken ct)
     {
         var strategy = await db.Strategies.SingleOrDefaultAsync(s => s.BusinessId == id, ct)
             ?? throw new StrategyNotFoundException(id);
@@ -20,7 +20,7 @@ public sealed class GetStrategyApplyPreviewQueryHandler(
             .Select(b => b.Name)
             .SingleOrDefaultAsync(ct) ?? string.Empty;
 
-        var plan = await planner.PlanAsync(strategy, scope.CurrentMonth(), ct);
+        var plan = await planner.PlanAsync(strategy, scope.CurrentMonth(), variantId, ct);
         return new StrategyApplyPreviewResponseDto(
             strategy.BudgetBusinessId,
             budgetName,
