@@ -101,7 +101,8 @@ resource "azurerm_linux_web_app" "api" {
     },
     {
       APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.main.connection_string
-    }
+    },
+    var.github_error_reporting_token == "" ? {} : { ErrorReporting__Token = var.github_error_reporting_token }
   )
 
   tags = local.tags
@@ -172,7 +173,8 @@ resource "azurerm_linux_web_app" "identity" {
       Clients__Spa__RedirectUris__1           = "${local.front_url}/silent-renew.html"
       Clients__Spa__PostLogoutRedirectUris__0 = "${local.front_url}/"
     },
-    { for index, email in var.admin_emails : "Admin__Emails__${index}" => email }
+    { for index, email in var.admin_emails : "Admin__Emails__${index}" => email },
+    var.github_error_reporting_token == "" ? {} : { ErrorReporting__Token = var.github_error_reporting_token }
   )
 
   tags = local.tags
