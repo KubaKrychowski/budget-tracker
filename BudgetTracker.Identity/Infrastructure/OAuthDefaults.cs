@@ -49,6 +49,24 @@ public static class OAuthDefaults
 
     public const string MobilePostLogoutRedirectUri = MobileScheme + ":/logout";
 
+    /// <summary>Widżet limitów na pulpicie Androida — osobny klient publiczny z WŁASNYM refresh tokenem.</summary>
+    /// <remarks>
+    /// ⚠️ Osobny klient, bo OpenIddict obraca refresh tokeny: gdyby widżet i aplikacja używały tego samego, drugie
+    /// użycie zużytego tokena unieważniłoby całą autoryzację i wylogowało użytkownika z aplikacji.
+    /// </remarks>
+    public const string WidgetClientId = "budgettracker-widget";
+
+    /// <summary>
+    /// Schemat powrotu widżetu — INNY niż <see cref="MobileScheme"/>, żeby deep link z logowania widżetu trafił do
+    /// jego własnej aktywności, a nie do aplikacji (Capacitor przekazałby go Angularowi).
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ Zaszyty też w <c>AndroidManifest.xml</c> i w <c>WidgetConfig.java</c> — redirect_uri jest porównywany DOSŁOWNIE.
+    /// </remarks>
+    public const string WidgetScheme = MobileScheme + ".widget";
+
+    public const string WidgetRedirectUri = WidgetScheme + ":/callback";
+
     /// <summary>
     /// Originy, z których WebView Capacitora woła discovery i endpoint tokenu (fetch, więc CORS): Android serwuje
     /// aplikację spod <c>https://localhost</c>, iOS spod <c>capacitor://localhost</c>.

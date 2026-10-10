@@ -1627,3 +1627,25 @@ projekt osobno, a to oszczędza zmian w pipeline'ach).
 - **Logi:** `RecentLogBuffer` trzyma w pamięci 500 ostatnich linii (od Information); do issue idą linie tego samego
   `TraceId`, a gdy ich brak — ostatnie ostrzeżenia i błędy.
 - **Nie zgłaszamy:** przerwanych żądań (`RequestAborted`).
+
+## 16. Widżet limitów na pulpit Androida
+
+**Decyzja (2026-10-10):** natywny widżet (`web/android/.../widget/`) pokazuje do 4 wybranych limitów jednego budżetu:
+pasek wykorzystania w kolorze progu i tekst „zostało X zł" (po przekroczeniu „przekroczono o X zł"). Budżet i limity
+wybiera się RAZ, przy dodawaniu widżetu; zmiana wymaga dodania go od nowa. Tylko Android (iOS to WidgetKit, którego na
+Windowsie nie zbudujemy ani nie sprawdzimy).
+
+- **Osobny klient OAuth `budgettracker-widget`** (publiczny, kod + PKCE, schemat powrotu `com.wydatki.app.widget:/callback`),
+  zamiast współdzielenia sesji z aplikacją. ⚠️ OpenIddict obraca refresh tokeny: gdyby widżet i aplikacja używały tego
+  samego, drugie użycie zużytego tokena unieważniłoby całą autoryzację i wylogowało użytkownika z aplikacji.
+  Access token żyje 15 minut, więc widżet bez własnego odświeżania byłby nieaktualny niemal zawsze.
+- **Schemat powrotu inny niż aplikacji**, żeby deep link z logowania widżetu trafił do `WidgetAuthCallbackActivity`,
+  a nie do Capacitora i Angulara. Wpisany w `OAuthDefaults`, `AndroidManifest.xml`, `WidgetConfig.java` i w `form-action` CSP;
+  `WidgetClientTests` pilnuje zgodności.
+- **Tokeny** w `EncryptedSharedPreferences` (klucz w Android Keystore); jedno odświeżanie naraz (blokada), bo refresh token
+  jest obracany. Po usunięciu ostatniego widżetu tokeny są kasowane.
+- **Odświeżanie:** co 30 minut (minimum Androida) i po dodaniu. Bez sieci widżet pokazuje ostatnie dane z godziną.
+  Wygasła sesja = komunikat i dotknięcie otwiera ponowne logowanie.
+- **Zgoda jawna** na ekranie logowania, jak w aplikacji: schemat adresu może zająć każda aplikacja na telefonie.
+- Adresy API i Identity są zaszyte w `WidgetConfig.java` (te same, co `web/mobile/config.json`).
+- ⚠️ **Kolejność wdrożenia:** najpierw Identity (nowy klient uzgadnia się przy starcie), potem wydanie APK.

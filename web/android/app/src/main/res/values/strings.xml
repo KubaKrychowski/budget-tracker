@@ -4,4 +4,34 @@
     <string name="title_activity_main">Wydatki.com</string>
     <string name="package_name">com.wydatki.app</string>
     <string name="custom_url_scheme">com.wydatki.app</string>
+
+    <!-- Widzet limitow -->
+    <string name="widget_name">Limity wydatków</string>
+    <string name="widget_description">Ile zostało w wybranych limitach.</string>
+    <string name="widget_header">%1$s · limity</string>
+    <string name="widget_remaining">zostało %1$s zł</string>
+    <string name="widget_over">przekroczono o %1$s zł</string>
+    <string name="widget_offline">brak sieci, stan z %1$s</string>
+    <string name="widget_empty">Nie ma już wybranych limitów. Dodaj widżet od nowa.</string>
+    <string name="widget_no_data">Nie udało się pobrać limitów.</string>
+    <string name="widget_not_configured">Dotknij, aby skonfigurować widżet.</string>
+    <string name="widget_sign_in_again">Sesja wygasła. Dotknij, aby zalogować się ponownie.</string>
+
+    <string name="setup_title">Widżet limitów</string>
+    <string name="setup_sign_in_info">Zaloguj się, aby widżet mógł pobierać Twoje limity.</string>
+    <string name="setup_sign_in">Zaloguj</string>
+    <string name="setup_loading">Ładowanie…</string>
+    <string name="setup_pick_budget">Z którego budżetu pokazać limity?</string>
+    <string name="setup_budget_disabled">%1$s (wyłączony)</string>
+    <string name="setup_pick_limits">Które limity pokazać? (do %1$d)</string>
+    <string name="setup_no_limits">W tym budżecie nie ma jeszcze limitów. Ustaw je w aplikacji.</string>
+    <string name="setup_next">Dalej</string>
+    <string name="setup_back">Wstecz</string>
+    <string name="setup_add">Dodaj widżet</string>
+    <string name="setup_cancel">Anuluj</string>
+    <string name="setup_error_pick_budget">Wybierz budżet.</string>
+    <string name="setup_error_pick_one">Wybierz co najmniej jeden limit.</string>
+    <string name="setup_error_max">Można wybrać najwyżej %1$d limity.</string>
+    <string name="setup_error_network">Nie udało się pobrać danych. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="setup_error_auth">Logowanie nie powiodło się. Spróbuj ponownie.</string>
 </resources>
