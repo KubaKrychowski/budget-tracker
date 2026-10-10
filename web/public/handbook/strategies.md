@@ -1,6 +1,6 @@
 ## Strategie: kredyt, nadpłata, poduszka
 
-Strategia to **plan na kilkanaście miesięcy do przodu** — na przykład „nadpłacę kredyt premią i zbuduję poduszkę finansową”. Układasz go z klocków (kafelków) na tablicy, a aplikacja **na bieżąco liczy**, ile będziesz miał oszczędności i ile długu w każdym kolejnym miesiącu.
+Strategia to **plan na kilkanaście miesięcy do przodu** — na przykład „nadpłacę kredyt premią i zbuduję poduszkę finansową”. Układasz go z klocków (kafelków) na tablicy, a aplikacja **na bieżąco liczy**, ile będziesz miał oszczędności i ile długu w każdym kolejnym miesiącu. Plan możesz **porównywać w wariantach** („co jeśli nie będzie podwyżki?”) i **uzupełniać faktami**, gdy zdarzenia już nastąpią.
 
 > 🧪 Strategia **niczego nie zmienia w Twoim budżecie**, dopóki sam o to nie poprosisz. To plan i symulacja, nie dane z wyciągów.
 
@@ -152,4 +152,33 @@ Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w bud�
 
 ### Terminal (CLI)
 
-Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `duplicate`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a fakty zdarzeń to pola kafelka `actualMonth` i `actualAmount`. a `apply-preview` i `apply` przyjmują `--variant-id`.
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**). Pełna lista z flagami: `strategy help`.
+
+| Komenda | Co robi |
+|---|---|
+| `strategy list` | strategie budżetu: nazwa, liczba zdarzeń, akcji i wariantów |
+| `strategy get <id>` | cała strategia: kafelki, połączenia, fakty, warianty i **wynik symulacji każdego wariantu** |
+| `strategy create --name "…" [--template LoanAndCushion]` | nowa strategia, pusta albo z szablonu |
+| `strategy duplicate <id> --name "…" [--variants false]` | kopia strategii (domyślnie razem z wariantami) |
+| `strategy save <id> --json '…'` | zapisuje całą strategię, jak „Zapisz strategię” na tablicy |
+| `strategy simulate --json '…'` | liczy niezapisaną strategię (wariant bazowy) |
+| `strategy simulate-variants --json '…'` | liczy niezapisaną strategię dla **bazowego i wszystkich wariantów** naraz |
+| `strategy references <id>` | kategorie i zlecenia stałe do pól kafelków |
+| `strategy apply-preview <id> [--variant-id <id>]` | co zastosowanie założyłoby w budżecie |
+| `strategy apply <id> --node-ids a,b [--variant-id <id>]` | zakłada w budżecie wskazane akcje |
+| `strategy delete <id>` | usuwa strategię (to, co z niej założono w budżecie, zostaje) |
+
+Warianty i fakty są częścią JSON-a strategii — ten sam kształt, który zwraca `strategy get`:
+
+- **warianty:** `"variants":[{"id":"v1","name":"Bez dachu","disabledNodeIds":["r2"]}]` (do 10, nazwy bez powtórzeń),
+- **zdarzenie, które nastąpiło:** w węźle `"actualMonth":"2026-10-01","actualAmount":150` (plan zostaje w `month` i `amount`; fakt tylko na zdarzeniach).
+
+Przykład — plan zastosowania dla wariantu „bez dachu” i kopia bez wariantów:
+
+```
+strategy apply-preview <id> --variant-id v1
+strategy apply <id> --node-ids r1 --variant-id v1
+strategy duplicate <id> --name "Plan B" --variants false
+```
+
+Niezapisane zmiany tablicy w terminalu nie istnieją — każda komenda działa na zapisanej strategii albo na JSON-ie, który podasz.

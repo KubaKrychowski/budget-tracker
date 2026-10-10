@@ -130,7 +130,8 @@ public static class StrategiesModule
         const string BudgetIdHelp = "BusinessId budżetu; pomiń dla budżetu domyślnego.";
         const string VariantIdHelp = "Identyfikator wariantu (z „strategy get”); pomiń dla bazowego.";
         const string GraphHelp =
-            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[], variants[].";
+            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[], variants[] "
+            + "(id, name, disabledNodeIds[]). Zdarzenie, które nastąpiło, ma w węźle actualMonth i actualAmount.";
 
         registry.Register("strategy", "list", "Strategie budżetu (nazwa, liczba zdarzeń i akcji, data zmiany).",
             "strategy list [--budget-id <guid>]",
