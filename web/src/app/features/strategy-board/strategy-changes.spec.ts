@@ -3,7 +3,7 @@ import { describeChanges, summarizeChanges } from './strategy-changes';
 
 const node = (over: Partial<StrategyNode>): StrategyNode => ({
   id: 'x', type: 'Trigger', title: '', x: 0, y: 0, month: null, amount: null, rate: null, installment: null,
-  mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, ...over,
+  mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, actualMonth: null, actualAmount: null, ...over,
 });
 
 const edge = (id: string, from: string, to: string): StrategyEdge => ({ id, from, to, label: 'None' });

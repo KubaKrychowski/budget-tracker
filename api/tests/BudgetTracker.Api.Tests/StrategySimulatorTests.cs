@@ -395,4 +395,59 @@ public sealed class StrategySimulatorTests
         Assert.Equal(baseProblems.Select(p => (p.NodeId, p.Kind)), variantProblems.Select(p => (p.NodeId, p.Kind)));
         Assert.NotEmpty(baseProblems);
     }
+
+    private static StrategyNode Fact(StrategyNode plan, DateOnly month, decimal? amount) => plan with { ActualMonth = month, ActualAmount = amount };
+
+    [Fact]
+    public void A_realized_income_counts_in_the_actual_month_with_the_actual_amount_instead_of_the_plan()
+    {
+        // Łapie symulację, która dalej liczy premię z planu (maj, 7 800 zł), choć wpłynęła w czerwcu i w innej kwocie.
+        var plan = Node("bonus", StrategyNodeType.Income, M(2027, 5), 7_800m);
+
+        var planned = Run([plan], cash: 0m, months: 12);
+        var realized = Run([Fact(plan, M(2027, 6), 8_150m)], cash: 0m, months: 12);
+
+        Assert.Equal(0m, planned.Months.Single(m => m.Month == M(2027, 4)).Cash);
+        Assert.Equal(7_800m, planned.Months.Single(m => m.Month == M(2027, 5)).Cash);
+        Assert.Equal(0m, realized.Months.Single(m => m.Month == M(2027, 5)).Cash);
+        Assert.Equal(8_150m, realized.Months.Single(m => m.Month == M(2027, 6)).Cash);
+        Assert.Equal(M(2027, 6), realized.Nodes.Single(n => n.NodeId == "bonus").FiredIn);
+    }
+
+    [Fact]
+    public void A_realized_expense_and_its_chain_move_to_the_actual_month()
+    {
+        var plan = Node("ins", StrategyNodeType.Expense, M(2026, 12), 2_200m);
+        var edges = new[] { Edge("ins", "more") };
+        var nodes = new[] { Fact(plan, M(2027, 1), 2_350m), Node("more", StrategyNodeType.IncreaseSurplus, amount: 100m) };
+
+        var result = Run(nodes, edges, cash: 5_000m, months: 6);
+
+        Assert.Equal(M(2027, 1), result.Nodes.Single(n => n.NodeId == "more").FiredIn);
+        Assert.Equal(5_000m, result.Months.Single(m => m.Month == M(2026, 12)).Cash);
+        Assert.Equal(5_000m - 2_350m + 100m, result.Months.Single(m => m.Month == M(2027, 1)).Cash);
+    }
+
+    [Fact]
+    public void A_realized_income_without_the_actual_amount_is_a_problem_and_is_skipped()
+    {
+        // Nie zgadujemy kwoty faktu z planu: wpływ „nastąpił”, ale bez kwoty, nie może po cichu liczyć się z planu.
+        var broken = Fact(Node("bonus", StrategyNodeType.Income, M(2027, 5), 7_800m), M(2027, 6), null);
+
+        var result = Run([broken], cash: 0m, months: 12);
+
+        Assert.Contains(result.Problems, p => p.NodeId == "bonus" && p.Kind == StrategyProblemKind.MissingParameter);
+        Assert.Equal(0m, result.FinalCash);
+    }
+
+    [Fact]
+    public void A_realized_trigger_fires_its_chain_in_the_actual_month_without_an_amount()
+    {
+        var trigger = Fact(Node("raise", StrategyNodeType.Trigger, M(2027, 1)), M(2027, 3), null);
+        var nodes = new[] { trigger, Node("more", StrategyNodeType.IncreaseSurplus, amount: 400m) };
+
+        var result = Run(nodes, [Edge("raise", "more")], months: 8);
+
+        Assert.Equal(M(2027, 3), result.Nodes.Single(n => n.NodeId == "more").FiredIn);
+    }
 }

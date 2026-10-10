@@ -144,8 +144,13 @@ export const newNode = (type: StrategyNodeType, id: string, x: number, y: number
     threshold: type === 'SetLimit' ? DEFAULT_WARNING_THRESHOLD : null,
     categoryId: null,
     standingOrderId: null,
+    actualMonth: null,
+    actualAmount: null,
   };
 };
+
+/** Rodzaje, o których można powiedzieć „nastąpiło” — zdarzenia; kredyt, nadwyżka i poduszka to stan wyjściowy, nie zdarzenie. */
+export const REALIZABLE_TYPES: readonly StrategyNodeType[] = ['Trigger', 'Income', 'Expense'];
 
 /**
  * Kafelek po zmianie rodzaju: zostają pola, które nowy rodzaj też ma (np. kwota przy zmianie „Zwiększ nadwyżkę” na
@@ -171,6 +176,8 @@ export const retype = (node: StrategyNode, type: StrategyNodeType, startMonth: s
     threshold: thresholdKind(type) === null ? null : sameThreshold ? node.threshold : type === 'SetLimit' ? DEFAULT_WARNING_THRESHOLD : null,
     categoryId: keep('category', node.categoryId),
     standingOrderId: keep('standingOrder', node.standingOrderId),
+    actualMonth: REALIZABLE_TYPES.includes(type) ? node.actualMonth : null,
+    actualAmount: fields.includes('amount') && REALIZABLE_TYPES.includes(type) ? node.actualAmount : null,
   };
 };
 

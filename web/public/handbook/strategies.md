@@ -84,6 +84,18 @@ Kafelek z czerwonym znacznikiem **!** ma problem, a nad tablicą pojawia się ba
 
 Symulacja **pomija** kafelki z problemami, ale szkic zapisuje się mimo to.
 
+### Zdarzenie nastąpiło: od planu do faktów
+
+Plan to przypuszczenie. Gdy premia wpłynie w czerwcu zamiast w maju i będzie o 350 zł większa, możesz to **wpisać na kafelku**, żeby symulacja liczyła dalej od faktów:
+
+1. Kliknij kafelek zdarzenia (wpływ, wydatek albo zdarzenie bez skutku, np. podwyżka).
+2. W ustawieniach włącz **Zdarzenie nastąpiło**. Aplikacja przepisuje plan do faktu, więc pola nie są puste.
+3. Popraw **Faktyczną kwotę** i **Faktyczny miesiąc**. Pod polami zobaczysz **różnicę w gotówce względem planu** (wpływ większy niż planowany to plus, wydatek większy niż planowany to minus).
+
+Na tablicy takie zdarzenie dostaje zielony znacznik ✓ i pokazuje **fakt**, a nie plan. Nad tablicą widać pasek „Zdarzenia: 1 z 4 zrealizowane”, a wynik symulacji dostaje dopisek „od faktów”. **Plan zostaje** (miesiąc i kwota w ustawieniach kafelka), więc w każdej chwili możesz wyłączyć przełącznik i wrócić do niego. Zdarzenia, które jeszcze nie nastąpiły, dalej liczą się z planu — a razem z faktem przesuwa się też **cały łańcuch akcji** po zdarzeniu.
+
+> ℹ️ Faktu nie da się wpisać na akcji, warunku, kredycie, nadwyżce ani poduszce — to nie są zdarzenia, które „następują”. Wpływ z faktem **bez kwoty** jest problemem na tablicy (nie zgadujemy kwoty z planu).
+
 ### Warianty: „co jeśli”
 
 Wariant to **ta sama tablica z wyłączonymi kafelkami** — na przykład „bez podwyżki” albo „bez ubezpieczenia”. Dzięki temu bez kopiowania strategii sprawdzisz, co by się stało, gdyby czegoś zabrakło.
@@ -140,4 +152,4 @@ Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w bud�
 
 ### Terminal (CLI)
 
-Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `duplicate`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a `apply-preview` i `apply` przyjmują `--variant-id`.
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `duplicate`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a fakty zdarzeń to pola kafelka `actualMonth` i `actualAmount`. a `apply-preview` i `apply` przyjmują `--variant-id`.

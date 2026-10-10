@@ -60,7 +60,8 @@ public static class StrategyGraphAnalyzer
     private static bool HasMissingParameter(StrategyNode node) => node.Type switch
     {
         StrategyNodeType.Trigger => node.Month is null,
-        StrategyNodeType.Income or StrategyNodeType.Expense => node.Month is null || node.Amount is not > 0m,
+        StrategyNodeType.Income or StrategyNodeType.Expense =>
+            node.Month is null || node.Amount is not > 0m || (node.ActualMonth is not null && node.ActualAmount is not > 0m),
         StrategyNodeType.Surplus => node.Amount is null,
         StrategyNodeType.Loan => node.Amount is not > 0m || node.Rate is null or < 0m || node.Installment is not > 0m,
         StrategyNodeType.CushionGoal => node.Amount is not > 0m,

@@ -32,10 +32,12 @@ import {
   StrategyReferences, StrategyResult, StrategyVariant, StrategyVariantsResult,
 } from '../../core/api/models/strategies';
 import {
-  BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
+  BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector,
+  REALIZABLE_TYPES, retype,
 } from './strategy-node-meta';
 import { buildChains, Chain } from './strategy-chains';
 import { StrategyApply } from './strategy-apply';
+import { StrategyFactsBar } from './strategy-facts-bar';
 import { describeChanges, summarizeChanges } from './strategy-changes';
 import { LeaveAware } from './strategy-leave.guard';
 import { CompareSeries, StrategyCompare } from './strategy-compare';
@@ -76,6 +78,8 @@ interface BoardNode {
   readonly problems: readonly StrategyProblemKind[];
   /** Wyłączony w wybranym wariancie — symulacja go pomija. */
   readonly disabled: boolean;
+  /** Zdarzenie, które już nastąpiło — symulacja liczy je z faktu (miesiąc i kwota), nie z planu. */
+  readonly realized: boolean;
 }
 
 /**
@@ -107,7 +111,7 @@ interface BoardNode {
     DatePipe, NgTemplateOutlet, FormsModule, RouterLink, FFlowModule,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDrawerModule, NzDropdownModule, NzInputModule,
     NzInputNumberModule, NzMenuModule, NzModalModule, NzSegmentedModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyCompare, StrategyNodeForm,
-    StrategyPalette, StrategyPanelTabs, StrategyVariantBar, StrategyVariantsPanel,
+    StrategyFactsBar, StrategyPalette, StrategyPanelTabs, StrategyVariantBar, StrategyVariantsPanel,
   ],
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
@@ -284,7 +288,13 @@ export class StrategyBoard implements LeaveAware {
       sends: canSend(n.type),
       problems: this.problemsByNode().get(n.id) ?? [],
       disabled: this.activeDisabled().has(n.id),
+      realized: n.actualMonth !== null,
     })));
+
+  /** Zdarzenia (wpływ, wydatek, zdarzenie bez skutku) i ile z nich już nastąpiło — do paska nad tablicą. */
+  protected readonly eventCount = computed(() => this.nodes().filter((n) => REALIZABLE_TYPES.includes(n.type)).length);
+  protected readonly realizedCount = computed(() =>
+    this.nodes().filter((n) => REALIZABLE_TYPES.includes(n.type) && n.actualMonth !== null).length);
 
   protected readonly problemNodes = computed(() => this.viewNodes().filter((n) => n.problems.length > 0));
 
@@ -320,7 +330,8 @@ export class StrategyBoard implements LeaveAware {
     return node.title.trim() || this.translate.instant(`strategies.board.types.${node.type}`);
   }
 
-  protected glyph(kind: BoardNode['kind']): string {
+  protected glyph(kind: BoardNode['kind'], realized = false): string {
+    if (realized) return '✓';
     return kind === 'event' || kind === 'base' ? '⚡' : kind === 'condition' ? '?' : kind === 'end' ? '✓' : kind === 'wait' ? '⏱' : '</>';
   }
 
@@ -339,9 +350,10 @@ export class StrategyBoard implements LeaveAware {
   /** Jedna linia pod tytułem kafelka — to, co najważniejsze w jego parametrach. */
   private summaryOf(n: StrategyNode): string {
     switch (n.type) {
-      case 'Trigger': return this.monthLabel(n.month);
-      case 'Income': return `+${this.money(n.amount)} · ${this.monthLabel(n.month)}`;
-      case 'Expense': return `−${this.money(n.amount)} · ${this.monthLabel(n.month)}`;
+      // Zdarzenie z faktem pokazuje fakt (miesiąc i kwotę) — plan jest w ustawieniach kafelka.
+      case 'Trigger': return this.monthLabel(n.actualMonth ?? n.month);
+      case 'Income': return `+${this.money(n.actualMonth ? n.actualAmount : n.amount)} · ${this.monthLabel(n.actualMonth ?? n.month)}`;
+      case 'Expense': return `−${this.money(n.actualMonth ? n.actualAmount : n.amount)} · ${this.monthLabel(n.actualMonth ?? n.month)}`;
       case 'Surplus': return this.translate.instant('strategies.board.perMonth', { amount: this.money(n.amount) });
       case 'IncreaseSurplus':
         return this.translate.instant('strategies.board.perMonth', { amount: `${(n.amount ?? 0) > 0 ? '+' : ''}${this.money(n.amount)}` });

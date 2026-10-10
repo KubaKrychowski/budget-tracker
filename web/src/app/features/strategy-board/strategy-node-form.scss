@@ -32,6 +32,32 @@
     color: var(--ds-neutral-600);
   }
 
+  /* „Zdarzenie nastąpiło” (makieta 423:1016) — ramka, która po włączeniu robi się zielona. */
+  &__fact {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--ds-neutral-200);
+    border-radius: 4px;
+
+    &--on {
+      border-color: var(--ds-primary-600);
+      background: var(--ds-primary-50);
+    }
+  }
+
+  &__fact-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__hint {
+    font-size: 12px;
+    color: var(--ds-neutral-600);
+  }
+
   &__field {
     display: flex;
     flex-direction: column;

@@ -79,8 +79,10 @@ public sealed class StrategiesTests : IAsyncLifetime
     private static StrategyNodeRequestDto NodeDto(
         string id, StrategyNodeType type, DateOnly? month = null, decimal? amount = null, decimal? rate = null,
         decimal? installment = null, OverpaymentMode? mode = null, StrategyConditionMetric? metric = null,
-        StrategyConditionComparison? comparison = null, decimal? threshold = null, string? title = null, double x = 10, double y = 20) =>
-        new(id, type, title, x, y, month, amount, rate, installment, mode, metric, comparison, threshold);
+        StrategyConditionComparison? comparison = null, decimal? threshold = null, string? title = null, double x = 10, double y = 20,
+        DateOnly? actualMonth = null, decimal? actualAmount = null) =>
+        new(id, type, title, x, y, month, amount, rate, installment, mode, metric, comparison, threshold,
+            ActualMonth: actualMonth, ActualAmount: actualAmount);
 
     private static StrategyEdgeRequestDto EdgeDto(string from, string to, StrategyEdgeLabel label = StrategyEdgeLabel.None) =>
         new($"{from}-{to}", from, to, label);
@@ -602,5 +604,73 @@ public sealed class StrategiesTests : IAsyncLifetime
         var counts = list.Strategies.ToDictionary(r => r.Name, r => r.VariantCount);
         Assert.Equal(1, counts["Oryginał"]);
         Assert.Equal(0, counts["Pusta"]);
+    }
+
+    // ── Zdarzenie nastąpiło ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task A_realized_event_keeps_the_plan_and_the_fact_and_the_result_follows_the_fact()
+    {
+        var created = await NewAsync();
+        var nodes = new[]
+        {
+            NodeDto("bonus", StrategyNodeType.Income, new DateOnly(2026, 11, 15), 500m, actualMonth: new DateOnly(2026, 12, 20), actualAmount: 650m),
+        };
+
+        var saved = await Save().HandleAsync(created.Id, Request(nodes, horizon: 12, cash: 0m), default);
+        var reloaded = await Get().HandleAsync(created.Id, default);
+
+        var node = Assert.Single(reloaded.Nodes);
+        Assert.Equal((new DateOnly(2026, 11, 1), 500m), (node.Month, node.Amount));
+        Assert.Equal((new DateOnly(2026, 12, 1), 650m), (node.ActualMonth, node.ActualAmount));
+        Assert.Equal(650m, saved.Result.FinalCash);
+        Assert.Equal(new DateOnly(2026, 12, 1), saved.Result.Nodes.Single().FiredIn);
+    }
+
+    [Fact]
+    public async Task Clearing_the_fact_returns_to_the_plan()
+    {
+        var created = await NewAsync();
+        var realized = NodeDto("bonus", StrategyNodeType.Income, October, 500m, actualMonth: October.AddMonths(2), actualAmount: 650m);
+        await Save().HandleAsync(created.Id, Request([realized], horizon: 12, cash: 0m), default);
+
+        var back = await Save().HandleAsync(
+            created.Id, Request([NodeDto("bonus", StrategyNodeType.Income, October, 500m)], horizon: 12, cash: 0m), default);
+
+        Assert.Null(back.Nodes.Single().ActualMonth);
+        Assert.Equal(October, back.Result.Nodes.Single().FiredIn);
+        Assert.Equal(500m, back.Result.FinalCash);
+    }
+
+    [Fact]
+    public async Task Facts_are_only_for_events_and_an_amount_needs_a_month_and_never_belongs_to_a_trigger()
+    {
+        var created = await NewAsync();
+        Task SaveNode(StrategyNodeRequestDto node) => Save().HandleAsync(created.Id, Request([node]), default);
+        var may = new DateOnly(2027, 5, 1);
+
+        await Assert.ThrowsAsync<StrategyGraphInvalidException>(
+            () => SaveNode(NodeDto("s", StrategyNodeType.Surplus, amount: 700m, actualMonth: may)));
+        await Assert.ThrowsAsync<StrategyGraphInvalidException>(
+            () => SaveNode(NodeDto("i", StrategyNodeType.Income, may, 500m, actualAmount: 600m)));
+        await Assert.ThrowsAsync<StrategyGraphInvalidException>(
+            () => SaveNode(NodeDto("t", StrategyNodeType.Trigger, may, actualMonth: may, actualAmount: 100m)));
+        await SaveNode(NodeDto("t", StrategyNodeType.Trigger, may, actualMonth: may.AddMonths(1)));
+    }
+
+    [Fact]
+    public async Task A_strategy_row_written_before_facts_existed_still_loads_with_no_fact()
+    {
+        // Łapie węzły bez kluczy ActualMonth/ActualAmount w jsonb (wiersze sprzed tej zmiany): materializacja nie może się wywrócić.
+        var created = await NewAsync();
+        await Save().HandleAsync(created.Id, Request([NodeDto("bonus", StrategyNodeType.Income, October, 500m)]), default);
+        await _db.Database.ExecuteSqlRawAsync(
+            "UPDATE \"Strategies\" SET \"Nodes\" = (SELECT jsonb_agg(elem - 'ActualMonth' - 'ActualAmount') FROM jsonb_array_elements(\"Nodes\") elem)");
+        _db.ChangeTracker.Clear();
+
+        var node = Assert.Single((await Get().HandleAsync(created.Id, default)).Nodes);
+
+        Assert.Null(node.ActualMonth);
+        Assert.Null(node.ActualAmount);
     }
 }

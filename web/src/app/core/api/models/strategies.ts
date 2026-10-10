@@ -49,6 +49,10 @@ export interface StrategyNode {
   readonly categoryId: string | null;
   /** Zlecenie stałe do zakończenia. */
   readonly standingOrderId: string | null;
+  /** Miesiąc, w którym zdarzenie FAKTYCZNIE nastąpiło („zdarzenie nastąpiło”); `null` = liczy się plan (`month`). */
+  readonly actualMonth: string | null;
+  /** Faktyczna kwota wpływu albo wydatku — tylko razem z `actualMonth`. */
+  readonly actualAmount: number | null;
 }
 
 /** Odpowiednik StrategyEdgeRequestDto / StrategyEdgeResponseDto — strzałka między kafelkami. */

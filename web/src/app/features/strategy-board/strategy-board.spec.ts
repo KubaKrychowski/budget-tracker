@@ -62,7 +62,7 @@ describe('StrategyBoard', () => {
 
   const node = (over: Partial<StrategyNode>): StrategyNode => ({
     id: 'x', type: 'Trigger', title: '', x: 0, y: 0, month: null, amount: null, rate: null, installment: null,
-    mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, ...over,
+    mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, actualMonth: null, actualAmount: null, ...over,
   });
 
   const nodes: StrategyNode[] = [
@@ -164,6 +164,7 @@ describe('StrategyBoard', () => {
           errors: { required: 'Podaj nazwę.', tooLong: 'Za długa.', taken: 'Zajęta.' }, limit: 'Limit wariantów.',
         },
         errors: { loadFailed: 'Nie udało się wczytać strategii', saveFailed: 'Nie udało się zapisać zmian' },
+        facts: { summary: 'Zdarzenia: {{done}} z {{total}} zrealizowane', done: 'nastąpiło', planned: 'planowane', note: 'Fakty liczone z faktu.' },
         leave: {
           title: 'Wyjść bez zapisania?', alertTitle: 'Strategia „{{name}}” ma niezapisane zmiany.', body: 'Zmiany przepadną.',
           stay: 'Zostań na tablicy', discard: 'Odrzuć i wyjdź', save: 'Zapisz i wyjdź',
@@ -180,7 +181,7 @@ describe('StrategyBoard', () => {
           problem: { NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.', MissingParameter: 'Brakuje parametru.' },
           mobile: { list: 'Lista kroków', board: 'Tablica', menu: 'Menu', tiles: 'Kafelki: {{count}}', addTile: '+ Dodaj kafelek', save: 'Zapisz', addStep: '+ Dodaj krok', unlinked: 'Bez połączenia', empty: 'Pusto', zoom: 'Powiększenie', zoomOut: 'Pomniejsz', zoomIn: 'Powiększ', fit: 'Dopasuj', gesture: 'Przesuń palcem', paletteHint: 'Dotknij +' },
           yes: 'tak', no: 'nie', edgeLabel: 'Połączenie: {{from}} → {{to}}', perMonth: '{{amount}} / mies.',
-          sim: { title: 'Symulacja', variant: 'Symulacja · {{name}}', chart: 'Pokaż wykres', compare: 'Porównaj warianty', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
+          sim: { title: 'Symulacja', facts: 'od faktów', variant: 'Symulacja · {{name}}', chart: 'Pokaż wykres', compare: 'Porównaj warianty', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
           palette: { title: 'Dodaj kafelek', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}', categories: { event: { title: 'Zdarzenie', hint: '' }, action: { title: 'Akcja', hint: '' }, control: { title: 'Warunek', hint: '' } } },
           types: { Trigger: 'Zdarzenie', Income: 'Wpływ', Overpay: 'Nadpłać kredyt', PayOffLoan: 'Spłać resztę', Condition: 'Warunek', Wait: 'Czekaj', End: 'Koniec', IncreaseSurplus: 'Zwiększ nadwyżkę' },
           hints: {}, mode: { ReduceInstallment: 'Obniż ratę' }, metric: { CashMinusDebt: 'Gotówka − dług' },
@@ -486,6 +487,54 @@ describe('StrategyBoard', () => {
       expect(await first).toBe(false);
       api().discardAndLeave();
       expect(await second).toBe(true);
+    });
+  });
+
+  describe('zdarzenia, które nastąpiły', () => {
+    const realized = (): StrategyNode => ({ ...nodes.find((n) => n.id === 'bonus')!, actualMonth: '2027-06-01', actualAmount: 8150 });
+    const withFact = (): Strategy => strategy({ nodes: nodes.map((n) => (n.id === 'bonus' ? realized() : n)) });
+
+    it('pasek nad tablicą liczy zrealizowane zdarzenia z wszystkich zdarzeń', async () => {
+      await settle();
+      expect(text()).toContain('Zdarzenia: 0 z 1 zrealizowane');
+
+    });
+
+    it('zdarzenie z faktem pokazuje fakt (miesiąc i kwotę), zielony ✓ i chip „od faktów”', async () => {
+      await settle(withFact());
+
+      const bonus = [...fixture.nativeElement.querySelectorAll('.f-node')].find((n) => (n as HTMLElement).textContent!.includes('Premia')) as HTMLElement;
+      const glyph = bonus.querySelector('.sb__glyph') as HTMLElement;
+      expect(bonus.textContent).toContain('8150');
+      expect(bonus.textContent).toContain('czerwiec 2027');
+      expect(bonus.textContent).not.toContain('7800');
+      expect(glyph.textContent!.trim()).toBe('✓');
+      expect(glyph.style.background).toContain('--ds-primary-600');
+      expect(text()).toContain('Zdarzenia: 1 z 1 zrealizowane');
+      expect(text()).toContain('Symulacja · od faktów');
+    });
+
+    it('bez faktów chip nie mówi „od faktów”, a zdarzenie ma ⚡', async () => {
+      await settle();
+
+      expect(text()).not.toContain('od faktów');
+      const bonus = [...fixture.nativeElement.querySelectorAll('.f-node')].find((n) => (n as HTMLElement).textContent!.includes('Premia')) as HTMLElement;
+      expect((bonus.querySelector('.sb__glyph') as HTMLElement).textContent!.trim()).toBe('⚡');
+    });
+
+    it('fakt trafia do zapisu razem z planem i jest zmianą do zapisania', async () => {
+      await settle();
+
+      api().updateNode(realized());
+      fixture.detectChanges();
+      expect(api().dirty()).toBe(true);
+
+      const done = api().save();
+      const put = http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT');
+      const sent = put.request.body.nodes.find((n: StrategyNode) => n.id === 'bonus');
+      expect([sent.month, sent.amount, sent.actualMonth, sent.actualAmount]).toEqual(['2027-05-01', 7800, '2027-06-01', 8150]);
+      put.flush(strategy({ nodes: put.request.body.nodes }));
+      await done;
     });
   });
 

@@ -170,4 +170,28 @@ describe('strategy-node-meta', () => {
       expect(edgesAfterRetype(edges, 'n', 'Wait', 'Condition')).toEqual(edges);
     });
   });
+
+  describe('fakty zdarzeń', () => {
+    const income = { ...newNode('Income', 'i', 0, 0, '2026-10-01'), amount: 500, actualMonth: '2026-12-01', actualAmount: 650 };
+
+    it('nowy kafelek nie ma faktu', () => {
+      const created = newNode('Income', 'i', 0, 0, '2026-10-01');
+
+      expect([created.actualMonth, created.actualAmount]).toEqual([null, null]);
+    });
+
+    it('zmiana wpływu na wydatek zostawia fakt, a na zdarzenie bez kwoty zostawia miesiąc, ale gubi kwotę faktu', () => {
+      const expense = retype(income, 'Expense', '2026-10-01');
+      const trigger = retype(income, 'Trigger', '2026-10-01');
+
+      expect([expense.actualMonth, expense.actualAmount]).toEqual(['2026-12-01', 650]);
+      expect([trigger.actualMonth, trigger.actualAmount]).toEqual(['2026-12-01', null]);
+    });
+
+    it('zmiana na akcję czyści fakt — akcja nie „następuje”, a zostawiony fakt serwer odrzuciłby (400)', () => {
+      const action = retype(income, 'IncreaseSurplus', '2026-10-01');
+
+      expect([action.actualMonth, action.actualAmount]).toEqual([null, null]);
+    });
+  });
 });

@@ -27,6 +27,11 @@ namespace BudgetTracker.Api.Domain;
 /// <param name="Threshold">Próg warunku; przy limicie kategorii — od ilu procent limitu ostrzegać (domyślnie 80).</param>
 /// <param name="CategoryId">Publiczny identyfikator kategorii (limit kategorii, wydatek jednorazowy).</param>
 /// <param name="StandingOrderId">Publiczny identyfikator zlecenia stałego do zakończenia.</param>
+/// <param name="ActualMonth">
+/// Miesiąc, w którym zdarzenie FAKTYCZNIE nastąpiło („zdarzenie nastąpiło”); <c>null</c> = jeszcze nie nastąpiło i liczy się plan
+/// (<paramref name="Month"/>). Tylko zdarzenia: zdarzenie bez skutku, wpływ i wydatek jednorazowy.
+/// </param>
+/// <param name="ActualAmount">Faktyczna kwota wpływu albo wydatku; ma sens tylko razem z <paramref name="ActualMonth"/>.</param>
 public sealed record StrategyNode(
     string Id,
     StrategyNodeType Type,
@@ -42,4 +47,6 @@ public sealed record StrategyNode(
     StrategyConditionComparison? Comparison,
     decimal? Threshold,
     Guid? CategoryId = null,
-    Guid? StandingOrderId = null);
+    Guid? StandingOrderId = null,
+    DateOnly? ActualMonth = null,
+    decimal? ActualAmount = null);

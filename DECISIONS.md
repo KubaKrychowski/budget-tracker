@@ -1586,4 +1586,22 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 >   odpowiedzią odrzuca pierwsze jako „zostań”. Okno wypisuje, co się zmieniło (`summarizeChanges`): kafelki dodane/usunięte/zmienione
 >   (przesunięcie to zmiana), połączenia porównywane po początku, końcu i etykiecie (nowy identyfikator tej samej strzałki to nie zmiana),
 >   warianty i parametry.
-> - Nadal poza zakresem: „zdarzenie nastąpiło” (etap 4) i changelog (etap 5).
+> - Nadal poza zakresem: changelog (etap 5). „Zdarzenie nastąpiło” (etap 4) jest w następnej rewizji.
+
+> **REWIZJA — 2026-10-10: strategie — „zdarzenie nastąpiło” (etap 4)** (makieta Figma „Strategia”: 423:1016; `StrategyNode.ActualMonth`,
+> `ActualAmount`, `StrategySimulator`, `strategy-facts-bar`):
+> - **Fakt leży OBOK planu, nie zamiast niego.** Kafelek zdarzenia ma pola `ActualMonth` i `ActualAmount` (jsonb, jak reszta kafelka — bez
+>   migracji schematu; wiersze sprzed zmiany nie mają tych kluczy i czytają się jako „nie nastąpiło”, pilnuje tego test na wierszu bez kluczy).
+>   „Nastąpiło” to `ActualMonth != null`. Plan (`Month`, `Amount`) zostaje do porównania i do „wyłącz przełącznik = wróć do planu”.
+> - **Symulator liczy zdarzenie z faktu**: miesiąc faktyczny i kwota faktyczna zamiast planowych; cały łańcuch akcji po zdarzeniu przesuwa się
+>   razem z nim. ⚠️ Wpływ albo wydatek z faktem BEZ kwoty to problem grafu (`MissingParameter`) i zdarzenie się nie wykonuje — nie zgadujemy
+>   kwoty z planu, bo wpływ „nastąpił”, a po cichu liczył się z planu, wprowadzałby w błąd.
+> - **Tylko zdarzenia** (`Trigger`, `Income`, `Expense`): fakt na innym rodzaju, kwota faktu bez miesiąca albo kwota faktu przy zdarzeniu bez
+>   skutku to 400 (`StrategyGraphInvalidException`). Zmiana rodzaju kafelka w ustawieniach czyści fakt, którego nowy rodzaj nie ma (`retype`),
+>   inaczej zapis kończyłby się błędem, którego nie widać na tablicy.
+> - **Fakt jest częścią tablicy**, zapisuje się razem z nią jednym `PUT` (nie ma osobnego „Zapisz fakt” z makiety — ustawienia kafelka działają
+>   na żywo, jak pozostałe pola) i liczy się w oknie „Wyjść bez zapisania?” jako zmieniony kafelek. Nie jest powiązany z transakcją z wyciągu —
+>   to świadomie prosty model „wpisz, co się stało”; powiązanie z transakcją to osobne, większe zadanie.
+> - **Ekran:** zielony ✓ zamiast ⚡ i fakt zamiast planu w opisie kafelka, pasek „Zdarzenia: N z M zrealizowane” nad tablicą, dopisek „od faktów”
+>   w chipie wyniku, ramka „Zdarzenie nastąpiło” w ustawieniach (kwota i miesiąc faktu, różnica w gotówce: wpływ większy to plus, wydatek większy
+>   to minus).

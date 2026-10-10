@@ -5,7 +5,7 @@ describe('buildChains', () => {
   const node = (id: string, type: StrategyNodeType, x = 0, y = 0): { node: StrategyNode } => ({
     node: {
       id, type, title: id, x, y, month: null, amount: null, rate: null, installment: null, mode: null, metric: null,
-      comparison: null, threshold: null, categoryId: null, standingOrderId: null,
+      comparison: null, threshold: null, categoryId: null, standingOrderId: null, actualMonth: null, actualAmount: null,
     },
   });
   const edge = (from: string, to: string, label: StrategyEdge['label'] = 'None'): StrategyEdge => ({ id: `${from}-${to}-${label}`, from, to, label });

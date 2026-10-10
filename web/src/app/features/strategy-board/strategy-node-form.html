@@ -198,6 +198,51 @@
     </div>
   }
 
+  @if (canRealize()) {
+    <section class="snf__fact" [class.snf__fact--on]="realized()">
+      <div class="snf__fact-head">
+        <nz-switch
+          nzSize="small"
+          [ngModel]="realized()"
+          [nzDisabled]="!canToggleFact()"
+          [attr.aria-label]="'strategies.board.form.fact.title' | translate"
+          (ngModelChange)="setRealized($event)" />
+        <strong>{{ 'strategies.board.form.fact.title' | translate }}</strong>
+      </div>
+      @if (realized()) {
+        @if (has('amount')) {
+          <div class="snf__field">
+            <label class="snf__label" for="node-actual-amount">{{ 'strategies.board.form.fact.amount' | translate }}</label>
+            <nz-input-number
+              nzId="node-actual-amount"
+              class="snf__number"
+              [nzParser]="parseAmount"
+              [nzStep]="10"
+              [nzMin]="0"
+              [nzPrecision]="2"
+              [ngModel]="node().actualAmount"
+              (ngModelChange)="patch({ actualAmount: $event })" />
+          </div>
+        }
+        <div class="snf__field">
+          <label class="snf__label" for="node-actual-month">{{ 'strategies.board.form.fact.month' | translate }}</label>
+          <nz-date-picker
+            nzId="node-actual-month"
+            nzMode="month"
+            [nzAllowClear]="false"
+            [ngModel]="actualMonthDate()"
+            (ngModelChange)="setActualMonth($event)" />
+        </div>
+        @if (factDelta(); as delta) {
+          <small class="snf__hint">{{ 'strategies.board.form.fact.delta' | translate: { delta: delta } }}</small>
+        }
+        <small class="snf__hint">{{ 'strategies.board.form.fact.hint' | translate }}</small>
+      } @else {
+        <small class="snf__hint">{{ 'strategies.board.form.fact.off' | translate }}</small>
+      }
+    </section>
+  }
+
   @if (outcome(); as result) {
     <div class="snf__outcome">
       <strong>

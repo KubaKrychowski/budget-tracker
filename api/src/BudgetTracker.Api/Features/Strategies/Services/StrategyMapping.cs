@@ -33,7 +33,7 @@ public static class StrategyMapping
             strategy.UpdatedAt,
             [.. strategy.Nodes.Select(n => new StrategyNodeResponseDto(
                 n.Id, n.Type, n.Title, n.X, n.Y, n.Month, n.Amount, n.Rate, n.Installment, n.Mode, n.Metric,
-                n.Comparison, n.Threshold, n.CategoryId, n.StandingOrderId))],
+                n.Comparison, n.Threshold, n.CategoryId, n.StandingOrderId, n.ActualMonth, n.ActualAmount))],
             [.. strategy.Edges.Select(e => new StrategyEdgeResponseDto(e.Id, e.From, e.To, e.Label))],
             ToResult(result),
             [.. strategy.Variants.Select(v => new StrategyVariantResponseDto(

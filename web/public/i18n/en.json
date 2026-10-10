@@ -1091,7 +1091,8 @@
         "never": "not within the horizon",
         "chart": "Show chart",
         "compare": "Compare variants",
-        "variant": "Simulation · {{name}}"
+        "variant": "Simulation · {{name}}",
+        "facts": "from facts"
       },
       "palette": {
         "title": "Add a tile",
@@ -1220,7 +1221,15 @@
         "standingOrderPlaceholder": "Pick a standing order",
         "standingOrderMissing": "This order is no longer in the list (deleted or ended) — pick another.",
         "warning": "Warn from (% of the limit)",
-        "applyTitle": "Apply in the app"
+        "applyTitle": "Apply in the app",
+        "fact": {
+          "title": "The event happened",
+          "amount": "Actual amount",
+          "month": "Actual month",
+          "delta": "Difference from the plan: {{delta}} in cash.",
+          "hint": "The simulation counts this event from the fact, and the plan (month and amount above) stays for comparison. Switch it off to go back to the plan.",
+          "off": "Until the event happens, the simulation counts it from the plan. When it does, enter the actual month and amount."
+        }
       },
       "outcome": {
         "met": "Met: {{month}}",
@@ -1395,6 +1404,12 @@
         "variantsChanged": "variants changed",
         "paramsChanged": "strategy parameters changed"
       }
+    },
+    "facts": {
+      "summary": "Events: {{done}} of {{total}} happened",
+      "done": "happened (counted from the fact)",
+      "planned": "planned (counted from the plan)",
+      "note": "The simulation counts events that happened from their actual month and amount, the rest from the plan."
     }
   },
   "episodicOrders": {
