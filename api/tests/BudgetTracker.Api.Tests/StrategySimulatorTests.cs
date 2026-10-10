@@ -347,4 +347,52 @@ public sealed class StrategySimulatorTests
 
         Assert.Contains("\"NoIncomingEdge\"", json);
     }
+
+    private static StrategyResult RunDisabled(
+        IReadOnlyList<StrategyNode> nodes, IReadOnlyList<StrategyEdge> edges, decimal cash, params string[] disabled) =>
+        StrategySimulator.Run(new StrategyInput(October2026, cash, 6, nodes, edges, disabled.ToHashSet()));
+
+    [Fact]
+    public void A_disabled_surplus_tile_adds_nothing_while_the_base_variant_keeps_it()
+    {
+        var nodes = new[] { Node("s", StrategyNodeType.Surplus, amount: 700m) };
+
+        Assert.Equal(1_000m + 6 * 700m, RunDisabled(nodes, [], 1_000m).FinalCash);
+        Assert.Equal(1_000m, RunDisabled(nodes, [], 1_000m, "s").FinalCash);
+    }
+
+    [Fact]
+    public void Disabling_an_event_also_skips_the_chain_that_starts_from_it()
+    {
+        // Łapie błąd, w którym wyłączone zdarzenie nie wykonuje się, ale jego akcje dalej odpalają — wariant „bez podwyżki”
+        // musiałby wtedy wyłączać każdą akcję z osobna.
+        var nodes = new[]
+        {
+            Node("raise", StrategyNodeType.Trigger, M(2026, 10)),
+            Node("more", StrategyNodeType.IncreaseSurplus, amount: 400m),
+            Node("s", StrategyNodeType.Surplus, amount: 700m),
+        };
+        StrategyEdge[] edges = [Edge("raise", "more")];
+
+        var withRaise = RunDisabled(nodes, edges, 0m);
+        var withoutRaise = RunDisabled(nodes, edges, 0m, "raise");
+
+        Assert.Equal(6 * 1_100m, withRaise.FinalCash);
+        Assert.Equal(6 * 700m, withoutRaise.FinalCash);
+        Assert.DoesNotContain(withoutRaise.Nodes, n => n.NodeId == "more");
+    }
+
+    [Fact]
+    public void A_disabled_tile_does_not_hide_or_add_graph_problems()
+    {
+        // Problemy liczone są dla całego grafu: wariant nie może ich chować, bo wynik wariantu stałby się
+        // „czystszy” niż strategia, którą użytkownik zapisze.
+        var nodes = new[] { Node("orphan", StrategyNodeType.IncreaseSurplus, amount: 100m) };
+
+        var baseProblems = RunDisabled(nodes, [], 0m).Problems;
+        var variantProblems = RunDisabled(nodes, [], 0m, "orphan").Problems;
+
+        Assert.Equal(baseProblems.Select(p => (p.NodeId, p.Kind)), variantProblems.Select(p => (p.NodeId, p.Kind)));
+        Assert.NotEmpty(baseProblems);
+    }
 }

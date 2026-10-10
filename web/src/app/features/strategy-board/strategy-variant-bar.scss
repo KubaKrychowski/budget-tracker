@@ -1,0 +1,49 @@
+.svb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+
+  &__label {
+    font-weight: 600;
+  }
+
+  &__chip {
+    padding: 6px 14px;
+    border: 1px solid var(--ds-neutral-300);
+    border-radius: 16px;
+    background: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    color: inherit;
+
+    &--active {
+      border-color: var(--ds-primary-600);
+      background: var(--ds-primary-600);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    &--add {
+      border: 1px dashed var(--ds-primary-600);
+      color: var(--ds-primary-600);
+
+      &:disabled {
+        cursor: not-allowed;
+        border-color: var(--ds-neutral-300);
+        color: var(--ds-neutral-400);
+      }
+    }
+  }
+
+  &__manage {
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--ds-primary-600);
+  }
+}

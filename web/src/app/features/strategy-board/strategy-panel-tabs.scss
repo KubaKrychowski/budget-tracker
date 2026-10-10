@@ -1,0 +1,22 @@
+.spt {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--ds-neutral-100);
+
+  &__tab {
+    margin-bottom: -1px;
+    padding: 0 0 6px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ds-neutral-600);
+
+    &--active {
+      border-bottom-color: var(--ds-primary-600);
+      color: var(--ds-primary-600);
+    }
+  }
+}

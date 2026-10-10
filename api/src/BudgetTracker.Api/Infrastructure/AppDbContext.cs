@@ -243,6 +243,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             // Graf jako jsonb: wartość strategii bez własnego cyklu życia — kasuje się, przywraca i purge'uje razem z nią.
             e.ComplexCollection(x => x.Nodes, n => n.ToJson());
             e.ComplexCollection(x => x.Edges, ed => ed.ToJson());
+            e.ComplexCollection(x => x.Variants, v => v.ToJson());
             e.HasIndex(x => x.BudgetBusinessId);
 
             e.HasIndex(x => x.UserId);

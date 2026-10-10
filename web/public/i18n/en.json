@@ -1088,7 +1088,10 @@
         "loan": "loan paid off",
         "cushion": "cushion reached",
         "cash": "cash at the end",
-        "never": "not within the horizon"
+        "never": "not within the horizon",
+        "chart": "Show chart",
+        "compare": "Compare variants",
+        "variant": "Simulation · {{name}}"
       },
       "palette": {
         "title": "Add a tile",
@@ -1306,7 +1309,65 @@
         "Incomplete": "Fill in the tile parameters on the board",
         "New": "",
         "Change": ""
+      },
+      "variant": "Variant: {{name}}"
+    },
+    "variants": {
+      "barLabel": "Variant",
+      "base": "Base",
+      "add": "+ New variant",
+      "limit": "The strategy already has 10 variants — remove one to add another.",
+      "defaultName": "Variant",
+      "copySuffix": "copy",
+      "manage": "Variants",
+      "tabTiles": "Tiles",
+      "tabVariants": "Variants",
+      "panelTitle": "Tiles and variants",
+      "hint": "A variant is the same graph with some tiles switched off. A switched-off tile stays in the strategy, but the simulation skips it.",
+      "baseHint": "The base variant has every tile switched on. Pick a variant to switch tiles off in it.",
+      "loan": "loan paid off: {{month}}",
+      "cash": "cash at the end: {{amount}}",
+      "never": "not within the horizon",
+      "delta": "{{delta}} compared to base",
+      "duplicate": "Duplicate",
+      "rename": "Rename",
+      "remove": "Remove",
+      "tilesTitle": "Tiles in the “{{name}}” variant",
+      "toggle": "Tile “{{name}}” in the variant",
+      "off": "switched off in the variant",
+      "note": "The switches change this variant only. “Apply to budget…” works on the selected variant.",
+      "noTiles": "There are no tiles on the board yet.",
+      "renameTitle": "Rename the variant",
+      "renameLabel": "Variant name",
+      "renameOk": "Save",
+      "errors": {
+        "required": "Enter a variant name.",
+        "tooLong": "The name can have at most 60 characters.",
+        "taken": "Another variant already has this name."
       }
+    },
+    "compare": {
+      "title": "Variant comparison",
+      "titleSingle": "Simulation run",
+      "alertTitle": "This is an estimate, not financial advice",
+      "alertBody": "Interest is calculated by actual date (365-day year). Your bank may charge a few zlotys differently.",
+      "caption": "{{metric}} at the end of every month, based on the tiles of each variant.",
+      "series": "Series",
+      "metrics": {
+        "Cash": "Cash",
+        "Debt": "Debt",
+        "CashMinusDebt": "Cash − debt"
+      },
+      "chart": "Chart: {{metric}} month by month",
+      "cushionGoal": "target cushion",
+      "measure": "Measure",
+      "loanPaidOff": "Loan paid off",
+      "cushionReached": "Target cushion reached",
+      "finalCash": "Cash at the end",
+      "interest": "Interest until the loan is paid off",
+      "never": "not within the horizon",
+      "close": "Close",
+      "monthsShort": "{{delta}} mo."
     }
   },
   "episodicOrders": {

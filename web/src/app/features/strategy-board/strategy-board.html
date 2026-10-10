@@ -89,6 +89,15 @@
     </header>
     }
 
+    <app-strategy-variant-bar
+      [variants]="variants()"
+      [activeId]="activeVariantId()"
+      [canAdd]="canAddVariant()"
+      [mobile]="viewport.isMobile()"
+      (picked)="selectVariant($event)"
+      (added)="addNewVariant()"
+      (manage)="openVariantsPanel()" />
+
     @if (problemNodes().length > 0) {
       <nz-alert
         style="display: block; margin-bottom: 16px"
@@ -128,6 +137,7 @@
                 [fSourceId]="sourceConnector(edge)"
                 [fTargetId]="targetConnector(edge)"
                 fType="segment"
+                [style.opacity]="edgeOff(edge) ? 0.4 : null"
                 fSourceSide="right"
                 fTargetSide="left"
                 [fRadius]="10"
@@ -160,6 +170,9 @@
                 fDragHandle
                 class="sb__node sb__node--{{ view.kind }}"
                 [class.sb__node--problem]="view.problems.length > 0"
+                [class.sb__node--off]="view.disabled"
+                [style.opacity]="view.disabled ? 0.4 : null"
+                [style.border-style]="view.disabled ? 'dashed' : null"
                 [fNodeId]="view.node.id"
                 [fNodePosition]="view.position"
               >
@@ -205,7 +218,9 @@
         @if (result(); as sim) {
           @if (!viewport.isMobile()) {
           <div class="sb__chip" role="status">
-            <strong>{{ 'strategies.board.sim.title' | translate }}</strong>
+            <strong>
+              {{ (activeVariant() ? 'strategies.board.sim.variant' : 'strategies.board.sim.title') | translate: { name: activeVariant()?.name } }}
+            </strong>
             @if (hasLoan()) {
               <span>
                 {{ 'strategies.board.sim.loan' | translate }}:
@@ -219,6 +234,9 @@
               </span>
             }
             <span>{{ 'strategies.board.sim.cash' | translate }}: {{ finalCash() }}</span>
+            <button type="button" class="sb__link" (click)="compareOpen.set(true)">
+              {{ (variants().length > 0 ? 'strategies.board.sim.compare' : 'strategies.board.sim.chart') | translate }}
+            </button>
           </div>
           }
         }
@@ -234,7 +252,7 @@
       <div class="sb__list">
         @for (chain of chains().chains; track chain.root.node.id) {
           <section class="sb__chain">
-            <button type="button" class="sb__step sb__step--{{ chain.root.kind }}" [class.sb__step--problem]="chain.root.problems.length > 0" (click)="openNode(chain.root.node.id)">
+            <button type="button" class="sb__step sb__step--{{ chain.root.kind }}" [class.sb__step--problem]="chain.root.problems.length > 0" [class.sb__step--off]="chain.root.disabled" (click)="openNode(chain.root.node.id)">
               <span class="sb__glyph" aria-hidden="true">{{ glyph(chain.root.kind) }}</span>
               <span class="sb__text">
                 <strong class="sb__node-title">{{ chain.root.title }}</strong>
@@ -249,7 +267,7 @@
             @for (step of chain.steps; track step.view.node.id) {
               <div class="sb__row" [style.padding-left.px]="step.depth * 20">
                 <span class="sb__rail" aria-hidden="true">{{ step.label === 'None' ? '↓' : ((step.label === 'Yes' ? 'strategies.board.yes' : 'strategies.board.no') | translate) }}</span>
-                <button type="button" class="sb__step sb__step--{{ step.view.kind }}" [class.sb__step--problem]="step.view.problems.length > 0" (click)="openNode(step.view.node.id)">
+                <button type="button" class="sb__step sb__step--{{ step.view.kind }}" [class.sb__step--problem]="step.view.problems.length > 0" [class.sb__step--off]="step.view.disabled" (click)="openNode(step.view.node.id)">
                   <span class="sb__glyph" aria-hidden="true">{{ glyph(step.view.kind) }}</span>
                   <span class="sb__text">
                     <strong class="sb__node-title">{{ step.view.title }}</strong>
@@ -275,7 +293,7 @@
           <section class="sb__chain">
             <h2 class="sb__panel-title">{{ 'strategies.board.mobile.unlinked' | translate }}</h2>
             @for (view of chains().unlinked; track view.node.id) {
-              <button type="button" class="sb__step sb__step--{{ view.kind }}" [class.sb__step--problem]="view.problems.length > 0" (click)="openNode(view.node.id)">
+              <button type="button" class="sb__step sb__step--{{ view.kind }}" [class.sb__step--problem]="view.problems.length > 0" [class.sb__step--off]="view.disabled" (click)="openNode(view.node.id)">
                 <span class="sb__glyph" aria-hidden="true">{{ glyph(view.kind) }}</span>
                 <span class="sb__text">
                   <strong class="sb__node-title">{{ view.title }}</strong>
@@ -314,6 +332,9 @@
             </span>
           }
           <span>{{ 'strategies.board.sim.cash' | translate }} <b>{{ finalCash() }}</b></span>
+          <button type="button" class="sb__link" (click)="compareOpen.set(true)">
+            {{ (variants().length > 0 ? 'strategies.board.sim.compare' : 'strategies.board.sim.chart') | translate }}
+          </button>
         </div>
       }
 
@@ -327,7 +348,24 @@
 
     <!-- Treść panelu bocznego: na desktopie stoi w <aside>, na telefonie w arkuszu od dołu (makieta 419:1593). -->
     <ng-template #panelBody>
-        @if (formNode(); as node) {
+        @if (!viewport.isMobile()) {
+          <app-strategy-panel-tabs [active]="panelTab()" (picked)="setPanelTab($event)" />
+        }
+        @if (showVariantsPanel()) {
+          <app-strategy-variants-panel
+            [variants]="variants()"
+            [activeId]="activeVariantId()"
+            [baseResult]="baseResult()"
+            [results]="variantResults()"
+            [tiles]="variantTiles()"
+            [hasLoan]="hasLoan()"
+            (picked)="selectVariant($event)"
+            (added)="addNewVariant()"
+            (duplicated)="duplicateVariant($event)"
+            (renamed)="openRename($event)"
+            (removed)="removeVariant($event)"
+            (toggled)="toggleTile($event)" />
+        } @else if (formNode(); as node) {
           <app-strategy-node-form
             [node]="node"
             [outcome]="formOutcome()"
@@ -385,8 +423,45 @@
   }
 
   @if (saved(); as strategy) {
-    <app-strategy-apply [strategyId]="strategy.id" [open]="applyOpen()" (closed)="applyOpen.set(false)" />
+    <app-strategy-apply
+      [strategyId]="strategy.id"
+      [variantId]="activeVariantId()"
+      [variantName]="activeVariant()?.name ?? null"
+      [open]="applyOpen()"
+      (closed)="applyOpen.set(false)" />
+    <app-strategy-compare
+      [open]="compareOpen()"
+      [series]="compareSeries()"
+      [hasLoan]="hasLoan()"
+      [hasCushion]="hasCushion()"
+      (closed)="compareOpen.set(false)" />
   }
+
+  <nz-modal
+    [nzVisible]="renameId() !== null"
+    [nzTitle]="'strategies.variants.renameTitle' | translate"
+    [nzOkText]="'strategies.variants.renameOk' | translate"
+    [nzCancelText]="'strategies.create.cancel' | translate"
+    [nzOkDisabled]="renameError() !== null"
+    (nzOnOk)="applyRename()"
+    (nzOnCancel)="renameId.set(null)"
+  >
+    <ng-container *nzModalContent>
+      <div class="sb__field">
+        <label class="sb__label" for="strategy-variant-name">{{ 'strategies.variants.renameLabel' | translate }}</label>
+        <input
+          nz-input
+          id="strategy-variant-name"
+          [maxlength]="60"
+          [ngModel]="renameDraft()"
+          (ngModelChange)="renameDraft.set($event)"
+          (keydown.enter)="applyRename()" />
+        @if (renameError(); as problem) {
+          <small style="color: var(--ds-error-600)" role="alert">{{ 'strategies.variants.errors.' + problem | translate }}</small>
+        }
+      </div>
+    </ng-container>
+  </nz-modal>
 
   <nz-modal
     [nzVisible]="paramsOpen()"

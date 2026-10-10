@@ -85,8 +85,9 @@ public sealed class StrategiesTests : IAsyncLifetime
 
     private static SaveStrategyRequestDto Request(
         IReadOnlyList<StrategyNodeRequestDto>? nodes = null, IReadOnlyList<StrategyEdgeRequestDto>? edges = null,
-        string name = "Plan na rok", DateOnly? month = null, decimal cash = 1_000m, int horizon = 24) =>
-        new(name, month ?? October, cash, horizon, nodes ?? [], edges ?? []);
+        string name = "Plan na rok", DateOnly? month = null, decimal cash = 1_000m, int horizon = 24,
+        IReadOnlyList<StrategyVariantRequestDto>? variants = null) =>
+        new(name, month ?? October, cash, horizon, nodes ?? [], edges ?? [], variants);
 
     private Task<StrategyResponseDto> NewAsync(string name = "Plan", StrategyTemplate template = StrategyTemplate.Blank) =>
         Create().HandleAsync(new CreateStrategyRequestDto(_budget.BusinessId, name, template), default);
@@ -423,5 +424,95 @@ public sealed class StrategiesTests : IAsyncLifetime
         await _db.SaveChangesAsync();
         await new BudgetPurger(_db).PurgeAsync(null, default);
         Assert.Empty(await _db.Strategies.IgnoreQueryFilters().ToListAsync());
+    }
+
+    // ── Warianty ─────────────────────────────────────────────────────────────────────────
+
+    private static readonly StrategyNodeRequestDto[] RaiseChain =
+    [
+        NodeDto("raise", StrategyNodeType.Trigger, October),
+        NodeDto("more", StrategyNodeType.IncreaseSurplus, amount: 400m),
+        NodeDto("s", StrategyNodeType.Surplus, amount: 700m),
+    ];
+
+    [Fact]
+    public async Task Variants_are_saved_with_their_own_result_while_the_base_result_stays_whole()
+    {
+        var created = await NewAsync();
+
+        var saved = await Save().HandleAsync(
+            created.Id,
+            Request(
+                RaiseChain, [EdgeDto("raise", "more")], horizon: 6,
+                variants: [new StrategyVariantRequestDto("v1", "  Bez podwyżki ", ["raise"])]),
+            default);
+        var reloaded = await Get().HandleAsync(created.Id, default);
+
+        var variant = Assert.Single(saved.Variants);
+        Assert.Equal("Bez podwyżki", variant.Name);
+        Assert.Equal(1_000m + 6 * 1_100m, saved.Result.FinalCash);
+        Assert.Equal(1_000m + 6 * 700m, variant.Result.FinalCash);
+        Assert.Equal(["raise"], Assert.Single(reloaded.Variants).DisabledNodeIds);
+        Assert.Equal(variant.Result.FinalCash, reloaded.Variants[0].Result.FinalCash);
+    }
+
+    [Fact]
+    public async Task A_request_without_variants_clears_them_and_old_rows_read_as_having_none()
+    {
+        var created = await NewAsync();
+        await Save().HandleAsync(
+            created.Id,
+            Request(RaiseChain, [EdgeDto("raise", "more")], variants: [new StrategyVariantRequestDto("v1", "A", ["raise"])]),
+            default);
+
+        var cleared = await Save().HandleAsync(created.Id, Request(RaiseChain, [EdgeDto("raise", "more")]), default);
+
+        Assert.Empty(created.Variants);
+        Assert.Empty(cleared.Variants);
+    }
+
+    [Fact]
+    public async Task A_variant_cannot_disable_a_tile_that_is_not_on_the_board()
+    {
+        var created = await NewAsync();
+
+        await Assert.ThrowsAsync<StrategyVariantInvalidException>(() => Save().HandleAsync(
+            created.Id, Request(RaiseChain, variants: [new StrategyVariantRequestDto("v1", "A", ["ghost"])]), default));
+    }
+
+    [Fact]
+    public async Task Variant_names_and_ids_must_be_filled_and_unique_and_there_are_at_most_ten()
+    {
+        var created = await NewAsync();
+        Task Save(params StrategyVariantRequestDto[] variants) =>
+            this.Save().HandleAsync(created.Id, Request(RaiseChain, variants: variants), default);
+
+        await Assert.ThrowsAsync<StrategyVariantInvalidException>(() => Save(new StrategyVariantRequestDto("v1", "  ", [])));
+        await Assert.ThrowsAsync<StrategyVariantInvalidException>(
+            () => Save(new StrategyVariantRequestDto("v1", new string('x', 61), [])));
+        await Assert.ThrowsAsync<StrategyVariantInvalidException>(
+            () => Save(new StrategyVariantRequestDto("v1", "A", []), new StrategyVariantRequestDto("v1", "B", [])));
+        await Assert.ThrowsAsync<StrategyVariantInvalidException>(
+            () => Save(new StrategyVariantRequestDto("v1", "Bez", []), new StrategyVariantRequestDto("v2", "BEZ", [])));
+        await Assert.ThrowsAsync<StrategyVariantInvalidException>(() => Save([.. Enumerable.Range(0, 11)
+            .Select(i => new StrategyVariantRequestDto($"v{i}", $"Wariant {i}", []))]));
+        await Save([.. Enumerable.Range(0, 10).Select(i => new StrategyVariantRequestDto($"v{i}", $"Wariant {i}", []))]);
+    }
+
+    [Fact]
+    public async Task Simulating_variants_returns_the_base_and_every_variant_without_saving_anything()
+    {
+        var created = await NewAsync();
+        var request = Request(
+            RaiseChain, [EdgeDto("raise", "more")], horizon: 6,
+            variants: [new StrategyVariantRequestDto("v1", "Bez podwyżki", ["raise"])]);
+
+        var result = await new SimulateStrategyVariantsQueryHandler().HandleAsync(request, default);
+
+        Assert.Equal(1_000m + 6 * 1_100m, result.Base.FinalCash);
+        var variant = Assert.Single(result.Variants);
+        Assert.Equal("v1", variant.Id);
+        Assert.Equal(1_000m + 6 * 700m, variant.Result.FinalCash);
+        Assert.Empty((await Get().HandleAsync(created.Id, default)).Variants);
     }
 }

@@ -1156,7 +1156,10 @@
         "loan": "kredyt spłacony",
         "cushion": "poduszka osiągnięta",
         "cash": "gotówka na koniec",
-        "never": "nie w tym horyzoncie"
+        "never": "nie w tym horyzoncie",
+        "chart": "Pokaż wykres",
+        "compare": "Porównaj warianty",
+        "variant": "Symulacja · {{name}}"
       },
       "palette": {
         "title": "Dodaj kafelek",
@@ -1376,7 +1379,65 @@
         "Incomplete": "Uzupełnij parametry kafelka na tablicy",
         "New": "",
         "Change": ""
+      },
+      "variant": "Wariant: {{name}}"
+    },
+    "variants": {
+      "barLabel": "Wariant",
+      "base": "Bazowy",
+      "add": "+ Nowy wariant",
+      "limit": "Strategia ma już 10 wariantów — usuń któryś, żeby dodać nowy.",
+      "defaultName": "Wariant",
+      "copySuffix": "kopia",
+      "manage": "Warianty",
+      "tabTiles": "Kafelki",
+      "tabVariants": "Warianty",
+      "panelTitle": "Kafelki i warianty",
+      "hint": "Wariant to ten sam graf z wyłączonymi kafelkami. Wyłączony kafelek zostaje w strategii, ale symulacja go pomija.",
+      "baseHint": "Bazowy ma wszystkie kafelki włączone. Wybierz wariant, żeby wyłączać w nim kafelki.",
+      "loan": "kredyt spłacony: {{month}}",
+      "cash": "gotówka na koniec: {{amount}}",
+      "never": "nie w tym horyzoncie",
+      "delta": "{{delta}} względem bazowego",
+      "duplicate": "Duplikuj",
+      "rename": "Zmień nazwę",
+      "remove": "Usuń",
+      "tilesTitle": "Kafelki w wariancie „{{name}}”",
+      "toggle": "Kafelek „{{name}}” w wariancie",
+      "off": "wyłączony w wariancie",
+      "note": "Przełączniki zmieniają tylko ten wariant. „Zastosuj w budżecie…” działa na wybranym wariancie.",
+      "noTiles": "Na tablicy nie ma jeszcze kafelków.",
+      "renameTitle": "Zmień nazwę wariantu",
+      "renameLabel": "Nazwa wariantu",
+      "renameOk": "Zapisz",
+      "errors": {
+        "required": "Podaj nazwę wariantu.",
+        "tooLong": "Nazwa może mieć najwyżej 60 znaków.",
+        "taken": "Inny wariant ma już taką nazwę."
       }
+    },
+    "compare": {
+      "title": "Porównanie wariantów",
+      "titleSingle": "Przebieg symulacji",
+      "alertTitle": "To szacunek, nie porada finansowa",
+      "alertBody": "Odsetki liczone wg daty rzeczywistej (rok 365 dni). Bank może naliczać inaczej o kilka złotych.",
+      "caption": "{{metric}} na koniec każdego miesiąca, według kafelków każdego z wariantów.",
+      "series": "Seria",
+      "metrics": {
+        "Cash": "Gotówka",
+        "Debt": "Dług",
+        "CashMinusDebt": "Gotówka − dług"
+      },
+      "chart": "Wykres: {{metric}} w kolejnych miesiącach",
+      "cushionGoal": "poduszka docelowa",
+      "measure": "Miara",
+      "loanPaidOff": "Kredyt spłacony",
+      "cushionReached": "Poduszka docelowa osiągnięta",
+      "finalCash": "Gotówka na koniec",
+      "interest": "Odsetki do spłaty kredytu",
+      "never": "nie w tym horyzoncie",
+      "close": "Zamknij",
+      "monthsShort": "{{delta}} mies."
     }
   },
   "episodicOrders": {

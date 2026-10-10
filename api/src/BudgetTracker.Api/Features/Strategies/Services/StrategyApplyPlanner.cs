@@ -35,16 +35,22 @@ public sealed class StrategyApplyPlanner(AppDbContext db, LimitCategories limitC
         StrategyNodeType.EndStandingOrder, StrategyNodeType.CreateEpisodicOrder,
     ];
 
+    /// <remarks>
+    /// ⚠️ Wariant (<paramref name="variantId"/>) zawęża plan: akcje wyłączone w nim w ogóle nie pojawiają się na liście, a
+    /// miesiące wykonania pochodzą z symulacji TEGO wariantu — „czeka” dla wariantu bez podwyżki może wypaść inaczej niż
+    /// dla bazowego.
+    /// </remarks>
     public async Task<IReadOnlyList<StrategyApplyPlanItem>> PlanAsync(
-        Strategy strategy, DateOnly currentMonth, CancellationToken ct)
+        Strategy strategy, DateOnly currentMonth, string? variantId, CancellationToken ct)
     {
-        var result = StrategySimulator.Run(StrategyMapping.ToInput(strategy));
+        var disabled = StrategyMapping.Disabled(strategy.Variants, variantId);
+        var result = StrategySimulator.Run(StrategyMapping.ToInput(strategy, variantId));
         var firedIn = result.Nodes.ToDictionary(n => n.NodeId, n => n.FiredIn);
         var withProblems = result.Problems.Select(p => p.NodeId).ToHashSet();
         var categories = (await limitCategories.AllowedAsync(ct)).ToDictionary(c => c.BusinessId, c => c.Id);
 
         var items = new List<StrategyApplyPlanItem>();
-        foreach (var node in strategy.Nodes.Where(n => BudgetActions.Contains(n.Type)))
+        foreach (var node in strategy.Nodes.Where(n => BudgetActions.Contains(n.Type) && !disabled.Contains(n.Id)))
         {
             if (withProblems.Contains(node.Id))
             {

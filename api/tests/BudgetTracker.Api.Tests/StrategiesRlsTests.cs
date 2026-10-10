@@ -128,7 +128,7 @@ public sealed class StrategiesRlsTests : IAsyncLifetime
 
         own.Replace("Alicji", new DateOnly(2026, 10, 1), 500m, 12,
             [new StrategyNode("n1", StrategyNodeType.Surplus, string.Empty, 0, 0, null, 700m, null, null, null, null, null, null)],
-            [], _clock.GetUtcNow());
+            [], [], _clock.GetUtcNow());
         await alice.SaveChangesAsync();
 
         await using var again = AppAs(_alice);

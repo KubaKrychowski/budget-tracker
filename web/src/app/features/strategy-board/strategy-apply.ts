@@ -35,6 +35,9 @@ export class StrategyApply {
   private readonly errorMessages = inject(ErrorMessages);
 
   readonly strategyId = input.required<string>();
+  /** Wariant, który stosujemy (`null` = bazowy) — wyłączone w nim akcje nie trafiają na listę. */
+  readonly variantId = input<string | null>(null);
+  readonly variantName = input<string | null>(null);
   readonly open = input(false);
 
   readonly closed = output<void>();
@@ -104,7 +107,9 @@ export class StrategyApply {
     this.loading.set(true);
     this.failed.set(null);
     try {
-      const preview = await firstValueFrom(this.http.get<StrategyApplyPreview>(`/api/strategies/${this.strategyId()}/apply`));
+      const variant = this.variantId();
+      const query = variant ? `?variantId=${encodeURIComponent(variant)}` : '';
+      const preview = await firstValueFrom(this.http.get<StrategyApplyPreview>(`/api/strategies/${this.strategyId()}/apply${query}`));
       this.preview.set(preview);
       this.selected.set(new Set(preview.items.filter(applicable).map((i) => i.nodeId)));
     } catch (err) {
@@ -119,7 +124,8 @@ export class StrategyApply {
     if (this.busy() || this.count() === 0) return;
     this.busy.set(true);
     try {
-      const body: ApplyStrategyRequest = { nodeIds: [...this.selected()] };
+      const variant = this.variantId();
+      const body: ApplyStrategyRequest = { nodeIds: [...this.selected()], ...(variant ? { variantId: variant } : {}) };
       const result = await firstValueFrom(
         this.http.post<ApplyStrategyResponse>(`/api/strategies/${this.strategyId()}/apply`, body),
       );

@@ -14,7 +14,7 @@ import { pl_PL, provideNzI18n } from 'ng-zorro-antd/i18n';
 import { APP_ICONS } from '../../core/icons';
 import { Viewport } from '../../core/layout/viewport';
 import {
-  Strategy, StrategyEdge, StrategyNode, StrategyProblem, StrategyReferences, StrategyResult,
+  Strategy, StrategyEdge, StrategyNode, StrategyProblem, StrategyReferences, StrategyResult, StrategyVariantWithResult,
 } from '../../core/api/models/strategies';
 import { StrategyBoard } from './strategy-board';
 
@@ -34,6 +34,12 @@ interface BoardApi {
   nodes(): readonly StrategyNode[];
   edges(): readonly StrategyEdge[];
   dirty(): boolean;
+  addNewVariant(): void;
+  selectVariant(id: string | null): void;
+  toggleTile(change: { nodeId: string; disabled: boolean }): void;
+  removeVariant(id: string): void;
+  removeNode(id: string): void;
+  variants(): readonly { id: string; name: string; disabledNodeIds: readonly string[] }[];
 }
 
 /**
@@ -77,7 +83,11 @@ describe('StrategyBoard', () => {
 
   const strategy = (over: Partial<Strategy> = {}): Strategy => ({
     id: 's1', budgetId: 'b1', name: 'Kredyt i poduszka', startMonth: '2026-10-01', startCash: 4600, horizonMonths: 24,
-    updatedAt: '2026-10-03T10:00:00+00:00', nodes, edges, result: result(), ...over,
+    updatedAt: '2026-10-03T10:00:00+00:00', nodes, edges, result: result(), variants: [], ...over,
+  });
+
+  const variant = (over: Partial<StrategyVariantWithResult> = {}): StrategyVariantWithResult => ({
+    id: 'v1', name: 'Bez premii', disabledNodeIds: ['bonus'], result: { ...result(), finalCash: 14900, loanPaidOffIn: '2027-08-01' }, ...over,
   });
 
   const api = (): BoardApi => fixture.componentInstance as unknown as BoardApi;
@@ -137,6 +147,15 @@ describe('StrategyBoard', () => {
       dashboard: { breadcrumb: 'Dashboard' },
       strategies: {
         title: 'Strategie',
+        variants: {
+          barLabel: 'Wariant', base: 'Bazowy', add: '+ Nowy wariant', defaultName: 'Wariant', copySuffix: 'kopia', manage: 'Warianty',
+          tabTiles: 'Kafelki', tabVariants: 'Warianty', hint: 'Wariant to ten sam graf.', baseHint: 'Bazowy ma wszystko włączone.',
+          loan: 'kredyt spłacony: {{month}}', cash: 'gotówka na koniec: {{amount}}', never: 'nie w tym horyzoncie', delta: '{{delta}} względem bazowego',
+          duplicate: 'Duplikuj', rename: 'Zmień nazwę', remove: 'Usuń', tilesTitle: 'Kafelki w wariancie „{{name}}”',
+          toggle: 'Kafelek „{{name}}” w wariancie', note: 'Przełączniki zmieniają tylko ten wariant.', noTiles: 'Brak kafelków.',
+          renameTitle: 'Zmień nazwę wariantu', renameLabel: 'Nazwa wariantu', renameOk: 'Zapisz',
+          errors: { required: 'Podaj nazwę.', tooLong: 'Za długa.', taken: 'Zajęta.' }, limit: 'Limit wariantów.',
+        },
         errors: { loadFailed: 'Nie udało się wczytać strategii', saveFailed: 'Nie udało się zapisać zmian' },
         board: {
           apply: 'Zastosuj w budżecie…',
@@ -148,7 +167,7 @@ describe('StrategyBoard', () => {
           problem: { NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.', MissingParameter: 'Brakuje parametru.' },
           mobile: { list: 'Lista kroków', board: 'Tablica', menu: 'Menu', tiles: 'Kafelki: {{count}}', addTile: '+ Dodaj kafelek', save: 'Zapisz', addStep: '+ Dodaj krok', unlinked: 'Bez połączenia', empty: 'Pusto', zoom: 'Powiększenie', zoomOut: 'Pomniejsz', zoomIn: 'Powiększ', fit: 'Dopasuj', gesture: 'Przesuń palcem', paletteHint: 'Dotknij +' },
           yes: 'tak', no: 'nie', edgeLabel: 'Połączenie: {{from}} → {{to}}', perMonth: '{{amount}} / mies.',
-          sim: { title: 'Symulacja', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
+          sim: { title: 'Symulacja', variant: 'Symulacja · {{name}}', chart: 'Pokaż wykres', compare: 'Porównaj warianty', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
           palette: { title: 'Dodaj kafelek', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}', categories: { event: { title: 'Zdarzenie', hint: '' }, action: { title: 'Akcja', hint: '' }, control: { title: 'Warunek', hint: '' } } },
           types: { Trigger: 'Zdarzenie', Income: 'Wpływ', Overpay: 'Nadpłać kredyt', PayOffLoan: 'Spłać resztę', Condition: 'Warunek', Wait: 'Czekaj', End: 'Koniec', IncreaseSurplus: 'Zwiększ nadwyżkę' },
           hints: {}, mode: { ReduceInstallment: 'Obniż ratę' }, metric: { CashMinusDebt: 'Gotówka − dług' },
@@ -244,9 +263,9 @@ describe('StrategyBoard', () => {
     fixture.detectChanges();
     await new Promise((resolve) => setTimeout(resolve, 450));
 
-    const simulate = http.expectOne((r) => r.url === '/api/strategies/simulate' && r.method === 'POST');
+    const simulate = http.expectOne((r) => r.url === '/api/strategies/simulate-variants' && r.method === 'POST');
     expect(simulate.request.body.nodes.find((n: StrategyNode) => n.id === 'overpay').amount).toBe(5000);
-    simulate.flush(result());
+    simulate.flush({ base: result(), variants: [] });
   });
 
   it('połączenie z wyjścia „tak” warunku dostaje etykietę Yes, a z wyjścia „nie” — No', async () => {
@@ -345,6 +364,110 @@ describe('StrategyBoard', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('Nie udało się wczytać strategii');
+  });
+
+  describe('warianty', () => {
+    const chips = (): string[] => [...fixture.nativeElement.querySelectorAll('.svb__chip')].map((c) => (c as HTMLElement).textContent!.trim());
+    const offNodes = (): string[] => [...fixture.nativeElement.querySelectorAll('.f-node.sb__node--off')]
+      .map((n) => (n as HTMLElement).textContent!.replace(/\s+/g, ' ').trim());
+
+    it('pasek pokazuje wariant bazowy, zapisane warianty i „+ Nowy wariant”', async () => {
+      await settle(strategy({ variants: [variant()] }));
+
+      expect(chips()).toEqual(['Bazowy', 'Bez premii', '+ Nowy wariant']);
+      expect(api().dirty()).toBe(false);
+    });
+
+    it('wybór wariantu wygasza jego wyłączone kafelki, a bazowy ma wszystkie włączone', async () => {
+      await settle(strategy({ variants: [variant()] }));
+      expect(offNodes()).toEqual([]);
+
+      api().selectVariant('v1');
+      fixture.detectChanges();
+      expect(offNodes()).toHaveLength(1);
+      expect(offNodes()[0]).toContain('Premia');
+
+      api().selectVariant(null);
+      fixture.detectChanges();
+      expect(offNodes()).toEqual([]);
+    });
+
+    it('chip wyniku pokazuje wynik WYBRANEGO wariantu', async () => {
+      await settle(strategy({ variants: [variant()] }));
+      expect(text()).toContain('kredyt spłacony: lipiec 2027');
+
+      api().selectVariant('v1');
+      fixture.detectChanges();
+
+      expect(text()).toContain('Symulacja · Bez premii');
+      expect(text()).toContain('kredyt spłacony: sierpień 2027');
+    });
+
+    it('„+ Nowy wariant” dodaje wariant bez wyłączeń o wolnej nazwie, wybiera go i oznacza zmianę', async () => {
+      await settle(strategy({ variants: [variant({ name: 'Wariant' })] }));
+
+      api().addNewVariant();
+      fixture.detectChanges();
+
+      expect(api().variants().map((v) => v.name)).toEqual(['Wariant', 'Wariant 2']);
+      expect(api().variants()[1].disabledNodeIds).toEqual([]);
+      expect(chips()).toContain('Wariant 2');
+      expect(api().dirty()).toBe(true);
+    });
+
+    it('wyłączenie kafelka w wariancie jest zmianą do zapisania i trafia do PUT razem z wariantami', async () => {
+      await settle(strategy({ variants: [variant({ disabledNodeIds: [] })] }));
+      api().selectVariant('v1');
+
+      api().toggleTile({ nodeId: 'overpay', disabled: true });
+      fixture.detectChanges();
+      expect(api().dirty()).toBe(true);
+      expect(offNodes()[0]).toContain('Nadpłać kredyt');
+
+      const done = api().save();
+      const put = http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT');
+      expect(put.request.body.variants).toEqual([{ id: 'v1', name: 'Bez premii', disabledNodeIds: ['overpay'] }]);
+      put.flush(strategy({ variants: [variant({ disabledNodeIds: ['overpay'] })] }));
+      await done;
+
+      expect(api().dirty()).toBe(false);
+    });
+
+    it('usunięcie kafelka zdejmuje go z wyłączeń wariantów, żeby zapis nie dostał 400', async () => {
+      // Łapie wariant wyłączający kafelek, którego już nie ma na tablicy: serwer odrzuca taki zapis.
+      await settle(strategy({ variants: [variant()] }));
+
+      api().removeNode('bonus');
+
+      expect(api().variants()[0].disabledNodeIds).toEqual([]);
+    });
+
+    it('usunięcie wybranego wariantu wraca do bazowego', async () => {
+      await settle(strategy({ variants: [variant()] }));
+      api().selectVariant('v1');
+
+      api().removeVariant('v1');
+      fixture.detectChanges();
+
+      expect(chips()).toEqual(['Bazowy', '+ Nowy wariant']);
+      expect(text()).toContain('Symulacja');
+      expect(text()).not.toContain('Symulacja · ');
+      expect(api().dirty()).toBe(true);
+    });
+
+    it('zakładka „Warianty” pokazuje karty z wynikiem każdego wariantu i różnicą względem bazowego', async () => {
+      await settle(strategy({ variants: [variant()] }));
+
+      const tab = [...fixture.nativeElement.querySelectorAll('.spt__tab')].find((t) => (t as HTMLElement).textContent!.includes('Warianty')) as HTMLElement;
+      tab.click();
+      fixture.detectChanges();
+
+      const panel = (fixture.nativeElement.querySelector('app-strategy-variants-panel') as HTMLElement).textContent!.replace(/\s+/g, ' ');
+      expect(panel).toContain('Bez premii');
+      expect(panel).toContain('kredyt spłacony: sierpień 2027');
+      expect(panel).toContain('gotówka na koniec: 14 900 zł');
+      expect(panel).toContain('−2400 zł względem bazowego');
+    });
   });
 
   describe('na telefonie', () => {

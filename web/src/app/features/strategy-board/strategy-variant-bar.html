@@ -1,0 +1,32 @@
+<div class="svb" role="group" [attr.aria-label]="'strategies.variants.barLabel' | translate">
+  <span class="svb__label">{{ 'strategies.variants.barLabel' | translate }}</span>
+  <button
+    type="button"
+    class="svb__chip"
+    [class.svb__chip--active]="activeId() === null"
+    [attr.aria-pressed]="activeId() === null"
+    (click)="picked.emit(null)">
+    {{ 'strategies.variants.base' | translate }}
+  </button>
+  @for (variant of variants(); track variant.id) {
+    <button
+      type="button"
+      class="svb__chip"
+      [class.svb__chip--active]="activeId() === variant.id"
+      [attr.aria-pressed]="activeId() === variant.id"
+      (click)="picked.emit(variant.id)">
+      {{ variant.name }}
+    </button>
+  }
+  <button
+    type="button"
+    class="svb__chip svb__chip--add"
+    [disabled]="!canAdd()"
+    [attr.title]="canAdd() ? null : ('strategies.variants.limit' | translate)"
+    (click)="added.emit()">
+    {{ 'strategies.variants.add' | translate }}
+  </button>
+  @if (mobile()) {
+    <button type="button" class="svb__manage" (click)="manage.emit()">{{ 'strategies.variants.manage' | translate }}</button>
+  }
+</div>

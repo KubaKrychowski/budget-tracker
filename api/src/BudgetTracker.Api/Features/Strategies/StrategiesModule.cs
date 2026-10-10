@@ -26,6 +26,7 @@ public static class StrategiesModule
         services.AddScoped<ListStrategiesQueryHandler>();
         services.AddScoped<GetStrategyQueryHandler>();
         services.AddScoped<SimulateStrategyQueryHandler>();
+        services.AddScoped<SimulateStrategyVariantsQueryHandler>();
         services.AddScoped<CreateStrategyCommandHandler>();
         services.AddScoped<SaveStrategyCommandHandler>();
         services.AddScoped<DeleteStrategyCommandHandler>();
@@ -58,6 +59,13 @@ public static class StrategiesModule
             .Produces<StrategyResultResponseDto>()
             .Produces(StatusCodes.Status400BadRequest);
 
+        app.MapPost("/api/strategies/simulate-variants", async (
+            SaveStrategyRequestDto request, SimulateStrategyVariantsQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(request, ct)))
+            .WithName("SimulateStrategyVariants")
+            .Produces<StrategyVariantsResultResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest);
+
         app.MapGet("/api/strategies/{id:guid}", async (Guid id, GetStrategyQueryHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.HandleAsync(id, ct)))
             .WithName("GetStrategy")
@@ -73,8 +81,8 @@ public static class StrategiesModule
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapGet("/api/strategies/{id:guid}/apply", async (
-            Guid id, GetStrategyApplyPreviewQueryHandler handler, CancellationToken ct) =>
-            Results.Ok(await handler.HandleAsync(id, ct)))
+            Guid id, string? variantId, GetStrategyApplyPreviewQueryHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, variantId, ct)))
             .WithName("GetStrategyApplyPreview")
             .Produces<StrategyApplyPreviewResponseDto>()
             .Produces(StatusCodes.Status404NotFound);
@@ -111,8 +119,9 @@ public static class StrategiesModule
     public static CliCommandRegistry MapStrategiesCli(this CliCommandRegistry registry)
     {
         const string BudgetIdHelp = "BusinessId budżetu; pomiń dla budżetu domyślnego.";
+        const string VariantIdHelp = "Identyfikator wariantu (z „strategy get”); pomiń dla bazowego.";
         const string GraphHelp =
-            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[].";
+            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[], variants[].";
 
         registry.Register("strategy", "list", "Strategie budżetu (nazwa, liczba zdarzeń i akcji, data zmiany).",
             "strategy list [--budget-id <guid>]",
@@ -149,6 +158,12 @@ public static class StrategiesModule
             async (sp, args, ct) => await sp.GetRequiredService<SimulateStrategyQueryHandler>()
                 .HandleAsync(args.GetRequiredJsonFlag<SaveStrategyRequestDto>("json"), ct));
 
+        registry.Register("strategy", "simulate-variants", "Liczy symulację niezapisanego grafu dla wariantu bazowego i wszystkich wariantów — niczego nie zapisuje.",
+            "strategy simulate-variants --json '<strategia>'",
+            [CliFlag.Required("json", GraphHelp)],
+            async (sp, args, ct) => await sp.GetRequiredService<SimulateStrategyVariantsQueryHandler>()
+                .HandleAsync(args.GetRequiredJsonFlag<SaveStrategyRequestDto>("json"), ct));
+
         registry.Register("strategy", "delete", "Usuwa strategię (to, co z niej założono w budżecie, zostaje).",
             "strategy delete <id>", [],
             async (sp, args, ct) =>
@@ -164,17 +179,22 @@ public static class StrategiesModule
                 .HandleAsync(args.GetGuid(0), ct));
 
         registry.Register("strategy", "apply-preview", "Co zastosowanie strategii założyłoby w budżecie (statusy akcji).",
-            "strategy apply-preview <id>", [],
+            "strategy apply-preview <id> [--variant-id <id>]",
+            [CliFlag.Optional("variant-id", VariantIdHelp)],
             async (sp, args, ct) => await sp.GetRequiredService<GetStrategyApplyPreviewQueryHandler>()
-                .HandleAsync(args.GetGuid(0), ct));
+                .HandleAsync(args.GetGuid(0), args.GetFlag("variant-id"), ct));
 
         registry.Register("strategy", "apply", "Zakłada w budżecie wskazane akcje strategii (wszystkie albo żadna).",
-            "strategy apply <id> --node-ids <id1,id2,...>",
-            [CliFlag.Required("node-ids", "Identyfikatory kafelków (z „strategy apply-preview”) rozdzielone przecinkami.")],
+            "strategy apply <id> --node-ids <id1,id2,...> [--variant-id <id>]",
+            [
+                CliFlag.Required("node-ids", "Identyfikatory kafelków (z „strategy apply-preview”) rozdzielone przecinkami."),
+                CliFlag.Optional("variant-id", VariantIdHelp),
+            ],
             async (sp, args, ct) => await sp.GetRequiredService<ApplyStrategyCommandHandler>().HandleAsync(
                 args.GetGuid(0),
                 new ApplyStrategyRequestDto(
-                    args.GetRequiredFlag("node-ids").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)),
+                    args.GetRequiredFlag("node-ids").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                    args.GetFlag("variant-id")),
                 ct));
 
         return registry;

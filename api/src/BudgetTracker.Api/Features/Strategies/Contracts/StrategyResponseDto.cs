@@ -10,7 +10,8 @@ namespace BudgetTracker.Api.Features.Strategies.Contracts;
 /// <param name="UpdatedAt">Ostatni zapis.</param>
 /// <param name="Nodes">Kafelki.</param>
 /// <param name="Edges">Połączenia.</param>
-/// <param name="Result">Wynik symulacji dla zapisanego grafu.</param>
+/// <param name="Result">Wynik symulacji dla zapisanego grafu (wariant bazowy).</param>
+/// <param name="Variants">Warianty z wynikiem każdego z nich.</param>
 public sealed record StrategyResponseDto(
     Guid Id,
     Guid BudgetId,
@@ -21,4 +22,5 @@ public sealed record StrategyResponseDto(
     DateTimeOffset UpdatedAt,
     IReadOnlyList<StrategyNodeResponseDto> Nodes,
     IReadOnlyList<StrategyEdgeResponseDto> Edges,
-    StrategyResultResponseDto Result);
+    StrategyResultResponseDto Result,
+    IReadOnlyList<StrategyVariantResponseDto> Variants);
