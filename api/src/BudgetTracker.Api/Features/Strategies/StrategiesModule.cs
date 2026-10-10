@@ -30,6 +30,7 @@ public static class StrategiesModule
         services.AddScoped<CreateStrategyCommandHandler>();
         services.AddScoped<SaveStrategyCommandHandler>();
         services.AddScoped<DeleteStrategyCommandHandler>();
+        services.AddScoped<DuplicateStrategyCommandHandler>();
         services.AddScoped<GetStrategyApplyPreviewQueryHandler>();
         services.AddScoped<ApplyStrategyCommandHandler>();
         services.AddScoped<GetStrategyReferencesQueryHandler>();
@@ -48,6 +49,14 @@ public static class StrategiesModule
             CreateStrategyRequestDto request, CreateStrategyCommandHandler handler, CancellationToken ct) =>
             Results.Ok(await handler.HandleAsync(request, ct)))
             .WithName("CreateStrategy")
+            .Produces<StrategyResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapPost("/api/strategies/{id:guid}/duplicate", async (
+            Guid id, DuplicateStrategyRequestDto request, DuplicateStrategyCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, request, ct)))
+            .WithName("DuplicateStrategy")
             .Produces<StrategyResponseDto>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound);
@@ -121,7 +130,8 @@ public static class StrategiesModule
         const string BudgetIdHelp = "BusinessId budżetu; pomiń dla budżetu domyślnego.";
         const string VariantIdHelp = "Identyfikator wariantu (z „strategy get”); pomiń dla bazowego.";
         const string GraphHelp =
-            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[], variants[].";
+            "Cała strategia jako JSON (SaveStrategyRequestDto): name, startMonth, startCash, horizonMonths, nodes[], edges[], variants[] "
+            + "(id, name, disabledNodeIds[]). Zdarzenie, które nastąpiło, ma w węźle actualMonth i actualAmount.";
 
         registry.Register("strategy", "list", "Strategie budżetu (nazwa, liczba zdarzeń i akcji, data zmiany).",
             "strategy list [--budget-id <guid>]",
@@ -144,6 +154,17 @@ public static class StrategiesModule
                 new CreateStrategyRequestDto(
                     args.GetGuidFlag("budget-id"), args.GetRequiredFlag("name"),
                     args.GetEnumFlag("template", StrategyTemplate.Blank)),
+                ct));
+
+        registry.Register("strategy", "duplicate", "Kopiuje strategię (graf, parametry i domyślnie warianty) pod nową nazwą.",
+            "strategy duplicate <id> --name <nazwa> [--variants true|false]",
+            [
+                CliFlag.Required("name", "Nazwa kopii (do 100 znaków)."),
+                CliFlag.Optional("variants", "Czy kopiować warianty: true (domyślnie) albo false."),
+            ],
+            async (sp, args, ct) => await sp.GetRequiredService<DuplicateStrategyCommandHandler>().HandleAsync(
+                args.GetGuid(0),
+                new DuplicateStrategyRequestDto(args.GetRequiredFlag("name"), args.GetBoolFlag("variants", true)),
                 ct));
 
         registry.Register("strategy", "save", "Zapisuje całą strategię (parametry i graf) — jak „Zapisz strategię” na tablicy.",

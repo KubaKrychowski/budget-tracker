@@ -117,7 +117,7 @@ Nie musisz wszystkiego robić naraz. Wracaj do tych tematów, gdy będą Ci potr
 | …żeby aplikacja pilnowała stałych opłat (czynsz, abonamenty) | **Zlecenia stałe** |
 | …zaplanować duży zakup (laptop, pralka) | **Zlecenia epizodyczne** |
 | …odkładać pieniądze na konkretne cele | **Cele oszczędzania i rezerwacje** |
-| …zaplanować spłatę kredytu i poduszkę finansową | **Strategie: kredyt, nadpłata, poduszka** |
+| …zaplanować spłatę kredytu i poduszkę finansową, sprawdzić warianty „co jeśli” | **Strategie: kredyt, nadpłata, poduszka** |
 | …nauczyć aplikację własnych reguł kategorii | **Ustawienia i reguły** |
 | …obsługiwać aplikację komendami | **Terminal (CLI)** |
 

@@ -1,6 +1,6 @@
 ## Strategie: kredyt, nadpłata, poduszka
 
-Strategia to **plan na kilkanaście miesięcy do przodu** — na przykład „nadpłacę kredyt premią i zbuduję poduszkę finansową”. Układasz go z klocków (kafelków) na tablicy, a aplikacja **na bieżąco liczy**, ile będziesz miał oszczędności i ile długu w każdym kolejnym miesiącu.
+Strategia to **plan na kilkanaście miesięcy do przodu** — na przykład „nadpłacę kredyt premią i zbuduję poduszkę finansową”. Układasz go z klocków (kafelków) na tablicy, a aplikacja **na bieżąco liczy**, ile będziesz miał oszczędności i ile długu w każdym kolejnym miesiącu. Plan możesz **porównywać w wariantach** („co jeśli nie będzie podwyżki?”) i **uzupełniać faktami**, gdy zdarzenia już nastąpią.
 
 > 🧪 Strategia **niczego nie zmienia w Twoim budżecie**, dopóki sam o to nie poprosisz. To plan i symulacja, nie dane z wyciągów.
 
@@ -15,6 +15,8 @@ Najłatwiej zacząć od gotowego przykładu:
 3. Podmień przykładowe liczby na własne — kliknij kafelek i wpisz swoje kwoty.
 
 ![Lista strategii wybranego budżetu z przyciskami Otwórz i Usuń oraz ramką „Nowa strategia”](handbook/images/strategies-list.png)
+
+Przy każdej strategii jest też **Duplikuj**: tworzy kopię pod nową nazwą (domyślnie „… (kopia)”) z całym grafem, parametrami i — jeśli chcesz — wariantami, a potem otwiera ją na tablicy. Kopia jest niezależna od oryginału i **nie jest zastosowana w budżecie**: cele, rezerwacje i limity założone z oryginału zostają, jak były. To najprostszy sposób, żeby wypróbować dużą zmianę bez ryzyka dla działającego planu.
 
 Strategie należą do **budżetu** — przełącznik budżetu na górze pokazuje strategie wybranego. Zamiast szablonu możesz też zacząć od **pustej tablicy**.
 
@@ -82,6 +84,18 @@ Kafelek z czerwonym znacznikiem **!** ma problem, a nad tablicą pojawia się ba
 
 Symulacja **pomija** kafelki z problemami, ale szkic zapisuje się mimo to.
 
+### Zdarzenie nastąpiło: od planu do faktów
+
+Plan to przypuszczenie. Gdy premia wpłynie w czerwcu zamiast w maju i będzie o 350 zł większa, możesz to **wpisać na kafelku**, żeby symulacja liczyła dalej od faktów:
+
+1. Kliknij kafelek zdarzenia (wpływ, wydatek albo zdarzenie bez skutku, np. podwyżka).
+2. W ustawieniach włącz **Zdarzenie nastąpiło**. Aplikacja przepisuje plan do faktu, więc pola nie są puste.
+3. Popraw **Faktyczną kwotę** i **Faktyczny miesiąc**. Pod polami zobaczysz **różnicę w gotówce względem planu** (wpływ większy niż planowany to plus, wydatek większy niż planowany to minus).
+
+Na tablicy takie zdarzenie dostaje zielony znacznik ✓ i pokazuje **fakt**, a nie plan. Nad tablicą widać pasek „Zdarzenia: 1 z 4 zrealizowane”, a wynik symulacji dostaje dopisek „od faktów”. **Plan zostaje** (miesiąc i kwota w ustawieniach kafelka), więc w każdej chwili możesz wyłączyć przełącznik i wrócić do niego. Zdarzenia, które jeszcze nie nastąpiły, dalej liczą się z planu — a razem z faktem przesuwa się też **cały łańcuch akcji** po zdarzeniu.
+
+> ℹ️ Faktu nie da się wpisać na akcji, warunku, kredycie, nadwyżce ani poduszce — to nie są zdarzenia, które „następują”. Wpływ z faktem **bez kwoty** jest problemem na tablicy (nie zgadujemy kwoty z planu).
+
 ### Warianty: „co jeśli”
 
 Wariant to **ta sama tablica z wyłączonymi kafelkami** — na przykład „bez podwyżki” albo „bez ubezpieczenia”. Dzięki temu bez kopiowania strategii sprawdzisz, co by się stało, gdyby czegoś zabrakło.
@@ -126,8 +140,45 @@ Zmiany na tablicy **nie zapisują się same**:
 - **Odrzuć zmiany** — wraca do ostatniego zapisu,
 - **Parametry** — zmienia nazwę, miesiąc startu, oszczędności na początku i horyzont.
 
+Gdy spróbujesz wyjść z tablicy (z menu, okruszków albo przyciskiem „wstecz”) z **niezapisanymi zmianami**, aplikacja zapyta, co zrobić, i wypisze, co się zmieniło (np. „dodane kafelki: 2”):
+
+- **Zostań na tablicy** — nic się nie dzieje,
+- **Odrzuć i wyjdź** — zmiany przepadają, zapisana wersja zostaje bez zmian,
+- **Zapisz i wyjdź** — zapisuje i wychodzi; gdy zapis się nie uda, zostajesz na tablicy.
+
+Zamknięcie karty albo odświeżenie strony z niezapisanymi zmianami pokazuje zwykłe pytanie przeglądarki.
+
 Usunięcie strategii nie cofa niczego, co wcześniej założyłeś z niej w budżecie.
 
 ### Terminal (CLI)
 
-Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**): `strategy list`, `get`, `create`, `save`, `simulate`, `simulate-variants`, `delete`, `references`, `apply-preview` i `apply`. Warianty są częścią JSON-a strategii (`variants`), a `apply-preview` i `apply` przyjmują `--variant-id`.
+Wszystko, co robisz na tablicy, da się zrobić w terminalu komendami `strategy` (temat **Terminal**). Pełna lista z flagami: `strategy help`.
+
+| Komenda | Co robi |
+|---|---|
+| `strategy list` | strategie budżetu: nazwa, liczba zdarzeń, akcji i wariantów |
+| `strategy get <id>` | cała strategia: kafelki, połączenia, fakty, warianty i **wynik symulacji każdego wariantu** |
+| `strategy create --name "…" [--template LoanAndCushion]` | nowa strategia, pusta albo z szablonu |
+| `strategy duplicate <id> --name "…" [--variants false]` | kopia strategii (domyślnie razem z wariantami) |
+| `strategy save <id> --json '…'` | zapisuje całą strategię, jak „Zapisz strategię” na tablicy |
+| `strategy simulate --json '…'` | liczy niezapisaną strategię (wariant bazowy) |
+| `strategy simulate-variants --json '…'` | liczy niezapisaną strategię dla **bazowego i wszystkich wariantów** naraz |
+| `strategy references <id>` | kategorie i zlecenia stałe do pól kafelków |
+| `strategy apply-preview <id> [--variant-id <id>]` | co zastosowanie założyłoby w budżecie |
+| `strategy apply <id> --node-ids a,b [--variant-id <id>]` | zakłada w budżecie wskazane akcje |
+| `strategy delete <id>` | usuwa strategię (to, co z niej założono w budżecie, zostaje) |
+
+Warianty i fakty są częścią JSON-a strategii — ten sam kształt, który zwraca `strategy get`:
+
+- **warianty:** `"variants":[{"id":"v1","name":"Bez dachu","disabledNodeIds":["r2"]}]` (do 10, nazwy bez powtórzeń),
+- **zdarzenie, które nastąpiło:** w węźle `"actualMonth":"2026-10-01","actualAmount":150` (plan zostaje w `month` i `amount`; fakt tylko na zdarzeniach).
+
+Przykład — plan zastosowania dla wariantu „bez dachu” i kopia bez wariantów:
+
+```
+strategy apply-preview <id> --variant-id v1
+strategy apply <id> --node-ids r1 --variant-id v1
+strategy duplicate <id> --name "Plan B" --variants false
+```
+
+Niezapisane zmiany tablicy w terminalu nie istnieją — każda komenda działa na zapisanej strategii albo na JSON-ie, który podasz.

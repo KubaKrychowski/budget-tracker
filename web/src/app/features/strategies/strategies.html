@@ -64,6 +64,9 @@
               </div>
               <div class="str__row-actions">
                 <a [routerLink]="['/strategies', row.id]">{{ 'strategies.open' | translate }}</a>
+                <button type="button" class="str__link" [disabled]="busy()" (click)="openDuplicate(row)">
+                  {{ 'strategies.duplicate.action' | translate }}
+                </button>
                 <button type="button" class="str__link str__link--danger" [disabled]="busy()" (click)="remove(row)">
                   {{ 'strategies.remove' | translate }}
                 </button>
@@ -114,6 +117,41 @@
         [ngModel]="newName()"
         (ngModelChange)="newName.set($event)"
         (keydown.enter)="create()" />
+    </ng-container>
+  </nz-modal>
+
+  <nz-modal
+    [nzVisible]="duplicating() !== null"
+    [nzTitle]="'strategies.duplicate.title' | translate"
+    [nzOkText]="'strategies.duplicate.ok' | translate"
+    [nzCancelText]="'strategies.create.cancel' | translate"
+    [nzOkDisabled]="!copyNameValid() || busy()"
+    [nzOkLoading]="busy()"
+    (nzOnOk)="duplicate()"
+    (nzOnCancel)="closeDuplicate()"
+  >
+    <ng-container *nzModalContent>
+      <nz-alert
+        nzType="info"
+        nzShowIcon
+        [nzMessage]="'strategies.duplicate.alertTitle' | translate"
+        [nzDescription]="'strategies.duplicate.alertBody' | translate" />
+      <label class="str__field-label" for="strategy-copy-name">{{ 'strategies.duplicate.nameLabel' | translate }}</label>
+      <input
+        nz-input
+        id="strategy-copy-name"
+        [maxlength]="maxNameLength"
+        [ngModel]="copyName()"
+        (ngModelChange)="copyName.set($event)"
+        (keydown.enter)="duplicate()" />
+      @if (duplicating(); as source) {
+        @if (source.variantCount > 0) {
+          <div class="str__check">
+            <span nz-checkbox nzId="strategy-copy-variants" [ngModel]="copyVariants()" (ngModelChange)="copyVariants.set($event)"></span>
+            <label for="strategy-copy-variants">{{ 'strategies.duplicate.variants' | translate: { count: source.variantCount } }}</label>
+          </div>
+        }
+      }
     </ng-container>
   </nz-modal>
 </section>

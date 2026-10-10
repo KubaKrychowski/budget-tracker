@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { appAuthGuard } from './core/native/provide-native-auth';
+import { leaveStrategyGuard } from './features/strategy-board/strategy-leave.guard';
 
 /**
  * Cała aplikacja pod jednym strażnikiem logowania — niezalogowany użytkownik nigdy nie widzi
@@ -61,6 +62,7 @@ export const routes: Routes = [
         path: 'strategies/:id',
         loadComponent: () =>
           import('./features/strategy-board/strategy-board').then((m) => m.StrategyBoard),
+        canDeactivate: [leaveStrategyGuard],
         title: 'Strategia — Wydatki.com',
       },
       {

@@ -6,6 +6,7 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { parseAmount } from '../../core/parse-amount';
@@ -14,7 +15,9 @@ import {
   StrategyProblemKind, StrategyReferences,
 } from '../../core/api/models/strategies';
 import { StrategyNodeType } from '../../core/api/models/strategies';
-import { BUDGET_ACTIONS, CATEGORIES, DEFAULT_WARNING_THRESHOLD, NODE_META, NodeField, unavailableReason } from './strategy-node-meta';
+import {
+  BUDGET_ACTIONS, CATEGORIES, DEFAULT_WARNING_THRESHOLD, NODE_META, NodeField, REALIZABLE_TYPES, unavailableReason,
+} from './strategy-node-meta';
 
 /** Najdłuższy podpis kafelka — ten sam co `StrategyGraphValidator` w API. */
 const MAX_TITLE_LENGTH = 100;
@@ -30,7 +33,7 @@ const MAX_TITLE_LENGTH = 100;
   selector: 'app-strategy-node-form',
   imports: [
     DatePipe, FormsModule, NzButtonModule, NzDatePickerModule, NzInputModule, NzInputNumberModule, NzSegmentedModule,
-    NzSelectModule, TranslatePipe,
+    NzSelectModule, NzSwitchModule, TranslatePipe,
   ],
   templateUrl: './strategy-node-form.html',
   styleUrl: './strategy-node-form.scss',
@@ -134,6 +137,47 @@ export class StrategyNodeForm {
     if (!month) return null;
     const [year, m] = month.split('-').map(Number);
     return new Date(year, m - 1, 1);
+  });
+
+  // ── Zdarzenie nastąpiło ──────────────────────────────────────────────────────────────
+
+  /** Tylko zdarzenia mogą „nastąpić” — akcje i warunki nie mają faktu. */
+  protected readonly canRealize = computed(() => REALIZABLE_TYPES.includes(this.node().type));
+  protected readonly realized = computed(() => this.node().actualMonth !== null);
+
+  /** Bez planowanego miesiąca nie ma czego przepisać do faktu — przełącznik czeka, aż kafelek dostanie miesiąc. */
+  protected readonly canToggleFact = computed(() => this.realized() || this.node().month !== null);
+
+  /** ⚠️ `computed`, nie metoda — ta sama pułapka `ngModel` co przy `monthDate`. */
+  protected readonly actualMonthDate = computed(() => {
+    const month = this.node().actualMonth;
+    if (!month) return null;
+    const [year, m] = month.split('-').map(Number);
+    return new Date(year, m - 1, 1);
+  });
+
+  /** Włączenie przepisuje plan do faktu (żeby pola nie były puste); wyłączenie czyści fakt i wraca do planu. */
+  protected setRealized(on: boolean): void {
+    const n = this.node();
+    this.patch(on
+      ? { actualMonth: n.month, actualAmount: this.has('amount') ? n.amount : null }
+      : { actualMonth: null, actualAmount: null });
+  }
+
+  protected setActualMonth(date: Date | null): void {
+    if (date) this.patch({ actualMonth: this.isoMonth(date) });
+  }
+
+  /**
+   * Różnica faktu względem planu w GOTÓWCE: wpływ większy niż planowany to plus, wydatek większy niż planowany to minus.
+   * `null`, gdy nie ma czego porównać albo kwoty są równe.
+   */
+  protected readonly factDelta = computed(() => {
+    const n = this.node();
+    if (!this.realized() || n.amount === null || n.actualAmount === null) return null;
+    const diff = n.type === 'Expense' ? n.amount - n.actualAmount : n.actualAmount - n.amount;
+    if (diff === 0) return null;
+    return `${diff > 0 ? '+' : '−'}${new Intl.NumberFormat(this.locale(), { maximumFractionDigits: 2 }).format(Math.abs(diff))} zł`;
   });
 
   protected setMonth(date: Date | null): void {

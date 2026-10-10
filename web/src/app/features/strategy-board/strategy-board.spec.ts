@@ -39,6 +39,13 @@ interface BoardApi {
   toggleTile(change: { nodeId: string; disabled: boolean }): void;
   removeVariant(id: string): void;
   removeNode(id: string): void;
+  canLeave(): boolean | Promise<boolean>;
+  stay(): void;
+  discardAndLeave(): void;
+  saveAndLeave(): Promise<void>;
+  leaveOpen(): boolean;
+  changeLines(): string[];
+  onBeforeUnload(event: { preventDefault(): void }): void;
   variants(): readonly { id: string; name: string; disabledNodeIds: readonly string[] }[];
 }
 
@@ -55,7 +62,7 @@ describe('StrategyBoard', () => {
 
   const node = (over: Partial<StrategyNode>): StrategyNode => ({
     id: 'x', type: 'Trigger', title: '', x: 0, y: 0, month: null, amount: null, rate: null, installment: null,
-    mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, ...over,
+    mode: null, metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, actualMonth: null, actualAmount: null, ...over,
   });
 
   const nodes: StrategyNode[] = [
@@ -157,6 +164,13 @@ describe('StrategyBoard', () => {
           errors: { required: 'Podaj nazwę.', tooLong: 'Za długa.', taken: 'Zajęta.' }, limit: 'Limit wariantów.',
         },
         errors: { loadFailed: 'Nie udało się wczytać strategii', saveFailed: 'Nie udało się zapisać zmian' },
+        facts: { summary: 'Zdarzenia: {{done}} z {{total}} zrealizowane', done: 'nastąpiło', planned: 'planowane', note: 'Fakty liczone z faktu.' },
+        leave: {
+          title: 'Wyjść bez zapisania?', alertTitle: 'Strategia „{{name}}” ma niezapisane zmiany.', body: 'Zmiany przepadną.',
+          stay: 'Zostań na tablicy', discard: 'Odrzuć i wyjdź', save: 'Zapisz i wyjdź',
+          changes: { nodesAdded: 'dodane kafelki: {{count}}', nodesRemoved: 'usunięte kafelki: {{count}}', nodesChanged: 'zmienione kafelki: {{count}}',
+            edgesAdded: 'dodane połączenia: {{count}}', edgesRemoved: 'usunięte połączenia: {{count}}', variantsChanged: 'zmiany w wariantach', paramsChanged: 'zmienione parametry strategii' },
+        },
         board: {
           apply: 'Zastosuj w budżecie…',
           lead: 'Połącz zdarzenia z akcjami.',
@@ -167,7 +181,7 @@ describe('StrategyBoard', () => {
           problem: { NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.', MissingParameter: 'Brakuje parametru.' },
           mobile: { list: 'Lista kroków', board: 'Tablica', menu: 'Menu', tiles: 'Kafelki: {{count}}', addTile: '+ Dodaj kafelek', save: 'Zapisz', addStep: '+ Dodaj krok', unlinked: 'Bez połączenia', empty: 'Pusto', zoom: 'Powiększenie', zoomOut: 'Pomniejsz', zoomIn: 'Powiększ', fit: 'Dopasuj', gesture: 'Przesuń palcem', paletteHint: 'Dotknij +' },
           yes: 'tak', no: 'nie', edgeLabel: 'Połączenie: {{from}} → {{to}}', perMonth: '{{amount}} / mies.',
-          sim: { title: 'Symulacja', variant: 'Symulacja · {{name}}', chart: 'Pokaż wykres', compare: 'Porównaj warianty', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
+          sim: { title: 'Symulacja', facts: 'od faktów', variant: 'Symulacja · {{name}}', chart: 'Pokaż wykres', compare: 'Porównaj warianty', loan: 'kredyt spłacony', cushion: 'poduszka osiągnięta', cash: 'gotówka na koniec', never: 'nie w tym horyzoncie' },
           palette: { title: 'Dodaj kafelek', hint: 'Podpowiedź', add: 'Dodaj kafelek: {{name}}', categories: { event: { title: 'Zdarzenie', hint: '' }, action: { title: 'Akcja', hint: '' }, control: { title: 'Warunek', hint: '' } } },
           types: { Trigger: 'Zdarzenie', Income: 'Wpływ', Overpay: 'Nadpłać kredyt', PayOffLoan: 'Spłać resztę', Condition: 'Warunek', Wait: 'Czekaj', End: 'Koniec', IncreaseSurplus: 'Zwiększ nadwyżkę' },
           hints: {}, mode: { ReduceInstallment: 'Obniż ratę' }, metric: { CashMinusDebt: 'Gotówka − dług' },
@@ -364,6 +378,164 @@ describe('StrategyBoard', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('Nie udało się wczytać strategii');
+  });
+
+  describe('wyjście z niezapisanymi zmianami', () => {
+    const modalText = (): string => document.body.textContent!.replace(/\s+/g, ' ');
+    const footerButton = (label: string): HTMLButtonElement =>
+      [...document.body.querySelectorAll<HTMLButtonElement>('.ant-modal-footer button')].find((b) => b.textContent!.includes(label))!;
+    /** Zwraca obietnicę w obiekcie — gołe `return answer` z funkcji async czekałoby na wybór użytkownika. */
+    const open = async (): Promise<{ answer: Promise<boolean> }> => {
+      const answer = Promise.resolve(api().canLeave());
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return { answer };
+    };
+
+    it('bez zmian wolno wyjść od razu, bez okna', async () => {
+      await settle();
+
+      expect(api().canLeave()).toBe(true);
+      expect(api().leaveOpen()).toBe(false);
+    });
+
+    it('ze zmianami otwiera okno z alertem i wypisaniem, co się zmieniło, a trasa czeka na wybór', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+      api().onMoveNodes({ nodes: [{ id: 'bonus', position: { x: 5, y: 6 } }] });
+      fixture.detectChanges();
+
+      const { answer } = await open();
+
+      expect(api().leaveOpen()).toBe(true);
+      expect(modalText()).toContain('Strategia „Kredyt i poduszka” ma niezapisane zmiany.');
+      expect(modalText()).toContain('dodane kafelki: 1');
+      expect(modalText()).toContain('zmienione kafelki: 1');
+      api().stay();
+      expect(await answer).toBe(false);
+    });
+
+    it('„Zostań na tablicy” nie wypuszcza, a zmiany zostają', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Zostań na tablicy').click();
+
+      expect(await answer).toBe(false);
+      expect(api().dirty()).toBe(true);
+      expect(api().leaveOpen()).toBe(false);
+    });
+
+    it('„Odrzuć i wyjdź” wypuszcza bez żadnego zapisu', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Odrzuć i wyjdź').click();
+
+      expect(await answer).toBe(true);
+      expect(http.match((r) => r.method === 'PUT')).toHaveLength(0);
+    });
+
+    it('„Zapisz i wyjdź” zapisuje strategię i dopiero potem wypuszcza', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Zapisz i wyjdź').click();
+      const put = http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT');
+      put.flush(strategy({ nodes: put.request.body.nodes }));
+
+      expect(await answer).toBe(true);
+      expect(api().dirty()).toBe(false);
+    });
+
+    it('nieudany zapis zostawia użytkownika na tablicy — inaczej zmiany przepadłyby po cichu', async () => {
+      // Łapie „Zapisz i wyjdź”, które wychodzi mimo błędu zapisu.
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const { answer } = await open();
+      footerButton('Zapisz i wyjdź').click();
+      http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT').flush({}, { status: 500, statusText: 'Server Error' });
+
+      expect(await answer).toBe(false);
+      expect(api().dirty()).toBe(true);
+    });
+
+    it('zamknięcie karty z niezapisanymi zmianami jest anulowane, bez zmian — nie', async () => {
+      await settle();
+      const event = { preventDefault: vi.fn() };
+
+      api().onBeforeUnload(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+      api().onBeforeUnload(event);
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it('drugie pytanie przed odpowiedzią odrzuca pierwsze jako „zostań”', async () => {
+      await settle();
+      api().addNode('IncreaseSurplus', { x: 100, y: 200 });
+
+      const first = Promise.resolve(api().canLeave());
+      const second = Promise.resolve(api().canLeave());
+
+      expect(await first).toBe(false);
+      api().discardAndLeave();
+      expect(await second).toBe(true);
+    });
+  });
+
+  describe('zdarzenia, które nastąpiły', () => {
+    const realized = (): StrategyNode => ({ ...nodes.find((n) => n.id === 'bonus')!, actualMonth: '2027-06-01', actualAmount: 8150 });
+    const withFact = (): Strategy => strategy({ nodes: nodes.map((n) => (n.id === 'bonus' ? realized() : n)) });
+
+    it('pasek nad tablicą liczy zrealizowane zdarzenia z wszystkich zdarzeń', async () => {
+      await settle();
+      expect(text()).toContain('Zdarzenia: 0 z 1 zrealizowane');
+
+    });
+
+    it('zdarzenie z faktem pokazuje fakt (miesiąc i kwotę), zielony ✓ i chip „od faktów”', async () => {
+      await settle(withFact());
+
+      const bonus = [...fixture.nativeElement.querySelectorAll('.f-node')].find((n) => (n as HTMLElement).textContent!.includes('Premia')) as HTMLElement;
+      const glyph = bonus.querySelector('.sb__glyph') as HTMLElement;
+      expect(bonus.textContent).toContain('8150');
+      expect(bonus.textContent).toContain('czerwiec 2027');
+      expect(bonus.textContent).not.toContain('7800');
+      expect(glyph.textContent!.trim()).toBe('✓');
+      expect(glyph.style.background).toContain('--ds-primary-600');
+      expect(text()).toContain('Zdarzenia: 1 z 1 zrealizowane');
+      expect(text()).toContain('Symulacja · od faktów');
+    });
+
+    it('bez faktów chip nie mówi „od faktów”, a zdarzenie ma ⚡', async () => {
+      await settle();
+
+      expect(text()).not.toContain('od faktów');
+      const bonus = [...fixture.nativeElement.querySelectorAll('.f-node')].find((n) => (n as HTMLElement).textContent!.includes('Premia')) as HTMLElement;
+      expect((bonus.querySelector('.sb__glyph') as HTMLElement).textContent!.trim()).toBe('⚡');
+    });
+
+    it('fakt trafia do zapisu razem z planem i jest zmianą do zapisania', async () => {
+      await settle();
+
+      api().updateNode(realized());
+      fixture.detectChanges();
+      expect(api().dirty()).toBe(true);
+
+      const done = api().save();
+      const put = http.expectOne((r) => r.url === '/api/strategies/s1' && r.method === 'PUT');
+      const sent = put.request.body.nodes.find((n: StrategyNode) => n.id === 'bonus');
+      expect([sent.month, sent.amount, sent.actualMonth, sent.actualAmount]).toEqual(['2027-05-01', 7800, '2027-06-01', 8150]);
+      put.flush(strategy({ nodes: put.request.body.nodes }));
+      await done;
+    });
   });
 
   describe('warianty', () => {

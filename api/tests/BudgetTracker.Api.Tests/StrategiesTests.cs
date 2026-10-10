@@ -66,6 +66,8 @@ public sealed class StrategiesTests : IAsyncLifetime
 
     private SaveStrategyCommandHandler Save() => new(_db, _clock);
 
+    private DuplicateStrategyCommandHandler Duplicate() => new(_db, Scope(), new FakeCurrentUserAccessor(_user));
+
     private GetStrategyQueryHandler Get() => new(_db);
 
     private ListStrategiesQueryHandler List() => new(_db, Scope());
@@ -77,8 +79,10 @@ public sealed class StrategiesTests : IAsyncLifetime
     private static StrategyNodeRequestDto NodeDto(
         string id, StrategyNodeType type, DateOnly? month = null, decimal? amount = null, decimal? rate = null,
         decimal? installment = null, OverpaymentMode? mode = null, StrategyConditionMetric? metric = null,
-        StrategyConditionComparison? comparison = null, decimal? threshold = null, string? title = null, double x = 10, double y = 20) =>
-        new(id, type, title, x, y, month, amount, rate, installment, mode, metric, comparison, threshold);
+        StrategyConditionComparison? comparison = null, decimal? threshold = null, string? title = null, double x = 10, double y = 20,
+        DateOnly? actualMonth = null, decimal? actualAmount = null) =>
+        new(id, type, title, x, y, month, amount, rate, installment, mode, metric, comparison, threshold,
+            ActualMonth: actualMonth, ActualAmount: actualAmount);
 
     private static StrategyEdgeRequestDto EdgeDto(string from, string to, StrategyEdgeLabel label = StrategyEdgeLabel.None) =>
         new($"{from}-{to}", from, to, label);
@@ -514,5 +518,159 @@ public sealed class StrategiesTests : IAsyncLifetime
         Assert.Equal("v1", variant.Id);
         Assert.Equal(1_000m + 6 * 700m, variant.Result.FinalCash);
         Assert.Empty((await Get().HandleAsync(created.Id, default)).Variants);
+    }
+
+    // ── Duplikowanie ─────────────────────────────────────────────────────────────────────
+
+    private async Task<StrategyResponseDto> WithVariantAsync()
+    {
+        var created = await NewAsync("Oryginał");
+        return await Save().HandleAsync(
+            created.Id,
+            Request(
+                RaiseChain, [EdgeDto("raise", "more")], name: "Oryginał", cash: 2_500m, horizon: 12,
+                variants: [new StrategyVariantRequestDto("v1", "Bez podwyżki", ["raise"])]),
+            default);
+    }
+
+    [Fact]
+    public async Task A_copy_has_the_same_graph_parameters_and_variants_under_the_new_name_in_the_same_budget()
+    {
+        var original = await WithVariantAsync();
+
+        var copy = await Duplicate().HandleAsync(original.Id, new DuplicateStrategyRequestDto("  Kopia planu "), default);
+
+        Assert.NotEqual(original.Id, copy.Id);
+        Assert.Equal("Kopia planu", copy.Name);
+        Assert.Equal(original.BudgetId, copy.BudgetId);
+        Assert.Equal((original.StartMonth, original.StartCash, original.HorizonMonths), (copy.StartMonth, copy.StartCash, copy.HorizonMonths));
+        Assert.Equal(original.Nodes.Select(n => n.Id), copy.Nodes.Select(n => n.Id));
+        Assert.Equal(original.Edges.Select(e => e.Id), copy.Edges.Select(e => e.Id));
+        Assert.Equal(original.Result.FinalCash, copy.Result.FinalCash);
+        var variant = Assert.Single(copy.Variants);
+        Assert.Equal(("v1", "Bez podwyżki"), (variant.Id, variant.Name));
+        Assert.Equal(original.Variants[0].Result.FinalCash, variant.Result.FinalCash);
+        Assert.Equal(_user, (await _db.Strategies.SingleAsync(s => s.BusinessId == copy.Id)).UserId);
+    }
+
+    [Fact]
+    public async Task Changing_the_copy_leaves_the_original_alone()
+    {
+        // Łapie kopię współdzielącą listy z oryginałem: zapis kopii zmieniałby też oryginał.
+        var original = await WithVariantAsync();
+        var copy = await Duplicate().HandleAsync(original.Id, new DuplicateStrategyRequestDto("Kopia"), default);
+
+        await Save().HandleAsync(copy.Id, Request([RaiseChain[2]], name: "Kopia", variants: []), default);
+
+        var untouched = await Get().HandleAsync(original.Id, default);
+        Assert.Equal(3, untouched.Nodes.Count);
+        Assert.Single(untouched.Variants);
+        Assert.Single((await Get().HandleAsync(copy.Id, default)).Nodes);
+    }
+
+    [Fact]
+    public async Task A_copy_without_variants_keeps_the_graph_and_has_only_the_base_variant()
+    {
+        var original = await WithVariantAsync();
+
+        var copy = await Duplicate().HandleAsync(original.Id, new DuplicateStrategyRequestDto("Bez wariantów", CopyVariants: false), default);
+
+        Assert.Equal(3, copy.Nodes.Count);
+        Assert.Empty(copy.Variants);
+        Assert.Single((await Get().HandleAsync(original.Id, default)).Variants);
+    }
+
+    [Fact]
+    public async Task Duplicating_needs_a_name_and_an_existing_strategy()
+    {
+        var original = await NewAsync();
+
+        await Assert.ThrowsAsync<StrategyNameRequiredException>(
+            () => Duplicate().HandleAsync(original.Id, new DuplicateStrategyRequestDto("   "), default));
+        await Assert.ThrowsAsync<StrategyNameRequiredException>(
+            () => Duplicate().HandleAsync(original.Id, new DuplicateStrategyRequestDto(new string('x', 101)), default));
+        await Assert.ThrowsAsync<StrategyNotFoundException>(
+            () => Duplicate().HandleAsync(Guid.NewGuid(), new DuplicateStrategyRequestDto("Kopia"), default));
+    }
+
+    [Fact]
+    public async Task The_list_tells_how_many_variants_each_strategy_has()
+    {
+        await WithVariantAsync();
+        await NewAsync("Pusta");
+
+        var list = await List().HandleAsync(_budget.BusinessId, default);
+
+        var counts = list.Strategies.ToDictionary(r => r.Name, r => r.VariantCount);
+        Assert.Equal(1, counts["Oryginał"]);
+        Assert.Equal(0, counts["Pusta"]);
+    }
+
+    // ── Zdarzenie nastąpiło ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task A_realized_event_keeps_the_plan_and_the_fact_and_the_result_follows_the_fact()
+    {
+        var created = await NewAsync();
+        var nodes = new[]
+        {
+            NodeDto("bonus", StrategyNodeType.Income, new DateOnly(2026, 11, 15), 500m, actualMonth: new DateOnly(2026, 12, 20), actualAmount: 650m),
+        };
+
+        var saved = await Save().HandleAsync(created.Id, Request(nodes, horizon: 12, cash: 0m), default);
+        var reloaded = await Get().HandleAsync(created.Id, default);
+
+        var node = Assert.Single(reloaded.Nodes);
+        Assert.Equal((new DateOnly(2026, 11, 1), 500m), (node.Month, node.Amount));
+        Assert.Equal((new DateOnly(2026, 12, 1), 650m), (node.ActualMonth, node.ActualAmount));
+        Assert.Equal(650m, saved.Result.FinalCash);
+        Assert.Equal(new DateOnly(2026, 12, 1), saved.Result.Nodes.Single().FiredIn);
+    }
+
+    [Fact]
+    public async Task Clearing_the_fact_returns_to_the_plan()
+    {
+        var created = await NewAsync();
+        var realized = NodeDto("bonus", StrategyNodeType.Income, October, 500m, actualMonth: October.AddMonths(2), actualAmount: 650m);
+        await Save().HandleAsync(created.Id, Request([realized], horizon: 12, cash: 0m), default);
+
+        var back = await Save().HandleAsync(
+            created.Id, Request([NodeDto("bonus", StrategyNodeType.Income, October, 500m)], horizon: 12, cash: 0m), default);
+
+        Assert.Null(back.Nodes.Single().ActualMonth);
+        Assert.Equal(October, back.Result.Nodes.Single().FiredIn);
+        Assert.Equal(500m, back.Result.FinalCash);
+    }
+
+    [Fact]
+    public async Task Facts_are_only_for_events_and_an_amount_needs_a_month_and_never_belongs_to_a_trigger()
+    {
+        var created = await NewAsync();
+        Task SaveNode(StrategyNodeRequestDto node) => Save().HandleAsync(created.Id, Request([node]), default);
+        var may = new DateOnly(2027, 5, 1);
+
+        await Assert.ThrowsAsync<StrategyGraphInvalidException>(
+            () => SaveNode(NodeDto("s", StrategyNodeType.Surplus, amount: 700m, actualMonth: may)));
+        await Assert.ThrowsAsync<StrategyGraphInvalidException>(
+            () => SaveNode(NodeDto("i", StrategyNodeType.Income, may, 500m, actualAmount: 600m)));
+        await Assert.ThrowsAsync<StrategyGraphInvalidException>(
+            () => SaveNode(NodeDto("t", StrategyNodeType.Trigger, may, actualMonth: may, actualAmount: 100m)));
+        await SaveNode(NodeDto("t", StrategyNodeType.Trigger, may, actualMonth: may.AddMonths(1)));
+    }
+
+    [Fact]
+    public async Task A_strategy_row_written_before_facts_existed_still_loads_with_no_fact()
+    {
+        // Łapie węzły bez kluczy ActualMonth/ActualAmount w jsonb (wiersze sprzed tej zmiany): materializacja nie może się wywrócić.
+        var created = await NewAsync();
+        await Save().HandleAsync(created.Id, Request([NodeDto("bonus", StrategyNodeType.Income, October, 500m)]), default);
+        await _db.Database.ExecuteSqlRawAsync(
+            "UPDATE \"Strategies\" SET \"Nodes\" = (SELECT jsonb_agg(elem - 'ActualMonth' - 'ActualAmount') FROM jsonb_array_elements(\"Nodes\") elem)");
+        _db.ChangeTracker.Clear();
+
+        var node = Assert.Single((await Get().HandleAsync(created.Id, default)).Nodes);
+
+        Assert.Null(node.ActualMonth);
+        Assert.Null(node.ActualAmount);
     }
 }

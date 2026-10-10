@@ -18,4 +18,6 @@ public sealed record StrategyNodeRequestDto(
     StrategyConditionComparison? Comparison,
     decimal? Threshold,
     Guid? CategoryId = null,
-    Guid? StandingOrderId = null);
+    Guid? StandingOrderId = null,
+    DateOnly? ActualMonth = null,
+    decimal? ActualAmount = null);

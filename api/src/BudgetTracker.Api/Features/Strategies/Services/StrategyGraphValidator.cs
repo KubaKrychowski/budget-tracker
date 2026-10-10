@@ -54,6 +54,7 @@ public static class StrategyGraphValidator
                 if (amount is { } value && Math.Abs(value) > MaxAmount) throw new StrategyGraphInvalidException();
             }
 
+            ValidateActuals(n);
             if (n.Mode is { } mode && !Enum.IsDefined(mode)) throw new StrategyGraphInvalidException();
             if (n.Metric is { } metric && !Enum.IsDefined(metric)) throw new StrategyGraphInvalidException();
             if (n.Comparison is { } comparison && !Enum.IsDefined(comparison)) throw new StrategyGraphInvalidException();
@@ -62,7 +63,8 @@ public static class StrategyGraphValidator
             if (title.Length > MaxTitleLength) throw new StrategyGraphInvalidException();
             domainNodes.Add(new StrategyNode(
                 id, n.Type, title, n.X, n.Y, n.Month is { } m ? new DateOnly(m.Year, m.Month, 1) : null,
-                n.Amount, n.Rate, n.Installment, n.Mode, n.Metric, n.Comparison, n.Threshold, n.CategoryId, n.StandingOrderId));
+                n.Amount, n.Rate, n.Installment, n.Mode, n.Metric, n.Comparison, n.Threshold, n.CategoryId, n.StandingOrderId,
+                n.ActualMonth is { } actual ? new DateOnly(actual.Year, actual.Month, 1) : null, n.ActualAmount));
         }
 
         var types = domainNodes.ToDictionary(n => n.Id, n => n.Type);
@@ -88,6 +90,18 @@ public static class StrategyGraphValidator
         return new ValidStrategy(
             name, new DateOnly(request.StartMonth.Year, request.StartMonth.Month, 1), request.StartCash,
             request.HorizonMonths, domainNodes, domainEdges, ValidateVariants(request.Variants ?? [], types.Keys.ToHashSet()));
+    }
+
+    /// <summary>Fakty („zdarzenie nastąpiło”) dotyczą tylko zdarzeń, a kwota faktu ma sens tylko z miesiącem i nie przy zdarzeniu bez skutku.</summary>
+    private static void ValidateActuals(StrategyNodeRequestDto n)
+    {
+        if (n.ActualMonth is null && n.ActualAmount is null) return;
+        if (n.Type is not (StrategyNodeType.Trigger or StrategyNodeType.Income or StrategyNodeType.Expense)) throw new StrategyGraphInvalidException();
+        if (n.ActualMonth is null) throw new StrategyGraphInvalidException();
+        if (n.ActualAmount is not null && (n.Type == StrategyNodeType.Trigger || Math.Abs(n.ActualAmount.Value) > MaxAmount))
+        {
+            throw new StrategyGraphInvalidException();
+        }
     }
 
     /// <summary>Warianty: nazwa przycięta i niepowtarzalna bez względu na wielkość liter, wyłączone kafelki muszą istnieć.</summary>

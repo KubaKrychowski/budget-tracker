@@ -1159,7 +1159,8 @@
         "never": "nie w tym horyzoncie",
         "chart": "Pokaż wykres",
         "compare": "Porównaj warianty",
-        "variant": "Symulacja · {{name}}"
+        "variant": "Symulacja · {{name}}",
+        "facts": "od faktów"
       },
       "palette": {
         "title": "Dodaj kafelek",
@@ -1288,7 +1289,15 @@
         "standingOrderPlaceholder": "Wybierz zlecenie stałe",
         "standingOrderMissing": "Tego zlecenia nie ma już na liście (usunięte albo zakończone) — wybierz inne.",
         "warning": "Ostrzegaj od (% limitu)",
-        "applyTitle": "Zastosuj w aplikacji"
+        "applyTitle": "Zastosuj w aplikacji",
+        "fact": {
+          "title": "Zdarzenie nastąpiło",
+          "amount": "Faktyczna kwota",
+          "month": "Faktyczny miesiąc",
+          "delta": "Różnica względem planu: {{delta}} w gotówce.",
+          "hint": "Symulacja liczy to zdarzenie z faktu, a plan (miesiąc i kwota wyżej) zostaje do porównania. Wyłącz przełącznik, żeby wrócić do planu.",
+          "off": "Dopóki zdarzenie nie nastąpiło, symulacja liczy je z planu. Gdy nastąpi, wpisz faktyczny miesiąc i kwotę."
+        }
       },
       "outcome": {
         "met": "Spełniony: {{month}}",
@@ -1438,6 +1447,39 @@
       "never": "nie w tym horyzoncie",
       "close": "Zamknij",
       "monthsShort": "{{delta}} mies."
+    },
+    "duplicate": {
+      "action": "Duplikuj",
+      "title": "Duplikuj strategię",
+      "alertTitle": "Kopia nie jest zastosowana w budżecie.",
+      "alertBody": "Zawiera graf i parametry strategii. Cele, rezerwacje i limity zostają bez zmian.",
+      "nameLabel": "Nazwa kopii",
+      "copySuffix": "kopia",
+      "variants": "Skopiuj warianty ({{count}})",
+      "ok": "Utwórz kopię"
+    },
+    "leave": {
+      "title": "Wyjść bez zapisania?",
+      "alertTitle": "Strategia „{{name}}” ma niezapisane zmiany.",
+      "body": "Jeśli wyjdziesz bez zapisu, zmiany na tablicy przepadną. Zapisana wersja strategii zostaje bez zmian.",
+      "stay": "Zostań na tablicy",
+      "discard": "Odrzuć i wyjdź",
+      "save": "Zapisz i wyjdź",
+      "changes": {
+        "nodesAdded": "dodane kafelki: {{count}}",
+        "nodesRemoved": "usunięte kafelki: {{count}}",
+        "nodesChanged": "zmienione kafelki: {{count}}",
+        "edgesAdded": "dodane połączenia: {{count}}",
+        "edgesRemoved": "usunięte połączenia: {{count}}",
+        "variantsChanged": "zmiany w wariantach",
+        "paramsChanged": "zmienione parametry strategii"
+      }
+    },
+    "facts": {
+      "summary": "Zdarzenia: {{done}} z {{total}} zrealizowane",
+      "done": "nastąpiło (liczone z faktu)",
+      "planned": "planowane (liczone z planu)",
+      "note": "Zrealizowane zdarzenia symulacja liczy z faktycznego miesiąca i kwoty, pozostałe z planu."
     }
   },
   "episodicOrders": {

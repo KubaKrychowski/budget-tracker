@@ -32,10 +32,14 @@ import {
   StrategyReferences, StrategyResult, StrategyVariant, StrategyVariantsResult,
 } from '../../core/api/models/strategies';
 import {
-  BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector, retype,
+  BUDGET_ACTIONS, canReceive, canSend, edgesAfterRetype, inputConnector, newNode, NODE_META, outputConnector, parseInputConnector, parseOutputConnector,
+  REALIZABLE_TYPES, retype,
 } from './strategy-node-meta';
 import { buildChains, Chain } from './strategy-chains';
 import { StrategyApply } from './strategy-apply';
+import { StrategyFactsBar } from './strategy-facts-bar';
+import { describeChanges, summarizeChanges } from './strategy-changes';
+import { LeaveAware } from './strategy-leave.guard';
 import { CompareSeries, StrategyCompare } from './strategy-compare';
 import { StrategyNodeForm } from './strategy-node-form';
 import { StrategyPalette } from './strategy-palette';
@@ -74,6 +78,8 @@ interface BoardNode {
   readonly problems: readonly StrategyProblemKind[];
   /** Wyłączony w wybranym wariancie — symulacja go pomija. */
   readonly disabled: boolean;
+  /** Zdarzenie, które już nastąpiło — symulacja liczy je z faktu (miesiąc i kwota), nie z planu. */
+  readonly realized: boolean;
 }
 
 /**
@@ -93,6 +99,9 @@ interface BoardNode {
  * listę i wybrany wariant, a symulacja pomija wyłączone kafelki. Wybrany wariant zmienia też to, co pokazuje chip wyniku
  * i co stosuje „Zastosuj w budżecie”.
  *
+ * Wyjście z niezapisanymi zmianami przechodzi przez okno „Wyjść bez zapisania?” (makieta 423:1340): strażnik trasy
+ * (`leaveStrategyGuard`) pyta `canLeave()`, a `beforeunload` łapie zamknięcie karty i odświeżenie.
+ *
  * Nie ma jeszcze: „zdarzenie nastąpiło” (etap 4), polskich komunikatów czytnika ekranu (biblioteka mówi po angielsku, ale
  * nazwy połączeń niosą już tytuły kafelków).
  */
@@ -102,13 +111,14 @@ interface BoardNode {
     DatePipe, NgTemplateOutlet, FormsModule, RouterLink, FFlowModule,
     NzAlertModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule, NzDrawerModule, NzDropdownModule, NzInputModule,
     NzInputNumberModule, NzMenuModule, NzModalModule, NzSegmentedModule, NzSpinModule, TranslatePipe, StrategyApply, StrategyCompare, StrategyNodeForm,
-    StrategyPalette, StrategyPanelTabs, StrategyVariantBar, StrategyVariantsPanel,
+    StrategyFactsBar, StrategyPalette, StrategyPanelTabs, StrategyVariantBar, StrategyVariantsPanel,
   ],
   providers: [provideFFlow(withA11y(), withConnectionFlow('click'))],
   templateUrl: './strategy-board.html',
   styleUrls: ['./strategy-board.scss', './strategy-board.mobile.scss'],
+  host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
-export class StrategyBoard {
+export class StrategyBoard implements LeaveAware {
   /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
   protected readonly parseAmount = parseAmount;
   protected readonly maxNameLength = MAX_NAME_LENGTH;
@@ -278,7 +288,13 @@ export class StrategyBoard {
       sends: canSend(n.type),
       problems: this.problemsByNode().get(n.id) ?? [],
       disabled: this.activeDisabled().has(n.id),
+      realized: n.actualMonth !== null,
     })));
+
+  /** Zdarzenia (wpływ, wydatek, zdarzenie bez skutku) i ile z nich już nastąpiło — do paska nad tablicą. */
+  protected readonly eventCount = computed(() => this.nodes().filter((n) => REALIZABLE_TYPES.includes(n.type)).length);
+  protected readonly realizedCount = computed(() =>
+    this.nodes().filter((n) => REALIZABLE_TYPES.includes(n.type) && n.actualMonth !== null).length);
 
   protected readonly problemNodes = computed(() => this.viewNodes().filter((n) => n.problems.length > 0));
 
@@ -314,7 +330,8 @@ export class StrategyBoard {
     return node.title.trim() || this.translate.instant(`strategies.board.types.${node.type}`);
   }
 
-  protected glyph(kind: BoardNode['kind']): string {
+  protected glyph(kind: BoardNode['kind'], realized = false): string {
+    if (realized) return '✓';
     return kind === 'event' || kind === 'base' ? '⚡' : kind === 'condition' ? '?' : kind === 'end' ? '✓' : kind === 'wait' ? '⏱' : '</>';
   }
 
@@ -333,9 +350,10 @@ export class StrategyBoard {
   /** Jedna linia pod tytułem kafelka — to, co najważniejsze w jego parametrach. */
   private summaryOf(n: StrategyNode): string {
     switch (n.type) {
-      case 'Trigger': return this.monthLabel(n.month);
-      case 'Income': return `+${this.money(n.amount)} · ${this.monthLabel(n.month)}`;
-      case 'Expense': return `−${this.money(n.amount)} · ${this.monthLabel(n.month)}`;
+      // Zdarzenie z faktem pokazuje fakt (miesiąc i kwotę) — plan jest w ustawieniach kafelka.
+      case 'Trigger': return this.monthLabel(n.actualMonth ?? n.month);
+      case 'Income': return `+${this.money(n.actualMonth ? n.actualAmount : n.amount)} · ${this.monthLabel(n.actualMonth ?? n.month)}`;
+      case 'Expense': return `−${this.money(n.actualMonth ? n.actualAmount : n.amount)} · ${this.monthLabel(n.actualMonth ?? n.month)}`;
       case 'Surplus': return this.translate.instant('strategies.board.perMonth', { amount: this.money(n.amount) });
       case 'IncreaseSurplus':
         return this.translate.instant('strategies.board.perMonth', { amount: `${(n.amount ?? 0) > 0 ? '+' : ''}${this.money(n.amount)}` });
@@ -740,6 +758,67 @@ export class StrategyBoard {
     this.startCash.set(this.draftCash() ?? 0);
     this.horizonMonths.set(this.draftHorizon() ?? 24);
     this.paramsOpen.set(false);
+  }
+
+  // ── Wyjście z niezapisanymi zmianami ─────────────────────────────────────────────────
+
+  protected readonly leaveOpen = signal(false);
+  private leaveResolver: ((leave: boolean) => void) | null = null;
+
+  /** Co zmieniło się od ostatniego zapisu — to, co wypisuje okno wyjścia. */
+  protected readonly changeLines = computed(() => {
+    const saved = this.saved();
+    if (!saved) return [];
+    const savedRequest: SaveStrategyRequest = {
+      name: saved.name,
+      startMonth: saved.startMonth,
+      startCash: saved.startCash,
+      horizonMonths: saved.horizonMonths,
+      nodes: saved.nodes,
+      edges: saved.edges,
+      variants: saved.variants.map(({ id, name, disabledNodeIds }) => ({ id, name, disabledNodeIds })),
+    };
+    return describeChanges(summarizeChanges(savedRequest, this.request()))
+      .map((line) => this.translate.instant(`strategies.leave.changes.${line.key}`, { count: line.count }));
+  });
+
+  /**
+   * Pytanie strażnika trasy: bez zmian wolno wyjść od razu, a przy niezapisanych otwiera się okno i trasa czeka na wybór.
+   *
+   * ⚠️ Drugie wywołanie przed odpowiedzią (np. szybkie kliknięcie innego odnośnika) odrzuca pierwsze pytanie jako „zostań” —
+   * inaczej wisiałaby obietnica, której nikt już nie rozstrzygnie.
+   */
+  canLeave(): boolean | Promise<boolean> {
+    if (!this.dirty()) return true;
+    this.finishLeave(false);
+    this.leaveOpen.set(true);
+    return new Promise<boolean>((resolve) => { this.leaveResolver = resolve; });
+  }
+
+  protected stay(): void {
+    this.finishLeave(false);
+  }
+
+  protected discardAndLeave(): void {
+    this.finishLeave(true);
+  }
+
+  /** Zapis nieudany zostawia użytkownika na tablicy — komunikat błędu pokazuje już `save()`. */
+  protected async saveAndLeave(): Promise<void> {
+    await this.save();
+    this.finishLeave(!this.dirty());
+  }
+
+  private finishLeave(leave: boolean): void {
+    this.leaveOpen.set(false);
+    const resolve = this.leaveResolver;
+    this.leaveResolver = null;
+    resolve?.(leave);
+  }
+
+  /** Zamknięcie karty i odświeżenie: przeglądarka pokazuje własne pytanie, jeśli obsługa zdarzenia je „anuluje”. */
+  protected onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.dirty()) event.preventDefault();
   }
 
   // ── Zapis ────────────────────────────────────────────────────────────────────────────

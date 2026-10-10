@@ -31,6 +31,11 @@ namespace BudgetTracker.Api.Features.Strategies.Services;
 /// wykonują się wcale.
 /// </para>
 /// <para>
+/// ⚠️ „Zdarzenie nastąpiło”: zdarzenie z faktem (<see cref="StrategyNode.ActualMonth"/>) wykonuje się w miesiącu FAKTYCZNYM
+/// i z kwotą faktyczną, a plan (<see cref="StrategyNode.Month"/>, <see cref="StrategyNode.Amount"/>) zostaje tylko do
+/// porównania i do „Cofnij realizację”. Wpływ z faktem bez kwoty to problem grafu (nie zgadujemy kwoty z planu).
+/// </para>
+/// <para>
 /// ⚠️ Kafelki wyłączone w wariancie (<see cref="StrategyInput.DisabledNodeIds"/>) traktowane są jak węzły z problemami:
 /// nie wykonują się, więc nie wykonuje się też to, do czego prowadzi wyłącznie one. Problemy grafu w wyniku liczone są
 /// dla CAŁEGO grafu — wariant nie ukrywa ani nie dodaje problemów.
@@ -64,7 +69,7 @@ public static class StrategySimulator
             .ToList();
         var events = input.Nodes
             .Where(n => n.Type is StrategyNodeType.Trigger or StrategyNodeType.Income or StrategyNodeType.Expense
-                && !blocked.Contains(n.Id) && n.Month is not null)
+                && !blocked.Contains(n.Id) && (n.ActualMonth ?? n.Month) is not null)
             .ToList();
 
         var cash = input.StartCash;
@@ -95,11 +100,12 @@ public static class StrategySimulator
                 loanSeen = true;
             }
 
-            foreach (var ev in events.Where(e => Normalize(e.Month!.Value) == month))
+            foreach (var ev in events.Where(e => Normalize((e.ActualMonth ?? e.Month)!.Value) == month))
             {
                 if (!visited.Add(ev.Id)) continue;
-                if (ev.Type == StrategyNodeType.Income) cash += ev.Amount!.Value;
-                if (ev.Type == StrategyNodeType.Expense) cash -= ev.Amount!.Value;
+                var amount = ev.ActualMonth is not null ? ev.ActualAmount : ev.Amount;
+                if (ev.Type == StrategyNodeType.Income) cash += amount!.Value;
+                if (ev.Type == StrategyNodeType.Expense) cash -= amount!.Value;
                 firedIn.TryAdd(ev.Id, month);
                 foreach (var edge in next[ev.Id]) queue.Enqueue(edge.To);
             }

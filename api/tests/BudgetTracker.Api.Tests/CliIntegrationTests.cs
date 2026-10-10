@@ -232,6 +232,56 @@ public sealed class CliIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Strategy_warianty_fakty_i_duplikat_dzialaja_przez_CLI()
+    {
+        // Łapie komendę, która gubi pole z JSON-a (warianty, fakty) albo nie przekazuje --variant-id do planu zastosowania.
+        var budget = await SeedBudgetAsync();
+        var created = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyResponseDto>(BodyOf(await Run(
+            $"strategy create --budget-id {budget.BusinessId} --name \"Plan\"")));
+        var json = "{\"name\":\"Plan\",\"startMonth\":\"2026-09-01\",\"startCash\":1000,\"horizonMonths\":12,"
+            + "\"nodes\":[{\"id\":\"t\",\"type\":\"Trigger\",\"title\":\"Start\",\"x\":0,\"y\":0,\"month\":\"2026-09-01\"},"
+            + "{\"id\":\"i\",\"type\":\"Income\",\"title\":\"Premia\",\"x\":0,\"y\":0,\"month\":\"2026-09-01\",\"amount\":100,"
+            + "\"actualMonth\":\"2026-10-01\",\"actualAmount\":150},"
+            + "{\"id\":\"r1\",\"type\":\"CreateReservation\",\"title\":\"Wakacje\",\"x\":0,\"y\":0,\"amount\":500},"
+            + "{\"id\":\"r2\",\"type\":\"CreateReservation\",\"title\":\"Dach\",\"x\":0,\"y\":0,\"amount\":300}],"
+            + "\"edges\":[{\"id\":\"e1\",\"from\":\"t\",\"to\":\"r1\",\"label\":\"None\"},"
+            + "{\"id\":\"e2\",\"from\":\"t\",\"to\":\"r2\",\"label\":\"None\"}],"
+            + "\"variants\":[{\"id\":\"v1\",\"name\":\"Bez dachu\",\"disabledNodeIds\":[\"r2\"]}]}";
+
+        await Run($"strategy save {created.Id} --json '{json}'");
+        var loaded = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyResponseDto>(
+            BodyOf(await Run($"strategy get {created.Id}")));
+        var variant = Assert.Single(loaded.Variants);
+        Assert.Equal(("v1", "Bez dachu"), (variant.Id, variant.Name));
+        Assert.Equal(["r2"], variant.DisabledNodeIds);
+        var income = loaded.Nodes.Single(n => n.Id == "i");
+        Assert.Equal((new DateOnly(2026, 10, 1), 150m), (income.ActualMonth, income.ActualAmount));
+
+        var simulated = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyVariantsResultResponseDto>(
+            BodyOf(await Run($"strategy simulate-variants --json '{json}'")));
+        Assert.Equal("v1", Assert.Single(simulated.Variants).Id);
+
+        var basePreview = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyApplyPreviewResponseDto>(
+            BodyOf(await Run($"strategy apply-preview {created.Id}")));
+        var variantPreview = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyApplyPreviewResponseDto>(
+            BodyOf(await Run($"strategy apply-preview {created.Id} --variant-id v1")));
+        Assert.Equal(["r1", "r2"], basePreview.Items.Select(i => i.NodeId).Order());
+        Assert.Equal(["r1"], variantPreview.Items.Select(i => i.NodeId));
+
+        await Run($"strategy apply {created.Id} --node-ids r1,r2 --variant-id v1");
+        Assert.Equal(["Wakacje"], await _db.SavingsReservations.Select(r => r.Name).ToArrayAsync());
+
+        var withVariants = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyResponseDto>(
+            BodyOf(await Run($"strategy duplicate {created.Id} --name \"Kopia\"")));
+        var withoutVariants = Assert.IsAssignableFrom<Features.Strategies.Contracts.StrategyResponseDto>(
+            BodyOf(await Run($"strategy duplicate {created.Id} --name \"Kopia bez wariantów\" --variants false")));
+        Assert.Single(withVariants.Variants);
+        Assert.Empty(withoutVariants.Variants);
+        Assert.Equal(loaded.Nodes.Count, withoutVariants.Nodes.Count);
+        Assert.Equal(150m, withoutVariants.Nodes.Single(n => n.Id == "i").ActualAmount);
+    }
+
+    [Fact]
     public async Task Limit_set_i_list_widza_sie_nawzajem()
     {
         var budget = await SeedBudgetAsync();

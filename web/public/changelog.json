@@ -1,5 +1,57 @@
 [
   {
+    "id": "2.6",
+    "date": "2026-10-10",
+    "pl": [
+      {
+        "title": "Warianty strategii: „co jeśli”",
+        "text": "Wyłącz w strategii wybrane kafelki — np. podwyżkę albo ubezpieczenie — i porównaj wyniki obok siebie na wykresie, bez kopiowania całej strategii.",
+        "link": "/strategies",
+        "linkLabel": "Otwórz strategie"
+      },
+      {
+        "title": "Zdarzenie nastąpiło",
+        "text": "Gdy premia wpłynie w innym miesiącu albo w innej kwocie, wpisz to na kafelku — symulacja policzy dalej od faktów, a plan zostanie do porównania."
+      },
+      {
+        "title": "Duplikuj strategię",
+        "text": "Jednym kliknięciem skopiujesz strategię (razem z wariantami albo bez), żeby wypróbować dużą zmianę bez ryzyka dla działającego planu."
+      },
+      {
+        "title": "Pytanie przed utratą zmian",
+        "text": "Wychodząc z tablicy strategii z niezapisanymi zmianami zobaczysz, co się zmieniło, i wybierzesz: zostać, odrzucić albo zapisać i wyjść."
+      },
+      {
+        "title": "Strategie w terminalu",
+        "text": "Komendy strategy obsługują też warianty, fakty i duplikowanie: strategy duplicate, simulate-variants oraz --variant-id przy stosowaniu w budżecie."
+      }
+    ],
+    "en": [
+      {
+        "title": "Strategy variants: “what if”",
+        "text": "Switch off chosen tiles in a strategy — say a raise or an insurance — and compare the results side by side on a chart, without copying the whole strategy.",
+        "link": "/strategies",
+        "linkLabel": "Open strategies"
+      },
+      {
+        "title": "The event happened",
+        "text": "When a bonus arrives in a different month or amount, enter it on the tile — the simulation carries on from the facts and the plan stays for comparison."
+      },
+      {
+        "title": "Duplicate a strategy",
+        "text": "Copy a strategy in one click (with or without its variants) to try a big change without risking a plan that works."
+      },
+      {
+        "title": "A question before losing changes",
+        "text": "When you leave the strategy board with unsaved changes you will see what changed and choose: stay, discard or save and leave."
+      },
+      {
+        "title": "Strategies in the terminal",
+        "text": "The strategy commands also handle variants, facts and duplicating: strategy duplicate, simulate-variants and --variant-id when applying to the budget."
+      }
+    ]
+  },
+  {
     "id": "2.5",
     "date": "2026-10-06",
     "pl": [

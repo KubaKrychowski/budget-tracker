@@ -49,6 +49,10 @@ export interface StrategyNode {
   readonly categoryId: string | null;
   /** Zlecenie stałe do zakończenia. */
   readonly standingOrderId: string | null;
+  /** Miesiąc, w którym zdarzenie FAKTYCZNIE nastąpiło („zdarzenie nastąpiło”); `null` = liczy się plan (`month`). */
+  readonly actualMonth: string | null;
+  /** Faktyczna kwota wpływu albo wydatku — tylko razem z `actualMonth`. */
+  readonly actualAmount: number | null;
 }
 
 /** Odpowiednik StrategyEdgeRequestDto / StrategyEdgeResponseDto — strzałka między kafelkami. */
@@ -142,6 +146,12 @@ export interface SaveStrategyRequest {
   readonly variants: readonly StrategyVariant[];
 }
 
+/** Odpowiednik DuplicateStrategyRequestDto — kopia strategii pod nową nazwą. */
+export interface DuplicateStrategyRequest {
+  readonly name: string;
+  readonly copyVariants: boolean;
+}
+
 /** Odpowiednik CreateStrategyRequestDto. */
 export interface CreateStrategyRequest {
   readonly budgetId: string | null;
@@ -156,6 +166,8 @@ export interface StrategyListItem {
   readonly eventCount: number;
   readonly actionCount: number;
   readonly updatedAt: string;
+  /** Ile wariantów (poza bazowym) ma strategia. */
+  readonly variantCount: number;
 }
 
 /** Odpowiednik StrategiesResponseDto — lista strategii jednego budżetu z przełącznikiem budżetów. */

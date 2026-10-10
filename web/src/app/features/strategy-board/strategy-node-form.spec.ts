@@ -18,7 +18,7 @@ describe('StrategyNodeForm', () => {
 
   const node = (over: Partial<StrategyNode> = {}): StrategyNode => ({
     id: 'n1', type: 'Overpay', title: 'Nadpłać kredyt', x: 0, y: 0, month: null, amount: 7000, rate: null,
-    installment: null, mode: 'ReduceInstallment', metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, ...over,
+    installment: null, mode: 'ReduceInstallment', metric: null, comparison: null, threshold: null, categoryId: null, standingOrderId: null, actualMonth: null, actualAmount: null, ...over,
   });
 
   const text = (): string => (fixture.nativeElement.textContent as string).replace(/\s+/g, ' ');
@@ -51,13 +51,13 @@ describe('StrategyNodeForm', () => {
     translate.setTranslation('pl', {
       strategies: {
         board: {
-          types: { Overpay: 'Nadpłać kredyt', Loan: 'Kredyt', Condition: 'Warunek', PayOffLoan: 'Spłać resztę' },
-          kinds: { action: 'Akcja', base: 'Stan wyjściowy', condition: 'Warunek' },
-          amount: { Overpay: 'Kwota nadpłaty (zł)', Loan: 'Saldo kredytu (zł)' },
+          types: { Income: 'Wpływ', Expense: 'Wydatek', Trigger: 'Zdarzenie', Overpay: 'Nadpłać kredyt', Loan: 'Kredyt', Condition: 'Warunek', PayOffLoan: 'Spłać resztę' },
+          kinds: { event: 'Zdarzenie', action: 'Akcja', base: 'Stan wyjściowy', condition: 'Warunek' },
+          amount: { Income: 'Kwota wpływu', Expense: 'Kwota wydatku', Overpay: 'Kwota nadpłaty (zł)', Loan: 'Saldo kredytu (zł)' },
           mode: { ReduceInstallment: 'Obniż ratę', ShortenPeriod: 'Skróć okres' },
           metric: { CashMinusDebt: 'Gotówka − dług' },
           comparison: { AtLeast: 'jest co najmniej' },
-          form: { name: 'Nazwa', dueMonth: 'Termin', lastMonth: 'Ostatni miesiąc zlecenia', category: 'Kategoria', standingOrder: 'Zlecenie', warning: 'Ostrzegaj od', applyTitle: 'Zastosuj w aplikacji', categoryMissing: 'Tej kategorii nie ma już na liście.', standingOrderMissing: 'Tego zlecenia nie ma już na liście.', type: { event: 'Rodzaj zdarzenia', action: 'Rodzaj akcji', control: 'Rodzaj warunku' }, back: 'Dodaj kafelek', title: 'Podpis kafelka', remove: 'Usuń kafelek', done: 'Gotowe', month: 'Miesiąc', loanMonth: 'Miesiąc startu kredytu', rate: 'Oprocentowanie', installment: 'Rata', mode: 'Tryb rozliczenia', metric: 'Co porównujemy', comparison: 'Porównanie', threshold: 'Wartość' },
+          form: { fact: { title: 'Zdarzenie nastąpiło', amount: 'Faktyczna kwota', month: 'Faktyczny miesiąc', delta: 'Różnica względem planu: {{delta}} w gotówce.', hint: 'Plan zostaje do porównania.', off: 'Liczone z planu.' }, name: 'Nazwa', dueMonth: 'Termin', lastMonth: 'Ostatni miesiąc zlecenia', category: 'Kategoria', standingOrder: 'Zlecenie', warning: 'Ostrzegaj od', applyTitle: 'Zastosuj w aplikacji', categoryMissing: 'Tej kategorii nie ma już na liście.', standingOrderMissing: 'Tego zlecenia nie ma już na liście.', type: { event: 'Rodzaj zdarzenia', action: 'Rodzaj akcji', control: 'Rodzaj warunku' }, back: 'Dodaj kafelek', title: 'Podpis kafelka', remove: 'Usuń kafelek', done: 'Gotowe', month: 'Miesiąc', loanMonth: 'Miesiąc startu kredytu', rate: 'Oprocentowanie', installment: 'Rata', mode: 'Tryb rozliczenia', metric: 'Co porównujemy', comparison: 'Porównanie', threshold: 'Wartość' },
           applyInfo: { SetLimit: 'Ustawi limit {{amount}} zł dla „{{category}}”.', Overpay: 'x' },
           outcome: { met: 'Spełniony: {{month}}', notMet: 'Nie został spełniony', fired: 'Wykonany: {{month}}' },
           problem: { MissingParameter: 'Brakuje parametru.', NoIncomingEdge: 'Żadna strzałka tu nie prowadzi.' },
@@ -229,5 +229,71 @@ describe('StrategyNodeForm', () => {
     }
 
     expect(emitted).toEqual([]);
+  });
+
+  describe('zdarzenie nastąpiło', () => {
+    const income = (over: Partial<StrategyNode> = {}): StrategyNode =>
+      node({ type: 'Income', title: 'Premia', month: '2027-05-01', amount: 7800, ...over });
+    const toggle = (): HTMLButtonElement => fixture.nativeElement.querySelector('nz-switch button') as HTMLButtonElement;
+
+    it('wpływ ma przełącznik, a akcja i kredyt go nie mają', async () => {
+      await mount(income());
+      expect(toggle()).not.toBeNull();
+      expect(text()).toContain('Liczone z planu.');
+
+      await mount(node({ type: 'Overpay' }));
+      expect(toggle()).toBeNull();
+
+      await mount(node({ type: 'Loan', month: '2026-10-01', amount: 18400, rate: 12, installment: 880 }));
+      expect(toggle()).toBeNull();
+    });
+
+    it('włączenie przepisuje plan do faktu, wyłączenie czyści fakt', async () => {
+      await mount(income());
+      const emitted: StrategyNode[] = [];
+      fixture.componentInstance.changed.subscribe((n) => emitted.push(n));
+
+      toggle().click();
+      expect(emitted.at(-1)).toMatchObject({ actualMonth: '2027-05-01', actualAmount: 7800 });
+
+      await mount(income({ actualMonth: '2027-06-01', actualAmount: 8150 }));
+      fixture.componentInstance.changed.subscribe((n) => emitted.push(n));
+      toggle().click();
+      expect(emitted.at(-1)).toMatchObject({ actualMonth: null, actualAmount: null });
+    });
+
+    it('zdarzenie bez kwoty (np. podwyżka) przepisuje sam miesiąc i nie pyta o kwotę faktu', async () => {
+      await mount(node({ type: 'Trigger', month: '2027-01-01' }));
+      const emitted: StrategyNode[] = [];
+      fixture.componentInstance.changed.subscribe((n) => emitted.push(n));
+
+      toggle().click();
+
+      expect(emitted.at(-1)).toMatchObject({ actualMonth: '2027-01-01', actualAmount: null });
+      await mount(node({ type: 'Trigger', month: '2027-01-01', actualMonth: '2027-03-01' }));
+      expect(ids()).toContain('node-actual-month');
+      expect(ids()).not.toContain('node-actual-amount');
+    });
+
+    it('po włączeniu pokazuje pola faktu i różnicę w gotówce: wpływ większy to plus, wydatek większy to minus', async () => {
+      await mount(income({ actualMonth: '2027-06-01', actualAmount: 8150 }));
+      expect(ids()).toEqual(expect.arrayContaining(['node-actual-amount', 'node-actual-month']));
+      expect(text()).toContain('Różnica względem planu: +350 zł w gotówce.');
+
+      await mount(node({ type: 'Expense', month: '2026-12-01', amount: 2200, actualMonth: '2026-12-01', actualAmount: 2350 }));
+      expect(text()).toContain('Różnica względem planu: −150 zł w gotówce.');
+    });
+
+    it('bez różnicy w kwocie nie pokazuje wiersza różnicy', async () => {
+      await mount(income({ actualMonth: '2027-05-01', actualAmount: 7800 }));
+
+      expect(text()).not.toContain('Różnica względem planu');
+    });
+
+    it('bez miesiąca w planie przełącznik jest wyłączony — nie ma czego przepisać do faktu', async () => {
+      await mount(income({ month: null }));
+
+      expect(toggle().disabled).toBe(true);
+    });
   });
 });

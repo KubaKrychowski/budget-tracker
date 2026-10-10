@@ -98,6 +98,10 @@
       (added)="addNewVariant()"
       (manage)="openVariantsPanel()" />
 
+    @if (eventCount() > 0) {
+      <app-strategy-facts-bar [done]="realizedCount()" [total]="eventCount()" />
+    }
+
     @if (problemNodes().length > 0) {
       <nz-alert
         style="display: block; margin-bottom: 16px"
@@ -180,7 +184,7 @@
                   <div fConnector fConnectorType="target" [fConnectorId]="view.node.id + '-in'" class="sb__port sb__port--in"></div>
                 }
 
-                <span class="sb__glyph" aria-hidden="true">{{ glyph(view.kind) }}</span>
+                <span class="sb__glyph" aria-hidden="true" [style.background]="view.realized ? 'var(--ds-primary-600)' : null">{{ glyph(view.kind, view.realized) }}</span>
                 <span class="sb__text">
                   <strong class="sb__node-title">{{ view.title }}</strong>
                   @if (view.summary) {
@@ -220,6 +224,9 @@
           <div class="sb__chip" role="status">
             <strong>
               {{ (activeVariant() ? 'strategies.board.sim.variant' : 'strategies.board.sim.title') | translate: { name: activeVariant()?.name } }}
+              @if (realizedCount() > 0) {
+                · {{ 'strategies.board.sim.facts' | translate }}
+              }
             </strong>
             @if (hasLoan()) {
               <span>
@@ -253,7 +260,7 @@
         @for (chain of chains().chains; track chain.root.node.id) {
           <section class="sb__chain">
             <button type="button" class="sb__step sb__step--{{ chain.root.kind }}" [class.sb__step--problem]="chain.root.problems.length > 0" [class.sb__step--off]="chain.root.disabled" (click)="openNode(chain.root.node.id)">
-              <span class="sb__glyph" aria-hidden="true">{{ glyph(chain.root.kind) }}</span>
+              <span class="sb__glyph" aria-hidden="true" [style.background]="chain.root.realized ? 'var(--ds-primary-600)' : null">{{ glyph(chain.root.kind, chain.root.realized) }}</span>
               <span class="sb__text">
                 <strong class="sb__node-title">{{ chain.root.title }}</strong>
                 @if (chain.root.summary) {
@@ -268,7 +275,7 @@
               <div class="sb__row" [style.padding-left.px]="step.depth * 20">
                 <span class="sb__rail" aria-hidden="true">{{ step.label === 'None' ? '↓' : ((step.label === 'Yes' ? 'strategies.board.yes' : 'strategies.board.no') | translate) }}</span>
                 <button type="button" class="sb__step sb__step--{{ step.view.kind }}" [class.sb__step--problem]="step.view.problems.length > 0" [class.sb__step--off]="step.view.disabled" (click)="openNode(step.view.node.id)">
-                  <span class="sb__glyph" aria-hidden="true">{{ glyph(step.view.kind) }}</span>
+                  <span class="sb__glyph" aria-hidden="true" [style.background]="step.view.realized ? 'var(--ds-primary-600)' : null">{{ glyph(step.view.kind, step.view.realized) }}</span>
                   <span class="sb__text">
                     <strong class="sb__node-title">{{ step.view.title }}</strong>
                     @if (step.view.summary) {
@@ -294,7 +301,7 @@
             <h2 class="sb__panel-title">{{ 'strategies.board.mobile.unlinked' | translate }}</h2>
             @for (view of chains().unlinked; track view.node.id) {
               <button type="button" class="sb__step sb__step--{{ view.kind }}" [class.sb__step--problem]="view.problems.length > 0" [class.sb__step--off]="view.disabled" (click)="openNode(view.node.id)">
-                <span class="sb__glyph" aria-hidden="true">{{ glyph(view.kind) }}</span>
+                <span class="sb__glyph" aria-hidden="true" [style.background]="view.realized ? 'var(--ds-primary-600)' : null">{{ glyph(view.kind, view.realized) }}</span>
                 <span class="sb__text">
                   <strong class="sb__node-title">{{ view.title }}</strong>
                   @if (view.summary) {
@@ -436,6 +443,29 @@
       [hasCushion]="hasCushion()"
       (closed)="compareOpen.set(false)" />
   }
+
+  <nz-modal
+    [nzVisible]="leaveOpen()"
+    [nzTitle]="'strategies.leave.title' | translate"
+    [nzFooter]="leaveFooter"
+    [nzMaskClosable]="false"
+    (nzOnCancel)="stay()"
+  >
+    <ng-container *nzModalContent>
+      <nz-alert
+        nzType="warning"
+        nzShowIcon
+        [nzMessage]="'strategies.leave.alertTitle' | translate: { name: name() }"
+        [nzDescription]="changeLines().join(' · ')" />
+      <p class="sb__panel-hint" style="margin-top: 16px">{{ 'strategies.leave.body' | translate }}</p>
+    </ng-container>
+  </nz-modal>
+
+  <ng-template #leaveFooter>
+    <button nz-button [disabled]="busy()" (click)="stay()">{{ 'strategies.leave.stay' | translate }}</button>
+    <button nz-button nzDanger [disabled]="busy()" (click)="discardAndLeave()">{{ 'strategies.leave.discard' | translate }}</button>
+    <button nz-button nzType="primary" [nzLoading]="busy()" (click)="saveAndLeave()">{{ 'strategies.leave.save' | translate }}</button>
+  </ng-template>
 
   <nz-modal
     [nzVisible]="renameId() !== null"
