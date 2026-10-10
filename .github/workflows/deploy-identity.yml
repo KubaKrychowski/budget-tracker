@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - 'BudgetTracker.Identity/**'
+      - 'shared/**'
       - 'BudgetTracker.Identity.Tests/**'
       - '.github/workflows/deploy-identity.yml'
   pull_request:
     branches: [main]
     paths:
       - 'BudgetTracker.Identity/**'
+      - 'shared/**'
       - 'BudgetTracker.Identity.Tests/**'
       - '.github/workflows/deploy-identity.yml'
   workflow_dispatch:

@@ -27,4 +27,8 @@
       <EmbeddedResource Include="Emails\*.html;Emails\*.css" LogicalName="Emails.%(Filename)%(Extension)" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Include="..\shared\ErrorReporting\*.cs" Link="Shared\ErrorReporting\%(Filename)%(Extension)" />
+    </ItemGroup>
+
 </Project>

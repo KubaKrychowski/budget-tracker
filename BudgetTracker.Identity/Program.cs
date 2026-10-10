@@ -1,3 +1,4 @@
+using BudgetTracker.ErrorReporting;
 using BudgetTracker.Identity.Controllers;
 using BudgetTracker.Identity.Data;
 using BudgetTracker.Identity.Infrastructure;
@@ -27,6 +28,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddLocalization();
+builder.Services.AddErrorReporting(builder.Configuration, "identity");
 
 // ErrorMessage w atrybutach walidacji modeli to klucz z SharedResource — patrz AccountViewModels.
 builder.Services.AddControllersWithViews()
