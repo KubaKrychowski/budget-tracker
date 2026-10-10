@@ -243,3 +243,15 @@ variable "app_service_sku" {
   type        = string
   default     = "B1"
 }
+
+variable "github_error_reporting_token" {
+  description = <<-EOT
+    Fine-grained PAT GitHuba z uprawnieniem „Issues: Read and write" wyłącznie na repo
+    budget-tracker-2-boards. Włącza zakładanie issues przy błędach 500 (DECISIONS.md §15).
+    Pusty = funkcja wyłączona. ⚠️ Podawaj przez TF_VAR_github_error_reporting_token, nie przez tfvars.
+    Token wygasa — po wygaśnięciu zgłaszanie przestaje działać po cichu (tylko ostrzeżenie w logach).
+  EOT
+  type        = string
+  sensitive   = true
+  default     = ""
+}
