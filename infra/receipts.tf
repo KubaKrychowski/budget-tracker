@@ -4,7 +4,7 @@
 resource "azurerm_cognitive_account" "receipts" {
   name                = "${local.prefix}-receipts"
   resource_group_name = data.azurerm_resource_group.main.name
-  location            = local.location
+  location            = var.receipts_ocr_location
   kind                = "FormRecognizer"
   sku_name            = var.receipts_ocr_sku
 

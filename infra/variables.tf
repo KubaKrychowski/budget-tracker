@@ -244,6 +244,16 @@ variable "app_service_sku" {
   default     = "B1"
 }
 
+variable "receipts_ocr_location" {
+  description = <<-EOT
+    Region uslugi OCR paragonow. To OSOBNA zmienna, bo quota na ten typ konta jest przyznawana per region i nie zawsze
+    pokrywa region grupy zasobow: w polandcentral tworzenie konta konczy sie bledem SpecialFeatureOrQuotaIdRequired
+    (dla F0 i S0). germanywestcentral (Frankfurt) dziala. Obraz paragonu wychodzi do tego regionu - patrz DECISIONS.md §15.
+  EOT
+  type        = string
+  default     = "germanywestcentral"
+}
+
 variable "receipts_ocr_sku" {
   description = <<-EOT
     Poziom uslugi OCR paragonow (Azure AI Document Intelligence).
