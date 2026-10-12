@@ -27,14 +27,40 @@ public sealed class AzureReceiptReader(DocumentIntelligenceClient client) : IRec
             fields.TryGetValue("TransactionDate", out var date);
             fields.TryGetValue("Total", out var total);
 
+            var totalValue = total?.ValueCurrency is { } c ? Convert.ToDecimal(c.Amount, CultureInfo.InvariantCulture) : (decimal?)null;
+            fields.TryGetValue("Items", out var items);
+
             return new ReceiptReading(
                 merchant?.ValueString?.Trim(), merchant?.Confidence,
                 date?.ValueDate is { } d ? DateOnly.FromDateTime(d.DateTime) : null, date?.Confidence,
-                total?.ValueCurrency is { } c ? Convert.ToDecimal(c.Amount, CultureInfo.InvariantCulture) : null, total?.Confidence);
+                totalValue, ReceiptTotalCheck.Adjust(totalValue, total?.Confidence, ItemPrices(items)));
         }
         catch (Exception e) when (e is RequestFailedException or InvalidOperationException)
         {
             throw new ReceiptReaderUnavailableException(e);
         }
+    }
+
+    /// <summary>Ceny pozycji, ale tylko gdy MA je KAŻDA — suma części nie jest porównywalna z sumą całości.</summary>
+    private static IReadOnlyList<decimal> ItemPrices(DocumentField? items)
+    {
+        if (items?.ValueList is not { Count: > 0 } list) return [];
+
+        var prices = new List<decimal>();
+        foreach (var item in list)
+        {
+            if (item.ValueDictionary is { } fields
+                && fields.TryGetValue("TotalPrice", out var price)
+                && price.ValueCurrency is { } amount)
+            {
+                prices.Add(Convert.ToDecimal(amount.Amount, CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                return [];
+            }
+        }
+
+        return prices;
     }
 }
