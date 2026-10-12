@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Features.Receipts.Contracts;
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Features.Transactions.Exceptions;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,11 @@ public sealed class GetTransactionReceiptsQueryHandler(AppDbContext db)
             throw new TransactionNotFoundException(transactionId);
         }
 
-        return await db.Receipts
+        var receipts = await db.Receipts
             .Where(r => r.TransactionBusinessId == transactionId)
             .OrderByDescending(r => r.CreatedAt)
-            .Select(r => new ReceiptResponseDto(
-                r.BusinessId, r.FileName, r.ContentType, r.SizeBytes, r.Merchant, r.ReceiptDate, r.Total))
             .ToListAsync(ct);
+
+        return [.. receipts.Select(ReceiptMapping.ToResponse)];
     }
 }

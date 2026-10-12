@@ -589,6 +589,24 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.ComplexCollection(typeof(List<Dictionary<string, object>>), "Items", "BudgetTracker.Api.Domain.Receipt.Items#ReceiptLine", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Name")
+                                .IsRequired();
+
+                            b1.Property<decimal?>("Quantity");
+
+                            b1.Property<decimal?>("TotalPrice");
+
+                            b1.Property<decimal?>("UnitPrice");
+
+                            b1
+                                .ToJson("Items")
+                                .HasColumnType("jsonb");
+                        });
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId")

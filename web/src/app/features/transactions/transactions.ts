@@ -127,7 +127,7 @@ interface SelectionPayload {
     TranslatePipe, EnumTranslatePipe, ReceiptDialog,
   ],
   templateUrl: './transactions.html',
-  styleUrls: ['./transactions.scss', './transactions.mobile.scss'],
+  styleUrls: ['./transactions.scss', './transactions.mobile.scss', './transactions.products.scss'],
 })
 export class Transactions {
   /** Parser polskiego formatu kwot dla pól `nz-input-number` — uzasadnienie przy `parseAmount`. */
@@ -758,34 +758,14 @@ export class Transactions {
 
   protected onReceiptSaved(): void {
     this.list.reload();
+    this.refreshReceipts();
   }
 
-  /**
-   * Podgląd najnowszego paragonu transakcji w nowej karcie.
-   *
-   * ⚠️ Plik leży za autoryzacją, więc zwykły odnośnik nie zadziała — pobieramy go z tokenem i otwieramy jako blob.
-   * Pustą kartę otwieramy SYNCHRONICZNIE w kliknięciu, a adres dopisujemy po pobraniu: okno otwarte po `await`
-   * blokuje przeglądarka jako wyskakujące.
-   */
+  /** Podgląd najnowszego paragonu transakcji z menu wiersza — otwarcie pliku w nowej karcie: patrz `openReceiptFile`. */
   protected async viewReceiptMenuRow(): Promise<void> {
     const row = this.menuRow();
     if (!row) return;
-
-    const tab = window.open('', '_blank');
-    try {
-      const receipt = await this.newestReceipt(row.id);
-      if (!receipt) {
-        tab?.close();
-        this.message.info(this.translate.instant('transactions.receipt.noReceipts'));
-        return;
-      }
-      const blob = await firstValueFrom(this.http.get(`/api/receipts/${receipt.id}/file`, { responseType: 'blob' }));
-      const url = URL.createObjectURL(blob);
-      if (tab) tab.location.href = url;
-    } catch (e) {
-      tab?.close();
-      this.message.error(this.errorMessages.of(e));
-    }
+    await this.openReceiptFile(async () => (await this.newestReceipt(row.id))?.id ?? null);
   }
 
   protected async deleteReceiptMenuRow(): Promise<void> {
@@ -806,6 +786,7 @@ export class Transactions {
       await firstValueFrom(this.http.delete(`/api/receipts/${receipt.id}`));
       this.message.success(this.translate.instant('transactions.receipt.deleted'));
       this.list.reload();
+      this.refreshReceipts();
     } catch (e) {
       this.message.error(this.errorMessages.of(e));
     }
@@ -814,6 +795,84 @@ export class Transactions {
   private async newestReceipt(transactionId: string): Promise<ReceiptItem | undefined> {
     const receipts = await firstValueFrom(this.http.get<ReceiptItem[]>(`/api/transactions/${transactionId}/receipts`));
     return receipts[0];
+  }
+
+  // ── Produkty z paragonu: wiersz rozwijany (makieta Figma 434:6171) ───────────────────
+  //
+  // Transakcja zostaje jednym rekordem z jedną kwotą i kategorią; produkty to warstwa informacyjna pod nią. Pobieramy je
+  // dopiero przy rozwinięciu — lista nie niesie produktów całej strony, tylko licznik paragonów.
+
+  protected readonly expanded = signal<ReadonlySet<string>>(new Set());
+  protected readonly receiptsOf = signal<Readonly<Record<string, readonly ReceiptItem[] | 'loading' | 'error'>>>({});
+
+  protected toggleExpand(id: string, open: boolean): void {
+    this.expanded.update((current) => {
+      const next = new Set(current);
+      if (open) next.add(id); else next.delete(id);
+      return next;
+    });
+    if (open && !Array.isArray(this.receiptsOf()[id])) void this.loadReceipts(id);
+  }
+
+  private async loadReceipts(id: string): Promise<void> {
+    this.receiptsOf.update((current) => ({ ...current, [id]: 'loading' }));
+    try {
+      const receipts = await firstValueFrom(this.http.get<ReceiptItem[]>(`/api/transactions/${id}/receipts`));
+      this.receiptsOf.update((current) => ({ ...current, [id]: receipts }));
+    } catch {
+      this.receiptsOf.update((current) => ({ ...current, [id]: 'error' }));
+    }
+  }
+
+  /** Po zmianie paragonów (dodanie, usunięcie) rozwinięte wiersze pobierają produkty od nowa, reszta cache'u jest wyrzucana. */
+  private refreshReceipts(): void {
+    const open = [...this.expanded()];
+    this.receiptsOf.set({});
+    for (const id of open) void this.loadReceipts(id);
+  }
+
+  /** Suma wartości pozycji; `null`, gdy brak pozycji albo którakolwiek nie ma wartości (suma części nie jest porównywalna z całością). */
+  protected productsSum(receipt: ReceiptItem): number | null {
+    if (receipt.items.length === 0 || receipt.items.some((p) => p.totalPrice === null)) return null;
+    return receipt.items.reduce((sum, p) => sum + (p.totalPrice ?? 0), 0);
+  }
+
+  /** Czy suma pozycji zgadza się z kwotą transakcji — rozjazd bywa uczciwy (rabat, zaokrąglenie), więc to tylko znacznik. */
+  protected sumMatches(sum: number, amount: number): boolean {
+    return Math.abs(sum - Math.abs(amount)) <= 0.01;
+  }
+
+  protected quantity(value: number | null): string {
+    return value === null ? '—' : new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 3 }).format(value);
+  }
+
+  protected async viewReceipt(receipt: ReceiptItem): Promise<void> {
+    await this.openReceiptFile(() => Promise.resolve(receipt.id));
+  }
+
+  /**
+   * Otwiera plik paragonu w nowej karcie.
+   *
+   * ⚠️ Plik leży za autoryzacją, więc zwykły odnośnik nie zadziała — pobieramy go z tokenem i otwieramy jako blob.
+   * Pustą kartę otwieramy SYNCHRONICZNIE w kliknięciu, a adres dopisujemy po pobraniu: okno otwarte po `await`
+   * blokuje przeglądarka jako wyskakujące.
+   */
+  private async openReceiptFile(resolveId: () => Promise<string | null>): Promise<void> {
+    const tab = window.open('', '_blank');
+    try {
+      const receiptId = await resolveId();
+      if (receiptId === null) {
+        tab?.close();
+        this.message.info(this.translate.instant('transactions.receipt.noReceipts'));
+        return;
+      }
+      const blob = await firstValueFrom(this.http.get(`/api/receipts/${receiptId}/file`, { responseType: 'blob' }));
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+    } catch (e) {
+      tab?.close();
+      this.message.error(this.errorMessages.of(e));
+    }
   }
 
   // ── Transfer do budżetu oszczędnościowego (#10) ─────────────────────────────────────

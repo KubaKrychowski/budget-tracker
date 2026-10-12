@@ -144,10 +144,11 @@ export class ReceiptDialog {
     return this.transaction() !== null || this.choice() !== null;
   });
 
+  /** „Żadna z nich" zakłada nową transakcję z paragonu — przycisk mówi to wprost, żeby nikt nie był zaskoczony. */
+  protected readonly creates = computed(() => this.transaction() === null && this.choice() === NoTransaction);
+
   protected readonly saveLabelKey = computed(() =>
-    this.transaction() !== null || (this.choice() !== null && this.choice() !== NoTransaction)
-      ? 'transactions.receipt.attach'
-      : 'transactions.receipt.saveOnly');
+    this.creates() ? 'transactions.receipt.createTransaction' : 'transactions.receipt.attach');
 
   private reset(): void {
     this.revokePreview();
@@ -254,9 +255,12 @@ export class ReceiptDialog {
         merchant: this.merchant().trim() || null,
         date: this.date() ? toIsoDate(this.date()!) : null,
         total: this.total(),
+        createTransaction: this.creates(),
+        budgetId: this.budgetIds()[0] ?? null,
       }));
       this.message.success(this.translate.instant(
-        transactionId ? 'transactions.receipt.savedAttached' : 'transactions.receipt.saved'));
+        this.creates() ? 'transactions.receipt.createdTransaction'
+          : transactionId ? 'transactions.receipt.savedAttached' : 'transactions.receipt.saved'));
       this.saved.emit();
       this.closed.emit();
     } catch (e) {

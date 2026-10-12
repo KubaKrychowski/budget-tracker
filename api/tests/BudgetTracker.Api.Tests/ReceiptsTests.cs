@@ -1,14 +1,21 @@
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
+using BudgetTracker.Api.Features.Budgets.Services;
+using BudgetTracker.Api.Features.Categorization;
+using BudgetTracker.Api.Features.Categorization.Models;
+using BudgetTracker.Api.Features.Categorization.Services;
+using BudgetTracker.Api.Features.Import.Services;
 using BudgetTracker.Api.Features.Receipts.Commands;
 using BudgetTracker.Api.Features.Receipts.Contracts;
 using BudgetTracker.Api.Features.Receipts.Exceptions;
 using BudgetTracker.Api.Features.Receipts.Models;
 using BudgetTracker.Api.Features.Receipts.Queries;
 using BudgetTracker.Api.Features.Receipts.Services;
+using BudgetTracker.Api.Features.StandingOrders.Services;
 using BudgetTracker.Api.Features.Transactions.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -56,8 +63,20 @@ public sealed class ReceiptsTests : IAsyncLifetime
 
     private static ReceiptReading Reading(
         string? merchant = "Sklep Przykład", float? merchantConfidence = 0.97f,
-        DateOnly? date = null, float? dateConfidence = 0.95f, decimal? total = 20.60m, float? totalConfidence = 0.5f) =>
-        new(merchant, merchantConfidence, date ?? new DateOnly(2026, 10, 8), dateConfidence, total, totalConfidence);
+        DateOnly? date = null, float? dateConfidence = 0.95f, decimal? total = 20.60m, float? totalConfidence = 0.5f,
+        IReadOnlyList<ReceiptLine>? items = null) =>
+        new(merchant, merchantConfidence, date ?? new DateOnly(2026, 10, 8), dateConfidence, total, totalConfidence, items);
+
+    /// <summary>Handler zapisu z kategoryzatorem podstawianym przez test (domyślnie bez podpowiedzi).</summary>
+    private SaveReceiptCommandHandler Save(CategorySuggestion? suggestion = null) => new(
+        _db,
+        new FakeCategorizer(suggestion ?? CategorySuggestion.None),
+        new ImportConfidenceThreshold(Options.Create(new CategorizationOptions { ConfidenceThreshold = 0.7m })),
+        new ImportBudgetLookup(_db),
+        new TransactionBudgetScope(_db, _clock),
+        new StandingOrderMatcher(_db),
+        new SavingsTransferMatcher(_db),
+        _clock);
 
     private UploadReceiptCommandHandler Upload(IReceiptReader reader) =>
         new(_db, reader, new ReceiptFiles(TestBlobs.Client()), new FakeCurrentUserAccessor(_userId), _clock);
@@ -120,7 +139,7 @@ public sealed class ReceiptsTests : IAsyncLifetime
         var tx = await AddExpenseAsync(-20.60m, new DateOnly(2026, 10, 8));
         var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
 
-        var saved = await new SaveReceiptCommandHandler(_db).HandleAsync(
+        var saved = await Save().HandleAsync(
             uploaded.Id, new SaveReceiptRequestDto(tx.BusinessId, " Poprawiony ", new DateOnly(2026, 10, 8), 20.60m),
             CancellationToken.None);
 
@@ -134,7 +153,7 @@ public sealed class ReceiptsTests : IAsyncLifetime
     {
         var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
 
-        await Assert.ThrowsAsync<ReceiptTransactionInvalidException>(() => new SaveReceiptCommandHandler(_db).HandleAsync(
+        await Assert.ThrowsAsync<ReceiptTransactionInvalidException>(() => Save().HandleAsync(
             uploaded.Id, new SaveReceiptRequestDto(Guid.NewGuid(), null, null, null), CancellationToken.None));
     }
 
@@ -143,10 +162,106 @@ public sealed class ReceiptsTests : IAsyncLifetime
     {
         var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
 
-        await new SaveReceiptCommandHandler(_db).HandleAsync(
+        await Save().HandleAsync(
             uploaded.Id, new SaveReceiptRequestDto(null, "Sklep", null, 20.60m), CancellationToken.None);
 
         Assert.Null((await _db.Receipts.SingleAsync(r => r.BusinessId == uploaded.Id)).TransactionBusinessId);
+    }
+
+    private static readonly ReceiptLine[] Products =
+    [
+        new("Chleb pszenny", 1m, 4.50m, 4.50m),
+        new("Ser żółty", null, null, 12.90m),
+    ];
+
+    [Fact]
+    public async Task Upload_keeps_the_products_and_returns_them_with_the_fields()
+    {
+        var result = await UploadJpegAsync(new FakeReceiptReader(Reading(items: Products)));
+
+        var stored = (await _db.Receipts.SingleAsync(r => r.BusinessId == result.Id)).Items;
+        Assert.Equal(["Chleb pszenny", "Ser żółty"], result.Items.Select(i => i.Name));
+        // Łapie produkty, które wracały z odpowiedzi, ale nie zapisywały się w jsonb (znikały po odświeżeniu listy).
+        Assert.Equal(Products, stored);
+    }
+
+    [Fact]
+    public async Task Products_come_back_with_the_receipts_of_a_transaction()
+    {
+        var tx = await AddExpenseAsync(-17.40m, new DateOnly(2026, 10, 8));
+        var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading(items: Products)));
+        await Save().HandleAsync(uploaded.Id, new SaveReceiptRequestDto(tx.BusinessId, "Sklep", null, 17.40m), CancellationToken.None);
+
+        var receipts = await new GetTransactionReceiptsQueryHandler(_db).HandleAsync(tx.BusinessId, CancellationToken.None);
+
+        Assert.Equal(2, Assert.Single(receipts).Items.Count);
+    }
+
+    [Fact]
+    public async Task Creating_a_transaction_from_a_receipt_books_a_negative_amount_in_the_default_budget()
+    {
+        var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading(items: Products)));
+
+        var saved = await Save().HandleAsync(
+            uploaded.Id,
+            new SaveReceiptRequestDto(null, "Sklep Żabka", new DateOnly(2026, 10, 11), 8.99m, CreateTransaction: true),
+            CancellationToken.None);
+
+        var tx = await _db.Transactions.SingleAsync(t => t.BusinessId == saved.TransactionId);
+        // Znak: wydatek jest ujemny, paragon niesie sumę dodatnią.
+        Assert.Equal((-8.99m, "Sklep Żabka", new DateOnly(2026, 10, 11), _budget.BusinessId), (tx.Amount, tx.Description, tx.Date, tx.BudgetBusinessId));
+        Assert.Null(tx.ImportBatchId);
+    }
+
+    [Fact]
+    public async Task A_transaction_created_without_a_category_suggestion_waits_for_review()
+    {
+        var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
+
+        var saved = await Save().HandleAsync(
+            uploaded.Id, new SaveReceiptRequestDto(null, "Sklep", null, 20.60m, CreateTransaction: true), CancellationToken.None);
+
+        var tx = await _db.Transactions.SingleAsync(t => t.BusinessId == saved.TransactionId);
+        Assert.Equal(TransactionStatus.PendingReview, tx.Status);
+    }
+
+    [Fact]
+    public async Task A_confident_category_suggestion_is_applied_to_the_created_transaction()
+    {
+        var category = new Category("Jedzenie");
+        _db.Add(category);
+        await _db.SaveChangesAsync();
+        var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
+
+        var saved = await Save(new CategorySuggestion(category.Id, 0.95m)).HandleAsync(
+            uploaded.Id, new SaveReceiptRequestDto(null, "Sklep", null, 20.60m, CreateTransaction: true), CancellationToken.None);
+
+        var tx = await _db.Transactions.SingleAsync(t => t.BusinessId == saved.TransactionId);
+        Assert.Equal((category.Id, TransactionStatus.AutoCategorized), (tx.CategoryId, tx.Status));
+    }
+
+    [Fact]
+    public async Task Creating_a_transaction_without_a_total_is_rejected_and_creates_nothing()
+    {
+        var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
+
+        await Assert.ThrowsAsync<ReceiptFieldsInvalidException>(() => Save().HandleAsync(
+            uploaded.Id, new SaveReceiptRequestDto(null, "Sklep", null, null, CreateTransaction: true), CancellationToken.None));
+
+        Assert.Empty(await _db.Transactions.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Choosing_an_existing_transaction_never_creates_another_one()
+    {
+        var tx = await AddExpenseAsync(-20.60m, new DateOnly(2026, 10, 8));
+        var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
+
+        await Save().HandleAsync(
+            uploaded.Id, new SaveReceiptRequestDto(tx.BusinessId, "Sklep", null, 20.60m, CreateTransaction: true), CancellationToken.None);
+
+        // Łapie duplikat: flaga „utwórz” przy wskazanej transakcji ma być ignorowana.
+        Assert.Single(await _db.Transactions.ToListAsync());
     }
 
     [Fact]
@@ -154,7 +269,7 @@ public sealed class ReceiptsTests : IAsyncLifetime
     {
         var uploaded = await UploadJpegAsync(new FakeReceiptReader(Reading()));
 
-        await Assert.ThrowsAsync<ReceiptFieldsInvalidException>(() => new SaveReceiptCommandHandler(_db).HandleAsync(
+        await Assert.ThrowsAsync<ReceiptFieldsInvalidException>(() => Save().HandleAsync(
             uploaded.Id, new SaveReceiptRequestDto(null, "Sklep", null, 0m), CancellationToken.None));
     }
 
@@ -199,6 +314,13 @@ public sealed class ReceiptsTests : IAsyncLifetime
 
         Assert.Empty(await handler.HandleAsync([_budget.BusinessId], null, new DateOnly(2026, 10, 8), CancellationToken.None));
         Assert.Empty(await handler.HandleAsync([_budget.BusinessId], 20.60m, null, CancellationToken.None));
+    }
+
+    private sealed class FakeCategorizer(CategorySuggestion suggestion) : ICategorizer
+    {
+        public Task<CategorySuggestion> CategorizeAsync(
+            string normalizedDescription, string transactionType, decimal amount, CancellationToken ct) =>
+            Task.FromResult(suggestion);
     }
 
     private sealed class FakeReceiptReader(ReceiptReading? reading) : IReceiptReader

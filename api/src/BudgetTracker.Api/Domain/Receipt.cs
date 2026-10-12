@@ -52,6 +52,12 @@ public class Receipt(
 
     public DateTimeOffset CreatedAt { get; protected set; } = createdAt;
 
+    /// <summary>Produkty odczytane z paragonu — kolumna <c>jsonb</c>, kasuje się razem z paragonem; patrz <see cref="ReceiptLine"/>.</summary>
+    public List<ReceiptLine> Items { get; protected set; } = [];
+
+    /// <summary>Zapisuje odczytane produkty (przy wgraniu paragonu; użytkownik ich nie edytuje).</summary>
+    public void SetItems(IEnumerable<ReceiptLine> items) => Items = [.. items];
+
     /// <summary>Zapisuje pola po poprawkach użytkownika z ekranu weryfikacji.</summary>
     public void Correct(string? merchant, DateOnly? receiptDate, decimal? total)
     {

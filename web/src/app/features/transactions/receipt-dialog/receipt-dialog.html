@@ -112,6 +112,28 @@
             </div>
           </div>
 
+          @if (read()?.items?.length) {
+            <h3 class="rcpt__heading">{{ 'transactions.receipt.products' | translate }}</h3>
+            <table class="rcpt__products">
+              <thead>
+                <tr>
+                  <th>{{ 'transactions.receipt.product' | translate }}</th>
+                  <th>{{ 'transactions.receipt.quantity' | translate }}</th>
+                  <th>{{ 'transactions.receipt.value' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (product of read()!.items; track $index) {
+                  <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.quantity === null ? '—' : product.quantity }}</td>
+                    <td>{{ product.totalPrice === null ? '—' : money(product.totalPrice) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
           @if (transaction(); as tx) {
             <p class="rcpt__target">
               {{ 'transactions.receipt.forTransaction' | translate: { description: tx.description, date: day(tx.date), amount: money(tx.amount) } }}

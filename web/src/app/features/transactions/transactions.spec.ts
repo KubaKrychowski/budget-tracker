@@ -383,6 +383,34 @@ describe('Transactions', () => {
     expect(receiptCells).toEqual(['2', '—']);
   });
 
+  it('wiersz z paragonem rozwija się do produktów, wiersz bez paragonu nie ma szewronu', async () => {
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', search: 'produkty' },
+    });
+    await settle(response({
+      items: [row({ id: 'a', amount: -8.99, receiptCount: 1 }), row({ id: 'b', receiptCount: 0 })],
+      total: 2,
+    }));
+
+    const expanders = fixture.nativeElement.querySelectorAll('tbody .ant-table-row-expand-icon') as NodeListOf<HTMLElement>;
+    // Łapie szewron na każdym wierszu: rozwijać można tylko to, co ma paragon.
+    expect(Array.from(expanders).filter((e) => !e.classList.contains('ant-table-row-spaced')).length).toBe(1);
+
+    (Array.from(expanders).find((e) => !e.classList.contains('ant-table-row-spaced')) as HTMLElement).click();
+    await settle();
+    http.expectOne('/api/transactions/a/receipts').flush([{
+      id: 'r1', fileName: 'p.jpg', contentType: 'image/jpeg', sizeBytes: 10, merchant: 'Sklep Żabka', date: '2026-10-11',
+      total: 8.99, transactionId: 'a',
+      items: [{ name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 }],
+    }]);
+    await settle();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Pierogi ruskie 320 g');
+    // Suma pozycji (8,99) zgadza się z kwotą transakcji (−8,99) — tag „zgadza się”.
+    expect(text).toContain('transactions.receipt.sumMatches');
+  });
+
   it('przycisk „Dodaj paragon” otwiera okno dodawania z wyborem pliku', async () => {
     const button = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .find((b) => (b.textContent ?? '').includes('transactions.receipt.add'));

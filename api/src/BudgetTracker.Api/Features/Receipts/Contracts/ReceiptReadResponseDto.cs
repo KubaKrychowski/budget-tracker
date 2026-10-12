@@ -8,6 +8,7 @@ namespace BudgetTracker.Api.Features.Receipts.Contracts;
 /// <param name="MerchantUncertain">Pole puste albo pewność OCR poniżej progu — ekran oznacza je „sprawdź”.</param>
 /// <param name="DateUncertain">Jak <paramref name="MerchantUncertain"/>, dla daty.</param>
 /// <param name="TotalUncertain">Jak <paramref name="MerchantUncertain"/>, dla sumy.</param>
+/// <param name="Items">Produkty odczytane z paragonu — tylko do wglądu, bez edycji.</param>
 public sealed record ReceiptReadResponseDto(
     Guid Id,
     string FileName,
@@ -16,4 +17,5 @@ public sealed record ReceiptReadResponseDto(
     decimal? Total,
     bool MerchantUncertain,
     bool DateUncertain,
-    bool TotalUncertain);
+    bool TotalUncertain,
+    IReadOnlyList<ReceiptLineResponseDto> Items);

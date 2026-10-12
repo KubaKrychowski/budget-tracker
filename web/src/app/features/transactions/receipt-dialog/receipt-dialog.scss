@@ -166,3 +166,31 @@
     max-height: 200px;
   }
 }
+
+/* Produkty odczytane z paragonu — tylko do wglądu (makieta Figma 434:6171). */
+.rcpt__products {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+  background: var(--ds-neutral-100);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: 6px;
+
+  th {
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ds-text-description);
+    text-align: left;
+  }
+
+  td {
+    padding: 4px 8px;
+  }
+
+  th:not(:first-child),
+  td:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Azure;
 using Azure.AI.DocumentIntelligence;
+using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Features.Receipts.Exceptions;
 using BudgetTracker.Api.Features.Receipts.Models;
 
@@ -33,13 +34,45 @@ public sealed class AzureReceiptReader(DocumentIntelligenceClient client) : IRec
             return new ReceiptReading(
                 merchant?.ValueString?.Trim(), merchant?.Confidence,
                 date?.ValueDate is { } d ? DateOnly.FromDateTime(d.DateTime) : null, date?.Confidence,
-                totalValue, ReceiptTotalCheck.Adjust(totalValue, total?.Confidence, ItemPrices(items)));
+                totalValue, ReceiptTotalCheck.Adjust(totalValue, total?.Confidence, ItemPrices(items)),
+                Lines(items));
         }
         catch (Exception e) when (e is RequestFailedException or InvalidOperationException)
         {
             throw new ReceiptReaderUnavailableException(e);
         }
     }
+
+    /// <summary>Pozycje paragonu: nazwa z linii, ilość, cena jednostkowa i wartość; linie bez nazwy pomijamy.</summary>
+    private static IReadOnlyList<ReceiptLine> Lines(DocumentField? items)
+    {
+        if (items?.ValueList is not { Count: > 0 } list) return [];
+
+        var lines = new List<ReceiptLine>();
+        foreach (var item in list)
+        {
+            if (item.ValueDictionary is not { } fields) continue;
+
+            var name = fields.TryGetValue("Description", out var description) && description.ValueString is { } raw
+                ? ReceiptLine.CleanName(raw)
+                : null;
+            if (string.IsNullOrEmpty(name)) continue;
+
+            lines.Add(new ReceiptLine(
+                name,
+                fields.TryGetValue("Quantity", out var quantity) && quantity.ValueDouble is { } q
+                    ? Convert.ToDecimal(q, CultureInfo.InvariantCulture) : null,
+                Amount(fields, "Price"),
+                Amount(fields, "TotalPrice")));
+        }
+
+        return lines;
+    }
+
+    private static decimal? Amount(IReadOnlyDictionary<string, DocumentField> fields, string key) =>
+        fields.TryGetValue(key, out var field) && field.ValueCurrency is { } currency
+            ? Convert.ToDecimal(currency.Amount, CultureInfo.InvariantCulture)
+            : null;
 
     /// <summary>Ceny pozycji, ale tylko gdy MA je KAŻDA — suma części nie jest porównywalna z sumą całości.</summary>
     private static IReadOnlyList<decimal> ItemPrices(DocumentField? items)

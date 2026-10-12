@@ -1651,7 +1651,7 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 
 ## 17. Paragony (OCR)
 
-**Paragon to załącznik transakcji, nie jej część.** Zdjęcie albo PDF paragonu jest odczytywane OCR-em (sprzedawca, data, suma), a użytkownik dopasowuje je do transakcji z importu CSV. Paragon niczego nie zmienia: ani kwoty, ani kategorii, ani opisu. ⚠️ Zasada „transakcja jest najmniejszą jednostką” (README) zostaje bez zmian — **pozycji paragonu świadomie nie odczytujemy** (osobne decyzje: encja pozycji, podział kategorii, migracja). Makieta: Figma, strona „Lista transakcji”, ramka 432:6880.
+**Paragon to załącznik transakcji, nie jej część.** Zdjęcie albo PDF paragonu jest odczytywane OCR-em (sprzedawca, data, suma), a użytkownik dopasowuje je do transakcji z importu CSV. Paragon niczego nie zmienia: ani kwoty, ani kategorii, ani opisu. ⚠️ Zasada „transakcja jest najmniejszą jednostką” (README) zostaje bez zmian — **pozycji paragonu pierwotnie świadomie nie odczytywaliśmy** — to się zmieniło, patrz REWIZJA 2026-10-12 („produkty z paragonu”) na końcu pliku; podział transakcji na kategorie według pozycji nadal NIE jest zrobiony. Makieta: Figma, strona „Lista transakcji”, ramka 432:6880.
 
 - **Silnik: Azure AI Document Intelligence, model `prebuilt-receipt`** (decyzja właściciela, 2026-10-10). Wybór siedzi za `IReceiptReader` i konfiguracją (`Receipts:Endpoint`): jest adres → `AzureReceiptReader`; `Demo:Seed=true` bez adresu → `DemoReceiptReader` (zmyślone pola, do zrzutów i UI); w pozostałych przypadkach `UnconfiguredReceiptReader` zwraca 503, a reszta API działa. Brak adresu NIE przewraca startu — inaczej niż `Storage:BlobServiceUri`.
 - ⚠️ **Obraz paragonu wychodzi do chmury Microsoftu.** To jedyne takie miejsce w aplikacji i dlatego ekran dodawania mówi o tym wprost (alert u góry). Uwierzytelnienie to tożsamość zarządzana API (rola „Cognitive Services User”), konto usługi ma wyłączone klucze (`local_auth_enabled = false`) — jak magazyn blob.
@@ -1678,3 +1678,21 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 > - `npm run lint` uruchamia `check-silent-renew.mjs`: pilnuje wyjątku dla tej jednej strony i tego, że reszta serwisu zostaje nie do osadzenia. Test jednostkowy
 >   nie widzi nagłówków hostingu, dlatego to skrypt na pliku konfiguracji.
 > - ⚠️ Nie sprawdzone po wdrożeniu ani w przeglądarce: potwierdzić, że `curl -I https://app.wydatki.com/silent-renew.html` zwraca SAMEORIGIN, a po 15 minutach pracy 401 nie wraca.
+
+> **REWIZJA — 2026-10-12: produkty z paragonu** (decyzja właściciela; `Domain/ReceiptLine.cs`, `Receipt.Items`, migracja `AddReceiptItems`,
+> `SaveReceiptCommandHandler`, `receipt-dialog`, wiersz rozwijany w `transactions`; makieta Figma, strona „Lista transakcji”, ramka 434:6171):
+> - **Zmienia zasadę „bez pozycji paragonu” — ale tylko w jednym wymiarze.** Aplikacja odczytuje i pokazuje PRODUKTY z paragonu, lecz transakcja zostaje
+>   jednym rekordem z jedną kwotą i jedną kategorią. Produkty to warstwa informacyjna: nie dzielą kwoty, nie mają kategorii, nie wchodzą do sum ani
+>   limitów. Podział transakcji na kategorie według pozycji NIE jest zrobiony i wymagałby osobnej decyzji (encja pozycji, podział kwoty).
+> - **Dane:** `Receipt.Items` to kolumna `jsonb` (lista `ReceiptLine`: nazwa, ilość, cena jednostkowa, wartość), kasuje się z paragonem. Azure zwraca pozycje
+>   w tej samej odpowiedzi, więc to nie jest dodatkowe płatne wywołanie. Nazwa traci literę stawki PTU doklejoną przez kasę („…320g-C” → „…320g”).
+>   Paragony wgrane PRZED tą zmianą nie mają produktów (lista pusta) i nie da się ich odczytać wstecz bez ponownego płatnego odczytu pliku.
+> - **Ekran:** wiersz transakcji z paragonem ma szewron; rozwinięcie pobiera `GET /api/transactions/{id}/receipts` (lista nie niesie produktów całej strony,
+>   tylko licznik). Pokazuje produkty, „Razem z pozycji” i znacznik, czy suma zgadza się z kwotą transakcji (rozjazd bywa uczciwy: rabat, zaokrąglenie).
+>   Ekran weryfikacji pokazuje produkty tylko do wglądu. Nie ma jeszcze rozwijania na widoku mobilnym (karty).
+> - **„Żadna z nich” zakłada nową transakcję z paragonu** (`CreateTransaction`): data i sprzedawca z paragonu (po poprawkach), kwota UJEMNA, budżet z żądania albo
+>   domyślny, bez partii importu i numeru referencyjnego (jak transakcja ręczna). Przechodzi tę samą ścieżkę co wiersz importu: kategoryzator (reguły, potem ML),
+>   próg pewności decyduje o statusie (poniżej progu albo bez kategorii → do przeglądu), potem przypięcie do zleceń stałych i reguł transferu.
+> - ⚠️ **Znane ryzyko, świadomie przyjęte:** gdy ta sama płatność wpadnie później z wyciągu banku, będzie dwa razy (nie ma wykrywania duplikatu między paragonem
+>   a importem). Rozwiązanie na później: przy imporcie dopasować nową transakcję do istniejącej z paragonu po kwocie i dacie.
+> - Sprawdzone na żywym Azure na prawdziwym paragonie: sprzedawca, data, suma 8,99 i produkt „PIEROGI RUSKI 320g” (ilość 1, 8,99) odczytane poprawnie.

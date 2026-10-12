@@ -260,6 +260,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.Property(x => x.Total).HasColumnType("numeric(18,2)");
             e.Property(x => x.CreatedAt).HasColumnType("timestamptz");
             e.HasIndex(x => x.TransactionBusinessId);
+            // Produkty jako jsonb: warstwa informacyjna bez własnego cyklu życia — kasują się razem z paragonem.
+            e.ComplexCollection(x => x.Items, i => i.ToJson());
 
             e.HasIndex(x => x.UserId);
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);

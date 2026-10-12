@@ -342,10 +342,9 @@
       "candidates": "Pasujące transakcje z importu",
       "matchExact": "pasuje",
       "matchPossible": "możliwe",
-      "none": "Żadna z nich — zapisz paragon bez łączenia z transakcją",
+      "none": "Żadna z nich — utwórz nową transakcję z paragonu",
       "forTransaction": "Paragon zostanie dołączony do transakcji: {{date}} · {{description}} · {{amount}} PLN.",
       "attach": "Dołącz do transakcji",
-      "saveOnly": "Zapisz paragon",
       "cancel": "Anuluj",
       "saved": "Paragon zapisany.",
       "savedAttached": "Paragon dołączony do transakcji.",
@@ -354,7 +353,19 @@
       "deleteHeader": "Usunąć paragon „{{name}}”?",
       "deleteDescription": "Plik zostanie usunięty z magazynu. Tej operacji nie da się cofnąć.",
       "deleted": "Paragon usunięty.",
-      "noReceipts": "Do tej transakcji nie ma paragonu."
+      "noReceipts": "Do tej transakcji nie ma paragonu.",
+      "createTransaction": "Utwórz transakcję",
+      "createdTransaction": "Transakcja utworzona z paragonu.",
+      "products": "Produkty z paragonu",
+      "productsTitle": "Produkty z paragonu — {{merchant}}, {{date}}",
+      "product": "Produkt",
+      "quantity": "Ilość",
+      "price": "Cena",
+      "value": "Wartość",
+      "itemsSum": "Razem z pozycji",
+      "sumMatches": "zgadza się z kwotą",
+      "sumDiffers": "nie zgadza się z kwotą",
+      "noProducts": "Nie odczytano produktów z tego paragonu."
     }
   },
   "currencies": {
