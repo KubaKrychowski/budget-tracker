@@ -414,7 +414,7 @@
         [nzShowSizeChanger]="true"
         [nzPageSizeOptions]="pageSizeOptions"
         (nzQueryParams)="onQueryParamsChange($event, txTable)"
-        [nzScroll]="{ x: '1380px' }"
+        [nzScroll]="{ x: '1420px' }"
         nzSize="small"
       >
         <thead>
@@ -424,6 +424,7 @@
               [nzChecked]="allOnPageSelected()"
               (nzCheckedChange)="toggleAllOnPage($event)"
             ></th>
+            <th nzWidth="40px"></th>
             <th nzWidth="160px" nzColumnKey="date" [nzSortFn]="true" [nzSortOrder]="sortOrderFor('date')">
               {{ 'transactions.columns.date' | translate }}
             </th>
@@ -525,6 +526,12 @@
                 [nzChecked]="selectedIds().has(item.id)"
                 [nzDisabled]="editingIds().has(item.id)"
                 (nzCheckedChange)="toggleRow(item.id, $event)"
+              ></td>
+              <!-- Szewron tylko przy wierszu z paragonem; reszta wierszy nie ma czego rozwinąć. -->
+              <td
+                [nzShowExpand]="item.receiptCount > 0"
+                [nzExpand]="expanded().has(item.id)"
+                (nzExpandChange)="toggleExpand(item.id, $event)"
               ></td>
 
               @if (editingIds().has(item.id)) {
@@ -636,6 +643,63 @@
                   </button>
                 </td>
               }
+            </tr>
+            <!-- Produkty z paragonu (makieta Figma 434:6171). Rozwija się tylko wiersz z paragonem (`receiptCount`). -->
+            <tr [nzExpand]="expanded().has(item.id)">
+              <div class="tx__products">
+                @let state = receiptsOf()[item.id];
+                @if (state === undefined || state === 'loading') {
+                  <nz-spin nzSimple />
+                } @else if (state === 'error') {
+                  <nz-alert nzType="error" nzShowIcon [nzMessage]="'errors.network' | translate" />
+                } @else {
+                  @for (receipt of state; track receipt.id) {
+                    <section class="tx__receipt">
+                      <header class="tx__receipt-head">
+                        <strong>{{ 'transactions.receipt.productsTitle' | translate: {
+                          merchant: receipt.merchant ?? receipt.fileName, date: receipt.date ? day(receipt.date) : '—'
+                        } }}</strong>
+                        <button nz-button nzSize="small" (click)="viewReceipt(receipt)">
+                          {{ 'transactions.rowMenu.viewReceipt' | translate }}
+                        </button>
+                      </header>
+                      @if (receipt.items.length === 0) {
+                        <p class="tx__receipt-empty">{{ 'transactions.receipt.noProducts' | translate }}</p>
+                      } @else {
+                        <table class="tx__ptable">
+                          <thead>
+                            <tr>
+                              <th>{{ 'transactions.receipt.product' | translate }}</th>
+                              <th class="tx__right">{{ 'transactions.receipt.quantity' | translate }}</th>
+                              <th class="tx__right">{{ 'transactions.receipt.price' | translate }}</th>
+                              <th class="tx__right">{{ 'transactions.receipt.value' | translate }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (product of receipt.items; track $index) {
+                              <tr>
+                                <td>{{ product.name }}</td>
+                                <td class="tx__right tnum">{{ quantity(product.quantity) }}</td>
+                                <td class="tx__right tnum">{{ product.unitPrice === null ? '—' : money(product.unitPrice) }}</td>
+                                <td class="tx__right tnum">{{ product.totalPrice === null ? '—' : money(product.totalPrice) }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                        @let sum = productsSum(receipt);
+                        @if (sum !== null) {
+                          <p class="tx__receipt-sum">
+                            {{ 'transactions.receipt.itemsSum' | translate }} <strong class="tnum">{{ money(sum) }} PLN</strong>
+                            <nz-tag [nzColor]="sumMatches(sum, item.amount) ? 'green' : 'gold'">
+                              {{ (sumMatches(sum, item.amount) ? 'transactions.receipt.sumMatches' : 'transactions.receipt.sumDiffers') | translate }}
+                            </nz-tag>
+                          </p>
+                        }
+                      }
+                    </section>
+                  }
+                }
+              </div>
             </tr>
           }
         </tbody>

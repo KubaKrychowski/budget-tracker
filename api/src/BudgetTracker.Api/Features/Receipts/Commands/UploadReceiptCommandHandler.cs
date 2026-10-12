@@ -41,6 +41,7 @@ public sealed class UploadReceiptCommandHandler(
             userId, blobName, Path.GetFileName(fileName), contentType, length, clock.GetUtcNow(),
             reading.Merchant, reading.Date, total);
 
+        receipt.SetItems(reading.Items ?? []);
         db.Receipts.Add(receipt);
         await db.SaveChangesAsync(ct);
 
@@ -48,7 +49,8 @@ public sealed class UploadReceiptCommandHandler(
             receipt.BusinessId, receipt.FileName, receipt.Merchant, receipt.ReceiptDate, receipt.Total,
             Uncertain(receipt.Merchant, reading.MerchantConfidence),
             Uncertain(receipt.ReceiptDate, reading.DateConfidence),
-            Uncertain(receipt.Total, reading.TotalConfidence));
+            Uncertain(receipt.Total, reading.TotalConfidence),
+            ReceiptMapping.Lines(receipt.Items));
     }
 
     private static bool Uncertain<T>(T? value, float? confidence) => value is null || confidence is null or < ConfidenceThreshold;

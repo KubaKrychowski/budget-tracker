@@ -45,6 +45,7 @@ describe('ReceiptDialog', () => {
     merchantUncertain: false,
     dateUncertain: false,
     totalUncertain: true,
+    items: [{ name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 }],
     ...over,
   });
 
@@ -131,6 +132,47 @@ describe('ReceiptDialog', () => {
     expect(text()).toContain('transactions.receipt.check');
     expect((document.querySelector('#rcpt-merchant') as HTMLInputElement).value).toBe('Sklep Przykład');
     expect((document.querySelector('#rcpt-c-t1') as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('po odczycie pokazuje produkty z paragonu', async () => {
+    await uploadFile(uploaded());
+    candidateRequests().forEach((r) => r.flush([exact]));
+    await settle();
+
+    expect(document.querySelector('.rcpt__products')?.textContent).toContain('Pierogi ruskie 320 g');
+  });
+
+  it('„Żadna z nich” zakłada nową transakcję i tak nazywa przycisk', async () => {
+    await uploadFile(uploaded());
+    candidateRequests().forEach((r) => r.flush([]));
+    await settle();
+
+    (document.querySelector('#rcpt-c-none') as HTMLInputElement).click();
+    await settle();
+    const buttons = document.querySelectorAll('.ant-modal-footer button');
+    const ok = buttons[buttons.length - 1] as HTMLButtonElement;
+    expect(ok.textContent).toContain('transactions.receipt.createTransaction');
+    ok.click();
+    await settle();
+
+    // Łapie „utwórz” gubione po drodze: bez flagi serwer zostawiłby paragon bez transakcji, a produkty bez domu.
+    const put = http.expectOne((r) => r.url === '/api/receipts/r1' && r.method === 'PUT');
+    expect(put.request.body).toMatchObject({ transactionId: null, createTransaction: true, budgetId: 'b1' });
+    put.flush({});
+  });
+
+  it('wskazanie istniejącej transakcji nie prosi o utworzenie nowej', async () => {
+    await uploadFile(uploaded());
+    candidateRequests().forEach((r) => r.flush([exact]));
+    await settle();
+
+    const buttons = document.querySelectorAll('.ant-modal-footer button');
+    (buttons[buttons.length - 1] as HTMLButtonElement).click();
+    await settle();
+
+    const put = http.expectOne((r) => r.url === '/api/receipts/r1' && r.method === 'PUT');
+    expect(put.request.body).toMatchObject({ transactionId: 't1', createTransaction: false });
+    put.flush({});
   });
 
   it('zapis wysyła poprawione pola i wybraną transakcję, a potem zgłasza zapis', async () => {

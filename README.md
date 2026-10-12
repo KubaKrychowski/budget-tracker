@@ -212,8 +212,9 @@ W Claude Code to samo robi `/verify`.
   zapraszania, wspólnych budżetów ani wdrożenia w chmurze. To instalacja dla jednej osoby.
 - **Odczytu salda z banku** — saldo otwarcia podajesz sam przy zakładaniu budżetu, resztę
   aplikacja liczy z zaimportowanych transakcji. Konto, którego nie wgrasz, nie istnieje w rachunku.
-- **Pozycji paragonu** — transakcja jest najmniejszą jednostką. Paragon (zdjęcie lub PDF) da się dołączyć do transakcji
-  jako załącznik z odczytem OCR sprzedawcy, daty i sumy (DECISIONS.md §17), ale nie dzieli ona transakcji na pozycje.
+- **Podziału transakcji na pozycje paragonu** — transakcja jest najmniejszą jednostką z jedną kwotą i kategorią. Paragon (zdjęcie lub PDF)
+  da się dołączyć jako załącznik z odczytem OCR sprzedawcy, daty i sumy, a produkty z paragonu widać po rozwinięciu wiersza transakcji,
+  ale nie dzielą kwoty ani kategorii (DECISIONS.md §17).
 
 ⚠️ **Font**: `web/src/styles/design-tokens.less` deklaruje `IBM Plex Sans` (z design systemu
 w Figmie) i makiety są na nim zrobione, ale komentarz w `web/src/styles.scss` wciąż twierdzi,

@@ -340,10 +340,9 @@
       "candidates": "Matching imported transactions",
       "matchExact": "match",
       "matchPossible": "possible",
-      "none": "None of them — save the receipt without linking it to a transaction",
+      "none": "None of them — create a new transaction from the receipt",
       "forTransaction": "The receipt will be attached to the transaction: {{date}} · {{description}} · {{amount}} PLN.",
       "attach": "Attach to transaction",
-      "saveOnly": "Save receipt",
       "cancel": "Cancel",
       "saved": "Receipt saved.",
       "savedAttached": "Receipt attached to the transaction.",
@@ -352,7 +351,19 @@
       "deleteHeader": "Delete the receipt \"{{name}}\"?",
       "deleteDescription": "The file will be removed from storage. This cannot be undone.",
       "deleted": "Receipt deleted.",
-      "noReceipts": "This transaction has no receipt."
+      "noReceipts": "This transaction has no receipt.",
+      "createTransaction": "Create transaction",
+      "createdTransaction": "Transaction created from the receipt.",
+      "products": "Receipt products",
+      "productsTitle": "Receipt products — {{merchant}}, {{date}}",
+      "product": "Product",
+      "quantity": "Qty",
+      "price": "Price",
+      "value": "Amount",
+      "itemsSum": "Items total",
+      "sumMatches": "matches the amount",
+      "sumDiffers": "doesn't match the amount",
+      "noProducts": "No products were read from this receipt."
     }
   },
   "currencies": {

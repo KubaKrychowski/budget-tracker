@@ -1,0 +1,64 @@
+/* Produkty z paragonu pod wierszem transakcji — makieta Figma 434:6171. Osobny arkusz, bo transactions.scss jest przy budżecie stylu
+   komponentu (angular.json, anyComponentStyle) — tak samo jak transactions.mobile.scss. Kolory tylko z tokenów. */
+.tx__products {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--ds-neutral-100);
+}
+
+.tx__receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tx__receipt-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tx__receipt-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ds-text-description);
+}
+
+.tx__ptable {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+
+  th {
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ds-text-description);
+    text-align: left;
+  }
+
+  td {
+    padding: 4px 8px;
+  }
+
+  .tx__right {
+    text-align: right;
+  }
+}
+
+.tx__receipt-sum {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ds-text-description);
+
+  strong {
+    color: inherit;
+  }
+}
