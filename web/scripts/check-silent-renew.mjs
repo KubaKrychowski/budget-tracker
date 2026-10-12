@@ -27,6 +27,12 @@ if (!/frame-ancestors 'none'/.test(config.globalHeaders?.['Content-Security-Poli
   problems.push("globalne CSP musi zostać z frame-ancestors 'none'");
 }
 
+// Podgląd paragonu (okno „Dodaj paragon") to <img> z adresem blob: zrobionym z wybranego pliku. Bez `blob:` w img-src
+// przeglądarka go blokuje i okno pokazuje ikonę zepsutego obrazka — dokładnie tak było na produkcji.
+if (!/img-src[^;]*blob:/.test(config.globalHeaders?.['Content-Security-Policy'] ?? '')) {
+  problems.push("globalne CSP musi dopuszczać blob: w img-src (podgląd paragonu)");
+}
+
 // Skrypt inline wymagałby w CSP hasha zależnego od końców linii — dlatego skrypt jest w osobnym pliku.
 if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(html)) problems.push('silent-renew.html ma skrypt inline — CSP tej strony dopuszcza tylko script-src \'self\'');
 if (!/script-src 'self'/.test(csp)) problems.push("CSP tej strony musi dopuszczać script-src 'self' (skrypt jest w silent-renew.js)");
