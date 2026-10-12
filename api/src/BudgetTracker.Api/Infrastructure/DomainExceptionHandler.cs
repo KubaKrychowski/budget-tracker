@@ -5,6 +5,7 @@ using BudgetTracker.Api.Features.Budgets.Exceptions;
 using BudgetTracker.Api.Features.Categories.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Limits.Exceptions;
+using BudgetTracker.Api.Features.Receipts.Exceptions;
 using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Features.EpisodicOrders.Exceptions;
 using BudgetTracker.Api.Features.StandingOrders.Exceptions;
@@ -119,6 +120,13 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         StrategyGraphInvalidException => (StatusCodes.Status400BadRequest, "Strategy_GraphInvalid"),
         StrategyVariantInvalidException => (StatusCodes.Status400BadRequest, "Strategy_VariantInvalid"),
         StrategyApplyNothingSelectedException => (StatusCodes.Status400BadRequest, "Strategy_ApplyNothingSelected"),
+
+        ReceiptFileInvalidException => (StatusCodes.Status400BadRequest, "Receipt_FileInvalid"),
+        ReceiptFieldsInvalidException => (StatusCodes.Status400BadRequest, "Receipt_FieldsInvalid"),
+        // 400, nie 404: transakcja przychodzi w CIELE żądania — ta sama zasada co przy rozliczeniu rezerwacji.
+        ReceiptTransactionInvalidException => (StatusCodes.Status400BadRequest, "Receipt_TransactionInvalid"),
+        // Żądanie poprawne, to usługa OCR nie może go obsłużyć — 503, klient może spróbować ponownie.
+        ReceiptReaderUnavailableException => (StatusCodes.Status503ServiceUnavailable, "Receipt_ReaderUnavailable"),
 
         // Trzy razy ta sama historia: reguła zapisałaby się bez błędu i nigdy nie zadziałała.
         // 400, bo to wejście jest niepoprawne, a nie stan zasobu.

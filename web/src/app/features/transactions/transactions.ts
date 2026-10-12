@@ -37,6 +37,8 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { DraftRow } from './draft-row';
 import { parseAmount } from '../../core/parse-amount';
+import { ReceiptItem } from '../../core/api/models/receipts';
+import { ReceiptDialog } from './receipt-dialog/receipt-dialog';
 
 /** Wartość selecta kategorii dla wierszy bez kategorii — myliłaby się z „nic nie wybrano". */
 const NoCategory = '__brak__';
@@ -122,7 +124,7 @@ interface SelectionPayload {
     NzAlertModule, NzBadgeModule, NzBreadCrumbModule, NzButtonModule, NzDatePickerModule,
     NzDrawerModule, NzDropdownModule, NzEmptyModule, NzIconModule, NzInputModule, NzInputNumberModule,
     NzModalModule, NzPaginationModule, NzSelectModule, NzSpinModule, NzStatisticModule, NzTableModule, NzTagModule,
-    TranslatePipe, EnumTranslatePipe,
+    TranslatePipe, EnumTranslatePipe, ReceiptDialog,
   ],
   templateUrl: './transactions.html',
   styleUrls: ['./transactions.scss', './transactions.mobile.scss'],
@@ -735,6 +737,83 @@ export class Transactions {
     } catch (e) {
       this.message.error(this.errorMessages.of(e));
     }
+  }
+
+  // ── Paragony (OCR) — makieta Figma 432:6880 ─────────────────────────────────────────
+  //
+  // Dialog dodawania jest osobnym komponentem. Z paska nad tabelą — z wyborem transakcji spośród kandydatów;
+  // z menu wiersza — z góry przypięty do tego wiersza.
+
+  protected readonly receiptOpen = signal(false);
+  protected readonly receiptTransaction = signal<TransactionListItem | null>(null);
+
+  protected openReceipt(transaction: TransactionListItem | null): void {
+    this.receiptTransaction.set(transaction);
+    this.receiptOpen.set(true);
+  }
+
+  protected addReceiptMenuRow(): void {
+    this.openReceipt(this.menuRow());
+  }
+
+  protected onReceiptSaved(): void {
+    this.list.reload();
+  }
+
+  /**
+   * Podgląd najnowszego paragonu transakcji w nowej karcie.
+   *
+   * ⚠️ Plik leży za autoryzacją, więc zwykły odnośnik nie zadziała — pobieramy go z tokenem i otwieramy jako blob.
+   * Pustą kartę otwieramy SYNCHRONICZNIE w kliknięciu, a adres dopisujemy po pobraniu: okno otwarte po `await`
+   * blokuje przeglądarka jako wyskakujące.
+   */
+  protected async viewReceiptMenuRow(): Promise<void> {
+    const row = this.menuRow();
+    if (!row) return;
+
+    const tab = window.open('', '_blank');
+    try {
+      const receipt = await this.newestReceipt(row.id);
+      if (!receipt) {
+        tab?.close();
+        this.message.info(this.translate.instant('transactions.receipt.noReceipts'));
+        return;
+      }
+      const blob = await firstValueFrom(this.http.get(`/api/receipts/${receipt.id}/file`, { responseType: 'blob' }));
+      const url = URL.createObjectURL(blob);
+      if (tab) tab.location.href = url;
+    } catch (e) {
+      tab?.close();
+      this.message.error(this.errorMessages.of(e));
+    }
+  }
+
+  protected async deleteReceiptMenuRow(): Promise<void> {
+    const row = this.menuRow();
+    if (!row) return;
+
+    try {
+      const receipt = await this.newestReceipt(row.id);
+      if (!receipt) return;
+
+      const confirmed = await this.confirmDialog.confirm({
+        header: this.translate.instant('transactions.receipt.deleteHeader', { name: receipt.fileName }),
+        description: this.translate.instant('transactions.receipt.deleteDescription'),
+        danger: true,
+      });
+      if (!confirmed) return;
+
+      await firstValueFrom(this.http.delete(`/api/receipts/${receipt.id}`));
+      this.message.success(this.translate.instant('transactions.receipt.deleted'));
+      this.list.reload();
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    }
+  }
+
+  private async newestReceipt(transactionId: string): Promise<ReceiptItem | undefined> {
+    const receipts = await firstValueFrom(this.http.get<ReceiptItem[]>(`/api/transactions/${transactionId}/receipts`));
+    return receipts[0];
   }
 
   // ── Transfer do budżetu oszczędnościowego (#10) ─────────────────────────────────────

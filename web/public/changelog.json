@@ -4,6 +4,10 @@
     "date": "2026-10-10",
     "pl": [
       {
+        "title": "Widżet limitów na pulpit (Android)",
+        "text": "Dodaj widżet na ekran główny telefonu i wybierz budżet oraz do czterech limitów. Zobaczysz na pasku, ile zostało w każdym, bez otwierania aplikacji."
+      },
+      {
         "title": "Warianty strategii: „co jeśli”",
         "text": "Wyłącz w strategii wybrane kafelki — np. podwyżkę albo ubezpieczenie — i porównaj wyniki obok siebie na wykresie, bez kopiowania całej strategii.",
         "link": "/strategies",
@@ -27,6 +31,10 @@
       }
     ],
     "en": [
+      {
+        "title": "Limits widget for your home screen (Android)",
+        "text": "Add a widget to your phone home screen and pick a budget and up to four limits. A bar shows how much is left in each, without opening the app."
+      },
       {
         "title": "Strategy variants: “what if”",
         "text": "Switch off chosen tiles in a strategy — say a raise or an insurance — and compare the results side by side on a chart, without copying the whole strategy.",

@@ -21,4 +21,6 @@ export interface TransactionListItem {
   savingsTransferBudgetId: string | null;
   /** Saldo rachunku po operacji z wyciągu banku; `null`, gdy transakcja ręczna albo bank salda nie podał. */
   balanceAfter: number | null;
+  /** Ile paragonów przypięto do transakcji — kolumna „Paragon"; `0` = brak. */
+  receiptCount: number;
 }

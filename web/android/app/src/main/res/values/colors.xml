@@ -2,4 +2,13 @@
 <resources>
     <!-- Neutral/50 z design-tokens.less - tlo ekranu startowego, jak okladka ladowania w index.html. -->
     <color name="splash_background">#F7FAF8</color>
+
+    <!-- Widzet limitow (jasny motyw; ciemny: values-night/colors.xml). Kolory pasków jak progi limitu w aplikacji. -->
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_text">#1F2421</color>
+    <color name="widget_text_secondary">#5F6661</color>
+    <color name="widget_track">#E4E8E5</color>
+    <color name="widget_ok">#639922</color>
+    <color name="widget_warn">#EF9F27</color>
+    <color name="widget_over">#E24B4A</color>
 </resources>

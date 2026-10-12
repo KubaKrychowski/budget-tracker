@@ -90,6 +90,9 @@ resource "azurerm_linux_web_app" "api" {
       Storage__SharedContainerName = azurerm_storage_container.shared.name
       Storage__TrainingSetName     = "training-set.csv"
 
+      # OCR paragonow (receipts.tf). Pusty adres wylaczylby odczyt (API zwraca wtedy 503), reszta aplikacji dziala.
+      Receipts__Endpoint = azurerm_cognitive_account.receipts.endpoint
+
       # Front woła API z innego originu (Static Web Apps), więc bez tej listy przeglądarka odrzuci każde
       # żądanie. Landing tu NIE jest wymieniony — to strona statyczna, która nie rozmawia z API.
       Cors__Origins__0 = local.front_url

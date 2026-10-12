@@ -19,6 +19,7 @@ infra/
 | Static Web App `-front` | aplikacja (Angular) | 0 zł (plan Free) |
 | Static Web App `-landing` | strona projektu | 0 zł (plan Free) |
 | Storage Account `…models…` | modele kategoryzacji i zbiór uczący (lokalnie robi to Azurite) | grosze |
+| Cognitive Services `…receipts` (Document Intelligence) | OCR paragonów; F0 darmowy, S0 płatny za stronę (patrz `receipts_ocr_sku`) | F0: 0, S0: ok. 10 USD / 1000 stron |
 | Storage Account `…tfstate…` | stan Terraforma (moduł `bootstrap`) | grosze |
 
 **Grupa zasobów musi już istnieć** — podajesz ją w `resource_group_name`, a Terraform jej nie tworzy

@@ -231,7 +231,8 @@
       "amount": "Kwota",
       "balance": "Saldo po operacji",
       "actions": "Akcje",
-      "episodic": "Epizodyczne"
+      "episodic": "Epizodyczne",
+      "receipt": "Paragon"
     },
     "selection": {
       "count": "Zaznaczono: {{count}}",
@@ -253,7 +254,10 @@
       "delete": "Usuń",
       "markEpisodic": "Oznacz jako zlecenie epizodyczne…",
       "goToEpisodic": "Przejdź do zlecenia epizodycznego",
-      "unpinSavingsTransfer": "Odepnij transfer"
+      "unpinSavingsTransfer": "Odepnij transfer",
+      "addReceipt": "Dodaj paragon do tej transakcji…",
+      "viewReceipt": "Podgląd paragonu",
+      "deleteReceipt": "Usuń paragon"
     },
     "savingsTransfer": {
       "badge": "Transfer",
@@ -317,6 +321,40 @@
       "anyCategory": "Wszystkie kategorie",
       "showResults": "Pokaż wyniki",
       "balance": "Saldo {{amount}}"
+    },
+    "receipt": {
+      "add": "Dodaj paragon",
+      "title": "Dodaj paragon",
+      "reviewTitle": "Sprawdź odczyt paragonu",
+      "intro": "Wgraj zdjęcie lub PDF paragonu — odczytamy sprzedawcę, datę i sumę.",
+      "privacy": "Zdjęcie jest wysyłane do usługi Azure w celu odczytu i zapisywane jako załącznik transakcji.",
+      "drop": "Przeciągnij tu zdjęcie lub PDF paragonu",
+      "hint": "JPG, PNG, HEIC lub PDF · do 10 MB",
+      "takePhoto": "Zrób zdjęcie",
+      "reading": "Odczytuję paragon…",
+      "uncertain": "Nie jesteśmy pewni pól: {{fields}} — porównaj je z paragonem.",
+      "preview": "Podgląd paragonu",
+      "merchant": "Sprzedawca",
+      "date": "Data",
+      "total": "Suma (PLN)",
+      "sure": "pewny odczyt",
+      "check": "sprawdź",
+      "candidates": "Pasujące transakcje z importu",
+      "matchExact": "pasuje",
+      "matchPossible": "możliwe",
+      "none": "Żadna z nich — zapisz paragon bez łączenia z transakcją",
+      "forTransaction": "Paragon zostanie dołączony do transakcji: {{date}} · {{description}} · {{amount}} PLN.",
+      "attach": "Dołącz do transakcji",
+      "saveOnly": "Zapisz paragon",
+      "cancel": "Anuluj",
+      "saved": "Paragon zapisany.",
+      "savedAttached": "Paragon dołączony do transakcji.",
+      "tooLarge": "Plik jest za duży — maksymalnie 10 MB.",
+      "unsupported": "Obsługiwane są pliki JPG, PNG, HEIC i PDF.",
+      "deleteHeader": "Usunąć paragon „{{name}}”?",
+      "deleteDescription": "Plik zostanie usunięty z magazynu. Tej operacji nie da się cofnąć.",
+      "deleted": "Paragon usunięty.",
+      "noReceipts": "Do tej transakcji nie ma paragonu."
     }
   },
   "currencies": {

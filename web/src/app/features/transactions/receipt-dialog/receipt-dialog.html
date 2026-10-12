@@ -1,0 +1,148 @@
+<!-- Dodawanie paragonu — makieta Figma 432:6880. Alert zawsze pierwszy w treści, przyciski stopki do prawej. -->
+<nz-modal
+  [nzVisible]="open()"
+  [nzWidth]="step() === 'upload' ? 520 : 720"
+  [nzMaskClosable]="false"
+  [nzOkText]="step() === 'review' ? (saveLabelKey() | translate) : null"
+  [nzCancelText]="'transactions.receipt.cancel' | translate"
+  [nzOkDisabled]="!canSave()"
+  [nzOkLoading]="busy() && step() === 'review'"
+  (nzOnOk)="save()"
+  (nzOnCancel)="cancel()"
+>
+  <!-- Tytuł jako szablon, nie wejście: wejście `nzTitle` nie odświeża się po zmianie kroku. -->
+  <ng-container *nzModalTitle>
+    {{ (step() === 'upload' ? 'transactions.receipt.title' : 'transactions.receipt.reviewTitle') | translate }}
+  </ng-container>
+
+  <div *nzModalContent class="rcpt">
+    @if (step() === 'upload') {
+      <nz-alert nzType="info" nzShowIcon [nzMessage]="'transactions.receipt.privacy' | translate" />
+      @if (error(); as text) {
+        <nz-alert nzType="error" nzShowIcon [nzMessage]="text" />
+      }
+      <p class="rcpt__intro">{{ 'transactions.receipt.intro' | translate }}</p>
+
+      <nz-spin [nzSpinning]="busy()" [nzTip]="'transactions.receipt.reading' | translate">
+        <nz-upload
+          nzType="drag"
+          nzAccept=".jpg,.jpeg,.png,.heic,.heif,.pdf"
+          [nzMultiple]="false"
+          [nzBeforeUpload]="captureFile"
+          [nzShowUploadList]="false"
+        >
+          <p class="ant-upload-drag-icon"><nz-icon nzType="inbox" /></p>
+          <p class="ant-upload-text">{{ 'transactions.receipt.drop' | translate }}</p>
+          <p class="ant-upload-hint">{{ 'transactions.receipt.hint' | translate }}</p>
+        </nz-upload>
+      </nz-spin>
+
+      @if (isNative) {
+        <!-- Aparat tylko w aplikacji mobilnej: `capture` otwiera aparat zamiast wyboru pliku. -->
+        <input
+          #camera
+          class="rcpt__camera"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          (change)="pickCameraFile($event)"
+        />
+        <button nz-button nzType="primary" class="rcpt__take" [disabled]="busy()" (click)="camera.click()">
+          <nz-icon nzType="camera" /> {{ 'transactions.receipt.takePhoto' | translate }}
+        </button>
+      }
+    } @else {
+      @if (uncertainFields(); as fields) {
+        @if (fields.length > 0) {
+          <nz-alert
+            nzType="warning"
+            nzShowIcon
+            [nzMessage]="'transactions.receipt.uncertain' | translate: { fields }"
+          />
+        }
+      }
+
+      <div class="rcpt__columns">
+        <div class="rcpt__preview" [attr.aria-label]="'transactions.receipt.preview' | translate">
+          @if (previewUrl(); as url) {
+            <img [src]="url" [alt]="'transactions.receipt.preview' | translate" />
+          } @else {
+            <nz-icon nzType="file-text" />
+            <span>{{ read()?.fileName }}</span>
+          }
+        </div>
+
+        <div class="rcpt__fields">
+          <div class="rcpt__field">
+            <span class="rcpt__label">
+              <label for="rcpt-merchant">{{ 'transactions.receipt.merchant' | translate }}</label>
+              <nz-tag [nzColor]="uncertain().merchant ? 'gold' : 'green'">
+                {{ (uncertain().merchant ? 'transactions.receipt.check' : 'transactions.receipt.sure') | translate }}
+              </nz-tag>
+            </span>
+            <input id="rcpt-merchant" nz-input maxlength="200" [ngModel]="merchant()" (ngModelChange)="setMerchant($event)" />
+          </div>
+
+          <div class="rcpt__row">
+            <div class="rcpt__field">
+              <span class="rcpt__label">
+                <label for="rcpt-date">{{ 'transactions.receipt.date' | translate }}</label>
+                <nz-tag [nzColor]="uncertain().date ? 'gold' : 'green'">
+                  {{ (uncertain().date ? 'transactions.receipt.check' : 'transactions.receipt.sure') | translate }}
+                </nz-tag>
+              </span>
+              <nz-date-picker nzId="rcpt-date" nzFormat="dd.MM.yyyy" [ngModel]="date()" (ngModelChange)="setDate($event)" />
+            </div>
+            <div class="rcpt__field">
+              <span class="rcpt__label">
+                <label for="rcpt-total">{{ 'transactions.receipt.total' | translate }}</label>
+                <nz-tag [nzColor]="uncertain().total ? 'gold' : 'green'">
+                  {{ (uncertain().total ? 'transactions.receipt.check' : 'transactions.receipt.sure') | translate }}
+                </nz-tag>
+              </span>
+              <nz-input-number
+                nzId="rcpt-total"
+                [nzParser]="parseAmount"
+                [nzMin]="0"
+                [nzPrecision]="2"
+                [nzStep]="1"
+                [ngModel]="total()"
+                (ngModelChange)="setTotal($event)"
+              />
+            </div>
+          </div>
+
+          @if (transaction(); as tx) {
+            <p class="rcpt__target">
+              {{ 'transactions.receipt.forTransaction' | translate: { description: tx.description, date: day(tx.date), amount: money(tx.amount) } }}
+            </p>
+          } @else {
+            <h3 class="rcpt__heading">{{ 'transactions.receipt.candidates' | translate }}</h3>
+            @if (candidatesError()) {
+              <nz-alert nzType="error" nzShowIcon [nzMessage]="'errors.network' | translate" />
+            }
+            <ul class="rcpt__candidates">
+              @for (c of candidates(); track c.id) {
+                <li class="rcpt__candidate" [class.rcpt__candidate--on]="choice() === c.id">
+                  <input type="radio" name="rcpt-choice" [id]="'rcpt-c-' + c.id" [checked]="choice() === c.id" (change)="choice.set(c.id)" />
+                  <label [for]="'rcpt-c-' + c.id">
+                    <span class="rcpt__cdate">{{ day(c.date) }}</span>
+                    <span class="rcpt__cdesc" [title]="c.description">{{ c.description }}</span>
+                    <strong class="rcpt__camount">{{ money(c.amount) }} PLN</strong>
+                    <nz-tag [nzColor]="c.match === 'Exact' ? 'green' : 'default'">
+                      {{ (c.match === 'Exact' ? 'transactions.receipt.matchExact' : 'transactions.receipt.matchPossible') | translate }}
+                    </nz-tag>
+                  </label>
+                </li>
+              }
+              <li class="rcpt__candidate" [class.rcpt__candidate--on]="choice() === noTransaction">
+                <input type="radio" name="rcpt-choice" id="rcpt-c-none" [checked]="choice() === noTransaction" (change)="choice.set(noTransaction)" />
+                <label for="rcpt-c-none">{{ 'transactions.receipt.none' | translate }}</label>
+              </li>
+            </ul>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</nz-modal>

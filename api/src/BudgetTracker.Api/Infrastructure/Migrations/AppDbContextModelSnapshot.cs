@@ -537,6 +537,70 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.ToTable("ModelVersions");
                 });
 
+            modelBuilder.Entity("BudgetTracker.Api.Domain.Receipt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlobName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("Merchant")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly?>("ReceiptDate")
+                        .HasColumnType("date");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("TransactionBusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("TransactionBusinessId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Receipts");
+                });
+
             modelBuilder.Entity("BudgetTracker.Api.Domain.RuleDirectionDictionary", b =>
                 {
                     b.Property<string>("Code")
@@ -860,6 +924,10 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.ComplexCollection(typeof(List<Dictionary<string, object>>), "Nodes", "BudgetTracker.Api.Domain.Strategy.Nodes#StrategyNode", b1 =>
                         {
                             b1.IsRequired();
+
+                            b1.Property<decimal?>("ActualAmount");
+
+                            b1.Property<DateOnly?>("ActualMonth");
 
                             b1.Property<decimal?>("Amount");
 

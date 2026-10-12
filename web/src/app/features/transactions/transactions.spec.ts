@@ -107,6 +107,7 @@ describe('Transactions', () => {
     confidence: null,
     savingsTransferBudgetId: null,
     balanceAfter: null,
+    receiptCount: 0,
     ...over,
   });
 
@@ -358,11 +359,40 @@ describe('Transactions', () => {
       .map((tr) => Array.from(tr.querySelectorAll('td')).map((td) => (td.textContent ?? '').replace(/s+/g, ' ').trim()));
     const dataRows = rows.filter((cells) => cells.some((c) => c.endsWith('PLN') || c === '—'));
 
-    // Kolumna salda stoi tuż za kwotą i przed „Akcjami” (przedostatnia komórka wiersza).
-    const balances = dataRows.map((cells) => cells[cells.length - 2]);
+    // Kolumna salda stoi tuż za kwotą, przed „Paragonem” i „Akcjami” (trzecia od końca komórka wiersza).
+    const balances = dataRows.map((cells) => cells[cells.length - 3]);
     expect(balances.length, JSON.stringify(rows)).toBe(2);
     expect(balances[0]).toMatch(/^1\D?234,50 PLN$/);
     expect(balances[1]).toBe('—');
+  });
+
+  it('kolumna „Paragon” pokazuje liczbę przypiętych paragonów, a przy braku kreskę', async () => {
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', search: 'paragon' },
+    });
+    await settle(response({ items: [row({ id: 'a', receiptCount: 2 }), row({ id: 'b', receiptCount: 0 })], total: 2 }));
+
+    const receiptCells = Array.from(fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>)
+      .map((tr) => Array.from(tr.querySelectorAll('td')))
+      .filter((cells) => cells.length > 3)
+      // Komórka „Paragon” to przedostatnia, tuż przed „Akcjami”.
+      .map((cells) => (cells[cells.length - 2].textContent ?? '').replace(/s+/g, ' ').trim())
+      // Tabela renderuje też wiersz pomiarowy z pustymi komórkami — nie jest wierszem danych.
+      .filter((text) => text !== '');
+
+    expect(receiptCells).toEqual(['2', '—']);
+  });
+
+  it('przycisk „Dodaj paragon” otwiera okno dodawania z wyborem pliku', async () => {
+    const button = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
+      .find((b) => (b.textContent ?? '').includes('transactions.receipt.add'));
+    expect(button, 'brak przycisku w pasku').toBeTruthy();
+
+    button!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(document.body.textContent).toContain('transactions.receipt.drop');
   });
 
   it('nie usuwa niczego, gdy użytkownik odrzuci potwierdzenie', async () => {

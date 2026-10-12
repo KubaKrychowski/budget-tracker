@@ -39,6 +39,7 @@ public sealed class OpenIddictSeeder(
         await SeedSpaClientAsync(appManager, cancellationToken);
         await SeedCliClientAsync(appManager, cancellationToken);
         await SeedMobileClientAsync(appManager, cancellationToken);
+        await SeedWidgetClientAsync(appManager, cancellationToken);
         await SeedAdminClientAsync(appManager, cancellationToken);
 
         if (environment.IsDevelopment())
@@ -254,6 +255,48 @@ public sealed class OpenIddictSeeder(
         };
 
         if (await appManager.FindByClientIdAsync(OAuthDefaults.MobileClientId, ct) is { } existing)
+        {
+            await appManager.UpdateAsync(existing, descriptor, ct);
+            return;
+        }
+
+        await appManager.CreateAsync(descriptor, ct);
+    }
+
+    /// <summary>
+    /// Widżet limitów na pulpicie Androida jako klient PUBLICZNY: kod + PKCE, logowanie w systemowej przeglądarce,
+    /// powrót przez własny schemat (<see cref="OAuthDefaults.WidgetScheme"/>). Uzgadniany przy KAŻDYM starcie.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Osobny klient z własnym refresh tokenem — patrz <see cref="OAuthDefaults.WidgetClientId"/>.</item>
+    /// <item>Bez <c>profile</c> i <c>email</c>: widżet czyta tylko limity, nie potrzebuje danych profilu.</item>
+    /// <item>⚠️ Zgoda JAWNA z tego samego powodu co w aplikacji: schemat adresu może zająć każda aplikacja na telefonie.</item>
+    /// </list>
+    /// </remarks>
+    private static async Task SeedWidgetClientAsync(IOpenIddictApplicationManager appManager, CancellationToken ct)
+    {
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = OAuthDefaults.WidgetClientId,
+            DisplayName = "Wydatki.com — widżet limitów",
+            ClientType = ClientTypes.Public,
+            ConsentType = ConsentTypes.Explicit,
+            Permissions =
+            {
+                Permissions.Endpoints.Authorization,
+                Permissions.Endpoints.Token,
+                Permissions.GrantTypes.AuthorizationCode,
+                Permissions.GrantTypes.RefreshToken,
+                Permissions.ResponseTypes.Code,
+                Permissions.Prefixes.Scope + "offline_access",
+                Permissions.Prefixes.Scope + OAuthDefaults.ApiScope,
+            },
+            Requirements = { Requirements.Features.ProofKeyForCodeExchange },
+            RedirectUris = { new Uri(OAuthDefaults.WidgetRedirectUri) },
+        };
+
+        if (await appManager.FindByClientIdAsync(OAuthDefaults.WidgetClientId, ct) is { } existing)
         {
             await appManager.UpdateAsync(existing, descriptor, ct);
             return;
