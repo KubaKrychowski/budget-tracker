@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint && node scripts/check-tables.mjs",
+    "lint": "ng lint && node scripts/check-tables.mjs && node scripts/check-silent-renew.mjs",
     "build:mobile": "ng build --configuration production,mobile && cap sync",
     "android": "npm run build:mobile && node scripts/run-android.mjs",
     "android:studio": "npm run build:mobile && cap open android"

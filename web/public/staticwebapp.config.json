@@ -14,6 +14,15 @@
       "statusCode": 200
     }
   },
+  "routes": [
+    {
+      "route": "/silent-renew.html",
+      "headers": {
+        "X-Frame-Options": "SAMEORIGIN",
+        "Content-Security-Policy": "default-src 'none'; script-src 'self'; frame-ancestors 'self'; base-uri 'none'"
+      }
+    }
+  ],
   "globalHeaders": {
     "X-Frame-Options": "DENY",
     "Content-Security-Policy": "style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.wydatki.com https://auth.wydatki.com; frame-src https://auth.wydatki.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://auth.wydatki.com",

@@ -1209,8 +1209,7 @@ i `Export-PfxCertificate`; certyfikat szyfrujący analogicznie z `-KeyUsage KeyE
 **CSP.** Identity: middleware `SecurityHeadersMiddleware` (`script-src 'self'`, bez `unsafe-inline`, `frame-ancestors 'none'`,
 `form-action` z originami SPA — Chrome egzekwuje je także po przekierowaniu z formularza). Widoki nie mają `style=`, `<script>` bez `src`
 ani `onXxx=` — pilnuje tego test. Front: `security.autoCsp` w buildzie produkcyjnym (strict CSP na hashach, `<meta>` w `index.html`)
-plus `referrer` w `index.html`. ⚠️ `public/silent-renew.html` ma skrypt inline: host frontu, który dołoży CSP jako nagłówek HTTP,
-musi go dopuścić (hash), inaczej odnawianie sesji przestanie działać.
+plus `referrer` w `index.html`. ⚠️ `public/silent-renew.html` ładuje się w UKRYTEJ RAMCE, więc musi dać się osadzić: patrz REWIZJA 2026-10-12 niżej.
 
 **bt-cli.** Token (w tym refresh) leży w `%LOCALAPPDATA%\bt-cli\token.json` zaszyfrowany DPAPI — odczyta go tylko to samo konto Windows na tym
 komputerze. Starszy plik z jawnym JSON-em jest przy pierwszym odczycie migrowany.
@@ -1665,3 +1664,23 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 - **Paragon bez przypięcia** („Żadna z nich”) jest zapisywany, ale **nie ma jeszcze ekranu, który go pokaże** — to otwarta sprawa (np. zakładka „Paragony”). Usunięcie transakcji NIE kasuje jej paragonów: zostają osierocone w magazynie, dopóki ktoś ich nie usunie (do rozstrzygnięcia razem z ekranem).
 - **Usunięcie paragonu kasuje plik od razu**, mimo soft delete wiersza: zdjęcie paragonu to dana osobowa. Menu wiersza ma „Usuń paragon” zamiast „Odłącz paragon” z makiety — odłączony paragon byłby niewidoczny w UI, więc zostałby plikiem bez właściciela.
 - **Aparat** (`Zrób zdjęcie`) to `<input type="file" capture>` w aplikacji Capacitor, bez nowej wtyczki natywnej. ⚠️ Nie sprawdzone na urządzeniu — na Androidzie przechwytywanie z WebView może wymagać uprawnienia `CAMERA` w manifeście.
+
+> **REWIZJA — 2026-10-12: odnawianie sesji nie działało na produkcji** (zgłoszenie #32 „Tokeny się nie odświeżają”; ,
+> , ):
+> - Objaw: po długiej sesji ekrany dostają 401 i pomaga dopiero przeładowanie okna. **Przyczyna:**  Static Web Apps (,
+>   ) obejmowały KAŻDY plik, także , który odnawianie sesji ładuje w ukrytej ramce. Przeglądarka odmawiała
+>   jego wyrenderowania, więc ramka nigdy nie odpowiadała, a odnowienie kończyło się dopiero timeoutem biblioteki (ok. 20 s) — w tym czasie żądania szły z wygasłym tokenem.
+>   Mechanizm odzyskiwania z 401 ( + ) był poprawny, ale czekał na to samo, zepsute odnowienie.
+>   Po stronie Identity było dobrze () — sprawdzone na produkcji.
+> - Naprawa: wpis  dla  z  i  (nadpisuje globalne nagłówki tylko dla tej strony);
+>   skrypt strony przeniesiony do  (CSP strony:  — hash skryptu inline zależałby od końców linii w checkoucie).
+> - : odnawiamy minutę PRZED wygaśnięciem, a nie po (domyślne 0), więc zwykła praca nie wpada w okno z wygasłym tokenem.
+> -  uruchamia : pilnuje wyjątku dla tej jednej strony i tego, że reszta serwisu zostaje nie do osadzenia. Test jednostkowy
+>   nie widzi nagłówków hostingu, dlatego to skrypt na pliku konfiguracji.
+> - ⚠️ Nie sprawdzone po wdrożeniu ani w przeglądarce: potwierdzić, że HTTP/1.1 301 Moved Permanently
+Date: Mon, 12 Oct 2026 06:59:44 GMT
+Location: https://app.wydatki.com/silent-renew.html
+X-Frame-Options: DENY
+Content-Security-Policy: style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.wydatki.com https://auth.wydatki.com; frame-src https://auth.wydatki.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://auth.wydatki.com
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin zwraca SAMEORIGIN, a po 15 minutach pracy 401 nie wraca.
