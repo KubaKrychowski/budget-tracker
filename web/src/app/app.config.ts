@@ -72,6 +72,9 @@ export const appConfig: ApplicationConfig = {
         responseType: 'code',
         silentRenew: true,
         silentRenewUrl: `${window.location.origin}/silent-renew.html`,
+        // Odnawiamy ZANIM token wygaśnie (domyślnie dopiero po wygaśnięciu): przy 0 każde 15 minut zaczynało się oknem,
+        // w którym żądania szły z wygasłym tokenem i dostawały 401, zanim ramka zdążyła odnowić sesję (zgłoszenie #32).
+        renewTimeBeforeTokenExpiresInSeconds: 60,
         useRefreshToken: false,
         secureRoutes: ['/api'],
         // Token dostępu ma audience zawężone do "budgettracker_api" (patrz OpenIddictSeeder w
