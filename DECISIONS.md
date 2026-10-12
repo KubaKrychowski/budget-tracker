@@ -1665,22 +1665,16 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 - **Usunięcie paragonu kasuje plik od razu**, mimo soft delete wiersza: zdjęcie paragonu to dana osobowa. Menu wiersza ma „Usuń paragon” zamiast „Odłącz paragon” z makiety — odłączony paragon byłby niewidoczny w UI, więc zostałby plikiem bez właściciela.
 - **Aparat** (`Zrób zdjęcie`) to `<input type="file" capture>` w aplikacji Capacitor, bez nowej wtyczki natywnej. ⚠️ Nie sprawdzone na urządzeniu — na Androidzie przechwytywanie z WebView może wymagać uprawnienia `CAMERA` w manifeście.
 
-> **REWIZJA — 2026-10-12: odnawianie sesji nie działało na produkcji** (zgłoszenie #32 „Tokeny się nie odświeżają”; ,
-> , ):
-> - Objaw: po długiej sesji ekrany dostają 401 i pomaga dopiero przeładowanie okna. **Przyczyna:**  Static Web Apps (,
->   ) obejmowały KAŻDY plik, także , który odnawianie sesji ładuje w ukrytej ramce. Przeglądarka odmawiała
+> **REWIZJA — 2026-10-12: odnawianie sesji nie działało na produkcji** (zgłoszenie #32 „Tokeny się nie odświeżają”; `web/public/staticwebapp.config.json`,
+> `silent-renew.html`, `scripts/check-silent-renew.mjs`):
+> - Objaw: po długiej sesji ekrany dostają 401 i pomaga dopiero przeładowanie okna. **Przyczyna:** `globalHeaders` Static Web Apps (`X-Frame-Options: DENY`,
+>   `frame-ancestors 'none'`) obejmowały KAŻDY plik, także `silent-renew.html`, który odnawianie sesji ładuje w ukrytej ramce. Przeglądarka odmawiała
 >   jego wyrenderowania, więc ramka nigdy nie odpowiadała, a odnowienie kończyło się dopiero timeoutem biblioteki (ok. 20 s) — w tym czasie żądania szły z wygasłym tokenem.
->   Mechanizm odzyskiwania z 401 ( + ) był poprawny, ale czekał na to samo, zepsute odnowienie.
->   Po stronie Identity było dobrze () — sprawdzone na produkcji.
-> - Naprawa: wpis  dla  z  i  (nadpisuje globalne nagłówki tylko dla tej strony);
->   skrypt strony przeniesiony do  (CSP strony:  — hash skryptu inline zależałby od końców linii w checkoucie).
-> - : odnawiamy minutę PRZED wygaśnięciem, a nie po (domyślne 0), więc zwykła praca nie wpada w okno z wygasłym tokenem.
-> -  uruchamia : pilnuje wyjątku dla tej jednej strony i tego, że reszta serwisu zostaje nie do osadzenia. Test jednostkowy
+>   Mechanizm odzyskiwania z 401 (`unauthorizedInterceptor` + `SessionRecovery`) był poprawny, ale czekał na to samo, zepsute odnowienie.
+>   Po stronie Identity było dobrze (`frame-ancestors https://app.wydatki.com`) — sprawdzone na produkcji.
+> - Naprawa: wpis `routes` dla `/silent-renew.html` z `X-Frame-Options: SAMEORIGIN` i `frame-ancestors 'self'` (nadpisuje globalne nagłówki tylko dla tej strony);
+>   skrypt strony przeniesiony do `silent-renew.js` (CSP strony: `script-src 'self'` — hash skryptu inline zależałby od końców linii w checkoucie).
+> - `renewTimeBeforeTokenExpiresInSeconds: 60`: odnawiamy minutę PRZED wygaśnięciem, a nie po (domyślne 0), więc zwykła praca nie wpada w okno z wygasłym tokenem.
+> - `npm run lint` uruchamia `check-silent-renew.mjs`: pilnuje wyjątku dla tej jednej strony i tego, że reszta serwisu zostaje nie do osadzenia. Test jednostkowy
 >   nie widzi nagłówków hostingu, dlatego to skrypt na pliku konfiguracji.
-> - ⚠️ Nie sprawdzone po wdrożeniu ani w przeglądarce: potwierdzić, że HTTP/1.1 301 Moved Permanently
-Date: Mon, 12 Oct 2026 06:59:44 GMT
-Location: https://app.wydatki.com/silent-renew.html
-X-Frame-Options: DENY
-Content-Security-Policy: style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.wydatki.com https://auth.wydatki.com; frame-src https://auth.wydatki.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://auth.wydatki.com
-X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin zwraca SAMEORIGIN, a po 15 minutach pracy 401 nie wraca.
+> - ⚠️ Nie sprawdzone po wdrożeniu ani w przeglądarce: potwierdzić, że `curl -I https://app.wydatki.com/silent-renew.html` zwraca SAMEORIGIN, a po 15 minutach pracy 401 nie wraca.
