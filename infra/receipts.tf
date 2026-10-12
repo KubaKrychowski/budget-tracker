@@ -1,5 +1,5 @@
 # OCR paragonow: Azure AI Document Intelligence (model `prebuilt-receipt`). API wola go tozsamoscia zarzadzana,
-# bez kluczy, tak samo jak magazyn blob w storage.tf. Obraz paragonu wychodzi do tej uslugi - patrz DECISIONS.md §15.
+# bez kluczy, tak samo jak magazyn blob w storage.tf. Obraz paragonu wychodzi do tej uslugi - patrz DECISIONS.md §17.
 
 resource "azurerm_cognitive_account" "receipts" {
   name                = "${local.prefix}-receipts"

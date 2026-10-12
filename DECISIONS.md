@@ -1650,7 +1650,7 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 - Adresy API i Identity są zaszyte w `WidgetConfig.java` (te same, co `web/mobile/config.json`).
 - ⚠️ **Kolejność wdrożenia:** najpierw Identity (nowy klient uzgadnia się przy starcie), potem wydanie APK.
 
-## 15. Paragony (OCR)
+## 17. Paragony (OCR)
 
 **Paragon to załącznik transakcji, nie jej część.** Zdjęcie albo PDF paragonu jest odczytywane OCR-em (sprzedawca, data, suma), a użytkownik dopasowuje je do transakcji z importu CSV. Paragon niczego nie zmienia: ani kwoty, ani kategorii, ani opisu. ⚠️ Zasada „transakcja jest najmniejszą jednostką” (README) zostaje bez zmian — **pozycji paragonu świadomie nie odczytujemy** (osobne decyzje: encja pozycji, podział kategorii, migracja). Makieta: Figma, strona „Lista transakcji”, ramka 432:6880.
 
