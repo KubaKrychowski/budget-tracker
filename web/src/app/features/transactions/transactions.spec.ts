@@ -396,6 +396,10 @@ describe('Transactions', () => {
     // Łapie szewron na każdym wierszu: rozwijać można tylko to, co ma paragon.
     expect(Array.from(expanders).filter((e) => !e.classList.contains('ant-table-row-spaced')).length).toBe(1);
 
+    const headers = () => Array.from(fixture.nativeElement.querySelectorAll('thead th') as NodeListOf<HTMLElement>)
+      .map((th) => (th.textContent ?? '').replace(/s+/g, ' ').trim());
+    const headersBefore = headers();
+
     (Array.from(expanders).find((e) => !e.classList.contains('ant-table-row-spaced')) as HTMLElement).click();
     await settle();
     http.expectOne('/api/transactions/a/receipts').flush([{
@@ -404,6 +408,10 @@ describe('Transactions', () => {
       items: [{ name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 }],
     }]);
     await settle();
+
+    // Łapie rozwalenie listy po rozwinięciu: nz-table bierze każdy <thead> w treści za własny nagłówek, więc zagnieżdżona
+    // tabela z produktami podmieniała nagłówek całej listy i rozjeżdżała kolumny.
+    expect(headers()).toEqual(headersBefore);
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Pierogi ruskie 320 g');

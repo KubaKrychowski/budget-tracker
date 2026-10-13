@@ -666,26 +666,24 @@
                       @if (receipt.items.length === 0) {
                         <p class="tx__receipt-empty">{{ 'transactions.receipt.noProducts' | translate }}</p>
                       } @else {
-                        <table class="tx__ptable">
-                          <thead>
-                            <tr>
-                              <th>{{ 'transactions.receipt.product' | translate }}</th>
-                              <th class="tx__right">{{ 'transactions.receipt.quantity' | translate }}</th>
-                              <th class="tx__right">{{ 'transactions.receipt.price' | translate }}</th>
-                              <th class="tx__right">{{ 'transactions.receipt.value' | translate }}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (product of receipt.items; track $index) {
-                              <tr>
-                                <td>{{ product.name }}</td>
-                                <td class="tx__right tnum">{{ quantity(product.quantity) }}</td>
-                                <td class="tx__right tnum">{{ product.unitPrice === null ? '—' : money(product.unitPrice) }}</td>
-                                <td class="tx__right tnum">{{ product.totalPrice === null ? '—' : money(product.totalPrice) }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                        <!-- ⚠️ Siatka z div, NIE <table>/<thead>/<th>: nz-table bierze KAŻDY <thead> w swojej treści za własny nagłówek,
+                             więc zagnieżdżona tabela podmieniała nagłówek całej listy i rozjeżdżała kolumny. -->
+                        <div class="tx__ptable" role="table" [attr.aria-label]="'transactions.receipt.products' | translate">
+                          <div class="tx__prow tx__prow--head" role="row">
+                            <span role="columnheader">{{ 'transactions.receipt.product' | translate }}</span>
+                            <span role="columnheader" class="tx__right">{{ 'transactions.receipt.quantity' | translate }}</span>
+                            <span role="columnheader" class="tx__right">{{ 'transactions.receipt.price' | translate }}</span>
+                            <span role="columnheader" class="tx__right">{{ 'transactions.receipt.value' | translate }}</span>
+                          </div>
+                          @for (product of receipt.items; track $index) {
+                            <div class="tx__prow" role="row">
+                              <span role="cell" class="tx__pname" [title]="product.name">{{ product.name }}</span>
+                              <span role="cell" class="tx__right tnum">{{ quantity(product.quantity) }}</span>
+                              <span role="cell" class="tx__right tnum">{{ product.unitPrice === null ? '—' : money(product.unitPrice) }}</span>
+                              <span role="cell" class="tx__right tnum">{{ product.totalPrice === null ? '—' : money(product.totalPrice) }}</span>
+                            </div>
+                          }
+                        </div>
                         @let sum = productsSum(receipt);
                         @if (sum !== null) {
                           <p class="tx__receipt-sum">
