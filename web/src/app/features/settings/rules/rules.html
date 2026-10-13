@@ -153,7 +153,7 @@
             [ngModel]="draft().categoryId"
             (ngModelChange)="patch('categoryId', $event)"
           >
-            @for (category of categories(); track category.id) {
+            @for (category of categoryOptions(draft().categoryId); track category.id) {
               <nz-option [nzValue]="category.id" [nzLabel]="category.name" />
             }
           </nz-select>

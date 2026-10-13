@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Features.Limits.Consts;
 using BudgetTracker.Api.Features.Limits.Contracts;
 using BudgetTracker.Api.Features.Limits.Models;
@@ -10,7 +11,8 @@ namespace BudgetTracker.Api.Features.Limits.Queries;
 
 /// <summary>Limity kategorii budżetu w jednym okresie rozliczeniowym i to, ile w tym okresie wydano.</summary>
 public sealed class GetLimitsQueryHandler(
-    AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories, LimitSpending limitSpending)
+    AppDbContext db, LimitsBudgetScope scope, LimitCategories limitCategories, LimitSpending limitSpending,
+    HiddenCategories hiddenCategories)
 {
     /// <summary>Ekran limitów dla budżetu (wskazanego albo domyślnego) i okresu (wskazanego kluczem albo bieżącego).</summary>
     /// <remarks>
@@ -37,13 +39,14 @@ public sealed class GetLimitsQueryHandler(
         var budgets = await scope.OptionsAsync(ct);
         var selected = LimitsBudgetScope.Resolve(budgets, budgetId, calendarMonth);
         var allowed = await limitCategories.AllowedAsync(ct);
+        var hidden = await hiddenCategories.IdsAsync(ct);
 
         if (selected is not { } budget)
         {
             var emptyViewed = month is { } em ? new DateOnly(em.Year, em.Month, 1) : calendarMonth;
             return new LimitsResponseDto(
                 emptyViewed, calendarMonth, emptyViewed < calendarMonth, [], [],
-                [.. allowed.Select(c => new LimitCategoryOptionResponseDto(c.BusinessId, c.Name, false))],
+                [.. allowed.Where(c => !hidden.Contains(c.Id)).Select(c => new LimitCategoryOptionResponseDto(c.BusinessId, c.Name, false))],
                 0m, 0m, 0m, 0, 0, 0m, [], budgets, HasAnyLimit: false);
         }
 
@@ -84,7 +87,10 @@ public sealed class GetLimitsQueryHandler(
             ReadOnly: viewed < currentMonth,
             Limits: rows,
             Unlimited: unlimited,
-            Categories: [.. allowed.Select(c => new LimitCategoryOptionResponseDto(c.BusinessId, c.Name, limitedIds.Contains(c.Id)))],
+            // Ukryta kategoria wypada z wyboru NOWEGO limitu, ale zostaje, jeśli już ma limit — ten dalej działa i da się go edytować (#30).
+            Categories: [.. allowed
+                .Where(c => !hidden.Contains(c.Id) || limitedIds.Contains(c.Id))
+                .Select(c => new LimitCategoryOptionResponseDto(c.BusinessId, c.Name, limitedIds.Contains(c.Id)))],
             LimitTotal: rows.Sum(r => r.Limit),
             SpentInLimited: rows.Sum(r => r.Spent),
             SpentOutside: unlimited.Sum(u => u.Spent),

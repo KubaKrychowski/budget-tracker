@@ -120,6 +120,46 @@ public sealed class AdminOwnerDataTests : IAsyncLifetime
         Assert.Equal(OneFullSet, counts[_bob]);
     }
 
+    /// <summary>Wiersze nowszych funkcji konta (paragony, ukryte kategorie, strategie) — bez klucza obcego do reszty.</summary>
+    private async Task SeedNewerFeaturesAsync(Guid owner)
+    {
+        _db.Receipts.Add(new Receipt(owner, "receipts/a.jpg", "a.jpg", "image/jpeg", 10, Now, "Sklep", new DateOnly(2026, 9, 2), 10m));
+        _db.HiddenCategories.Add(new HiddenCategory(owner, _categoryId));
+        _db.Strategies.Add(new Strategy(Guid.NewGuid(), "Plan", new DateOnly(2026, 9, 1), 1000m, 24, Now, owner));
+        await _db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Delete_also_removes_receipts_hidden_categories_and_strategies_of_that_owner_only()
+    {
+        await SeedNewerFeaturesAsync(_alice);
+        await SeedNewerFeaturesAsync(_bob);
+
+        await new DeleteOwnerDataCommandHandler(_service).HandleAsync(_alice, default);
+
+        // Łapie dane osobowe zostawione po skasowanym koncie: nazwa sprzedawcy, kwoty i saldo strategii nie mają klucza obcego,
+        // więc same z siebie nie znikają razem z resztą.
+        Assert.Empty(await _db.Receipts.IgnoreQueryFilters().Where(r => r.UserId == _alice).ToListAsync());
+        Assert.Empty(await _db.HiddenCategories.IgnoreQueryFilters().Where(h => h.UserId == _alice).ToListAsync());
+        Assert.Empty(await _db.Strategies.IgnoreQueryFilters().Where(x => x.UserId == _alice).ToListAsync());
+        Assert.Single(await _db.Receipts.IgnoreQueryFilters().Where(r => r.UserId == _bob).ToListAsync());
+        Assert.Single(await _db.HiddenCategories.IgnoreQueryFilters().Where(h => h.UserId == _bob).ToListAsync());
+        Assert.Single(await _db.Strategies.IgnoreQueryFilters().Where(x => x.UserId == _bob).ToListAsync());
+    }
+
+    [Fact]
+    public async Task Reassign_moves_receipts_hidden_categories_and_strategies_to_the_target_account()
+    {
+        await SeedNewerFeaturesAsync(_alice);
+
+        await _service.AsSystemAsync(() => _service.ReassignAsync(_alice, _bob, default), default);
+
+        Assert.Single(await _db.Receipts.IgnoreQueryFilters().Where(r => r.UserId == _bob).ToListAsync());
+        Assert.Single(await _db.HiddenCategories.IgnoreQueryFilters().Where(h => h.UserId == _bob).ToListAsync());
+        Assert.Single(await _db.Strategies.IgnoreQueryFilters().Where(x => x.UserId == _bob).ToListAsync());
+        Assert.Empty(await _db.Receipts.IgnoreQueryFilters().Where(r => r.UserId == _alice).ToListAsync());
+    }
+
     [Fact]
     public async Task Delete_takes_soft_deleted_rows_too()
     {

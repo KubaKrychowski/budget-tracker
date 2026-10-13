@@ -145,7 +145,7 @@ describe('Transactions', () => {
   };
 
   const flushCategories = (): void => {
-    http.match('/api/categories').forEach((r) => r.flush(categories));
+    http.match((r) => r.url === '/api/categories').forEach((r) => r.flush(categories));
   };
 
   /**
@@ -233,6 +233,22 @@ describe('Transactions', () => {
     // sygnałów, nie przeciek. Sprawdzamy więc tylko, czy nie zostało nic NIEOBSŁUŻONEGO.
     http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush({}); });
     http.verify({ ignoreCancelled: true });
+  });
+
+  it('ukryta kategoria wypada z opcji wyboru, ale zostaje przy transakcji, która już w niej jest', async () => {
+    const hiddenId = 'c1000000-0000-4000-8000-000000000009';
+    const second = TestBed.createComponent(Transactions);
+    second.detectChanges();
+    // Słownik z `includeHidden=true` niesie ukryte z flagą; ekran filtruje je w wyborze.
+    http.match((r) => r.url === '/api/categories')
+      .forEach((r) => r.flush([...categories, { id: hiddenId, name: 'Paliwo', type: 'Expense', hidden: true }]));
+    await new Promise((resolve) => setTimeout(resolve));
+    second.detectChanges();
+
+    const screen = second.componentInstance as unknown as { categoryOptions(current: string | null): { name: string }[] };
+    expect(screen.categoryOptions(null).map((c) => c.name)).not.toContain('Paliwo');
+    // Łapie puste pole przy edycji transakcji w ukrytej kategorii (i ciche skasowanie kategorii przy zapisie).
+    expect(screen.categoryOptions(hiddenId).map((c) => c.name)).toContain('Paliwo');
   });
 
   // ── Echo inicjalizacyjne tabeli ────────────────────────────────────────────────────

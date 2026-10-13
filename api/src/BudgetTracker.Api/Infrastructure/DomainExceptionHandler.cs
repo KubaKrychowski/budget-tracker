@@ -59,6 +59,8 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         // Żądanie poprawne, to stan zasobu (duplikat, wspólna, używana) na nie nie pozwala — stąd 409.
         CategoryNameTakenException => (StatusCodes.Status409Conflict, "Category_NameTaken"),
         CategorySharedReadOnlyException => (StatusCodes.Status409Conflict, "Category_SharedReadOnly"),
+        // Ukrywa się tylko kategorie wspólne — własną można przemianować albo usunąć; żądanie poprawne, stan zasobu nie pozwala.
+        CategoryHideNotSharedException => (StatusCodes.Status409Conflict, "Category_HideOwn"),
         CategoryInUseException => (StatusCodes.Status409Conflict, "Category_InUse"),
         CategoryTypeLockedException => (StatusCodes.Status409Conflict, "Category_TypeLocked"),
         // Ta sama zasada: trening jest poprawnym żądaniem, tylko nie w trakcie importu.

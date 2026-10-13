@@ -665,8 +665,8 @@
     },
     "categories": {
       "intro": "Kategorie porządkują transakcje, limity i dashboard. Obok kategorii wspólnych możesz dodać własne — widzisz je tylko Ty. Typ kategorii (wydatek albo wpływ) decyduje, do jakich transakcji można ją przypisać.",
-      "sharedTitle": "Kategorie wspólne są tylko do odczytu",
-      "sharedDescription": "Kategorie oznaczone jako „Wspólna” są dostępne dla wszystkich kont — nie zmienisz ich ani nie usuniesz. Własną kategorię możesz zawsze przemianować, a usunąć tylko wtedy, gdy nie ma transakcji, limitów ani reguł.",
+      "sharedTitle": "Kategorie wspólne są tylko do odczytu — ale możesz je ukryć",
+      "sharedDescription": "Kategorie oznaczone jako „Wspólna” nie dają się zmienić ani usunąć. Te, których nie używasz, możesz ukryć: znikną z list wyboru, a istniejące transakcje, limity i reguły zostają bez zmian.",
       "listTitle": "Lista kategorii",
       "create": "Nowa kategoria",
       "empty": "Brak kategorii.",
@@ -707,8 +707,14 @@
       "toast": {
         "created": "Dodano kategorię.",
         "updated": "Zapisano kategorię.",
-        "deleted": "Usunięto kategorię."
-      }
+        "deleted": "Usunięto kategorię.",
+        "hidden": "Kategoria „{{name}}” jest ukryta. Możesz ją przywrócić przełącznikiem „Pokaż ukryte”.",
+        "shown": "Kategoria „{{name}}” znów jest widoczna."
+      },
+      "hide": "Ukryj kategorię",
+      "show": "Pokaż kategorię",
+      "hiddenTag": "ukryta",
+      "showHidden": "Pokaż ukryte ({{count}})"
     },
     "mobile": {
       "allSections": "Wszystkie ustawienia"

@@ -38,6 +38,9 @@ interface CategoriesInternals {
   canSave(): boolean;
   typeLocked(): boolean;
   editorError(): string | null;
+  showHidden: { set(value: boolean): void };
+  hiddenCount(): number;
+  setHidden(category: ManagedCategory, hidden: boolean): Promise<void>;
 }
 
 /**
@@ -60,6 +63,7 @@ describe('Categories', () => {
     rules: 0,
     limits: 0,
     inUse: false,
+    hidden: false,
     ...over,
   });
 
@@ -103,6 +107,7 @@ describe('Categories', () => {
           columns: { name: 'Nazwa', type: 'Typ', scope: 'Zakres', usage: 'Użycie', actions: 'Akcje' },
           type: { Expense: 'Wydatek', Income: 'Wpływ' },
           scope: { shared: 'Wspólna', own: 'Własna' },
+          hide: 'Ukryj kategorię', show: 'Pokaż kategorię', hiddenTag: 'ukryta', showHidden: 'Pokaż ukryte ({{count}})',
           editor: {
             createTitle: 'Nowa kategoria', editTitle: 'Edycja kategorii', type: 'Typ',
             typeHint: 'Typ decyduje o transakcjach.', typeLockedHint: 'Typ jest zablokowany.',
@@ -113,7 +118,7 @@ describe('Categories', () => {
             header: 'Usunąć kategorię „{{name}}”?', description: 'Zniknie z list.',
             confirm: 'Usuń kategorię', inUse: 'Kategoria jest używana.',
           },
-          toast: { created: 'Dodano.', updated: 'Zapisano.', deleted: 'Usunięto.' },
+          toast: { created: 'Dodano.', updated: 'Zapisano.', deleted: 'Usunięto.', hidden: 'Ukryto.', shown: 'Pokazano.' },
         },
       },
     });
@@ -150,13 +155,47 @@ describe('Categories', () => {
     expect(alert!.compareDocumentPosition(header!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('gives only own categories a row menu', async () => {
+  it('gives every category a row menu, shared ones included (to hide them)', async () => {
     await settle([category({ name: 'Hobby' }), category({ name: 'Paliwo', isShared: true })]);
 
     const rows = [...(fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr')];
     const menuButtons = rows.map((row) => row.querySelectorAll('button').length);
 
-    expect(menuButtons).toEqual([1, 0]);
+    expect(menuButtons).toEqual([1, 1]);
+    // Zawartość menu (wspólna: tylko „Ukryj/Pokaż”) nie renderuje się w teście bez otwartego overlayu NG-ZORRO; zachowanie pilnuje
+    // test żądań PUT/DELETE niżej, a brak „Edytuj/Usuń” przy wspólnej wynika z osobnej gałęzi szablonu.
+  });
+
+  it('keeps hidden shared categories off the list until the switch is turned on', async () => {
+    await settle([
+      category({ name: 'Hobby' }),
+      category({ name: 'Wynagrodzenie', isShared: true, hidden: true }),
+    ]);
+
+    expect(text()).not.toContain('Wynagrodzenie');
+    expect(text()).toContain('Pokaż ukryte (1)');
+
+    internals.showHidden.set(true);
+    fixture.detectChanges();
+
+    // Ukryta kategoria wraca na listę z tagiem — inaczej nie dałoby się jej przywrócić.
+    expect(text()).toContain('Wynagrodzenie');
+    expect(text()).toContain('ukryta');
+  });
+
+  it('hides a shared category with PUT and restores it with DELETE', async () => {
+    const shared = category({ name: 'Paliwo', isShared: true });
+    await settle([shared]);
+
+    const hiding = internals.setHidden(shared, true);
+    const put = http.expectOne((r) => r.url === `/api/categories/${shared.id}/hidden` && r.method === 'PUT');
+    put.flush({ ...shared, hidden: true });
+    await hiding;
+
+    const showing = internals.setHidden({ ...shared, hidden: true }, false);
+    const del = http.expectOne((r) => r.url === `/api/categories/${shared.id}/hidden` && r.method === 'DELETE');
+    del.flush({ ...shared, hidden: false });
+    await showing;
   });
 
   it('creates a category with the chosen type and name', async () => {

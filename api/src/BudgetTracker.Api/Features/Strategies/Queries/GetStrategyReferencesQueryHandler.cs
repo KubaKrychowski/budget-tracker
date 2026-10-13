@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Features.Limits.Services;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Features.Strategies.Contracts;
 using BudgetTracker.Api.Features.Strategies.Exceptions;
 using BudgetTracker.Api.Infrastructure;
@@ -11,14 +12,15 @@ namespace BudgetTracker.Api.Features.Strategies.Queries;
 /// Kategorie to te same, które dopuszcza ekran limitów (wydatkowe), bo limit i wydatek jednorazowy dotyczą wydatków.
 /// Zlecenia stałe: tylko niezakończone — zakończone nie mają czego kończyć.
 /// </remarks>
-public sealed class GetStrategyReferencesQueryHandler(AppDbContext db, LimitCategories limitCategories)
+public sealed class GetStrategyReferencesQueryHandler(AppDbContext db, LimitCategories limitCategories, HiddenCategories hiddenCategories)
 {
     public async Task<StrategyReferencesResponseDto> HandleAsync(Guid id, CancellationToken ct)
     {
         var strategy = await db.Strategies.SingleOrDefaultAsync(s => s.BusinessId == id, ct)
             ?? throw new StrategyNotFoundException(id);
 
-        var categories = await limitCategories.AllowedAsync(ct);
+        var hidden = await hiddenCategories.IdsAsync(ct);
+        var categories = (await limitCategories.AllowedAsync(ct)).Where(c => !hidden.Contains(c.Id)).ToList();
         var orders = await db.StandingOrders
             .Where(o => o.BudgetBusinessId == strategy.BudgetBusinessId && o.EndMonth == null)
             .OrderBy(o => o.Name)

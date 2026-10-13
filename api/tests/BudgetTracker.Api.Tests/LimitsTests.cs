@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Exceptions;
 using BudgetTracker.Api.Features.Limits.Commands;
@@ -72,7 +73,7 @@ public sealed class LimitsTests : IAsyncLifetime
 
     private LimitsBudgetScope Scope() => new(_db, _clock);
 
-    private GetLimitsQueryHandler Query() => new(_db, Scope(), new LimitCategories(_db), new LimitSpending(_db));
+    private GetLimitsQueryHandler Query() => new(_db, Scope(), new LimitCategories(_db), new LimitSpending(_db), new HiddenCategories(_db));
 
     private SetLimitCommandHandler Set() =>
         new(_db, Scope(), new LimitCategories(_db), new FakeCurrentUserAccessor(Guid.NewGuid()));

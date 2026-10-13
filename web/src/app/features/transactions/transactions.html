@@ -131,7 +131,7 @@
             [nzPlaceHolder]="'transactions.mobile.anyCategory' | translate"
           >
             <nz-option [nzValue]="noCategoryValue" [nzLabel]="'transactions.filters.uncategorized' | translate" />
-            @for (c of categories(); track c.id) {
+            @for (c of categoryOptions(categoryFilter()); track c.id) {
               <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
             }
           </nz-select>
@@ -351,7 +351,7 @@
                       (ngModelChange)="updateDraft(item.id, { categoryId: $event })"
                       [nzPlaceHolder]="'transactions.filters.uncategorized' | translate"
                     >
-                      @for (c of categories(); track c.id) {
+                      @for (c of categoryOptions(drafts()[item.id].categoryId); track c.id) {
                         <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
                       }
                     </nz-select>
@@ -570,7 +570,7 @@
                     (ngModelChange)="updateDraft(item.id, { categoryId: $event })"
                     [nzPlaceHolder]="'transactions.filters.uncategorized' | translate"
                   >
-                    @for (c of categories(); track c.id) {
+                    @for (c of categoryOptions(drafts()[item.id].categoryId); track c.id) {
                       <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
                     }
                   </nz-select>
@@ -826,7 +826,7 @@
         (ngModelChange)="categoryModalDraft.set($event)"
         [nzPlaceHolder]="'transactions.filters.category' | translate"
       >
-        @for (c of categories(); track c.id) {
+        @for (c of categoryOptions(null); track c.id) {
           <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
         }
       </nz-select>

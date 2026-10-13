@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.EpisodicOrders.Commands;
 using BudgetTracker.Api.Features.EpisodicOrders.Services;
@@ -255,7 +256,7 @@ public sealed class StrategyApplyTests : IAsyncLifetime
         await _db.SaveChangesAsync();
         var strategy = await StrategyAsync(October);
 
-        var references = await new GetStrategyReferencesQueryHandler(_db, new LimitCategories(_db))
+        var references = await new GetStrategyReferencesQueryHandler(_db, new LimitCategories(_db), new HiddenCategories(_db))
             .HandleAsync(strategy.BusinessId, default);
 
         Assert.Contains(references.Categories, c => c.Id == _food.BusinessId && c.Name == "Jedzenie");

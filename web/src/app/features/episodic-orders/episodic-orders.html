@@ -275,7 +275,7 @@
         <label class="eo__label" for="eo-category">{{ 'episodicOrders.editor.category' | translate }}</label>
         <nz-select nzId="eo-category" class="eo__field" nzShowSearch [ngModel]="draftCategoryId()" (ngModelChange)="draftCategoryId.set($event)"
           [nzPlaceHolder]="'episodicOrders.editor.categoryPlaceholder' | translate">
-          @for (c of categories(); track c.id) {
+          @for (c of categoryOptions(draftCategoryId()); track c.id) {
             <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
           }
         </nz-select>

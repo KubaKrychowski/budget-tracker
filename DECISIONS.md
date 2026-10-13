@@ -1696,3 +1696,20 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 > - ⚠️ **Znane ryzyko, świadomie przyjęte:** gdy ta sama płatność wpadnie później z wyciągu banku, będzie dwa razy (nie ma wykrywania duplikatu między paragonem
 >   a importem). Rozwiązanie na później: przy imporcie dopasować nową transakcję do istniejącej z paragonu po kwocie i dacie.
 > - Sprawdzone na żywym Azure na prawdziwym paragonie: sprzedawca, data, suma 8,99 i produkt „PIEROGI RUSKI 320g” (ilość 1, 8,99) odczytane poprawnie.
+
+> **REWIZJA — 2026-10-13: ukrywanie kategorii wspólnych** (zgłoszenie #30; `Domain/HiddenCategory.cs`, migracja `AddHiddenCategories`, `Features/Categories`
+> — `HideCategoryCommandHandler`, `HiddenCategories`, `core/category-options.ts`; makieta Figma, strona „Ustawienia”, ramka 439:2961):
+> - **Co to jest:** konto może ukryć kategorię WSPÓLNĄ („Wspólna”), której nie używa. Ukrycie jest per konto (tabela `HiddenCategories`: `UserId` + `CategoryId`, RLS
+>   `owner_isolation`, unikalny częściowy indeks) — flaga na samej kategorii ukryłaby ją wszystkim, bo wspólne są współdzielone. Własnej kategorii nie ukrywa się
+>   (409 `Category_HideOwn`): można ją przemianować albo usunąć.
+> - **Ukrycie niczego nie kasuje ani nie zmienia:** istniejące transakcje, limity i reguły zostają w kategorii i dalej ją pokazują (nazwa w tabeli).
+>   Można ukryć kategorię używaną przez limity — limit zostaje i działa (decyzja właściciela, 2026-10-13).
+> - **Gdzie znika:** z list wyboru (`GET /api/categories`, import, nowy limit, referencje strategii) i z podpowiedzi kategoryzacji. ⚠️ `HybridCategorizer` zwraca
+>   „brak kategorii” (wiersz idzie do przeglądu), gdy podpowiedź — z REGUŁY albo z modelu — wskazuje ukrytą kategorię; ukryta kategoria z reguły NIE jest podmieniana przez ML
+>   (decyzja właściciela, 2026-10-13). Ukryta kategoria zostaje w opcji wyboru tam, gdzie jest już wybrana (`pickerOptions`), żeby pole nie było puste, a zapis nie kasował jej po cichu.
+> - **API:** `PUT /api/categories/{id}/hidden` (ukryj) i `DELETE …/hidden` (przywróć) — idempotentne, bez ciała; `GET /api/categories?includeHidden=true` zwraca też ukryte z flagą
+>   `hidden`; lista zarządzania niesie `hidden`. Ekran: menu „⋮” przy wspólnych („Ukryj/Pokaż kategorię”), tag „ukryta”, przełącznik „Pokaż ukryte (N)” (domyślnie wyłączony).
+> - **Przy okazji (luka, nie ta funkcja):** `OwnerDataService` nie kasował ani nie przepisywał wierszy `Receipts`, `Strategies` i (teraz) `HiddenCategories` — bez klucza obcego
+>   do reszty zostawały po usuniętym koncie (nazwa sprzedawcy, kwoty i produkty z paragonów, strategie z saldem i kredytem). Dopisane do usuwania i przepisywania konta + testy.
+> - ⚠️ Nie sprawdzone w przeglądarce. Ekrany bez wyboru z `includeHidden` (limity: nowy limit; import; strategie) po prostu nie pokazują ukrytych — limit już istniejący
+>   na ukrytej kategorii zostaje w opcjach, żeby dało się go edytować.

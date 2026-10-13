@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Commands;
 using BudgetTracker.Api.Features.Budgets.Contracts;
@@ -181,7 +182,7 @@ public sealed class BillingPeriodTests : IAsyncLifetime
 
     private LimitsBudgetScope LimitsScope() => new(_db, _clock);
 
-    private GetLimitsQueryHandler LimitsQuery() => new(_db, LimitsScope(), new LimitCategories(_db), new LimitSpending(_db));
+    private GetLimitsQueryHandler LimitsQuery() => new(_db, LimitsScope(), new LimitCategories(_db), new LimitSpending(_db), new HiddenCategories(_db));
 
     private SetLimitCommandHandler SetLimit() =>
         new(_db, LimitsScope(), new LimitCategories(_db), new FakeCurrentUserAccessor(Guid.NewGuid()));
@@ -241,7 +242,7 @@ public sealed class BillingPeriodTests : IAsyncLifetime
     {
         await UsePeriodStartDayAsync(28);
         var dayBeforePayday = new FakeTimeProvider(new DateTimeOffset(2026, 9, 27, 10, 0, 0, TimeSpan.Zero));
-        var query = new GetLimitsQueryHandler(_db, new LimitsBudgetScope(_db, dayBeforePayday), new LimitCategories(_db), new LimitSpending(_db));
+        var query = new GetLimitsQueryHandler(_db, new LimitsBudgetScope(_db, dayBeforePayday), new LimitCategories(_db), new LimitSpending(_db), new HiddenCategories(_db));
 
         var response = await query.HandleAsync(_budget.BusinessId, null, default);
 

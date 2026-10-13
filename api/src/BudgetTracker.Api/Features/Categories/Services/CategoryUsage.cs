@@ -40,8 +40,9 @@ public sealed class CategoryUsage(AppDbContext db)
             r => r.Contributions.Any(c => c.CategoryBusinessId == category.BusinessId), ct);
 
     /// <summary>Widok kategorii z licznikami.</summary>
-    public static CategoryResponseDto View(Category category, (int Transactions, int Rules, int Limits) counts) =>
+    public static CategoryResponseDto View(
+        Category category, (int Transactions, int Rules, int Limits) counts, bool hidden = false) =>
         new(category.BusinessId, category.Name, category.Type, category.IsShared,
             counts.Transactions, counts.Rules, counts.Limits,
-            InUse: counts.Transactions + counts.Rules + counts.Limits > 0);
+            InUse: counts.Transactions + counts.Rules + counts.Limits > 0, Hidden: hidden);
 }

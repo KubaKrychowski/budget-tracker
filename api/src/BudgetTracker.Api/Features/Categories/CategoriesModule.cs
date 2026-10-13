@@ -20,11 +20,14 @@ public static class CategoriesModule
         services.AddScoped<CategoryNames>();
         services.AddScoped<CategoryUsage>();
         services.AddScoped<CategoryLookup>();
+        services.AddScoped<HiddenCategories>();
 
         services.AddScoped<CreateCategoryCommandHandler>();
         services.AddScoped<UpdateCategoryCommandHandler>();
         services.AddScoped<DeleteCategoryCommandHandler>();
         services.AddScoped<GetCategoryListQueryHandler>();
+        services.AddScoped<HideCategoryCommandHandler>();
+        services.AddScoped<UnhideCategoryCommandHandler>();
 
         return services;
     }
@@ -63,6 +66,22 @@ public static class CategoriesModule
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict);
+
+        // Ukrywanie kategorii WSPÓLNYCH dla tego konta (#30). PUT/DELETE na podzasobie „hidden”: idempotentne, bez ciała.
+        app.MapPut("/api/categories/{id:guid}/hidden", async (
+            Guid id, HideCategoryCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, ct)))
+            .WithName("HideCategory")
+            .Produces<CategoryResponseDto>()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
+
+        app.MapDelete("/api/categories/{id:guid}/hidden", async (
+            Guid id, UnhideCategoryCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, ct)))
+            .WithName("UnhideCategory")
+            .Produces<CategoryResponseDto>()
+            .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }

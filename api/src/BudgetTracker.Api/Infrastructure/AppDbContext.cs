@@ -39,6 +39,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<EpisodicOrder> EpisodicOrders => Set<EpisodicOrder>();
     public DbSet<Strategy> Strategies => Set<Strategy>();
     public DbSet<Receipt> Receipts => Set<Receipt>();
+    public DbSet<HiddenCategory> HiddenCategories => Set<HiddenCategory>();
 
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<TransactionStatusDictionary> TransactionStatuses => Set<TransactionStatusDictionary>();
@@ -248,6 +249,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => x.BudgetBusinessId);
 
             e.HasIndex(x => x.UserId);
+            e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
+        });
+
+        b.Entity<HiddenCategory>(e =>
+        {
+            // Jedno ukrycie danej kategorii na konto (żywe): częściowy indeks, żeby skasowane logicznie nie blokowało ponownego ukrycia.
+            e.HasIndex(x => new { x.UserId, x.CategoryId }).IsUnique().HasFilter(AliveOnly);
             e.HasQueryFilter(QueryFilterNames.Owner, x => CurrentUserId == null || x.UserId == CurrentUserId);
         });
 

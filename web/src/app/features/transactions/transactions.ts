@@ -30,6 +30,7 @@ import { EnumTranslatePipe } from '../../core/pipes/enum-translate.pipe';
 import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.service';
 import { fromIsoDate, toIsoDate } from '../../core/api/date-param';
 import { CategoryOption } from '../../core/api/models/category-option';
+import { pickerOptions } from '../../core/category-options';
 import { TransactionListItem } from '../../core/api/models/transaction-list-item';
 import { Viewport } from '../../core/layout/viewport';
 import { TransactionListResponse } from '../../core/api/models/transaction-list-response';
@@ -211,7 +212,7 @@ export class Transactions {
         value: NoCategory,
         byDefault: current === NoCategory,
       },
-      ...this.categories().map((c) => ({ text: c.name, value: c.id, byDefault: current === c.id })),
+      ...pickerOptions(this.categories(), current).map((c) => ({ text: c.name, value: c.id, byDefault: current === c.id })),
     ];
   });
 
@@ -432,9 +433,17 @@ export class Transactions {
     return v !== undefined && v.selectedBudgetIds.length > 0 && v.hasAnyTransactions && v.total === 0;
   });
 
-  private readonly categoriesResource = httpResource<CategoryOption[]>(() => '/api/categories');
+  private readonly categoriesResource = httpResource<CategoryOption[]>(() => ({ url: '/api/categories', params: { includeHidden: true } }));
   private readonly categoriesValue = valueOf(this.categoriesResource);
+  /**
+   * WSZYSTKIE kategorie, także ukryte przez konto (#30): lista nazywa nimi istniejące transakcje. Do wyboru idzie `categoryOptions`,
+   * które ukryte pomija (poza aktualnie wybraną).
+   */
   protected readonly categories = computed(() => this.categoriesValue() ?? []);
+
+  protected categoryOptions(current: string | null | undefined): readonly CategoryOption[] {
+    return pickerOptions(this.categories(), current);
+  }
 
   /** Wcielenie tabeli, którego echo inicjalizacyjne już odrzuciliśmy — patrz `onQueryParamsChange`. */
   private tableInstance: unknown = null;

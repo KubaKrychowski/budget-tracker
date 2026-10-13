@@ -60,8 +60,8 @@ public static class TransactionsModule
         .Produces<TransactionListResponseDto>()
         .Produces(StatusCodes.Status404NotFound);
 
-        app.MapGet("/api/categories", async (GetCategoriesQueryHandler handler, CancellationToken ct) =>
-            Results.Ok(await handler.HandleAsync(ct)))
+        app.MapGet("/api/categories", async (GetCategoriesQueryHandler handler, CancellationToken ct, bool includeHidden = false) =>
+            Results.Ok(await handler.HandleAsync(includeHidden, ct)))
             .WithName("ListCategories")
             .Produces<IReadOnlyList<CategoryOptionResponseDto>>();
 
@@ -141,7 +141,7 @@ public static class TransactionsModule
             });
 
         registry.Register("category", "list", "Słownik kategorii, alfabetycznie.", "category list", [],
-            async (sp, _, ct) => await sp.GetRequiredService<GetCategoriesQueryHandler>().HandleAsync(ct));
+            async (sp, _, ct) => await sp.GetRequiredService<GetCategoriesQueryHandler>().HandleAsync(includeHidden: false, ct));
 
         registry.Register("transaction", "update", "Zapisuje edycje wierszy (pojedynczą albo masową, tym samym mechanizmem).",
             "transaction update --edits-json <json> [--budget-id <guid,...>]",

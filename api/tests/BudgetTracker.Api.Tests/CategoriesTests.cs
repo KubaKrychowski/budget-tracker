@@ -83,7 +83,7 @@ public sealed class CategoriesTests : IAsyncLifetime
     private Task<IReadOnlyList<CategoryResponseDto>> ListAsync(Guid user)
     {
         var db = Context(user);
-        return new GetCategoryListQueryHandler(db, new CategoryUsage(db)).HandleAsync(default);
+        return new GetCategoryListQueryHandler(db, new CategoryUsage(db), new HiddenCategories(db)).HandleAsync(default);
     }
 
     private async Task<Guid> SharedIdAsync(string name) =>

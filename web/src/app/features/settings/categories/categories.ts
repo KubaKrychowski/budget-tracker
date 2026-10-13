@@ -11,7 +11,9 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogService } from '../../../core/confirm-dialog/confirm-dialog.service';
 import { ErrorMessages } from '../../../core/errors/error-messages';
@@ -33,7 +35,7 @@ const NameMaxLength = 100;
   imports: [
     FormsModule,
     NzAlertModule, NzButtonModule, NzDropdownModule, NzIconModule, NzInputModule, NzModalModule,
-    NzSegmentedModule, NzSpinModule, NzTableModule, TranslatePipe,
+    NzSegmentedModule, NzSpinModule, NzSwitchModule, NzTableModule, NzTagModule, TranslatePipe,
   ],
   templateUrl: './categories.html',
   styleUrl: './categories.scss',
@@ -52,6 +54,30 @@ export class Categories {
 
   protected readonly loading = this.resource.isLoading;
   protected readonly categories = computed(() => this.resourceValue() ?? []);
+
+  // ── Ukrywanie kategorii wspólnych (#30) ────────────────────────────────────────────
+
+  /** Przełącznik „Pokaż ukryte" — domyślnie wyłączony, ukryte kategorie nie zaśmiecają listy. */
+  protected readonly showHidden = signal(false);
+  protected readonly hiddenCount = computed(() => this.categories().filter((c) => c.hidden).length);
+  protected readonly visibleCategories = computed(() =>
+    this.showHidden() ? this.categories() : this.categories().filter((c) => !c.hidden));
+
+  /**
+   * Ukrywa albo przywraca kategorię wspólną dla tego konta. Nic się nie kasuje: transakcje, limity i reguły zostają
+   * w tej kategorii, znika ona tylko z list wyboru i z podpowiedzi kategoryzacji.
+   */
+  protected async setHidden(category: ManagedCategory, hidden: boolean): Promise<void> {
+    try {
+      const url = `/api/categories/${category.id}/hidden`;
+      await firstValueFrom(hidden ? this.http.put<ManagedCategory>(url, null) : this.http.delete<ManagedCategory>(url));
+      this.resource.reload();
+      this.message.info(this.translate.instant(
+        hidden ? 'settings.categories.toast.hidden' : 'settings.categories.toast.shown', { name: category.name }));
+    } catch (error) {
+      this.message.error(this.errorMessages.of(error));
+    }
+  }
 
   protected readonly nameMaxLength = NameMaxLength;
 

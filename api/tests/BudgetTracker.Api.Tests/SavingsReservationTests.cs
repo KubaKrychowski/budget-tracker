@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Limits.Consts;
 using BudgetTracker.Api.Features.Limits.Queries;
@@ -79,7 +80,7 @@ public sealed class SavingsReservationTests : IAsyncLifetime
         new(_db, Lookup(), new LimitCategories(_db), new LimitSpending(_db), new LimitsBudgetScope(_db, _clock));
 
     private GetLimitsQueryHandler LimitsHandler() =>
-        new(_db, new LimitsBudgetScope(_db, _clock), new LimitCategories(_db), new LimitSpending(_db));
+        new(_db, new LimitsBudgetScope(_db, _clock), new LimitCategories(_db), new LimitSpending(_db), new HiddenCategories(_db));
 
     private UpdateSavingsReservationCommandHandler UpdateHandler() => new(_db, Lookup(), Scope());
 
