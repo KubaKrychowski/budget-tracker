@@ -189,6 +189,7 @@ describe('Transactions', () => {
   } as NzTableQueryParams);
 
   beforeEach(async () => {
+    localStorage.clear();
     confirmDialog = new FakeConfirmDialogService();
 
     await TestBed.configureTestingModule({
@@ -229,10 +230,48 @@ describe('Transactions', () => {
   });
 
   afterEach(() => {
+    localStorage.clear();
     // `httpResource` porzuca żądanie, gdy parametry zmienią się w locie — to normalna praca
     // sygnałów, nie przeciek. Sprawdzamy więc tylko, czy nie zostało nic NIEOBSŁUŻONEGO.
     http.match(() => true).forEach((r) => { if (!r.cancelled) r.flush({}); });
     http.verify({ ignoreCancelled: true });
+  });
+
+  // ── Zapamiętany rozmiar strony (#31) ───────────────────────────────────────────────
+
+  const listPageSizes = (): (string | null)[] =>
+    http.match((r) => r.url === '/api/transactions').map((r) => r.request.params.get('pageSize'));
+
+  it('zmiana rozmiaru strony w tabeli jest zapamiętywana na następne wejście', async () => {
+    const table = {};
+    api().onQueryParamsChange(queryParams(), table); // echo — połknięte
+    api().onQueryParamsChange(queryParams({ pageSize: 50 }), table);
+
+    expect(localStorage.getItem('bt.pageSize.transactions')).toBe('50');
+  });
+
+  it('nowe wejście na ekran zaczyna od zapamiętanego rozmiaru, a nie od 10', async () => {
+    localStorage.setItem('bt.pageSize.transactions', '50');
+
+    const second = TestBed.createComponent(Transactions);
+    second.detectChanges();
+
+    // Łapie powrót do domyślnych 10 przy każdym wejściu — dokładnie to zgłoszono.
+    expect(listPageSizes()).toContain('50');
+  });
+
+  it('rozmiar jawnie podany w adresie wygrywa i niczego nie nadpisuje w pamięci', async () => {
+    localStorage.setItem('bt.pageSize.transactions', '50');
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', pageSize: '20' },
+    });
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+
+    expect(listPageSizes()).toContain('20');
+    // Odnośnik nie zmienia ustawień użytkownika.
+    expect(localStorage.getItem('bt.pageSize.transactions')).toBe('50');
   });
 
   // ── Echo inicjalizacyjne tabeli ────────────────────────────────────────────────────

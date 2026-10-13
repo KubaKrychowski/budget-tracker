@@ -37,11 +37,15 @@ import { errorOf, valueOf } from '../../core/api/resource-value';
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { DraftRow } from './draft-row';
 import { parseAmount } from '../../core/parse-amount';
+import { rememberPageSize, rememberedPageSize } from '../../core/page-size-memory';
 import { ReceiptItem } from '../../core/api/models/receipts';
 import { ReceiptDialog } from './receipt-dialog/receipt-dialog';
 
 /** Wartość selecta kategorii dla wierszy bez kategorii — myliłaby się z „nic nie wybrano". */
 const NoCategory = '__brak__';
+
+/** Klucz pamięci rozmiaru strony tej tabeli — patrz `core/page-size-memory`. */
+const TransactionsTable = 'transactions';
 
 /**
  * Wartość `?origin=` przy wejściu z zakładki „Dane treningowe" — patrz `crumbs`.
@@ -196,7 +200,17 @@ export class Transactions {
   protected readonly sort = computed(() => this.queryParams().get('sort') ?? 'date');
   protected readonly desc = computed(() => this.queryParams().get('desc') !== 'false');
   protected readonly page = computed(() => Number(this.queryParams().get('page') ?? '1'));
-  protected readonly pageSize = computed(() => Number(this.queryParams().get('pageSize') ?? '10'));
+  /**
+   * Rozmiar strony: jawny w adresie > zapamiętany wybór użytkownika > 10 (zgłoszenie #31).
+   * Zapamiętany jest tylko DOMYŚLEM — odnośnik z `?pageSize=` niczego nie nadpisuje (patrz `page-size-memory`).
+   */
+  protected readonly pageSize = computed(() => {
+    const fromUrl = this.queryParams().get('pageSize');
+    return fromUrl !== null ? Number(fromUrl) : this.rememberedPageSize;
+  });
+
+  /** Odczyt jednorazowy przy otwarciu ekranu; kolejne zmiany użytkownika idą już przez adres. */
+  private readonly rememberedPageSize = rememberedPageSize(TransactionsTable, [10, 20, 50, 100]) ?? 10;
 
   /**
    * Opcje filtra kolumny „Kategoria" (`nzFilters` w nagłówku, tak jak w imporcie) —
@@ -1097,6 +1111,8 @@ export class Transactions {
     // niż przed: kto oglądał stronę 8 po 10 wierszy, po przełączeniu na 100 wylądowałby
     // na stronie 8 z ośmiuset — czyli na pustej tabeli.
     const pageSizeChanged = params.pageSize !== this.pageSize();
+    // Zapamiętujemy WYBÓR użytkownika (zmiana w kontrolce tabeli), nie rozmiar z adresu — odnośnik nie zmienia ustawień.
+    if (pageSizeChanged) rememberPageSize(TransactionsTable, params.pageSize);
 
     void this.changeQuery({
       page: pageSizeChanged ? 1 : params.pageIndex,

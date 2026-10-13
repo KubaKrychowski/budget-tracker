@@ -1696,3 +1696,11 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 > - ⚠️ **Znane ryzyko, świadomie przyjęte:** gdy ta sama płatność wpadnie później z wyciągu banku, będzie dwa razy (nie ma wykrywania duplikatu między paragonem
 >   a importem). Rozwiązanie na później: przy imporcie dopasować nową transakcję do istniejącej z paragonu po kwocie i dacie.
 > - Sprawdzone na żywym Azure na prawdziwym paragonie: sprzedawca, data, suma 8,99 i produkt „PIEROGI RUSKI 320g” (ilość 1, 8,99) odczytane poprawnie.
+
+> **REWIZJA — 2026-10-13: zapamiętany rozmiar strony tabeli** (zgłoszenie #31; `web/src/app/core/page-size-memory.ts`, lista transakcji):
+> - Wybór „wierszy na stronę” w tabeli transakcji (10/20/50/100) jest zapamiętywany w `localStorage` pod `bt.pageSize.<tabela>` i staje się DOMYŚLNYM
+>   rozmiarem przy kolejnym wejściu na ekran. Wybór jest per przeglądarka, nie per konto na serwerze — jak „przeczytane” w „Co nowego”;
+>   prefiks `bt.` jest czyszczony przy wylogowaniu i zmianie konta, więc kolejna osoba na tej przeglądarce nie dziedziczy cudzego ustawienia.
+> - Kolejność: rozmiar jawny w adresie (`?pageSize=`) > zapamiętany wybór > 10. Odnośnik z jawnym rozmiarem niczego nie nadpisuje w pamięci —
+>   zapamiętuje się wyłącznie zmiana zrobiona w kontrolce tabeli. Wartość spoza dozwolonych albo uszkodzony wpis = „nic nie zapamiętano”.
+> - Pozostałe tabele nie mają przełącznika rozmiaru (stały `nzPageSize`), więc nie ma czego pamiętać; moduł jest gotowy na kolejne (klucz per tabela).
