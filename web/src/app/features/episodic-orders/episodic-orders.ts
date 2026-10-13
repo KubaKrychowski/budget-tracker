@@ -30,6 +30,7 @@ import { ConfirmDialogService } from '../../core/confirm-dialog/confirm-dialog.s
 import { ErrorMessages } from '../../core/errors/error-messages';
 import { errorOf, valueOf } from '../../core/api/resource-value';
 import { parseAmount } from '../../core/parse-amount';
+import { pickerOptions } from '../../core/category-options';
 import { CategoryOption } from '../../core/api/models/category-option';
 import {
   EpisodicOrderCandidate, EpisodicOrderRow, EpisodicOrdersResponse,
@@ -107,7 +108,7 @@ export class EpisodicOrders {
     params: { ...(this.budgetId() ? { budgetId: this.budgetId()! } : {}) },
   }));
 
-  private readonly categoriesResource = httpResource<CategoryOption[]>(() => '/api/categories');
+  private readonly categoriesResource = httpResource<CategoryOption[]>(() => ({ url: '/api/categories', params: { includeHidden: true } }));
 
   /** `value()` RZUCA w stanie błędu — patrz core/api/resource-value.ts. */
   private readonly value = valueOf(this.resource);
@@ -118,7 +119,12 @@ export class EpisodicOrders {
   protected readonly busy = signal(false);
 
   protected readonly data = computed(() => this.value() ?? null);
+  /** Wszystkie kategorie, także ukryte (#30) — zlecenie może wskazywać ukrytą; do wyboru idzie `categoryOptions`. */
   protected readonly categories = computed(() => this.categoriesValue() ?? []);
+
+  protected categoryOptions(current: string | null | undefined): readonly CategoryOption[] {
+    return pickerOptions(this.categories(), current);
+  }
 
   /** Ostatnia odpowiedź — dla przełącznika budżetu, żeby nie znikał w trakcie przeładowania. */
   protected readonly lastData = linkedSignal<EpisodicOrdersResponse | null, EpisodicOrdersResponse | null>({

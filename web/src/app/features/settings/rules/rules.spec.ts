@@ -93,7 +93,7 @@ describe('Rules', () => {
   const settle = async (rules: CategoryRule[]): Promise<void> => {
     fixture.detectChanges();
     http.match('/api/categorization/rules').forEach((r) => r.flush(rules));
-    http.match('/api/categories').forEach((r) => r.flush([{ id: 'cat-1', name: 'Paliwo' }]));
+    http.match((r) => r.url === '/api/categories').forEach((r) => r.flush([{ id: 'cat-1', name: 'Paliwo' }]));
     await fixture.whenStable();
     fixture.detectChanges();
   };

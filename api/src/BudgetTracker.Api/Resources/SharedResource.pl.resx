@@ -86,4 +86,5 @@
   <data name="Receipt_FieldsInvalid" xml:space="preserve"><value>Sprzedawca może mieć do 200 znaków, a suma musi być większa od zera.</value></data>
   <data name="Receipt_TransactionInvalid" xml:space="preserve"><value>Wybrana transakcja już nie istnieje. Odśwież listę i spróbuj ponownie.</value></data>
   <data name="Receipt_ReaderUnavailable" xml:space="preserve"><value>Odczyt paragonów jest teraz niedostępny. Spróbuj ponownie później.</value></data>
+  <data name="Category_HideOwn" xml:space="preserve"><value>Ukryć można tylko kategorię wspólną. Własną kategorię możesz przemianować albo usunąć.</value></data>
 </root>

@@ -20,6 +20,7 @@ import { ErrorMessages } from '../../../core/errors/error-messages';
 import { valueOf } from '../../../core/api/resource-value';
 import { normalizeText } from '../../../core/normalize-text';
 import { parseAmount } from '../../../core/parse-amount';
+import { pickerOptions } from '../../../core/category-options';
 import { CategoryOption } from '../../../core/api/models/category-option';
 import { CategoryRule, CategoryRuleRequest, RuleDirection } from '../../../core/api/models/category-rule';
 import { RulePreview } from '../../../core/api/models/rule-preview';
@@ -64,14 +65,19 @@ export class Rules {
   private readonly confirmDialog = inject(ConfirmDialogService);
 
   private readonly rulesResource = httpResource<CategoryRule[]>(() => '/api/categorization/rules');
-  private readonly categoriesResource = httpResource<CategoryOption[]>(() => '/api/categories');
+  private readonly categoriesResource = httpResource<CategoryOption[]>(() => ({ url: '/api/categories', params: { includeHidden: true } }));
 
   /** Bezpieczny odczyt — `value()` RZUCA w stanie błędu (patrz core/api/resource-value.ts). */
   private readonly rulesValue = valueOf(this.rulesResource);
   private readonly categoriesValue = valueOf(this.categoriesResource);
 
   protected readonly loading = this.rulesResource.isLoading;
+  /** Wszystkie kategorie, także ukryte (#30) — reguła może wskazywać ukrytą; do wyboru idzie `categoryOptions`. */
   protected readonly categories = computed(() => this.categoriesValue() ?? []);
+
+  protected categoryOptions(current: string | null | undefined): readonly CategoryOption[] {
+    return pickerOptions(this.categories(), current);
+  }
 
   /**
    * Reguły w kolejności, w jakiej NAPRAWDĘ się stosują.

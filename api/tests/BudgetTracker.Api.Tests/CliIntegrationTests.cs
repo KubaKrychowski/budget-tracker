@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.Categories;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets;
 using BudgetTracker.Api.Features.Budgets.Consts;
@@ -64,6 +65,7 @@ public sealed class CliIntegrationTests : IAsyncLifetime
         services.AddLogging();
         services.AddLocalization();
         services.AddDashboard();
+        services.AddCategories();
         services.AddCategorization(config);
         services.AddBudgets(config);
         services.AddTransactions();

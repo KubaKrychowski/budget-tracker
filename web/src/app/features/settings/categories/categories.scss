@@ -25,6 +25,30 @@
   font-weight: 600;
 }
 
+.cat__header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* Przełącznik „Pokaż ukryte" (#30) obok „Nowa kategoria". */
+.cat__show-hidden {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  color: #252b27;
+}
+
+/* Ukryta kategoria wspólna: przyciemniona, ale menu zostaje czytelne — to przez nie ją się przywraca. */
+.cat__row--hidden td:not(.cat__right) {
+  opacity: 0.45;
+}
+
+.cat__hidden-tag {
+  margin-left: 8px;
+}
+
 .cat__right {
   text-align: right;
 }

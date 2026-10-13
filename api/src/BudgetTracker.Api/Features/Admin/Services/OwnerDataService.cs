@@ -115,6 +115,11 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         var episodic = await db.EpisodicOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var budgets = await db.Budgets.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         var models = await db.ModelVersions.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        // Wiersze nowszych funkcji bez klucza obcego do reszty — kasujemy je razem z kontem, żeby po nim nie zostały dane osobowe
+        // (nazwa sprzedawcy, kwoty i produkty z paragonów, strategie z saldami i kredytem, ukryte kategorie).
+        await db.Receipts.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        await db.HiddenCategories.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        await db.Strategies.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         await DeleteOwnRulesAsync(ownerId, ct);
         await DeleteOwnCategoriesAsync(ownerId, ct);
         await DeleteStorageAsync(ownerId, ct);
@@ -141,6 +146,12 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         var standing = await db.StandingOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
         var episodic = await db.EpisodicOrders.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
+        await db.Receipts.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
+        await db.HiddenCategories.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
+        await db.Strategies.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
         await ReassignOwnRulesAsync(ownerId, targetUserId, ct);
         await ReassignOwnCategoriesAsync(ownerId, targetUserId, ct);

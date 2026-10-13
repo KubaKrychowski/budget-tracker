@@ -11,9 +11,21 @@
 
 <div class="cat__header">
   <h3 class="cat__title">{{ 'settings.categories.listTitle' | translate }}</h3>
-  <button nz-button nzType="primary" (click)="openCreate()">
-    {{ 'settings.categories.create' | translate }}
-  </button>
+  <div class="cat__header-actions">
+    <!-- Ukryte kategorie wspólne (#30): domyślnie schowane, licznik mówi, ile ich jest. -->
+    <span class="cat__show-hidden">
+      <nz-switch
+        nzSize="small"
+        [ngModel]="showHidden()"
+        (ngModelChange)="showHidden.set($event)"
+        [attr.aria-label]="'settings.categories.showHidden' | translate: { count: hiddenCount() }"
+      />
+      <span>{{ 'settings.categories.showHidden' | translate: { count: hiddenCount() } }}</span>
+    </span>
+    <button nz-button nzType="primary" (click)="openCreate()">
+      {{ 'settings.categories.create' | translate }}
+    </button>
+  </div>
 </div>
 
 <!-- Na telefonie tabela przewija się w bok we własnym kontenerze, zamiast rozpychać całą stronę. -->
@@ -23,7 +35,7 @@
          kontrolkę, a tabela dalej tnie do 10 wierszy. -->
     <nz-table
       #categoriesTable
-      [nzData]="categories()"
+      [nzData]="visibleCategories()"
       [nzPageSize]="20"
       nzSize="middle"
       [nzNoResult]="'settings.categories.empty' | translate"
@@ -39,14 +51,42 @@
       </thead>
       <tbody>
         @for (category of categoriesTable.data; track category.id) {
-          <tr>
-            <td>{{ category.name }}</td>
+          <tr [class.cat__row--hidden]="category.hidden">
+            <td>
+              {{ category.name }}
+              @if (category.hidden) {
+                <nz-tag class="cat__hidden-tag">{{ 'settings.categories.hiddenTag' | translate }}</nz-tag>
+              }
+            </td>
             <td>{{ 'settings.categories.type.' + category.type | translate }}</td>
             <td>{{ (category.isShared ? 'settings.categories.scope.shared' : 'settings.categories.scope.own') | translate }}</td>
             <td class="cat__usage">{{ usage(category) }}</td>
             <td class="cat__right">
-              <!-- Kategorie wspólne nie mają menu: nie da się ich zmienić ani usunąć (API odpowie 409). -->
-              @if (!category.isShared) {
+              <!-- Kategorii wspólnej nie da się zmienić ani usunąć (API odpowie 409), ale można ją UKRYĆ dla tego konta (#30). -->
+              @if (category.isShared) {
+                <button
+                  nz-button
+                  nzType="text"
+                  nz-dropdown
+                  [nzDropdownMenu]="sharedMenu"
+                  nzTrigger="click"
+                  [attr.aria-label]="'settings.categories.columns.actions' | translate"
+                >
+                  <nz-icon nzType="more" />
+                </button>
+                <nz-dropdown-menu #sharedMenu="nzDropdownMenu">
+                  <ul nz-menu>
+                    <li
+                      nz-menu-item
+                      tabindex="0"
+                      (click)="setHidden(category, !category.hidden)"
+                      (keydown.enter)="setHidden(category, !category.hidden)"
+                    >
+                      {{ (category.hidden ? 'settings.categories.show' : 'settings.categories.hide') | translate }}
+                    </li>
+                  </ul>
+                </nz-dropdown-menu>
+              } @else {
                 <button
                   nz-button
                   nzType="text"

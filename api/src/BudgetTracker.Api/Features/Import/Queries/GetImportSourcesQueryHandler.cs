@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Features.Import.Contracts;
+using BudgetTracker.Api.Features.Categories.Services;
 using BudgetTracker.Api.Features.Import.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,8 @@ namespace BudgetTracker.Api.Features.Import.Queries;
 /// Bez wyłączonych budżetów: import na taki budżet i tak skończyłby się 409, więc pokazywanie go w selektorze
 /// byłoby zaproszeniem do ślepego zaułka.
 /// </remarks>
-public sealed class GetImportSourcesQueryHandler(IEnumerable<IStatementParser> parsers, AppDbContext db)
+public sealed class GetImportSourcesQueryHandler(
+    IEnumerable<IStatementParser> parsers, AppDbContext db, HiddenCategories hiddenCategories)
 {
     public async Task<ImportSourcesResponseDto> HandleAsync(CancellationToken ct)
     {
@@ -23,7 +25,9 @@ public sealed class GetImportSourcesQueryHandler(IEnumerable<IStatementParser> p
             .Select(b => new ImportBudgetOptionResponseDto(b.BusinessId, b.Name, b.Month))
             .ToListAsync(ct);
 
+        var hidden = await hiddenCategories.IdsAsync(ct);
         var categories = await db.Categories
+            .Where(c => !hidden.Contains(c.Id))
             .OrderBy(c => c.Name)
             .Select(c => new ImportCategoryOptionResponseDto(c.BusinessId, c.Name))
             .ToListAsync(ct);

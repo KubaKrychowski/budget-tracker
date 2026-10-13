@@ -17,6 +17,8 @@ export interface ManagedCategory {
   readonly limits: number;
   /** Używana przez transakcje, reguły albo limity — nie da się wtedy zmienić typu. */
   readonly inUse: boolean;
+  /** Wspólna kategoria ukryta przez to konto (#30) — znika z list wyboru i podpowiedzi kategoryzacji. */
+  readonly hidden: boolean;
 }
 
 /** Ciało `POST /api/categories` i `PUT /api/categories/{id}`. */

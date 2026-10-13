@@ -597,8 +597,8 @@
     },
     "categories": {
       "intro": "Categories organise your transactions, limits and the dashboard. Besides the shared categories you can add your own — only you can see them. A category type (expense or income) decides which transactions it can be assigned to.",
-      "sharedTitle": "Shared categories are read-only",
-      "sharedDescription": "Categories marked “Shared” are available to all accounts — you cannot edit or delete them. You can always rename your own category, but delete it only when it has no transactions, limits or rules.",
+      "sharedTitle": "Shared categories are read-only — but you can hide them",
+      "sharedDescription": "Categories marked \"Shared\" cannot be changed or deleted. You can hide the ones you do not use: they disappear from the pick lists, while existing transactions, limits and rules stay as they are.",
       "listTitle": "Category list",
       "create": "New category",
       "empty": "No categories.",
@@ -639,8 +639,14 @@
       "toast": {
         "created": "Category added.",
         "updated": "Category saved.",
-        "deleted": "Category deleted."
-      }
+        "deleted": "Category deleted.",
+        "hidden": "The category \"{{name}}\" is hidden. You can restore it with the \"Show hidden\" switch.",
+        "shown": "The category \"{{name}}\" is visible again."
+      },
+      "hide": "Hide category",
+      "show": "Show category",
+      "hiddenTag": "hidden",
+      "showHidden": "Show hidden ({{count}})"
     },
     "mobile": {
       "allSections": "All settings"

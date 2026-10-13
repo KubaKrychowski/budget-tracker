@@ -8,6 +8,7 @@ namespace BudgetTracker.Api.Features.Categories.Contracts;
 /// <param name="Transactions">Transakcje zalogowanego konta w tej kategorii.</param>
 /// <param name="Rules">Reguły kategoryzacji (własne i wspólne) wskazujące na tę kategorię.</param>
 /// <param name="Limits">Limity budżetowe konta na tej kategorii.</param>
+/// <param name="Hidden">Kategoria wspólna ukryta przez to konto — znika z list wyboru i podpowiedzi kategoryzacji (zgłoszenie #30).</param>
 /// <param name="InUse">Czy kategoria jest używana przez transakcje, reguły albo limity — wtedy nie da się zmienić jej typu.</param>
 public sealed record CategoryResponseDto(
     Guid Id,
@@ -17,4 +18,5 @@ public sealed record CategoryResponseDto(
     int Transactions,
     int Rules,
     int Limits,
-    bool InUse);
+    bool InUse,
+    bool Hidden = false);

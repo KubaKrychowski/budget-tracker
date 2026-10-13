@@ -422,6 +422,38 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.ToTable("EpisodicOrders");
                 });
 
+            modelBuilder.Entity("BudgetTracker.Api.Domain.HiddenCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "CategoryId")
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("HiddenCategories");
+                });
+
             modelBuilder.Entity("BudgetTracker.Api.Domain.ImportBatch", b =>
                 {
                     b.Property<int>("Id")
