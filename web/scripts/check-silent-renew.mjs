@@ -33,6 +33,14 @@ if (!/img-src[^;]*blob:/.test(config.globalHeaders?.['Content-Security-Policy'] 
   problems.push("globalne CSP musi dopuszczać blob: w img-src (podgląd paragonu)");
 }
 
+// ⚠️ `frame-src` strony NADRZĘDNEJ musi dopuszczać 'self'. Odnowienie sesji ładuje ramkę na Identity, ale Identity odpowiada
+// przekierowaniem na https://<aplikacja>/silent-renew.html — czyli ramka trafia na WŁASNY origin, a przeglądarka sprawdza frame-src
+// także dla celu przekierowania. Samo `frame-src https://auth…` blokowało tę ramkę ("Framing … violates … frame-src"), więc odnowienie
+// nigdy się nie kończyło, mimo że sama strona silent-renew.html była już osadzalna (nagłówki route'a).
+if (!/frame-src[^;]*'self'/.test(config.globalHeaders?.['Content-Security-Policy'] ?? '')) {
+  problems.push("globalne CSP musi dopuszczać 'self' w frame-src (ramka odnowienia sesji wraca na origin aplikacji)");
+}
+
 // Skrypt inline wymagałby w CSP hasha zależnego od końców linii — dlatego skrypt jest w osobnym pliku.
 if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(html)) problems.push('silent-renew.html ma skrypt inline — CSP tej strony dopuszcza tylko script-src \'self\'');
 if (!/script-src 'self'/.test(csp)) problems.push("CSP tej strony musi dopuszczać script-src 'self' (skrypt jest w silent-renew.js)");
