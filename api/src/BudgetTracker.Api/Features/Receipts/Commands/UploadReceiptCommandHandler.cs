@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Domain;
+using BudgetTracker.Api.Features.ProductCategories.Services;
 using BudgetTracker.Api.Features.Receipts.Contracts;
 using BudgetTracker.Api.Features.Receipts.Exceptions;
 using BudgetTracker.Api.Features.Receipts.Services;
@@ -15,6 +16,7 @@ public sealed class UploadReceiptCommandHandler(
     AppDbContext db,
     IReceiptReader reader,
     ReceiptFiles files,
+    ProductCategorizer products,
     ICurrentUserAccessor currentUser,
     TimeProvider clock)
 {
@@ -41,7 +43,7 @@ public sealed class UploadReceiptCommandHandler(
             userId, blobName, Path.GetFileName(fileName), contentType, length, clock.GetUtcNow(),
             reading.Merchant, reading.Date, total);
 
-        receipt.SetItems(reading.Items ?? []);
+        receipt.SetItems(await CategorizeAsync(reading.Items ?? [], ct));
         db.Receipts.Add(receipt);
         await db.SaveChangesAsync(ct);
 
@@ -51,6 +53,19 @@ public sealed class UploadReceiptCommandHandler(
             Uncertain(receipt.ReceiptDate, reading.DateConfidence),
             Uncertain(receipt.Total, reading.TotalConfidence),
             ReceiptMapping.Lines(receipt.Items));
+    }
+
+    /// <summary>Podpowiada kategorię produktu każdej pozycji: reguły, potem model. Podpowiedź NIE jest potwierdzeniem użytkownika.</summary>
+    private async Task<List<ReceiptLine>> CategorizeAsync(IReadOnlyList<ReceiptLine> items, CancellationToken ct)
+    {
+        var result = new List<ReceiptLine>(items.Count);
+        foreach (var item in items)
+        {
+            var suggestion = await products.CategorizeAsync(item.Name, ct);
+            result.Add(item.WithCategory(suggestion.CategoryId, confirmed: false));
+        }
+
+        return result;
     }
 
     private static bool Uncertain<T>(T? value, float? confidence) => value is null || confidence is null or < ConfidenceThreshold;

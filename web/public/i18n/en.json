@@ -87,7 +87,13 @@
     "recentActions": "Recent actions",
     "recentActionsHint": "Screens you visited recently — newest first",
     "firstStepsHint": "Nothing here yet — screens you visit will show up",
-    "allActions": "All actions"
+    "allActions": "All actions",
+    "breakdown": {
+      "title": "Products from receipts",
+      "uncategorized": "Uncategorized",
+      "noReceipt": "No receipt",
+      "note": "\"No receipt\" is the part of the category without a loaded receipt with prices. The breakdown adds up to the category bar."
+    }
   },
   "enums": {
     "transactionStatus": {
@@ -363,7 +369,15 @@
       "itemsSum": "Items total",
       "sumMatches": "matches the amount",
       "sumDiffers": "doesn't match the amount",
-      "noProducts": "No products were read from this receipt."
+      "noProducts": "No products were read from this receipt.",
+      "category": "Product category",
+      "noCategory": "Uncategorized",
+      "filterAll": "Category: all",
+      "categoryFilter": "Product category filter",
+      "changeCategory": "Change the category of {{name}}",
+      "newCategory": "New product category",
+      "addCategory": "Add",
+      "uncategorizedHint": "Products without a category: {{count}}. Pick a category — we will remember it for this product name."
     }
   },
   "currencies": {

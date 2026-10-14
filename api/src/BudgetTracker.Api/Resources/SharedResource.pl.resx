@@ -86,4 +86,9 @@
   <data name="Receipt_FieldsInvalid" xml:space="preserve"><value>Sprzedawca może mieć do 200 znaków, a suma musi być większa od zera.</value></data>
   <data name="Receipt_TransactionInvalid" xml:space="preserve"><value>Wybrana transakcja już nie istnieje. Odśwież listę i spróbuj ponownie.</value></data>
   <data name="Receipt_ReaderUnavailable" xml:space="preserve"><value>Odczyt paragonów jest teraz niedostępny. Spróbuj ponownie później.</value></data>
+  <data name="Receipt_ItemNotFound" xml:space="preserve"><value>Ten paragon nie ma takiej pozycji.</value></data>
+  <data name="ProductCategory_NameRequired" xml:space="preserve"><value>Podaj nazwę kategorii produktu.</value></data>
+  <data name="ProductCategory_NameTooLong" xml:space="preserve"><value>Nazwa kategorii produktu może mieć najwyżej 100 znaków.</value></data>
+  <data name="ProductCategory_Invalid" xml:space="preserve"><value>Wybrana kategoria produktu już nie istnieje. Odśwież i spróbuj ponownie.</value></data>
+  <data name="ProductCategory_NameTaken" xml:space="preserve"><value>Kategoria produktu o tej nazwie już istnieje (własna albo wspólna). Wybierz inną nazwę.</value></data>
 </root>

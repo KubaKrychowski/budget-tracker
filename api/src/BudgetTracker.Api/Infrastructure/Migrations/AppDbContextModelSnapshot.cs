@@ -537,6 +537,86 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.ToTable("ModelVersions");
                 });
 
+            modelBuilder.Entity("BudgetTracker.Api.Domain.ProductCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("ProductCategories");
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.ProductRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BusinessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Pattern")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessId")
+                        .IsUnique();
+
+                    b.HasIndex("Priority");
+
+                    b.HasIndex("ProductCategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "Pattern")
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("ProductRules");
+                });
+
             modelBuilder.Entity("BudgetTracker.Api.Domain.Receipt", b =>
                 {
                     b.Property<int>("Id")
@@ -593,8 +673,12 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                         {
                             b1.IsRequired();
 
+                            b1.Property<bool>("CategoryConfirmed");
+
                             b1.Property<string>("Name")
                                 .IsRequired();
+
+                            b1.Property<Guid?>("ProductCategoryId");
 
                             b1.Property<decimal?>("Quantity");
 
@@ -1220,6 +1304,15 @@ namespace BudgetTracker.Api.Infrastructure.Migrations
                     b.HasOne("BudgetTracker.Api.Domain.Budget", null)
                         .WithMany()
                         .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BudgetTracker.Api.Domain.ProductRule", b =>
+                {
+                    b.HasOne("BudgetTracker.Api.Domain.ProductCategory", null)
+                        .WithMany()
+                        .HasForeignKey("ProductCategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

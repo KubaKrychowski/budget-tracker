@@ -6,6 +6,10 @@ export interface ReceiptProduct {
   readonly unitPrice: number | null;
   /** Wartość pozycji; `null`, gdy OCR jej nie odczytał. */
   readonly totalPrice: number | null;
+  /** BusinessId kategorii produktu; `null` = bez kategorii. */
+  readonly productCategoryId: string | null;
+  /** `true`, gdy kategorię wybrał użytkownik; `false` = podpowiedź reguły albo modelu. */
+  readonly categoryConfirmed: boolean;
 }
 
 /** Odpowiednik ReceiptReadResponseDto z BudgetTracker.Api.Features.Receipts.Contracts. */

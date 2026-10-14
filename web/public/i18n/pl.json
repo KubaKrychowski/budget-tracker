@@ -89,7 +89,13 @@
     "recentActions": "Ostatnie akcje",
     "recentActionsHint": "Ekrany, na których byłeś ostatnio — najświeższy pierwszy",
     "firstStepsHint": "Historia jest jeszcze pusta — tu wrócą ekrany, na których byłeś",
-    "allActions": "Wszystkie akcje"
+    "allActions": "Wszystkie akcje",
+    "breakdown": {
+      "title": "Produkty z paragonów",
+      "uncategorized": "Bez kategorii",
+      "noReceipt": "Bez paragonu",
+      "note": "„Bez paragonu” to część kategorii bez wczytanego paragonu z cenami. Suma rozbicia równa się słupkowi kategorii."
+    }
   },
   "enums": {
     "transactionStatus": {
@@ -365,7 +371,15 @@
       "itemsSum": "Razem z pozycji",
       "sumMatches": "zgadza się z kwotą",
       "sumDiffers": "nie zgadza się z kwotą",
-      "noProducts": "Nie odczytano produktów z tego paragonu."
+      "noProducts": "Nie odczytano produktów z tego paragonu.",
+      "category": "Kategoria produktu",
+      "noCategory": "Bez kategorii",
+      "filterAll": "Kategoria: wszystkie",
+      "categoryFilter": "Filtr kategorii produktu",
+      "changeCategory": "Zmień kategorię produktu {{name}}",
+      "newCategory": "Nowa kategoria produktu",
+      "addCategory": "Dodaj",
+      "uncategorizedHint": "Produkty bez kategorii: {{count}}. Wybierz kategorię — zapamiętamy ją dla tej nazwy produktu."
     }
   },
   "currencies": {

@@ -12,6 +12,7 @@ using BudgetTracker.Api.Features.Dashboard;
 using BudgetTracker.Api.Features.Import;
 using BudgetTracker.Api.Features.Limits;
 using BudgetTracker.Api.Features.EpisodicOrders;
+using BudgetTracker.Api.Features.ProductCategories;
 using BudgetTracker.Api.Features.Receipts;
 using BudgetTracker.Api.Features.Savings;
 using BudgetTracker.Api.Features.Search;
@@ -115,6 +116,7 @@ builder.Services.AddStandingOrders();
 builder.Services.AddEpisodicOrders();
 builder.Services.AddStrategies();
 builder.Services.AddReceipts();
+builder.Services.AddProductCategories();
 builder.Services.AddSearch();
 
 builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential(new DefaultAzureCredentialOptions
@@ -194,6 +196,7 @@ using (var baseline = app.Services.CreateScope())
     await baselineDb.EnterSystemRoleAsync();
 
     await BaselineSeed.SeedAsync(baselineDb);
+    await ProductBaselineSeed.SeedAsync(baselineDb);
 
     await LocalRulesSeed.SeedAsync(
         baselineDb,
@@ -282,6 +285,7 @@ api.MapImport();
 api.MapBudgets();
 api.MapTransactions();
 api.MapReceipts();
+api.MapProductCategories();
 
 // Wydatki CLI (issue #25) — każdy Map<Feature>Cli() dopisuje swoje komendy do wspólnego rejestru,
 // dokładnie tak jak lista app.Map<Feature>() wyżej dopisuje endpointy REST.

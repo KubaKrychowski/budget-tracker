@@ -2,6 +2,7 @@ using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Services;
 using BudgetTracker.Api.Features.Dashboard.Contracts;
+using BudgetTracker.Api.Features.Dashboard.Services;
 using BudgetTracker.Api.Infrastructure;
 using BudgetTracker.Api.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -173,10 +174,59 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
             .Select(g => new { g.Key.BusinessId, g.Key.Name, Total = g.Sum(x => x.Amount) })
             .ToListAsync(ct);
 
+        var products = await ProductsByCategoryAsync(inRange, ct);
+
         return totals
-            .Select(x => new CategorySpendResponseDto(x.BusinessId, x.Name, -x.Total))
+            .Select(x => new CategorySpendResponseDto(
+                x.BusinessId, x.Name, -x.Total,
+                products.TryGetValue(x.BusinessId, out var rows) ? rows : []))
             .OrderByDescending(x => x.Amount)
             .ToList();
+    }
+
+    /// <summary>Rozbicie wydatków każdej nazwanej kategorii na produkty z paragonów przypiętych do jej transakcji.</summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>Dwa dodatkowe zapytania (paragony, nazwy kategorii produktów), niezależnie od liczby kategorii — baza stoi w innym regionie,
+    /// więc liczba zapytań na ekran jest ważniejsza niż ich koszt. Gdy żadna transakcja okresu nie ma paragonu, drugie zapytanie
+    /// o nazwy się pomija.</item>
+    /// <item>⚠️ Pozycje paragonu to kolumna <c>jsonb</c> — składanie rozbicia robi się w pamięci (<see cref="ProductBreakdown"/>), nie w SQL.</item>
+    /// </list>
+    /// </remarks>
+    private async Task<Dictionary<Guid, IReadOnlyList<ProductSpendResponseDto>>> ProductsByCategoryAsync(
+        IQueryable<Transaction> inRange, CancellationToken ct)
+    {
+        var spent = await inRange
+            .Where(t => t.Amount < 0 && t.CategoryId != null)
+            .Join(db.Categories, t => t.CategoryId, c => (int?)c.Id,
+                (t, c) => new { t.BusinessId, t.Amount, CategoryId = c.BusinessId })
+            .ToListAsync(ct);
+        if (spent.Count == 0) return [];
+
+        var transactionIds = spent.Select(t => t.BusinessId).ToArray();
+        var receipts = await db.Receipts.AsNoTracking()
+            .Where(r => r.TransactionBusinessId != null && transactionIds.Contains(r.TransactionBusinessId.Value))
+            .ToListAsync(ct);
+        if (receipts.Count == 0) return [];
+
+        var linesByTransaction = receipts
+            .GroupBy(r => r.TransactionBusinessId!.Value)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<ReceiptLine>)[.. g.SelectMany(r => r.Items)]);
+
+        var categoryIds = linesByTransaction.Values
+            .SelectMany(l => l).Select(l => l.ProductCategoryId).OfType<Guid>().Distinct().ToArray();
+        var names = await db.ProductCategories
+            .Where(c => categoryIds.Contains(c.BusinessId))
+            .ToDictionaryAsync(c => c.BusinessId, c => c.Name, ct);
+
+        return spent
+            .GroupBy(t => t.CategoryId)
+            .ToDictionary(
+                g => g.Key,
+                g => ProductBreakdown.For(
+                    g.Select(t => new ProductBreakdown.SpentTransaction(
+                        -t.Amount, linesByTransaction.GetValueOrDefault(t.BusinessId, []))),
+                    names));
     }
 
     /// <summary>Sumy okresu jednym zapytaniem: wydatki, przychody, wydatki bez kategorii i licznik „do weryfikacji".</summary>
@@ -211,7 +261,7 @@ public sealed class GetDashboardQueryHandler(AppDbContext db, IStringLocalizer<S
         List<CategorySpendResponseDto> namedCategories, decimal uncategorized)
     {
         return uncategorized > 0m
-            ? [.. namedCategories, new CategorySpendResponseDto(null, localizer[UncategorizedResourceKey], uncategorized)]
+            ? [.. namedCategories, new CategorySpendResponseDto(null, localizer[UncategorizedResourceKey], uncategorized, [])]
             : namedCategories;
     }
 

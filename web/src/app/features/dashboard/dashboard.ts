@@ -19,6 +19,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ProductSpendKind } from '../../core/api/models/category-spend';
 import { DashboardResponse } from '../../core/api/models/dashboard-response';
 import { fromIsoDate, toIsoDate } from '../../core/api/date-param';
 import { QUICK_ACTIONS, actionByKey } from '../../core/system-actions';
@@ -39,7 +40,7 @@ import { valueOf } from '../../core/api/resource-value';
     NzAlertModule, NzSkeletonModule, NzTagModule, TranslatePipe, RouterLink,
   ],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  styleUrls: ['./dashboard.scss', './dashboard.breakdown.scss'],
 })
 export class Dashboard {
   private readonly message = inject(NzMessageService);
@@ -238,6 +239,51 @@ export class Dashboard {
   /** Stuknięcie w kategorię na telefonie robi to samo, co klik w słupek na desktopie. */
   protected openCategory(index: number): void {
     this.onCategoryBarClick(index);
+  }
+
+  // ── Rozbicie kategorii na produkty z paragonów (makieta Figma 447:18335) ─────────────────────────
+  //
+  // Klik w słupek nadal otwiera listę transakcji (ustalenie z 2026-09-04), więc rozbicie ma OSOBNĄ listę pod wykresem: kategoria
+  // (odbiorca) zostaje źródłem sumy słupka, a produkty tylko ją rozbijają. Pokazujemy wyłącznie kategorie, które mają rozbicie.
+
+  /** Klucz rozwiniętej kategorii; `null` = wszystkie zwinięte. */
+  protected readonly expandedBreakdown = signal<string | null>(null);
+
+  protected readonly breakdownRows = computed(() => {
+    this.langLoaded();
+    return (this.data()?.byCategory ?? [])
+      .filter((c) => c.products.length > 0)
+      .map((c) => {
+        const max = Math.max(1, ...c.products.map((p) => p.amount));
+        let categoryIndex = 0;
+        return {
+          key: c.categoryId ?? 'none',
+          name: c.categoryName,
+          amount: c.amount,
+          products: c.products.map((p) => ({
+            label: p.kind === 'Category' ? (p.name ?? '') : this.translate.instant(this.breakdownLabelKey(p.kind)),
+            amount: p.amount,
+            share: c.amount > 0 ? Math.round((p.amount / c.amount) * 100) : 0,
+            width: (p.amount / max) * 100,
+            color: this.breakdownColor(p.kind, categoryIndex++),
+          })),
+        };
+      });
+  });
+
+  protected toggleBreakdown(key: string): void {
+    this.expandedBreakdown.update((current) => (current === key ? null : key));
+  }
+
+  private breakdownLabelKey(kind: ProductSpendKind): string {
+    return kind === 'NoReceipt' ? 'dashboard.breakdown.noReceipt' : 'dashboard.breakdown.uncategorized';
+  }
+
+  /** Kategorie produktów zielone od najciemniejszej, „bez kategorii” żółta, „bez paragonu” szara — jak na makiecie. */
+  private breakdownColor(kind: ProductSpendKind, index: number): string {
+    if (kind === 'Uncategorized') return CHART_COLORS.warn500;
+    if (kind === 'NoReceipt') return CHART_COLORS.neutral200;
+    return [CHART_COLORS.primary500, CHART_COLORS.primary400, CHART_COLORS.primary200][Math.min(index, 2)];
   }
 
   protected readonly categoryChart = computed(() => {

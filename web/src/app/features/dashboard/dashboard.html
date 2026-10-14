@@ -225,6 +225,36 @@
           } @else {
             <nz-empty [nzNotFoundContent]="'dashboard.empty.noExpensesInPeriod' | translate" />
           }
+
+          @if (!isBlank() && breakdownRows().length > 0) {
+            <section class="dash__bd" [attr.aria-label]="'dashboard.breakdown.title' | translate">
+              <h3 class="dash__bd-title">{{ 'dashboard.breakdown.title' | translate }}</h3>
+              @for (row of breakdownRows(); track row.key) {
+                <button
+                  type="button" class="dash__bd-head"
+                  [attr.aria-expanded]="expandedBreakdown() === row.key"
+                  (click)="toggleBreakdown(row.key)">
+                  <nz-icon [nzType]="expandedBreakdown() === row.key ? 'caret-down' : 'caret-right'" />
+                  <span class="dash__bd-name">{{ row.name }}</span>
+                  <span class="amount">{{ money(row.amount) }} {{ 'dashboard.currency' | translate }}</span>
+                </button>
+                @if (expandedBreakdown() === row.key) {
+                  <ul class="dash__bd-list">
+                    @for (product of row.products; track $index) {
+                      <li class="dash__bd-row">
+                        <span class="dash__bd-label">{{ product.label }}</span>
+                        <span class="dash__bd-track">
+                          <span class="dash__bd-bar" [style.width.%]="product.width" [style.background]="product.color"></span>
+                        </span>
+                        <span class="amount dash__bd-amount">{{ money(product.amount) }} {{ 'dashboard.currency' | translate }} · {{ product.share }}%</span>
+                      </li>
+                    }
+                  </ul>
+                  <p class="dash__bd-note">{{ 'dashboard.breakdown.note' | translate }}</p>
+                }
+              }
+            </section>
+          }
         </div>
       </section>
 

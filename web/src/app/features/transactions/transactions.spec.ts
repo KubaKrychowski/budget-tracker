@@ -61,6 +61,10 @@ describe('Transactions', () => {
     selectionCount(): number;
     selectAllMatching(): boolean;
     toggleRow(id: string, checked: boolean): void;
+    receiptsOf(): Record<string, unknown>;
+    setProductCategory(transactionId: string, receipt: unknown, index: number, categoryId: string | null): Promise<void>;
+    productFilter: { set(v: string): void };
+    visibleProducts(receipt: unknown): { product: { name: string }; index: number }[];
     toggleAllOnPage(checked: boolean): void;
     selectAllMatchingFilter(): void;
     canSelectAllMatching(): boolean;
@@ -441,10 +445,13 @@ describe('Transactions', () => {
 
     (Array.from(expanders).find((e) => !e.classList.contains('ant-table-row-spaced')) as HTMLElement).click();
     await settle();
+    http.expectOne('/api/product-categories').flush([]);
     http.expectOne('/api/transactions/a/receipts').flush([{
       id: 'r1', fileName: 'p.jpg', contentType: 'image/jpeg', sizeBytes: 10, merchant: 'Sklep Żabka', date: '2026-10-11',
       total: 8.99, transactionId: 'a',
-      items: [{ name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 }],
+      items: [{
+        name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99, productCategoryId: null, categoryConfirmed: false,
+      }],
     }]);
     await settle();
 
@@ -456,6 +463,73 @@ describe('Transactions', () => {
     expect(text).toContain('Pierogi ruskie 320 g');
     // Suma pozycji (8,99) zgadza się z kwotą transakcji (−8,99) — tag „zgadza się”.
     expect(text).toContain('transactions.receipt.sumMatches');
+  });
+
+  /** Rozwija wiersz `a` z paragonem o dwóch produktach: jeden z kategorią (podpowiedź reguły), drugi bez. */
+  async function expandReceiptWithCategories(): Promise<void> {
+    await router.navigate(['/transactions'], {
+      queryParams: { budgetId: 'b1000000-0000-4000-8000-000000000001', search: 'produkty' },
+    });
+    await settle(response({ items: [row({ id: 'a', amount: -11.5, receiptCount: 1 })], total: 1 }));
+
+    const expander = Array.from(fixture.nativeElement.querySelectorAll('tbody .ant-table-row-expand-icon') as NodeListOf<HTMLElement>)
+      .find((e) => !e.classList.contains('ant-table-row-spaced'))!;
+    expander.click();
+    await settle();
+    http.expectOne('/api/product-categories').flush([
+      { id: 'p1', name: 'Nabiał', isShared: true },
+      { id: 'p2', name: 'Pieczywo', isShared: true },
+    ]);
+    http.expectOne('/api/transactions/a/receipts').flush([{
+      id: 'r1', fileName: 'p.jpg', contentType: 'image/jpeg', sizeBytes: 10, merchant: 'Sklep Żabka', date: '2026-10-11',
+      total: 11.5, transactionId: 'a',
+      items: [
+        { name: 'Mleko UHT', quantity: 1, unitPrice: 3.5, totalPrice: 3.5, productCategoryId: 'p1', categoryConfirmed: false },
+        { name: 'Bułka kajzerka', quantity: 1, unitPrice: 8, totalPrice: 8, productCategoryId: null, categoryConfirmed: false },
+      ],
+    }]);
+    await settle();
+  }
+
+  it('produkt z paragonu pokazuje kategorię produktu, a bez kategorii dostaje znacznik i podpowiedź', async () => {
+    await expandReceiptWithCategories();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Nabiał');
+    // Łapie pozycję bez kategorii, która wyglądałaby jak rozpoznana: musi mieć znacznik „bez kategorii” i licznik w alercie.
+    expect(text).toContain('transactions.receipt.noCategory');
+    expect(text).toContain('transactions.receipt.uncategorizedHint');
+  });
+
+  it('wybór kategorii produktu zapisuje się pod indeksem pozycji i odświeża znacznik bez przeładowania listy', async () => {
+    await expandReceiptWithCategories();
+    const receipt = (api().receiptsOf()['a'] as unknown[])[0];
+
+    const saving = api().setProductCategory('a', receipt, 1, 'p2');
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url === '/api/receipts/r1/items/1/category');
+    expect(put.request.body).toEqual({ productCategoryId: 'p2' });
+    put.flush({
+      name: 'Bułka kajzerka', quantity: 1, unitPrice: 8, totalPrice: 8, productCategoryId: 'p2', categoryConfirmed: true,
+    });
+    await saving;
+    await settle();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Pieczywo');
+    // Po wyborze nie ma już pozycji bez kategorii, więc podpowiedź znika.
+    expect(text).not.toContain('transactions.receipt.uncategorizedHint');
+    http.expectNone((r) => r.url.startsWith('/api/transactions/') && r.url.endsWith('/receipts'));
+  });
+
+  it('filtr „bez kategorii” zostawia tylko pozycje bez kategorii i nie przesuwa indeksów zapisu', async () => {
+    await expandReceiptWithCategories();
+    api().productFilter.set('none');
+    await settle();
+
+    const receipt = (api().receiptsOf()['a'] as unknown[])[0];
+    const visible = api().visibleProducts(receipt);
+    // Indeks jedzie do API w adresie, więc po filtrze musi zostać indeksem w PEŁNEJ liście paragonu.
+    expect(visible.map((v) => [v.product.name, v.index])).toEqual([['Bułka kajzerka', 1]]);
   });
 
   it('przycisk „Dodaj paragon” otwiera okno dodawania z wyborem pliku', async () => {

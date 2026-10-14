@@ -5,6 +5,7 @@ using BudgetTracker.Api.Features.Budgets.Exceptions;
 using BudgetTracker.Api.Features.Categories.Exceptions;
 using BudgetTracker.Api.Features.Categorization.Exceptions;
 using BudgetTracker.Api.Features.Limits.Exceptions;
+using BudgetTracker.Api.Features.ProductCategories.Exceptions;
 using BudgetTracker.Api.Features.Receipts.Exceptions;
 using BudgetTracker.Api.Features.Savings.Exceptions;
 using BudgetTracker.Api.Features.EpisodicOrders.Exceptions;
@@ -127,6 +128,13 @@ public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logge
         ReceiptTransactionInvalidException => (StatusCodes.Status400BadRequest, "Receipt_TransactionInvalid"),
         // Żądanie poprawne, to usługa OCR nie może go obsłużyć — 503, klient może spróbować ponownie.
         ReceiptReaderUnavailableException => (StatusCodes.Status503ServiceUnavailable, "Receipt_ReaderUnavailable"),
+
+        ReceiptItemNotFoundException => (StatusCodes.Status404NotFound, "Receipt_ItemNotFound"),
+        ProductCategoryNameRequiredException => (StatusCodes.Status400BadRequest, "ProductCategory_NameRequired"),
+        ProductCategoryNameTooLongException => (StatusCodes.Status400BadRequest, "ProductCategory_NameTooLong"),
+        // 400, nie 404: kategoria przychodzi w CIELE żądania.
+        ProductCategoryInvalidException => (StatusCodes.Status400BadRequest, "ProductCategory_Invalid"),
+        ProductCategoryNameTakenException => (StatusCodes.Status409Conflict, "ProductCategory_NameTaken"),
 
         // Trzy razy ta sama historia: reguła zapisałaby się bez błędu i nigdy nie zadziałała.
         // 400, bo to wejście jest niepoprawne, a nie stan zasobu.

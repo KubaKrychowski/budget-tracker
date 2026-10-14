@@ -32,6 +32,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
     public DbSet<Budget> Budgets => Set<Budget>();
     public DbSet<BudgetItem> BudgetItems => Set<BudgetItem>();
     public DbSet<CategoryRule> CategoryRules => Set<CategoryRule>();
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<ProductRule> ProductRules => Set<ProductRule>();
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
     public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
     public DbSet<SavingsReservation> SavingsReservations => Set<SavingsReservation>();
@@ -150,6 +152,30 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ICurren
             e.HasIndex(x => x.Priority);
             e.HasOne<Category>().WithMany()
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<ProductCategory>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(ProductCategory.MaxNameLength).IsRequired();
+            e.Property(x => x.UserId).IsRequired();
+            e.HasIndex(x => new { x.UserId, x.Name }).IsUnique().HasFilter(AliveOnly);
+            // Własne kategorie produktów ORAZ wspólne (bazowe, UserId = pusty Guid) — jak przy Category.
+            e.HasQueryFilter(QueryFilterNames.Owner,
+                x => CurrentUserId == null || x.UserId == ProductCategory.SharedUserId || x.UserId == CurrentUserId);
+        });
+
+        b.Entity<ProductRule>(e =>
+        {
+            e.Property(x => x.Pattern).HasMaxLength(200).IsRequired();
+            e.Property(x => x.UserId).IsRequired();
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.Priority);
+            // Reguła nauczona jest jedna na wzorzec u właściciela: poprawka tej samej nazwy przestawia istniejącą.
+            e.HasIndex(x => new { x.UserId, x.Pattern }).IsUnique().HasFilter(AliveOnly);
+            e.HasQueryFilter(QueryFilterNames.Owner,
+                x => CurrentUserId == null || x.UserId == ProductRule.SharedUserId || x.UserId == CurrentUserId);
+            e.HasOne<ProductCategory>().WithMany()
+                .HasForeignKey(x => x.ProductCategoryId).OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<ImportBatch>(e =>
