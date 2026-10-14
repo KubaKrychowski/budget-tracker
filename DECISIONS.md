@@ -1651,7 +1651,7 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 
 ## 17. Paragony (OCR)
 
-**Paragon to załącznik transakcji, nie jej część.** Zdjęcie albo PDF paragonu jest odczytywane OCR-em (sprzedawca, data, suma), a użytkownik dopasowuje je do transakcji z importu CSV. Paragon niczego nie zmienia: ani kwoty, ani kategorii, ani opisu. ⚠️ Zasada „transakcja jest najmniejszą jednostką” (README) zostaje bez zmian — **pozycji paragonu pierwotnie świadomie nie odczytywaliśmy** — to się zmieniło, patrz REWIZJA 2026-10-12 („produkty z paragonu”) na końcu pliku; podział transakcji na kategorie według pozycji nadal NIE jest zrobiony. Makieta: Figma, strona „Lista transakcji”, ramka 432:6880.
+**Paragon to załącznik transakcji, nie jej część.** Zdjęcie albo PDF paragonu jest odczytywane OCR-em (sprzedawca, data, suma), a użytkownik dopasowuje je do transakcji z importu CSV. Paragon niczego nie zmienia: ani kwoty, ani kategorii, ani opisu. ⚠️ Zasada „transakcja jest najmniejszą jednostką” (README) zostaje bez zmian — **pozycji paragonu pierwotnie świadomie nie odczytywaliśmy** — to się zmieniło, patrz REWIZJA 2026-10-12 („produkty z paragonu”) na końcu pliku; podział transakcji na kategorie według pozycji nadal NIE jest zrobiony; kategorie PRODUKTÓW (osobny słownik, rozbicie wykresu) — REWIZJA 2026-10-14. Makieta: Figma, strona „Lista transakcji”, ramka 432:6880.
 
 - **Silnik: Azure AI Document Intelligence, model `prebuilt-receipt`** (decyzja właściciela, 2026-10-10). Wybór siedzi za `IReceiptReader` i konfiguracją (`Receipts:Endpoint`): jest adres → `AzureReceiptReader`; `Demo:Seed=true` bez adresu → `DemoReceiptReader` (zmyślone pola, do zrzutów i UI); w pozostałych przypadkach `UnconfiguredReceiptReader` zwraca 503, a reszta API działa. Brak adresu NIE przewraca startu — inaczej niż `Storage:BlobServiceUri`.
 - ⚠️ **Obraz paragonu wychodzi do chmury Microsoftu.** To jedyne takie miejsce w aplikacji i dlatego ekran dodawania mówi o tym wprost (alert u góry). Uwierzytelnienie to tożsamość zarządzana API (rola „Cognitive Services User”), konto usługi ma wyłączone klucze (`local_auth_enabled = false`) — jak magazyn blob.
@@ -1704,3 +1704,25 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 > - Kolejność: rozmiar jawny w adresie (`?pageSize=`) > zapamiętany wybór > 10. Odnośnik z jawnym rozmiarem niczego nie nadpisuje w pamięci —
 >   zapamiętuje się wyłącznie zmiana zrobiona w kontrolce tabeli. Wartość spoza dozwolonych albo uszkodzony wpis = „nic nie zapamiętano”.
 > - Pozostałe tabele nie mają przełącznika rozmiaru (stały `nzPageSize`), więc nie ma czego pamiętać; moduł jest gotowy na kolejne (klucz per tabela).
+
+> **REWIZJA — 2026-10-14: kategorie produktów z paragonów i rozbicie na wykresie wydatków** (decyzja właściciela; `Domain/ProductCategory.cs`, `Domain/ProductRule.cs`,
+> `ReceiptLine.ProductCategoryId`, migracja `AddProductCategories`, `Features/ProductCategories/`, `Features/Dashboard/Services/ProductBreakdown.cs`;
+> makieta Figma 447:6254 (lista transakcji) i 447:18335 (dashboard)):
+> - **Zmienia zasadę „produkty nie mają kategorii”.** Pozycja paragonu dostaje kategorię PRODUKTU z OSOBNEGO słownika (Nabiał, Pieczywo, Chemia domowa…), nie
+>   kategorię budżetową. Transakcja nadal jest jednym rekordem z jedną kwotą i kategorią (odbiorcą); kategoria produktu NIE dzieli kwoty, nie wchodzi do sald ani
+>   limitów, tylko ROZBIJA słupek kategorii na wykresie wydatków. Podział transakcji według pozycji nadal NIE jest zrobiony. Powód osobnego słownika: wspólny
+>   rozbijałby „Jedzenie” na „Jedzenie” i podkategorie o tej samej nazwie.
+> - **Kategoryzacja = reguły, potem ML.NET** (jak przy transakcjach, `ProductCategorizer`). Reguły bazowe to ogólne słowa kluczowe (`ProductBaselineSeed`, bez marek);
+>   reguły NAUCZONE powstają z wyboru użytkownika (`ProductRuleLearning`: pełne dopasowanie znormalizowanej nazwy, jedna na nazwę) i wygrywają z bazowymi.
+>   Nazwa jest normalizowana bez gramatur i jednostek (`ProductNameNormalizer`), więc reguła z „Mleko 1 l” łapie „Mleko 500 ml”.
+> - **Model ML (`ProductMlCategorizer`) jest w procesie, bez wersji i bloba:** uczy się z pozycji potwierdzonych PRZEZ UŻYTKOWNIKA (`CategoryConfirmed`) — kategoria z reguły
+>   albo z modelu nie uczy modelu (inaczej powtarzałby własne pomyłki). Włącza się od `MinExamples` = 20 przykładów w co najmniej 2 kategoriach; do tego czasu działają same reguły.
+>   Transformer żyje w pamięci procesu pod odciskiem zbioru, więc zmiana jednej kategorii uczy model od nowa przy następnym wgraniu paragonu. Podpowiedź modelu wchodzi
+>   powyżej progu pewności z konfiguracji kategoryzacji i tylko wtedy, gdy model zna jakiś fragment nazwy (bramka jak w `MlCategorizer`). ⚠️ Przy wielu instancjach API
+>   każda uczy własną kopię; przy skali osobistego trackera to nie boli, a osobna wersja w blobie byłaby przedwczesna.
+> - **Rozbicie na dashboardzie zawsze sumuje się do słupka.** Transakcja bez paragonu z cenami idzie do „Bez paragonu”; pozycje przekraczające kwotę transakcji (rabat) są
+>   skalowane w dół; różnica w drugą stronę (nieodczytana pozycja) idzie do „Bez kategorii”. Rozbicie liczy się w pamięci (`jsonb`), dwoma dodatkowymi zapytaniami na ekran.
+> - ⚠️ **Rozjazd z makietą:** klik w słupek wykresu nadal otwiera listę transakcji (ustalenie z 2026-09-04), więc rozbicie nie rozwija się „w słupku”, tylko w OSOBNEJ liście
+>   pod wykresem (kategorie z rozbiciem, szewron rozwija produkty). Makieta zakładała rozwijanie klikiem w kategorię.
+> - **Nie ma jeszcze:** edycji kategorii na ekranie weryfikacji paragonu (tylko po przypięciu), ponownej kategoryzacji paragonów wgranych wcześniej (pozycje bez kategorii czekają
+>   na wybór), filtra transakcji po kategorii produktu, widoku mobilnego rozwijanych produktów.

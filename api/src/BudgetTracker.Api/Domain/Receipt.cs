@@ -55,8 +55,23 @@ public class Receipt(
     /// <summary>Produkty odczytane z paragonu — kolumna <c>jsonb</c>, kasuje się razem z paragonem; patrz <see cref="ReceiptLine"/>.</summary>
     public List<ReceiptLine> Items { get; protected set; } = [];
 
-    /// <summary>Zapisuje odczytane produkty (przy wgraniu paragonu; użytkownik ich nie edytuje).</summary>
+    /// <summary>Zapisuje odczytane produkty (przy wgraniu paragonu; użytkownik nie edytuje nazw ani cen).</summary>
     public void SetItems(IEnumerable<ReceiptLine> items) => Items = [.. items];
+
+    /// <summary>Ustawia kategorię produktu jednej pozycji; <c>null</c> ją zdejmuje. Zwraca zmienioną pozycję albo <c>null</c>, gdy indeks jest poza listą.</summary>
+    /// <remarks>
+    /// ⚠️ Podmienia CAŁĄ listę, nie element: kolumna <c>jsonb</c> to kolekcja złożona i EF zauważa zmianę dopiero po przypisaniu nowej listy.
+    /// </remarks>
+    public ReceiptLine? SetItemCategory(int index, Guid? productCategoryId)
+    {
+        if (index < 0 || index >= Items.Count) return null;
+
+        var changed = Items[index].WithCategory(productCategoryId, confirmed: true);
+        var items = Items.ToList();
+        items[index] = changed;
+        Items = items;
+        return changed;
+    }
 
     /// <summary>Zapisuje pola po poprawkach użytkownika z ekranu weryfikacji.</summary>
     public void Correct(string? merchant, DateOnly? receiptDate, decimal? total)

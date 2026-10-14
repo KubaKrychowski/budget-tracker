@@ -79,7 +79,7 @@ public sealed class ReceiptsTests : IAsyncLifetime
         _clock);
 
     private UploadReceiptCommandHandler Upload(IReceiptReader reader) =>
-        new(_db, reader, new ReceiptFiles(TestBlobs.Client()), new FakeCurrentUserAccessor(_userId), _clock);
+        new(_db, reader, new ReceiptFiles(TestBlobs.Client()), ProductTestKit.Categorizer(_db, _userId), new FakeCurrentUserAccessor(_userId), _clock);
 
     private Task<ReceiptReadResponseDto> UploadJpegAsync(IReceiptReader reader, string contentType = "image/jpeg") =>
         Upload(reader).HandleAsync(new MemoryStream(Jpeg), "paragon.jpg", contentType, Jpeg.Length, CancellationToken.None);

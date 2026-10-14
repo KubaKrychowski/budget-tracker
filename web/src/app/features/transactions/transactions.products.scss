@@ -43,7 +43,7 @@
 
 .tx__prow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 70px 90px 110px;
+  grid-template-columns: minmax(0, 1fr) 190px 70px 90px 110px;
   gap: 12px;
   align-items: baseline;
   padding: 6px 0;
@@ -82,4 +82,48 @@
   strong {
     color: inherit;
   }
+}
+
+.tx__receipt-tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tx__pfilter {
+  min-width: 190px;
+}
+
+.tx__pcat {
+  min-width: 0;
+}
+
+.tx__psel {
+  width: 100%;
+}
+
+/* Tag jako przycisk: cały obszar klika się, a klawiatura dostaje wyraźny fokus. */
+.tx__ptag-btn {
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
+
+  nz-tag {
+    margin: 0;
+    pointer-events: none;
+  }
+
+  &:focus-visible {
+    border-radius: 4px;
+    outline: 2px solid var(--ds-primary-500);
+    outline-offset: 2px;
+  }
+}
+
+.tx__pnew {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid var(--ds-neutral-200);
 }

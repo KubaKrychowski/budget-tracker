@@ -45,7 +45,9 @@ describe('ReceiptDialog', () => {
     merchantUncertain: false,
     dateUncertain: false,
     totalUncertain: true,
-    items: [{ name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99 }],
+    items: [{
+      name: 'Pierogi ruskie 320 g', quantity: 1, unitPrice: 8.99, totalPrice: 8.99, productCategoryId: null, categoryConfirmed: false,
+    }],
     ...over,
   });
 

@@ -659,10 +659,26 @@
                         <strong>{{ 'transactions.receipt.productsTitle' | translate: {
                           merchant: receipt.merchant ?? receipt.fileName, date: receipt.date ? day(receipt.date) : '—'
                         } }}</strong>
-                        <button nz-button nzSize="small" (click)="viewReceipt(receipt)">
-                          {{ 'transactions.rowMenu.viewReceipt' | translate }}
-                        </button>
+                        <span class="tx__receipt-tools">
+                          <nz-select
+                            nzSize="small" class="tx__pfilter" [ngModel]="productFilter()" (ngModelChange)="productFilter.set($event)"
+                            [attr.aria-label]="'transactions.receipt.categoryFilter' | translate">
+                            <nz-option nzValue="all" [nzLabel]="'transactions.receipt.filterAll' | translate" />
+                            <nz-option nzValue="none" [nzLabel]="'transactions.receipt.noCategory' | translate" />
+                            @for (c of productCategories(); track c.id) {
+                              <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+                            }
+                          </nz-select>
+                          <button nz-button nzSize="small" (click)="viewReceipt(receipt)">
+                            {{ 'transactions.rowMenu.viewReceipt' | translate }}
+                          </button>
+                        </span>
                       </header>
+                      @if (uncategorizedProducts(receipt) > 0) {
+                        <nz-alert
+                          nzType="info" nzShowIcon
+                          [nzMessage]="'transactions.receipt.uncategorizedHint' | translate: { count: uncategorizedProducts(receipt) }" />
+                      }
                       @if (receipt.items.length === 0) {
                         <p class="tx__receipt-empty">{{ 'transactions.receipt.noProducts' | translate }}</p>
                       } @else {
@@ -671,13 +687,53 @@
                         <div class="tx__ptable" role="table" [attr.aria-label]="'transactions.receipt.products' | translate">
                           <div class="tx__prow tx__prow--head" role="row">
                             <span role="columnheader">{{ 'transactions.receipt.product' | translate }}</span>
+                            <span role="columnheader">{{ 'transactions.receipt.category' | translate }}</span>
                             <span role="columnheader" class="tx__right">{{ 'transactions.receipt.quantity' | translate }}</span>
                             <span role="columnheader" class="tx__right">{{ 'transactions.receipt.price' | translate }}</span>
                             <span role="columnheader" class="tx__right">{{ 'transactions.receipt.value' | translate }}</span>
                           </div>
-                          @for (product of receipt.items; track $index) {
+                          @for (entry of visibleProducts(receipt); track entry.index) {
+                            @let product = entry.product;
                             <div class="tx__prow" role="row">
                               <span role="cell" class="tx__pname" [title]="product.name">{{ product.name }}</span>
+                              <span role="cell" class="tx__pcat">
+                                @if (editingProduct() === productKey(receipt.id, entry.index)) {
+                                  <nz-select
+                                    class="tx__psel" nzSize="small" nzShowSearch nzAllowClear nzAutoFocus [nzOpen]="true"
+                                    [nzPlaceHolder]="'transactions.receipt.noCategory' | translate"
+                                    [ngModel]="product.productCategoryId"
+                                    (ngModelChange)="setProductCategory(item.id, receipt, entry.index, $event)"
+                                    (nzOpenChange)="$event || editingProduct.set(null)"
+                                    [nzDropdownRender]="newCategoryTemplate">
+                                    @for (c of productCategories(); track c.id) {
+                                      <nz-option [nzValue]="c.id" [nzLabel]="c.name" />
+                                    }
+                                  </nz-select>
+                                  <ng-template #newCategoryTemplate>
+                                    <div class="tx__pnew">
+                                      <input
+                                        nz-input nzSize="small" maxlength="100"
+                                        [placeholder]="'transactions.receipt.newCategory' | translate"
+                                        [ngModel]="newProductCategory()" (ngModelChange)="newProductCategory.set($event)"
+                                        (keydown.enter)="createProductCategory(item.id, receipt, entry.index)" />
+                                      <button
+                                        nz-button nzSize="small" nzType="primary" type="button"
+                                        [disabled]="newProductCategory().trim() === ''"
+                                        (click)="createProductCategory(item.id, receipt, entry.index)">
+                                        {{ 'transactions.receipt.addCategory' | translate }}
+                                      </button>
+                                    </div>
+                                  </ng-template>
+                                } @else {
+                                  <button
+                                    type="button" class="tx__ptag-btn" (click)="editingProduct.set(productKey(receipt.id, entry.index))"
+                                    [attr.aria-label]="'transactions.receipt.changeCategory' | translate: { name: product.name }">
+                                    <nz-tag [nzColor]="product.productCategoryId ? 'green' : 'gold'">
+                                      {{ (product.productCategoryId && productCategoryNames().get(product.productCategoryId)) || ('transactions.receipt.noCategory' | translate) }}
+                                    </nz-tag>
+                                  </button>
+                                }
+                              </span>
                               <span role="cell" class="tx__right tnum">{{ quantity(product.quantity) }}</span>
                               <span role="cell" class="tx__right tnum">{{ product.unitPrice === null ? '—' : money(product.unitPrice) }}</span>
                               <span role="cell" class="tx__right tnum">{{ product.totalPrice === null ? '—' : money(product.totalPrice) }}</span>

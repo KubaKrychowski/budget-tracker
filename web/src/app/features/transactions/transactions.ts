@@ -38,7 +38,8 @@ import { ErrorMessages } from '../../core/errors/error-messages';
 import { DraftRow } from './draft-row';
 import { parseAmount } from '../../core/parse-amount';
 import { rememberPageSize, rememberedPageSize } from '../../core/page-size-memory';
-import { ReceiptItem } from '../../core/api/models/receipts';
+import { ProductCategory } from '../../core/api/models/product-category';
+import { ReceiptItem, ReceiptProduct } from '../../core/api/models/receipts';
 import { ReceiptDialog } from './receipt-dialog/receipt-dialog';
 
 /** Wartość selecta kategorii dla wierszy bez kategorii — myliłaby się z „nic nie wybrano". */
@@ -826,6 +827,7 @@ export class Transactions {
       return next;
     });
     if (open && !Array.isArray(this.receiptsOf()[id])) void this.loadReceipts(id);
+    if (open) void this.loadProductCategories();
   }
 
   private async loadReceipts(id: string): Promise<void> {
@@ -854,6 +856,87 @@ export class Transactions {
   /** Czy suma pozycji zgadza się z kwotą transakcji — rozjazd bywa uczciwy (rabat, zaokrąglenie), więc to tylko znacznik. */
   protected sumMatches(sum: number, amount: number): boolean {
     return Math.abs(sum - Math.abs(amount)) <= 0.01;
+  }
+
+  // ── Kategorie produktów (makieta Figma 447:6254) ─────────────────────────────────────
+  //
+  // Kategoria produktu to OSOBNY słownik od kategorii budżetowych i nie zmienia ani kwoty, ani kategorii transakcji — tylko rozbija
+  // słupek kategorii na dashboardzie. Wybór zapisuje się jako reguła po nazwie produktu (kolejny paragon dostanie kategorię sam).
+
+  protected readonly productCategories = signal<readonly ProductCategory[]>([]);
+  private productCategoriesLoaded = false;
+
+  /** Klucz pozycji w edycji (`<idParagonu>:<indeks>`) — tag zamienia się wtedy w listę wyboru; `null` = nic nie jest edytowane. */
+  protected readonly editingProduct = signal<string | null>(null);
+
+  /** Filtr pozycji nad tabelą: `all`, `none` (bez kategorii) albo identyfikator kategorii produktu. */
+  protected readonly productFilter = signal<string>('all');
+
+  /** Tekst pola „nowa kategoria” w rozwiniętej liście wyboru. */
+  protected readonly newProductCategory = signal('');
+
+  protected readonly productCategoryNames = computed(
+    () => new Map(this.productCategories().map((c) => [c.id, c.name] as const)));
+
+  private async loadProductCategories(force = false): Promise<void> {
+    if (this.productCategoriesLoaded && !force) return;
+    this.productCategoriesLoaded = true;
+    try {
+      this.productCategories.set(await firstValueFrom(this.http.get<ProductCategory[]>('/api/product-categories')));
+    } catch {
+      this.productCategoriesLoaded = false;
+    }
+  }
+
+  protected productKey(receiptId: string, index: number): string {
+    return `${receiptId}:${index}`;
+  }
+
+  /** Pozycje paragonu po filtrze kategorii, z indeksem w PEŁNEJ liście — endpoint adresuje pozycję indeksem, nie pozycją na ekranie. */
+  protected visibleProducts(receipt: ReceiptItem): { product: ReceiptProduct; index: number }[] {
+    const filter = this.productFilter();
+    return receipt.items
+      .map((product, index) => ({ product, index }))
+      .filter(({ product }) =>
+        filter === 'all' || (filter === 'none' ? product.productCategoryId === null : product.productCategoryId === filter));
+  }
+
+  protected uncategorizedProducts(receipt: ReceiptItem): number {
+    return receipt.items.filter((p) => p.productCategoryId === null).length;
+  }
+
+  protected async setProductCategory(
+    transactionId: string, receipt: ReceiptItem, index: number, categoryId: string | null,
+  ): Promise<void> {
+    try {
+      const line = await firstValueFrom(this.http.put<ReceiptProduct>(
+        `/api/receipts/${receipt.id}/items/${index}/category`, { productCategoryId: categoryId }));
+      this.receiptsOf.update((current) => {
+        const list = current[transactionId];
+        if (!Array.isArray(list)) return current;
+        const updated = (list as readonly ReceiptItem[]).map((r) => r.id !== receipt.id ? r : {
+          ...r, items: r.items.map((p, i) => i === index ? { ...p, ...line } : p),
+        });
+        return { ...current, [transactionId]: updated };
+      });
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    } finally {
+      this.editingProduct.set(null);
+    }
+  }
+
+  protected async createProductCategory(transactionId: string, receipt: ReceiptItem, index: number): Promise<void> {
+    const name = this.newProductCategory().trim();
+    if (name === '') return;
+    try {
+      const created = await firstValueFrom(this.http.post<ProductCategory>('/api/product-categories', { name }));
+      this.newProductCategory.set('');
+      await this.loadProductCategories(true);
+      await this.setProductCategory(transactionId, receipt, index, created.id);
+    } catch (e) {
+      this.message.error(this.errorMessages.of(e));
+    }
   }
 
   protected quantity(value: number | null): string {

@@ -39,6 +39,7 @@ public static class ReceiptsModule
         services.AddScoped<UploadReceiptCommandHandler>();
         services.AddScoped<SaveReceiptCommandHandler>();
         services.AddScoped<DeleteReceiptCommandHandler>();
+        services.AddScoped<SetReceiptLineCategoryCommandHandler>();
 
         services.AddScoped<GetReceiptCandidatesQueryHandler>();
         services.AddScoped<GetReceiptFileQueryHandler>();
@@ -73,6 +74,15 @@ public static class ReceiptsModule
             Results.Ok(await handler.HandleAsync(id, request, ct)))
             .WithName("SaveReceipt")
             .Produces<ReceiptResponseDto>()
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapPut("/api/receipts/{id:guid}/items/{index:int}/category", async (
+            Guid id, int index, SetReceiptLineCategoryRequestDto request,
+            SetReceiptLineCategoryCommandHandler handler, CancellationToken ct) =>
+            Results.Ok(await handler.HandleAsync(id, index, request, ct)))
+            .WithName("SetReceiptLineCategory")
+            .Produces<ReceiptLineResponseDto>()
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound);
 
