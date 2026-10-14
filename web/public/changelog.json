@@ -1,5 +1,61 @@
 [
   {
+    "id": "2.7",
+    "date": "2026-10-14",
+    "pl": [
+      {
+        "title": "Paragony: OCR i produkty",
+        "text": "Wgraj zdjęcie lub PDF paragonu — odczytamy sprzedawcę, datę, sumę i produkty, a Ty dopasujesz paragon do transakcji z importu. Produkty zobaczysz po rozwinięciu wiersza transakcji.",
+        "link": "/transactions",
+        "linkLabel": "Otwórz transakcje"
+      },
+      {
+        "title": "Kategorie produktów",
+        "text": "Każdy produkt z paragonu dostaje kategorię (Nabiał, Pieczywo, Chemia domowa…). Popraw ją jednym kliknięciem — zapamiętamy wybór dla tej nazwy produktu i następnym razem ustawimy go sami."
+      },
+      {
+        "title": "Rozbicie wydatków na produkty",
+        "text": "Pod wykresem podziału wydatków rozwiniesz kategorię i zobaczysz, na jakie produkty z paragonów poszła kwota. Kategoria transakcji i jej suma się nie zmieniają.",
+        "link": "/dashboard",
+        "linkLabel": "Otwórz dashboard"
+      },
+      {
+        "title": "Zapamiętana liczba wierszy",
+        "text": "Wybrana liczba wierszy na stronie listy transakcji zostaje na następne wejście."
+      },
+      {
+        "title": "Stabilniejsze logowanie",
+        "text": "Sesja odnawia się w tle bez wylogowywania w trakcie pracy."
+      }
+    ],
+    "en": [
+      {
+        "title": "Receipts: OCR and products",
+        "text": "Upload a photo or PDF of a receipt — we read the merchant, date, total and products, and you match it to a transaction from your import. Expand a transaction row to see the products.",
+        "link": "/transactions",
+        "linkLabel": "Open transactions"
+      },
+      {
+        "title": "Product categories",
+        "text": "Every product on a receipt gets a category (Dairy, Bakery, Household chemicals…). Fix it in one click — we remember the choice for that product name and apply it next time."
+      },
+      {
+        "title": "Spending broken down by product",
+        "text": "Under the spending chart you can expand a category and see which receipt products the amount went to. The transaction category and its total do not change.",
+        "link": "/dashboard",
+        "linkLabel": "Open dashboard"
+      },
+      {
+        "title": "Remembered rows per page",
+        "text": "The number of rows you pick on the transactions list stays for your next visit."
+      },
+      {
+        "title": "More reliable sign-in",
+        "text": "Your session renews in the background, so you are not signed out while working."
+      }
+    ]
+  },
+  {
     "id": "2.6",
     "date": "2026-10-10",
     "pl": [
