@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Commands;
@@ -67,7 +68,7 @@ public sealed class SavingsTransferTests : IAsyncLifetime
     private BudgetLookup Lookup() => new(_db);
     private UpdateSavingsLinkCommandHandler UpdateLink() => new(_db, Lookup(), Matcher());
     private UnpinSavingsTransferCommandHandler Unpin() => new(_db);
-    private DeleteBudgetCommandHandler DeleteBudget() => new(_db, Lookup(), new BudgetChildren(_db), Matcher(), _clock);
+    private DeleteBudgetCommandHandler DeleteBudget() => new(_db, Lookup(), new BudgetChildren(_db), new ReceiptCleaner(_db, new ReceiptFiles(TestBlobs.Client())), Matcher(), _clock);
 
     private static UpdateSavingsLinkRequestDto LinkRequest(
         Guid target, string pattern = "przelew wlasny", decimal from = 0m, decimal to = 5000m) =>

@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Services;
@@ -331,7 +332,7 @@ public sealed class EpisodicOrdersTests : IAsyncLifetime
         await children.SoftDeleteSavingsAsync(_budget, at, default);
         _budget.MarkDeleted(at);
         await _db.SaveChangesAsync();
-        await new BudgetPurger(_db).PurgeAsync(null, default);
+        await new BudgetPurger(_db, new ReceiptFiles(TestBlobs.Client())).PurgeAsync(null, default);
         Assert.Empty(await _db.EpisodicOrders.IgnoreQueryFilters().ToListAsync());
     }
 

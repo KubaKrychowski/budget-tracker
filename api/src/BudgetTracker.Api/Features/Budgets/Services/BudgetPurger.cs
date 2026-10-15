@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ namespace BudgetTracker.Api.Features.Budgets.Services;
 /// bez ostrzeżenia. Jeden warunek w jednym miejscu jest tu zabezpieczeniem, nie oszczędnością linii.
 /// </para>
 /// </remarks>
-public sealed class BudgetPurger([FromKeyedServices(SystemDb.Key)] AppDbContext db)
+public sealed class BudgetPurger([FromKeyedServices(SystemDb.Key)] AppDbContext db, ReceiptFiles receiptFiles)
 {
     /// <param name="deletedBefore">
     /// Górna granica znacznika usunięcia: kasujemy budżety ostemplowane nie później niż wtedy.
@@ -57,6 +58,11 @@ public sealed class BudgetPurger([FromKeyedServices(SystemDb.Key)] AppDbContext 
 
         var ids = doomed.Select(b => b.Id).ToList();
         var businessIds = doomed.Select(b => b.BusinessId).ToList();
+
+        // ⚠️ Paragony PRZED transakcjami: łączy je z transakcją tylko kolumna, więc po skasowaniu transakcji nie da się już
+        // ustalić, czyje są. Zwykle zniknęły przy usuwaniu budżetu; to domyka paragony po transakcjach skasowanych przed
+        // wprowadzeniem kaskady i te, których plik nie dał się wtedy usunąć.
+        await new ReceiptCleaner(db, receiptFiles).DeleteForBudgetsAsync(businessIds, ct);
 
         await db.Transactions.IgnoreQueryFilters()
             .Where(t => t.BudgetBusinessId != null && businessIds.Contains(t.BudgetBusinessId.Value))

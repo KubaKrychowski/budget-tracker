@@ -1,4 +1,5 @@
 using BudgetTracker.Api.Features.Budgets.Services;
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +10,12 @@ namespace BudgetTracker.Api.Features.Budgets.Commands;
 /// po oknie retencji (<see cref="BudgetOptions.RetentionDays"/>).
 /// </summary>
 public sealed class DeleteBudgetCommandHandler(
-    AppDbContext db, BudgetLookup lookup, BudgetChildren children, SavingsTransferMatcher savingsTransfers, TimeProvider clock)
+    AppDbContext db, BudgetLookup lookup, BudgetChildren children, ReceiptCleaner receipts, SavingsTransferMatcher savingsTransfers, TimeProvider clock)
 {
     /// <remarks>
     /// <list type="bullet">
+    /// <item>⚠️ Paragony transakcji budżetu znikają od razu (plik i wiersz), a nie po oknie retencji: przywrócenie budżetu
+    /// oddaje transakcje, ale NIE ich paragony (patrz <see cref="ReceiptCleaner"/>).</item>
     /// <item>⚠️ Budżet i dzieci dostają TEN SAM znacznik z jednego odczytu zegara — przywracanie rozpoznaje
     /// dzieci po równości znaczników (patrz <see cref="BudgetChildren.SoftDeleteAsync"/>).</item>
     /// <item>Budżet, który wskazywał USUWANY jako powiązany oszczędnościowy, traci to powiązanie i jego
@@ -35,6 +38,7 @@ public sealed class DeleteBudgetCommandHandler(
             linker.ReplaceSavingsTransferRules([]);
         }
 
+        await receipts.DeleteForBudgetsAsync([budget.BusinessId], ct);
         await children.SoftDeleteAsync(budget, now, ct);
 
         // ⚠️ Cele i rezerwacje osobnym wywołaniem, bo RESET ich nie zabiera — patrz

@@ -294,6 +294,7 @@
     },
     "bulkDelete": {
       "confirm": "Usunąć zaznaczone transakcje ({{count}})?",
+      "receiptsNote": "Paragony przypięte do tych transakcji zostaną usunięte razem z nimi (plik i odczytane dane) i nie da się ich odzyskać.",
       "success": "Usunięto {{count}} transakcji."
     },
     "bulkSetCategory": {
@@ -531,7 +532,7 @@
         "title": "Reset budżetu",
         "lead": "Czy na pewno chcesz zresetować budżet „{{name}}\"?",
         "effects": {
-          "transactions": "Usunięciem przypisanych transakcji",
+          "transactions": "Usunięciem przypisanych transakcji wraz z ich paragonami",
           "limits": "Usunięciem limitów budżetu",
           "balance": "Przypisaniem balansu początkowego"
         },
@@ -542,7 +543,7 @@
         "confirm": "Usuń",
         "cancel": "Anuluj",
         "header": "Czy na pewno chcesz usunąć budżet: {{name}}?",
-        "description": "Po usunięciu operacja będzie odwracalna przez {{days}} dni. Później budżet zostanie bezpowrotnie skasowany z systemu."
+        "description": "Po usunięciu operacja będzie odwracalna przez {{days}} dni, ale paragony transakcji budżetu znikną od razu i nie wrócą po przywróceniu. Później budżet zostanie bezpowrotnie skasowany z systemu."
       },
       "savingsLink": {
         "title": "Reguły powiązania z budżetem oszczędnościowym",

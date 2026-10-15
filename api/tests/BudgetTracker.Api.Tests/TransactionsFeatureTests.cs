@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets.Exceptions;
@@ -98,7 +99,7 @@ public sealed class TransactionsFeatureTests : IAsyncLifetime
     private TransactionSelectionResolver Selection() =>
         new(new TransactionBudgetScope(_db, _clock), new TransactionFilters(_db));
 
-    private BulkDeleteTransactionsCommandHandler BulkDeleteHandler() => new(_db, Selection(), _clock);
+    private BulkDeleteTransactionsCommandHandler BulkDeleteHandler() => new(_db, Selection(), new ReceiptCleaner(_db, new ReceiptFiles(TestBlobs.Client())), _clock);
 
     private BulkSetTransactionCategoryCommandHandler BulkSetCategoryHandler() => new(_db, Selection());
 

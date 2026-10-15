@@ -1003,6 +1003,7 @@ export class Transactions {
   ): Promise<void> {
     const ok = await this.confirmDialog.confirm({
       header: this.translate.instant('transactions.bulkDelete.confirm', { count }),
+      description: this.translate.instant('transactions.bulkDelete.receiptsNote'),
       danger: true,
     });
     if (!ok) return;
