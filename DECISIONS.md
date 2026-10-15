@@ -1760,5 +1760,5 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 >   Kasowanie transakcji nie jest w jednej transakcji z magazynem blob (nie da się): przy awarii po usunięciu plików a przed stemplem transakcji zostaje transakcja bez paragonu,
 >   co jest stanem poprawnym.
 > - **Paragon w ogóle bez transakcji** (przerwane dodawanie) nadal nie ma ekranu; znika z kontem albo na żądanie. To już dużo mniejsza luka niż „każda usunięta transakcja”.
-> - **Wersja dokumentów 2026-10-30** zastępuje 2026-10-29 z poprzedniej rewizji (ten sam zestaw dokumentów, zmieniony punkt o retencji paragonów); `ConsentVersion` podbita razem,
->   `ConsentVersionTests` pilnuje zgodności. Data obowiązywania 30.10.2026 to propozycja: polityka obiecuje powiadomienie e-mailem 14 dni wcześniej, więc ją trzeba potwierdzić.
+> - **Wersja dokumentów zostaje 2026-10-29** (obowiązuje od 29.10.2026, potwierdzone przez właściciela: 15.10 + 14 dni powiadomienia). Ten PR zmienia tylko treść punktu o retencji
+>   paragonów w wersji z poprzedniej rewizji; `ConsentVersion` i `ConsentVersionTests` bez zmian względem niej.
