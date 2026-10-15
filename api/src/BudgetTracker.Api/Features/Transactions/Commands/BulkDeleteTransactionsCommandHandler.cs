@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Features.Transactions.Contracts;
 using BudgetTracker.Api.Features.Transactions.Services;
 using BudgetTracker.Api.Infrastructure;
@@ -9,14 +10,17 @@ namespace BudgetTracker.Api.Features.Transactions.Commands;
 /// <remarks>
 /// Kasowanie logiczne przez jawny stempel <c>DeletedAt</c> w <c>ExecuteUpdate</c> — ta ścieżka omija
 /// <c>SoftDeleteInterceptor</c>, więc <c>ExecuteDelete</c> skasowałby wiersze fizycznie.
+/// ⚠️ Paragony przypięte do usuwanych transakcji znikają razem z nimi (plik i wiersz) — patrz <see cref="ReceiptCleaner"/>.
 /// </remarks>
 public sealed class BulkDeleteTransactionsCommandHandler(
-    AppDbContext db, TransactionSelectionResolver selection, TimeProvider clock)
+    AppDbContext db, TransactionSelectionResolver selection, ReceiptCleaner receipts, TimeProvider clock)
 {
     public async Task<BulkActionResponseDto> HandleAsync(BulkDeleteRequestDto request, CancellationToken ct)
     {
         var ids = await selection.ResolveAsync(request.Selection, ct);
         if (ids.Count == 0) return new BulkActionResponseDto(0);
+
+        await receipts.DeleteForTransactionsAsync(ids, ct);
 
         var now = clock.GetUtcNow();
         var affected = await db.Transactions

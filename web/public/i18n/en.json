@@ -292,6 +292,7 @@
     },
     "bulkDelete": {
       "confirm": "Delete the selected transactions ({{count}})?",
+      "receiptsNote": "Receipts attached to these transactions are deleted with them (file and extracted data) and cannot be recovered.",
       "success": "Deleted {{count}} transactions."
     },
     "bulkSetCategory": {
@@ -527,7 +528,7 @@
         "title": "Reset budget",
         "lead": "Reset the budget \"{{name}}\"?",
         "effects": {
-          "transactions": "Removing the assigned transactions",
+          "transactions": "Removing the assigned transactions together with their receipts",
           "limits": "Removing the budget limits",
           "balance": "Restoring the opening balance"
         },
@@ -539,7 +540,7 @@
         "confirm": "Delete",
         "cancel": "Cancel",
         "header": "Are you sure you want to delete the budget \"{{name}}\"?",
-        "description": "After deletion this stays reversible for {{days}} days. After that the budget is gone from the system for good."
+        "description": "After deletion this stays reversible for {{days}} days, but the receipts of the budget's transactions are deleted right away and do not come back on restore. After that the budget is gone from the system for good."
       },
       "savingsLink": {
         "title": "Savings budget link rules",

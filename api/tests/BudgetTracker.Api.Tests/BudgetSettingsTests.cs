@@ -1,3 +1,4 @@
+using BudgetTracker.Api.Features.Receipts.Services;
 using BudgetTracker.Api.Domain;
 using BudgetTracker.Api.Domain.Consts;
 using BudgetTracker.Api.Features.Budgets;
@@ -55,20 +56,21 @@ public sealed class BudgetSettingsTests : IAsyncLifetime
 
     private BudgetLookup Lookup() => new(_db);
     private BudgetChildren Children() => new(_db);
+    private ReceiptCleaner Cleaner() => new(_db, new ReceiptFiles(TestBlobs.Client()));
     private BudgetListItemReader Reader() => new(_db, _clock);
 
     private GetBudgetsListQueryHandler List() => new(Reader(), Options.Create(_options));
     private UpdateBudgetCommandHandler Update() => new(_db, Lookup(), Reader());
     private SetBudgetEnabledCommandHandler SetEnabled() => new(_db, Lookup(), Reader(), _clock);
-    private ResetBudgetCommandHandler Reset() => new(_db, Lookup(), Children(), Reader(), _clock);
-    private DeleteBudgetCommandHandler Delete() => new(_db, Lookup(), Children(), new SavingsTransferMatcher(_db), _clock);
+    private ResetBudgetCommandHandler Reset() => new(_db, Lookup(), Children(), Cleaner(), Reader(), _clock);
+    private DeleteBudgetCommandHandler Delete() => new(_db, Lookup(), Children(), Cleaner(), new SavingsTransferMatcher(_db), _clock);
     private RestoreBudgetCommandHandler Restore() => new(_db, Lookup(), Children(), Reader());
     private PurgeDeletedBudgetsCommandHandler Purge() => new(
-        new BudgetPurger(_db), Options.Create(_options), _clock,
+        new BudgetPurger(_db, new ReceiptFiles(TestBlobs.Client())), Options.Create(_options), _clock,
         Microsoft.Extensions.Logging.Abstractions.NullLogger<PurgeDeletedBudgetsCommandHandler>.Instance);
 
     private ForcePurgeDeletedBudgetsCommandHandler ForcePurge() => new(
-        new BudgetPurger(_db),
+        new BudgetPurger(_db, new ReceiptFiles(TestBlobs.Client())),
         Microsoft.Extensions.Logging.Abstractions.NullLogger<ForcePurgeDeletedBudgetsCommandHandler>.Instance);
 
     /// <summary>

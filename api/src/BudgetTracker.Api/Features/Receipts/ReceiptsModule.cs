@@ -35,6 +35,7 @@ public static class ReceiptsModule
                 : new UnconfiguredReceiptReader();
         });
         services.AddScoped<ReceiptFiles>();
+        services.AddScoped<ReceiptCleaner>();
 
         services.AddScoped<UploadReceiptCommandHandler>();
         services.AddScoped<SaveReceiptCommandHandler>();

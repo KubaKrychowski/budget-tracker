@@ -1661,7 +1661,7 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 - **Kolejność w `UploadReceiptCommandHandler`: najpierw odczyt, potem zapis pliku** — niedostępna usługa OCR nie zostawia osieroconego bloba ani wiersza bez pól. Odczyt jest jednym płatnym wywołaniem; poprawianie pól na ekranie weryfikacji nie woła go ponownie.
 - **Dopasowanie** (`ReceiptCandidateFinder`, czysta funkcja): tylko wydatki, ta sama kwota (±0,005) w oknie ±3 dni to „pasuje” (`Exact`), kwota w granicach większej z 2 zł i 5% to „możliwe”; do pięciu najlepszych. Nic nie przypina się samo — kandydat „pasuje” jest tylko zaznaczony z góry, a użytkownik zatwierdza. Kandydaci są osobnym zapytaniem, więc zmiana sumy na ekranie przelicza je bez OCR.
 - **Test na żywym Azure (2026-10-12) i kontrola sumy.** Zmyślone paragony (z kropką i z przecinkiem) czytane są poprawnie: sprzedawca, data, suma. ⚠️ Paragon o nietypowym układzie dał jednak sumę 20 zamiast 20,60 przy pewności 0,993 — pewność modelu nie chroni przed taką pomyłką. Dlatego `ReceiptTotalCheck` porównuje sumę z sumą cen pozycji (tylko gdy WSZYSTKIE pozycje mają cenę) i przy rozjeździe powyżej 0,01 obniża pewność sumy do 0,5, czyli ekran pokazuje „sprawdź”. Rozjazd bywa uczciwy (rabat, zaokrąglenie) — wtedy użytkownik po prostu potwierdza.
-- **Paragon bez przypięcia** („Żadna z nich”) jest zapisywany, ale **nie ma jeszcze ekranu, który go pokaże** — to otwarta sprawa (np. zakładka „Paragony”). Usunięcie transakcji NIE kasuje jej paragonów: zostają osierocone w magazynie, dopóki ktoś ich nie usunie (do rozstrzygnięcia razem z ekranem).
+- **Paragon bez przypięcia** („Żadna z nich”) jest zapisywany, ale **nie ma jeszcze ekranu, który go pokaże** — to otwarta sprawa (np. zakładka „Paragony”). Usunięcie transakcji i budżetu kasuje jej paragony — patrz REWIZJA 2026-10-15 („usunięcie transakcji i budżetu kasuje jej paragony”) na końcu pliku.
 - **Usunięcie paragonu kasuje plik od razu**, mimo soft delete wiersza: zdjęcie paragonu to dana osobowa. Menu wiersza ma „Usuń paragon” zamiast „Odłącz paragon” z makiety — odłączony paragon byłby niewidoczny w UI, więc zostałby plikiem bez właściciela.
 - **Aparat** (`Zrób zdjęcie`) to `<input type="file" capture>` w aplikacji Capacitor, bez nowej wtyczki natywnej. ⚠️ Nie sprawdzone na urządzeniu — na Androidzie przechwytywanie z WebView może wymagać uprawnienia `CAMERA` w manifeście.
 
@@ -1726,3 +1726,39 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 >   pod wykresem (kategorie z rozbiciem, szewron rozwija produkty). Makieta zakładała rozwijanie klikiem w kategorię.
 > - **Nie ma jeszcze:** edycji kategorii na ekranie weryfikacji paragonu (tylko po przypięciu), ponownej kategoryzacji paragonów wgranych wcześniej (pozycje bez kategorii czekają
 >   na wybór), filtra transakcji po kategorii produktu, widoku mobilnego rozwijanych produktów.
+
+> **REWIZJA — 2026-10-15: paragony w polityce prywatności i dane paragonów przy usuwaniu** (`DeleteReceiptCommandHandler`, `OwnerDataService`, migracja
+> `PurgeSoftDeletedReceipts`, `web/projects/landing/public/{polityka-prywatnosci,regulamin,usun-konto}.html`, `BetaAccessRequestService.ConsentVersion`):
+> - **Powód:** landing i polityka obiecywały „bez wysyłania opisów transakcji do zewnętrznych usług” i „natychmiastowe, nieodwracalne skasowanie” konta, a paragony
+>   (OCR w Microsoft Azure, plik w magazynie, produkty w bazie) tego nie spełniały. Przegląd kodu znalazł dwie realne luki, naprawione tu zamiast opisywania ich w polityce:
+>   1. **Usunięcie paragonu było miękkie** (plik znikał, wiersz ze sprzedawcą, produktami i nazwą pliku zostawał na stałe — retencja sprząta tylko budżety). Teraz kasuje
+>      wiersz fizycznie (`ExecuteDeleteAsync` omija `SoftDeleteInterceptor`); migracja jednorazowo kasuje stare wiersze z `DeletedAt` (nieodwracalna).
+>   2. **Usunięcie konta (`OwnerDataService`) nie ruszało `Receipts`, `ProductRules` ani własnych `ProductCategories`** — po „skasowanym” koncie zostawały dane zakupów.
+>      Teraz je kasuje (i przepisuje przy `ReassignAsync`); wspólnych kategorii i reguł (pusty `UserId`) nie rusza nigdy. Pliki znikają z kontenerem konta, jak dotąd.
+> - **(Zamknięte kaskadą — patrz następna REWIZJA 2026-10-15 na końcu pliku.) Było otwarte, opisane w polityce zamiast naprawione:** usunięcie transakcji/budżetu NIE kasuje jej paragonów, a paragon bez istniejącej transakcji nie ma ekranu
+>   (nie da się go usunąć w aplikacji). Do rozstrzygnięcia: kaskada przy usuwaniu transakcji albo ekran „Paragony”. Do tego czasu: na żądanie ręcznie, albo razem z kontem.
+> - **Fakty w dokumentach sprawdzone:** Document Intelligence przetwarza dane w regionie zasobu (Germany West Central) i trzyma plik oraz wynik 24 godziny, potem usuwa
+>   (dokumentacja Microsoft, strona „Data, privacy, and security for Document Intelligence”, aktualizacja 2026-07); baza paragonów jest na Neonie w us-east-2 (poza EOG),
+>   pliki w Azure Blob w Poland Central. Kod nie woła „Delete Analyze Result”, więc dokument mówi tylko o 24 godzinach.
+> - **Podstawy prawne dopisane, do potwierdzenia przez prawnika:** produkty z paragonów mogą ujawniać dane szczególnych kategorii (np. leki) — dokument powołuje się na wyraźną
+>   zgodę przez dobrowolne wgranie (art. 9 ust. 2 lit. a RODO); to samo dotyczy opisów w wyciągach CSV, których dotąd nie opisywano tą podstawą.
+> - **Wersja dokumentów 2026-10-29** (z datą obowiązywania 29.10.2026): polityka obiecuje powiadomić posiadaczy kont e-mailem z 14-dniowym wyprzedzeniem, więc data wypada
+>   14 dni po dniu wdrożenia. `ConsentVersion` podbita razem z dokumentami; `ConsentVersionTests` pilnuje, żeby się nie rozjechały.
+
+> **REWIZJA — 2026-10-15: usunięcie transakcji i budżetu kasuje jej paragony** (decyzja właściciela: kaskada zamiast ekranu „Paragony”; `Features/Receipts/Services/ReceiptCleaner.cs`,
+> `BulkDeleteTransactionsCommandHandler`, `ResetBudgetCommandHandler`, `DeleteBudgetCommandHandler`, `BudgetPurger`, `ReceiptCascadeTests`;
+> `web/projects/landing/public/{polityka-prywatnosci,regulamin,usun-konto}.html`, `BetaAccessRequestService.ConsentVersion`):
+> - **Zamyka lukę z poprzedniej rewizji** („usunięcie transakcji NIE kasuje jej paragonów”, §17 i REWIZJA 2026-10-15 wyżej). Paragon bez istniejącej transakcji nie miał
+>   żadnego ekranu, a wiersz niesie sprzedawcę, produkty i nazwę pliku — użytkownik nie mógł go usunąć. Rozważane: (a) kaskada, (b) ekran „Paragony” z nieprzypiętymi
+>   (wymagałby makiety), (c) hybryda. Wybrana (a): paragon jest dowodem transakcji i bez niej traci sens; nic nie zostaje bez właściciela i bez nowego ekranu.
+> - **Co kasuje** (zawsze plik z magazynu, potem wiersz, fizycznie — jak `DeleteReceiptCommandHandler`): usunięcie transakcji z listy (pojedyncze i masowe, `bulk-delete`),
+>   reset budżetu, usunięcie budżetu oraz — jako siatka bezpieczeństwa — trwałe usunięcie budżetu w `BudgetPurger` (paragony po transakcjach skasowanych przed kaskadą
+>   albo takie, których plik nie dał się usunąć). Purge woła `ReceiptCleaner` PRZED skasowaniem transakcji: potem kolumna `TransactionBusinessId` nie wskazywałaby już niczego.
+> - ⚠️ **Przywrócenie budżetu NIE oddaje paragonów.** Usunięcie budżetu jest odwracalne przez okno retencji, ale paragony znikają od razu: zdjęcie paragonu to dana osobowa,
+>   a „usunąłem” ma znaczyć to samo przy transakcji i przy budżecie. Dialog usuwania budżetu mówi o tym wprost; dialogi resetu i usuwania transakcji też.
+> - **Kolejność w `ReceiptCleaner`:** pliki pierwsze, wiersze potem — niepowodzenie kasowania z magazynu zostawia wiersz, więc następna próba (albo purge) dokończy.
+>   Kasowanie transakcji nie jest w jednej transakcji z magazynem blob (nie da się): przy awarii po usunięciu plików a przed stemplem transakcji zostaje transakcja bez paragonu,
+>   co jest stanem poprawnym.
+> - **Paragon w ogóle bez transakcji** (przerwane dodawanie) nadal nie ma ekranu; znika z kontem albo na żądanie. To już dużo mniejsza luka niż „każda usunięta transakcja”.
+> - **Wersja dokumentów zostaje 2026-10-29** (obowiązuje od 29.10.2026, potwierdzone przez właściciela: 15.10 + 14 dni powiadomienia). Ten PR zmienia tylko treść punktu o retencji
+>   paragonów w wersji z poprzedniej rewizji; `ConsentVersion` i `ConsentVersionTests` bez zmian względem niej.
