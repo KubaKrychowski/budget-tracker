@@ -28,13 +28,13 @@ describe('Landing', () => {
     expect(text()).toContain('Czego jeszcze nie ma');
     expect(text()).toContain('Sam nie łączy się z bankiem');
     expect(text()).toContain('To wczesna wersja');
-    expect(text()).toContain('Nie czyta paragonów');
+    expect(text()).toContain('Paragony czytane są w chmurze Microsoftu');
   });
 
   it('nie obiecuje funkcji, których nie ma', () => {
     // Bez tego ktoś dopisze „wkrótce prognozy” albo „łączy się z Twoim bankiem”, wszystko dalej się zbuduje,
     // a strona zacznie obiecywać nieistniejący kod.
-    for (const promise of ['Prognoz', 'automatycznie z bankiem', 'połączysz konto', 'Paragony i pozycje']) {
+    for (const promise of ['Nie czyta paragonów', 'bez wysyłania opisów transakcji do zewnętrznych usług', 'Prognoz', 'automatycznie z bankiem', 'połączysz konto', 'Paragony i pozycje']) {
       expect(text()).not.toContain(promise);
     }
   });
