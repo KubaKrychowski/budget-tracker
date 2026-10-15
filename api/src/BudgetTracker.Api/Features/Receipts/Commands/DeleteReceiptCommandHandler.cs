@@ -5,10 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetTracker.Api.Features.Receipts.Commands;
 
-/// <summary>Usuwa paragon: wiersz miękko, a sam plik z magazynu naprawdę.</summary>
+/// <summary>Usuwa paragon: plik z magazynu i wiersz z bazy, naprawdę, od razu.</summary>
 /// <remarks>
-/// ⚠️ Plik kasujemy od razu, mimo soft delete wiersza: zdjęcie paragonu to dana osobowa i nie ma powodu trzymać go
-/// po tym, jak użytkownik kazał je usunąć — wiersz zostaje tylko po to, żeby historia tabeli była spójna.
+/// <para>
+/// ⚠️ Kasowanie jest FIZYCZNE, nie miękkie (<c>ExecuteDeleteAsync</c> omija <c>SoftDeleteInterceptor</c>). Wiersz paragonu niesie sprzedawcę,
+/// datę, sumę, nazwy kupionych produktów i oryginalną nazwę pliku, a nic w aplikacji nie sprząta miękko skasowanych paragonów
+/// (retencja dotyczy tylko budżetów) — wiersz po „usunięciu” zostawałby w bazie na stałe, mimo że polityka prywatności obiecuje
+/// usunięcie paragonu od razu.
+/// </para>
+/// <para>Plik idzie pierwszy: gdy kasowanie z magazynu się nie powiedzie, wiersz zostaje i użytkownik może ponowić usunięcie.</para>
 /// </remarks>
 public sealed class DeleteReceiptCommandHandler(AppDbContext db, ReceiptFiles files)
 {
@@ -18,7 +23,6 @@ public sealed class DeleteReceiptCommandHandler(AppDbContext db, ReceiptFiles fi
             ?? throw new ReceiptNotFoundException(id);
 
         await files.DeleteAsync(receipt.UserId, receipt.BlobName, ct);
-        db.Receipts.Remove(receipt);
-        await db.SaveChangesAsync(ct);
+        await db.Receipts.Where(r => r.BusinessId == id).ExecuteDeleteAsync(ct);
     }
 }

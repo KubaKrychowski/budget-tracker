@@ -117,6 +117,7 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         var models = await db.ModelVersions.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
         await DeleteOwnRulesAsync(ownerId, ct);
         await DeleteOwnCategoriesAsync(ownerId, ct);
+        await DeleteOwnReceiptDataAsync(ownerId, ct);
         await DeleteStorageAsync(ownerId, ct);
 
         return new OwnerDataCountsResponseDto(
@@ -144,6 +145,7 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
         await ReassignOwnRulesAsync(ownerId, targetUserId, ct);
         await ReassignOwnCategoriesAsync(ownerId, targetUserId, ct);
+        await ReassignOwnReceiptDataAsync(ownerId, targetUserId, ct);
 
         return new OwnerDataCountsResponseDto(
             budgets, budgetItems, transactions, imports, goals, reservations, standing, episodic, ModelVersions: 0);
@@ -164,6 +166,40 @@ public sealed class OwnerDataService([FromKeyedServices(SystemDb.Key)] AppDbCont
         if (ownerId == Category.SharedUserId) return;
 
         await db.Categories.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+    }
+
+    /// <summary>Kasuje trwale paragony konta (wiersze razem z odczytanymi produktami) oraz jego własne reguły i kategorie produktów.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ Paragon niesie sprzedawcę, datę, sumę, nazwy kupionych produktów i oryginalną nazwę pliku, a reguły produktów — historię zakupów
+    /// konta. Bez tego kroku usunięcie konta zostawiałoby te dane w bazie jako wiersze bez właściciela, wbrew polityce prywatności
+    /// („natychmiastowe i nieodwracalne skasowanie”). Same pliki paragonów znikają z kontenerem konta (<see cref="DeleteStorageAsync"/>).
+    /// </para>
+    /// <para>
+    /// Reguły przed kategoriami (klucz obcy Restrict). Kategorii i reguł wspólnych (pusty <c>UserId</c>) nie rusza nigdy — należą do wszystkich kont.
+    /// </para>
+    /// </remarks>
+    private async Task DeleteOwnReceiptDataAsync(Guid ownerId, CancellationToken ct)
+    {
+        await db.Receipts.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        if (ownerId == ProductCategory.SharedUserId) return;
+
+        await db.ProductRules.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+        await db.ProductCategories.IgnoreQueryFilters().Where(x => x.UserId == ownerId).ExecuteDeleteAsync(ct);
+    }
+
+    /// <summary>Przepisuje paragony oraz własne reguły i kategorie produktów konta na inne konto; wspólnych nie rusza nigdy.</summary>
+    /// <remarks>⚠️ Pliki paragonów leżą w kontenerze konta źródłowego i NIE są przenoszone — jak pliki modeli, patrz <see cref="ReassignAsync"/>.</remarks>
+    private async Task ReassignOwnReceiptDataAsync(Guid ownerId, Guid targetUserId, CancellationToken ct)
+    {
+        await db.Receipts.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
+        if (ownerId == ProductCategory.SharedUserId) return;
+
+        await db.ProductRules.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
+        await db.ProductCategories.IgnoreQueryFilters().Where(x => x.UserId == ownerId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.UserId, targetUserId), ct);
     }
 
     /// <summary>Przepisuje własne kategorie konta na inne konto; kategorii wspólnych nie rusza nigdy.</summary>

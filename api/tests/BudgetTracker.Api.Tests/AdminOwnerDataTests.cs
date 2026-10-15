@@ -188,6 +188,58 @@ public sealed class AdminOwnerDataTests : IAsyncLifetime
         Assert.Equal(["wspolna"], await RulesOfAsync(CategoryRule.SharedUserId));
     }
 
+    /// <summary>Dla właściciela: kategoria produktu, reguła na nią i paragon z jedną pozycją. Zwraca nazwy do porównania.</summary>
+    private async Task AddReceiptDataAsync(Guid owner, string name)
+    {
+        var category = new ProductCategory(name, owner);
+        _db.ProductCategories.Add(category);
+        await _db.SaveChangesAsync();
+        _db.ProductRules.Add(new ProductRule(category.Id, "^" + name + "$", ProductRule.LearnedPriority, owner));
+
+        var receipt = new Receipt(owner, $"receipts/{Guid.NewGuid()}.jpg", name + ".jpg", "image/jpeg", 1, Now, merchant: name);
+        receipt.SetItems([new ReceiptLine(name, 1m, 1m, 1m, category.BusinessId, true)]);
+        _db.Receipts.Add(receipt);
+        await _db.SaveChangesAsync();
+    }
+
+    /// <summary>Paragony, reguły i kategorie produktów właściciela jako jeden tekst do porównania, np. <c>paragony=a;reguly=^a$;kategorie=a</c>.</summary>
+    private async Task<string> ReceiptDataOfAsync(Guid owner)
+    {
+        var receipts = await _db.Receipts.IgnoreQueryFilters().Where(r => r.UserId == owner).Select(r => r.Merchant).ToListAsync();
+        var rules = await _db.ProductRules.IgnoreQueryFilters().Where(r => r.UserId == owner).Select(r => r.Pattern).ToListAsync();
+        var categories = await _db.ProductCategories.IgnoreQueryFilters().Where(c => c.UserId == owner).Select(c => c.Name).ToListAsync();
+        return $"paragony={string.Join(',', receipts)};reguly={string.Join(',', rules)};kategorie={string.Join(',', categories)}";
+    }
+
+    [Fact]
+    public async Task Delete_takes_the_owners_receipts_and_product_data_but_never_the_shared_categories()
+    {
+        // ⚠️ Paragon niesie sprzedawcę, nazwy kupionych produktów i oryginalną nazwę pliku — to dane osobowe, które po usunięciu
+        // konta nie mogą zostać jako wiersze bez właściciela (polityka prywatności obiecuje natychmiastowe skasowanie).
+        await AddReceiptDataAsync(CategoryOwnerShared, "wspolna");
+        await AddReceiptDataAsync(_alice, "alicja");
+        await AddReceiptDataAsync(_bob, "bartek");
+
+        await new DeleteOwnerDataCommandHandler(_service).HandleAsync(_alice, default);
+
+        Assert.Equal("paragony=;reguly=;kategorie=", await ReceiptDataOfAsync(_alice));
+        Assert.Equal("paragony=bartek;reguly=^bartek$;kategorie=bartek", await ReceiptDataOfAsync(_bob));
+        Assert.Contains("kategorie=wspolna", await ReceiptDataOfAsync(CategoryOwnerShared));
+    }
+
+    [Fact]
+    public async Task Reassign_moves_the_owners_receipts_and_product_data_to_the_target()
+    {
+        await AddReceiptDataAsync(_alice, "alicja");
+
+        await new ReassignOwnerDataCommandHandler(_service).HandleAsync(_alice, new ReassignOwnerRequestDto(_bob), default);
+
+        Assert.Equal("paragony=;reguly=;kategorie=", await ReceiptDataOfAsync(_alice));
+        Assert.Equal("paragony=alicja;reguly=^alicja$;kategorie=alicja", await ReceiptDataOfAsync(_bob));
+    }
+
+    private static Guid CategoryOwnerShared => ProductCategory.SharedUserId;
+
     [Fact]
     public async Task Deleting_the_empty_owner_leaves_the_shared_rules_alone()
     {

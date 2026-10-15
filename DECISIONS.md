@@ -1726,3 +1726,21 @@ Windowsie nie zbudujemy ani nie sprawdzimy).
 >   pod wykresem (kategorie z rozbiciem, szewron rozwija produkty). Makieta zakładała rozwijanie klikiem w kategorię.
 > - **Nie ma jeszcze:** edycji kategorii na ekranie weryfikacji paragonu (tylko po przypięciu), ponownej kategoryzacji paragonów wgranych wcześniej (pozycje bez kategorii czekają
 >   na wybór), filtra transakcji po kategorii produktu, widoku mobilnego rozwijanych produktów.
+
+> **REWIZJA — 2026-10-15: paragony w polityce prywatności i dane paragonów przy usuwaniu** (`DeleteReceiptCommandHandler`, `OwnerDataService`, migracja
+> `PurgeSoftDeletedReceipts`, `web/projects/landing/public/{polityka-prywatnosci,regulamin,usun-konto}.html`, `BetaAccessRequestService.ConsentVersion`):
+> - **Powód:** landing i polityka obiecywały „bez wysyłania opisów transakcji do zewnętrznych usług” i „natychmiastowe, nieodwracalne skasowanie” konta, a paragony
+>   (OCR w Microsoft Azure, plik w magazynie, produkty w bazie) tego nie spełniały. Przegląd kodu znalazł dwie realne luki, naprawione tu zamiast opisywania ich w polityce:
+>   1. **Usunięcie paragonu było miękkie** (plik znikał, wiersz ze sprzedawcą, produktami i nazwą pliku zostawał na stałe — retencja sprząta tylko budżety). Teraz kasuje
+>      wiersz fizycznie (`ExecuteDeleteAsync` omija `SoftDeleteInterceptor`); migracja jednorazowo kasuje stare wiersze z `DeletedAt` (nieodwracalna).
+>   2. **Usunięcie konta (`OwnerDataService`) nie ruszało `Receipts`, `ProductRules` ani własnych `ProductCategories`** — po „skasowanym” koncie zostawały dane zakupów.
+>      Teraz je kasuje (i przepisuje przy `ReassignAsync`); wspólnych kategorii i reguł (pusty `UserId`) nie rusza nigdy. Pliki znikają z kontenerem konta, jak dotąd.
+> - **Nadal otwarte, opisane w polityce zamiast naprawione:** usunięcie transakcji/budżetu NIE kasuje jej paragonów, a paragon bez istniejącej transakcji nie ma ekranu
+>   (nie da się go usunąć w aplikacji). Do rozstrzygnięcia: kaskada przy usuwaniu transakcji albo ekran „Paragony”. Do tego czasu: na żądanie ręcznie, albo razem z kontem.
+> - **Fakty w dokumentach sprawdzone:** Document Intelligence przetwarza dane w regionie zasobu (Germany West Central) i trzyma plik oraz wynik 24 godziny, potem usuwa
+>   (dokumentacja Microsoft, strona „Data, privacy, and security for Document Intelligence”, aktualizacja 2026-07); baza paragonów jest na Neonie w us-east-2 (poza EOG),
+>   pliki w Azure Blob w Poland Central. Kod nie woła „Delete Analyze Result”, więc dokument mówi tylko o 24 godzinach.
+> - **Podstawy prawne dopisane, do potwierdzenia przez prawnika:** produkty z paragonów mogą ujawniać dane szczególnych kategorii (np. leki) — dokument powołuje się na wyraźną
+>   zgodę przez dobrowolne wgranie (art. 9 ust. 2 lit. a RODO); to samo dotyczy opisów w wyciągach CSV, których dotąd nie opisywano tą podstawą.
+> - **Wersja dokumentów 2026-10-29** (z datą obowiązywania 29.10.2026): polityka obiecuje powiadomić posiadaczy kont e-mailem z 14-dniowym wyprzedzeniem, więc data wypada
+>   14 dni po dniu wdrożenia. `ConsentVersion` podbita razem z dokumentami; `ConsentVersionTests` pilnuje, żeby się nie rozjechały.

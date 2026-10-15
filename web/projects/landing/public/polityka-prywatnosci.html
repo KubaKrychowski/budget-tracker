@@ -16,7 +16,7 @@
 
 <main>
   <h1>Polityka prywatności</h1>
-  <p class="meta">Obowiązuje od 01.10.2026 · wersja 2026-10-01</p>
+  <p class="meta">Obowiązuje od 29.10.2026 · wersja 2026-10-29</p>
 
   <p>
     Niniejsza Polityka prywatności określa zasady przetwarzania danych osobowych w związku z korzystaniem ze strony
@@ -43,7 +43,7 @@
   <p><strong>b) Konto w aplikacji (po otrzymaniu zaproszenia).</strong></p>
   <ul>
     <li>Przetwarzane są: adres e-mail, hasło (przechowywane wyłącznie w postaci zaszyfrowanego skrótu PBKDF2 z HMAC-SHA512, 100 000 iteracji i losową solą) oraz, opcjonalnie, dane weryfikacji dwuetapowej.</li>
-    <li>Przetwarzane są również dane wprowadzone lub zaimportowane przez Użytkownika: transakcje z wyciągów w formacie CSV, kategorie, budżety, limity, cele oszczędzania, zlecenia i reguły kategoryzacji.</li>
+    <li>Przetwarzane są również dane wprowadzone lub zaimportowane przez Użytkownika: transakcje z wyciągów w formacie CSV, kategorie, budżety, limity, cele oszczędzania, zlecenia i reguły kategoryzacji, a także — jeśli Użytkownik skorzysta z tej funkcji — paragony wraz z danymi z nich odczytanymi (lit. e poniżej).</li>
     <li>Celem przetwarzania jest prowadzenie konta Użytkownika oraz świadczenie funkcji aplikacji (kategoryzacja wydatków, budżety, limity, oszczędności).</li>
     <li>
       Opisy transakcji w wyciągach mogą zawierać dane szczególnych kategorii (np. dotyczące zdrowia lub przekonań).
@@ -74,10 +74,50 @@
     </li>
   </ul>
 
+  <p><strong>e) Paragony (funkcja dobrowolna).</strong></p>
+  <ul>
+    <li>Użytkownik może wgrać zdjęcie albo plik PDF paragonu (JPG, PNG, HEIC lub PDF, do 10 MB), aby Aplikacja odczytała jego treść i dopasowała paragon do transakcji. Korzystanie z tej funkcji jest dobrowolne.</li>
+    <li>
+      <strong>Przetwarzany jest cały plik, nie tylko odczytane pola.</strong> Na paragonie może znajdować się więcej, niż Aplikacja odczytuje i wyświetla,
+      np. numer lub końcówka karty płatniczej, numer karty lojalnościowej, imię kasjera, adres sklepu czy dane osób trzecich (np. przy paragonie z danymi nabywcy).
+      Aplikacja nie ukrywa ani nie usuwa tych fragmentów ze zdjęcia. Użytkownik powinien przed wgraniem ocenić, czy paragon zawiera dane, których nie chce przekazywać.
+    </li>
+    <li>
+      Z pliku odczytywane są: sprzedawca, data, suma oraz lista produktów (nazwa, ilość, cena, wartość). Zapisywana jest także oryginalna nazwa pliku
+      (która może zawierać informacje nadane przez urządzenie, np. datę zdjęcia).
+    </li>
+    <li>
+      <strong>Nazwy produktów mogą ujawniać dane szczególnych kategorii</strong> (np. dotyczące zdrowia — leki i wyroby medyczne; życia seksualnego; przekonań).
+      Administrator nie ma wpływu na treść paragonów wgrywanych przez Użytkownika.
+    </li>
+    <li>
+      Odczyt pliku wykonuje usługa Azure AI Document Intelligence firmy Microsoft, do której plik jest przesyłany (punkt 5). To jedyne miejsce w Aplikacji,
+      w którym treść dokumentu Użytkownika jest wysyłana do zewnętrznej usługi analizującej.
+    </li>
+    <li>
+      Plik jest przechowywany jako załącznik transakcji w usłudze Azure Blob Storage, w odrębnym kontenerze przypisanym do konta Użytkownika.
+      Odczytane dane (sprzedawca, data, suma, produkty, nazwa pliku) są przechowywane w bazie danych Aplikacji, wraz z pozostałymi danymi konta (punkt 5).
+    </li>
+    <li>
+      Aplikacja przypisuje produktom kategorie (np. „Nabiał”, „Pieczywo”) za pomocą reguł oraz modelu uczenia maszynowego działającego na serwerze Aplikacji.
+      Model uczy się wyłącznie na poprawkach wprowadzonych przez danego Użytkownika i służy tylko jemu: dane Użytkownika nie są używane do uczenia modeli
+      dla innych użytkowników ani przekazywane do zewnętrznych usług w tym celu. Z kategoryzacji nie wynikają decyzje wywołujące skutki prawne wobec Użytkownika.
+      Zapamiętane poprawki (nazwa produktu po normalizacji i wybrana kategoria) są przechowywane w bazie danych jako reguły konta.
+    </li>
+    <li>Celem przetwarzania jest odczyt paragonu, dopasowanie go do transakcji, kategoryzacja produktów oraz pokazanie na wykresie wydatków, na co poszła kwota transakcji. Odczyt jest automatyczny i może być błędny; Użytkownik sprawdza go przed zapisaniem.</li>
+    <li>Telemetria (lit. d) nie zawiera obrazów ani treści paragonów; mogą w niej występować wyłącznie losowe identyfikatory paragonów w ścieżkach adresów.</li>
+  </ul>
+
   <h2>3. Podstawa prawna przetwarzania</h2>
   <ul>
     <li>Prośba o dostęp — zgoda Użytkownika (art. 6 ust. 1 lit. a RODO). Zgodę można cofnąć w każdej chwili; cofnięcie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej cofnięciem.</li>
     <li>Konto w aplikacji — wykonanie umowy o świadczenie usługi drogą elektroniczną (art. 6 ust. 1 lit. b RODO).</li>
+    <li>Paragony i produkty (punkt 2 lit. e) — wykonanie umowy o świadczenie usługi drogą elektroniczną w zakresie funkcji, którą Użytkownik sam wybiera, wgrywając paragon (art. 6 ust. 1 lit. b RODO).</li>
+    <li>
+      Dane szczególnych kategorii, jeżeli wynikają z treści zaimportowanych wyciągów lub wgranych paragonów (np. nazwy produktów) — wyraźna zgoda Użytkownika
+      wyrażona przez dobrowolne wgranie pliku (art. 9 ust. 2 lit. a RODO). Zgodę można cofnąć w każdej chwili, usuwając paragon, import lub konto; cofnięcie
+      nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej cofnięciem.
+    </li>
     <li>Ochrona przed nadużyciami — prawnie uzasadniony interes Administratora, polegający na zapewnieniu bezpieczeństwa serwisu (art. 6 ust. 1 lit. f RODO).</li>
     <li>Telemetria i diagnostyka — prawnie uzasadniony interes Administratora, polegający na zapewnieniu poprawnego działania, wydajności i bezpieczeństwa aplikacji (art. 6 ust. 1 lit. f RODO). Użytkownik ma prawo sprzeciwu wobec takiego przetwarzania (zob. punkt 7).</li>
   </ul>
@@ -91,6 +131,21 @@
       skontaktować się z Administratorem.
     </li>
     <li>Dane konta i dane finansowe są przechowywane do czasu usunięcia konta. Usunięcie konta w aplikacji powoduje ich natychmiastowe i nieodwracalne skasowanie (zob. <a href="/usun-konto">Usuwanie konta</a>).</li>
+    <li>
+      Paragon (plik i dane z niego odczytane) jest przechowywany do czasu jego usunięcia przez Użytkownika albo usunięcia konta. Usunięcie paragonu w Aplikacji
+      (menu transakcji → „Usuń paragon”) kasuje plik z magazynu oraz wiersz z bazy danych natychmiast i nieodwracalnie. Paragony usunięte w ten sposób przed
+      29.10.2026 i oznaczone wcześniej w bazie jako usunięte zostały skasowane jednorazowo przy wdrożeniu tej wersji.
+    </li>
+    <li>
+      <strong>Usunięcie transakcji, importu lub budżetu nie usuwa paragonów przypiętych do tej transakcji.</strong> Paragon, który nie jest przypięty do żadnej istniejącej
+      transakcji (np. po jej usunięciu albo po przerwaniu dodawania paragonu), nie jest widoczny w Aplikacji i nie można go w niej usunąć samodzielnie. Takie paragony są
+      usuwane razem z kontem, a na żądanie Użytkownika Administrator usunie je wcześniej (dane kontaktowe w punkcie 1).
+    </li>
+    <li>
+      Microsoft przechowuje przesłany plik i wynik odczytu przez 24 godziny od zakończenia analizy, po czym usuwa je automatycznie (zgodnie z dokumentacją usługi
+      Document Intelligence). Administrator nie korzysta z możliwości wcześniejszego usunięcia wyniku.
+    </li>
+    <li>Reguły zapamiętane z poprawek kategorii produktów oraz własne kategorie produktów są przechowywane do czasu usunięcia konta; po usunięciu paragonu reguły zostają (nie zawierają treści paragonu poza znormalizowaną nazwą produktu).</li>
     <li>Budżet usunięty przez Użytkownika z aplikacji jest przechowywany przez 30 dni w celu umożliwienia jego przywrócenia. Jest to funkcja aplikacji uruchamiana z inicjatywy Użytkownika. Po upływie tego okresu budżet jest kasowany, a na żądanie Użytkownika może zostać skasowany niezwłocznie.</li>
     <li>Dane telemetryczne i dziennik zdarzeń aplikacji są przechowywane przez 30 dni, po czym są automatycznie usuwane. Usunięcie konta nie powoduje wcześniejszego usunięcia wpisów telemetrii dotyczących konta; wygasają one wraz z upływem tego okresu.</li>
   </ul>
@@ -98,11 +153,18 @@
   <h2>5. Odbiorcy danych</h2>
   <ul>
     <li>Administrator nie sprzedaje danych osobowych, nie dokonuje profilowania Użytkowników ani nie wykorzystuje danych do celów reklamowych.</li>
-    <li>Aplikacja jest udostępniana z wykorzystaniem usług Microsoft Azure (hosting aplikacji i strony projektu oraz wysyłka wiadomości e-mail związanych z kontem, np. potwierdzenia adresu). Microsoft przetwarza dane jako podmiot przetwarzający na zlecenie Administratora. W usłudze Azure przechowywane są również pliki modeli kategoryzacji, odrębne dla każdego Użytkownika.</li>
+    <li>Aplikacja jest udostępniana z wykorzystaniem usług Microsoft Azure (hosting aplikacji i strony projektu oraz wysyłka wiadomości e-mail związanych z kontem, np. potwierdzenia adresu). Microsoft przetwarza dane jako podmiot przetwarzający na zlecenie Administratora. W usłudze Azure przechowywane są również pliki modeli kategoryzacji oraz zdjęcia i pliki paragonów wgrane przez Użytkownika (punkt 2 lit. e), w odrębnym kontenerze dla każdego Użytkownika; zasoby te znajdują się w regionie Poland Central, w Europejskim Obszarze Gospodarczym.</li>
+    <li>
+      <strong>Odczyt paragonów (punkt 2 lit. e):</strong> zdjęcie lub plik PDF paragonu jest przesyłane do usługi Azure AI Document Intelligence firmy Microsoft, która działa jako
+      podmiot przetwarzający na zlecenie Administratora. Usługa pracuje w regionie Germany West Central (Niemcy, Europejski Obszar Gospodarczy), a według dokumentacji
+      Microsoft dane są przetwarzane w regionie, w którym utworzono zasób, przesłany plik i wynik są przechowywane przez 24 godziny, po czym są automatycznie usuwane.
+      Przesyłanie odbywa się tylko wtedy, gdy Użytkownik wgra paragon.
+    </li>
     <li>Telemetria aplikacji (punkt 2 lit. d) jest przetwarzana w usłudze Azure Monitor (Application Insights i Log Analytics) firmy Microsoft, która działa jako podmiot przetwarzający na zlecenie Administratora. Zasoby znajdują się w regionie Poland Central, w Europejskim Obszarze Gospodarczym.</li>
-    <li>Baza danych zawierająca dane konta i dane finansowe jest prowadzona w usłudze Neon (Neon, Inc.), która przetwarza dane jako podmiot przetwarzający na zlecenie Administratora. Baza jest zlokalizowana w infrastrukturze Amazon Web Services w regionie us-east na terytorium Stanów Zjednoczonych, wobec czego dane są przekazywane poza Europejski Obszar Gospodarczy. Neon należy do grupy Databricks, która, zgodnie ze swoją informacją o prywatności, stosuje standardowe klauzule umowne Komisji Europejskiej oraz uczestniczy w programie EU-U.S. Data Privacy Framework.</li>
+    <li>Baza danych zawierająca dane konta i dane finansowe, w tym dane odczytane z paragonów (sprzedawca, data, suma, nazwy produktów, nazwa pliku) oraz kategorie produktów, jest prowadzona w usłudze Neon (Neon, Inc.), która przetwarza dane jako podmiot przetwarzający na zlecenie Administratora. Baza jest zlokalizowana w infrastrukturze Amazon Web Services w regionie us-east na terytorium Stanów Zjednoczonych, wobec czego dane są przekazywane poza Europejski Obszar Gospodarczy. Neon należy do grupy Databricks, która, zgodnie ze swoją informacją o prywatności, stosuje standardowe klauzule umowne Komisji Europejskiej oraz uczestniczy w programie EU-U.S. Data Privacy Framework.</li>
     <li>Dane osobowe nie są udostępniane innym podmiotom trzecim poza dostawcami infrastruktury wskazanymi powyżej.</li>
     <li>Plik CSV z wyciągiem bankowym jest odczytywany wyłącznie w trakcie importu; zapisywane są zawarte w nim transakcje, natomiast sam plik nie jest przechowywany.</li>
+    <li><strong>Inaczej niż wyciąg CSV, zdjęcie lub plik paragonu jest przechowywane</strong> (jako załącznik transakcji) do czasu jego usunięcia lub usunięcia konta — zob. punkt 4.</li>
     <li>Dane mogą zostać ujawnione organom władzy publicznej wyłącznie w przypadkach, w których obowiązek taki wynika z przepisów prawa.</li>
   </ul>
 
@@ -134,7 +196,7 @@
     <li>komunikacja ze stroną logowania i z aplikacją jest szyfrowana (HTTPS),</li>
     <li>hasła są przechowywane wyłącznie w postaci zaszyfrowanych skrótów (PBKDF2 z HMAC-SHA512, 100 000 iteracji, losowa sól); Administrator nie ma dostępu do haseł Użytkowników,</li>
     <li>Użytkownik może włączyć weryfikację dwuetapową; usunięcie konta wymaga potwierdzenia hasłem oraz, w przypadku włączonej weryfikacji dwuetapowej, kodem,</li>
-    <li>dane poszczególnych Użytkowników są od siebie izolowane na poziomie bazy danych, a nie wyłącznie w kodzie aplikacji; pliki modeli kategoryzacji są przechowywane w odrębnych kontenerach dla każdego Użytkownika,</li>
+    <li>dane poszczególnych Użytkowników są od siebie izolowane na poziomie bazy danych, a nie wyłącznie w kodzie aplikacji; pliki modeli kategoryzacji oraz paragony są przechowywane w odrębnych kontenerach dla każdego Użytkownika,</li>
     <li>formularze i strony są zabezpieczone przed typowymi atakami z poziomu przeglądarki (w tym tokenami chroniącymi przed fałszowaniem żądań oraz polityką bezpieczeństwa treści), a liczba prób wysłania formularzy jest ograniczana,</li>
     <li>czynności administracyjne dotyczące kont (np. usunięcie konta) są rejestrowane w dzienniku audytu,</li>
     <li>dostęp do panelu administracyjnego mają wyłącznie osoby posiadające rolę administratora.</li>

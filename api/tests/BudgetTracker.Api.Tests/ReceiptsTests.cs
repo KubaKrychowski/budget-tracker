@@ -284,6 +284,8 @@ public sealed class ReceiptsTests : IAsyncLifetime
         // Zdjęcie paragonu to dana osobowa: ma zniknąć z magazynu od razu, nie dopiero po soft delete.
         Assert.False(await TestBlobs.ExistsAsync(UserBlobContainer.NameFor(_userId), blobName));
         Assert.Empty(await _db.Receipts.ToListAsync());
+        // Łapie miękkie kasowanie: wiersz z sprzedawcą, produktami i nazwą pliku zostawał w bazie po tym, jak użytkownik kazał go usunąć.
+        Assert.Empty(await _db.Receipts.IgnoreQueryFilters().ToListAsync());
     }
 
     [Fact]
