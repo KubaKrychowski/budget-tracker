@@ -326,6 +326,7 @@ Dodanie banku = nowy `IStatementParser` + 1 linijka w `AddImport`.
 >   (schemat `hangfire`, poza migracjami EF). Zadanie rejestruje moduł feature'a. **Historia przebiegów jest audytem** —
 >   dlatego `JobHistoryRetentionFilter` trzyma ją przez `Jobs:HistoryRetentionDays`; domyślnie Hangfire kasuje udane
 >   przebiegi po dobie. Panel `/hangfire` tylko w Development.
+>   **REWIZJA 2026-10-24: storage Hangfire w pamięci procesu, nie w Postgresie** — patrz §13, wpis z tej daty.
 > - **Komentarze w kodzie źródłowym: wyłącznie XML doc** typów i członków. Uzasadnienie pułapki idzie do `<remarks>`
 >   członka, którego dotyczy — nie do komentarza w ciele metody.
 >
@@ -1479,6 +1480,42 @@ Dopisana reguła (`SmtpOptions.IsUsable`) sprawia, że to zdanie jest prawdziwe 
 
 **Nie sprawdzone:** przepływ end-to-end na działającym Identity i API (bez Dockera); testy obejmują bilet i ciasteczko (`JobsDashboardAccessTests`) oraz zgodność zasobów Identity.
 
+
+### 2026-10-24 — Hangfire w pamięci, żeby darmowy Neon mógł zasnąć
+
+**Problem:** w październiku skończył się darmowy limit compute Neona i baza stanęła. Przyczyną nie był ruch użytkowników, tylko
+Hangfire: dwa serwery (domyślny i treningowy) na storage w Postgresie odpytują kolejkę i harmonogram co 15 s, a heartbeat idzie
+co 30 s. Neon usypia compute dopiero po 5 minutach bez żadnego zapytania, a od przejścia na B1 z Always On proces API nigdy nie
+zasypia. Neon chodził więc całą dobę i limit nie mógł wystarczyć.
+
+**Rozważone i odrzucone:**
+- **Azure Database for PostgreSQL B1ms** (najtańszy SKU, Poland Central): ok. 14,5 USD/mies. compute + 4,4 USD za 32 GB storage.
+  Płacilibyśmy za skutek problemu, który siedzi w kodzie.
+- **Dłuższe interwały odpytywania (powyżej 5 min)**: Neon by zasnął, ale kliknięty trening czekałby na start do kilku minut,
+  a każde zadanie i tak budziłoby bazę zapisem historii.
+
+**Decyzja:** `Hangfire.InMemory` zamiast `Hangfire.PostgreSql`. Hangfire w ogóle nie dotyka bazy; Neon budzi się, gdy ktoś
+korzysta z aplikacji, i przy codziennym sprzątaniu budżetów. Limitu CPU po stronie B1 nie ma, więc koszt odpytywania w pamięci
+jest pomijalny.
+
+**Cena, świadomie przyjęta:**
+- restart procesu (wdrożenie, restart App Service) kasuje historię w panelu `/hangfire` i zadania czekające w kolejce. Zadania
+  cykliczne rejestrują się od nowa przy starcie, więc harmonogram nie ginie; przepada co najwyżej trening zgłoszony tuż przed
+  restartem — użytkownik klika go ponownie. Audytem udanych treningów i tak jest `ModelVersion`, nie Hangfire;
+- działa tylko przy **jednej** instancji aplikacji. Szeregowanie treningu (`JobsModule`) już wcześniej zakładało jedną.
+
+⚠️ **Identyfikatory zgłoszeń to GUID-y** (`InMemoryStorageIdType.Guid`). Storage w pamięci domyślnie numeruje od 1 po każdym
+restarcie, a `JobId` treningu leży w `ModelVersion` i po nim `GetTrainingStatusQueryHandler` rozpoznaje „gotowe”. Powtórzony
+numer pokazałby świeżo zgłoszony trening jako skończony, z raportem starego przebiegu. Pilnuje tego `JobsStorageTests`.
+
+⚠️ **`MaxExpirationTime` ustawiony na okres retencji.** Domyślnie storage w pamięci przycina wygasanie do 3 godzin, co po cichu
+skróciłoby historię ustawioną przez `JobHistoryRetentionFilter`.
+
+Skrypt `api/db/setup-hangfire-schema.sql` usunięty. Schemat `hangfire` na produkcyjnym Neonie zostaje nietknięty; można go
+skasować ręcznie (`DROP SCHEMA hangfire CASCADE`), gdy baza wróci.
+
+**Nie sprawdzone:** pełny `dotnet test` (Docker był wyłączony; przeszły testy bez bazy: `JobsStorageTests`,
+`JobsDashboardAccessTests`) i zachowanie na produkcji, bo Neon jest wstrzymany do odnowienia limitu 1 listopada.
 
 ## 14. Telemetria (Application Insights)
 

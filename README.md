@@ -16,7 +16,7 @@ prawdy, nie ten plik. Instrukcje pracy dla agentów: [CLAUDE.md](CLAUDE.md), [ap
 | Backend | .NET 10 · Minimal APIs · vertical slice (12 slice'ów w `Features/`) |
 | Baza | PostgreSQL 18 (Docker) · EF Core + Npgsql · RLS per właściciel |
 | Tożsamość | `BudgetTracker.Identity` — ASP.NET Identity + OpenIddict (logowanie, 2FA, panel admina) |
-| Zadania w tle | Hangfire (trening modelu jedzie kolejką, nie w żądaniu) |
+| Zadania w tle | Hangfire, storage w pamięci procesu (trening modelu jedzie kolejką, nie w żądaniu) |
 | Pliki | Azure Blob Storage · lokalnie Azurite z `docker-compose` |
 | ML | ML.NET in-process (`Microsoft.ML`) |
 | Parsowanie CSV | CsvHelper |
