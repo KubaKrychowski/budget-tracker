@@ -29,7 +29,7 @@ bo istnieje tylko w pięciu regionach.
 
 Baza **nie** powstaje: jest na Neonie, poza Terraformem, który dostaje gotowe connection stringi.
 
-## Zanim uruchomisz — cztery rzeczy, które trzeba wiedzieć
+## Zanim uruchomisz — pięć rzeczy, które trzeba wiedzieć
 
 ### 1. F1 to plan z twardym sufitem, nie „mniejszy plan"
 
@@ -49,7 +49,18 @@ i `BudgetPurger` (czyszczenie budżetów po okresie retencji). To nie jest „wo
 
 Pierwsze żądanie po uśpieniu to kilkanaście sekund oczekiwania.
 
-### 3. Baza na Neonie: rola właściciela omija RLS
+### 3. Darmowy Neon musi móc zasnąć — nic nie może odpytywać bazy w kółko
+
+Darmowy plan Neona ma miesięczny limit compute i usypia bazę dopiero po **5 minutach bez żadnego zapytania**.
+Po wyczerpaniu limitu baza **stoi do początku następnego miesiąca** — nie da się nawet zrobić z niej zrzutu.
+Przy B1 z Always On proces API nie zasypia nigdy, więc każdy mechanizm, który pyta bazę częściej niż co 5 minut,
+trzyma Neona na nogach całą dobę i zjada limit przed końcem miesiąca.
+
+Tak było do 2026-10-24: Hangfire trzymał kolejkę w Postgresie i odpytywał ją co 15 s. Dlatego jego storage jest
+teraz **w pamięci procesu** (DECISIONS.md §13, wpis z 2026-10-24). ⚠️ Przy dokładaniu czegokolwiek cyklicznego
+(health check z zapytaniem do bazy, rozgrzewka co minutę, metryki z bazy) — sprawdź najpierw, czy nie budzi Neona.
+
+### 4. Baza na Neonie: rola właściciela omija RLS
 
 Schemat API wymaga roli `budget_jobs` z atrybutem `BYPASSRLS` (`api/db/setup-rls-roles.sql`), a ten atrybut
 może nadać wyłącznie rola, która sama go ma. **Sprawdzone 2026-09-25 na prawdziwym projekcie: Neon to
@@ -79,7 +90,7 @@ Stan docelowy ról w klastrze (`SELECT rolname, rolbypassrls, rolcanlogin FROM p
 
 Do tego `GRANT budget_jobs TO budget_app`, inaczej `SET LOCAL ROLE` kończy się błędem.
 
-### 4. Certyfikaty tokenów generuje Terraform i wymiana ich wylogowuje wszystkich
+### 5. Certyfikaty tokenów generuje Terraform i wymiana ich wylogowuje wszystkich
 
 ⚠️ Nie mylić z HTTPS. Certyfikat TLS dla `*.azurewebsites.net` **Azure daje sam** i nic się o niego nie robi.
 Te dwa to materiał kryptograficzny aplikacji: podpisujący kładzie podpis pod każdym wydanym JWT (API
