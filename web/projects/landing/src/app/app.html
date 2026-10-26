@@ -42,7 +42,8 @@
 
     <!-- `muted` + `playsinline` są warunkiem autoodtwarzania na telefonach. ⚠️ `[muted]` obok atrybutu nie jest
          dublem: Angular ustawia sam atrybut, a właściwość `muted` zostaje false — Safari wtedy nie startuje filmu. Przy „ogranicz ruch” film nie startuje
-         sam (patrz `App`), a `controls` pozwala go zatrzymać albo przewinąć. Poster to kadr z filmu, więc
+         sam (patrz `App`), a `controls` pozwala go zatrzymać albo przewinąć. Bez `loop`: film gra raz
+         i zostaje na ostatnim kadrze (logo i „Poproś o dostęp do bety”). Poster to kadr z filmu, więc
          pierwsza klatka nie mignie pustym polem. -->
     <figure class="shot hero__shot">
       <video
@@ -54,7 +55,6 @@
         autoplay
         muted
         [muted]="true"
-        loop
         playsinline
         controls
         preload="metadata"

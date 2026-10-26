@@ -132,6 +132,8 @@ describe('Landing', () => {
     expect(video.muted).toBe(true);
     expect(video.hasAttribute('playsinline')).toBe(true);
     expect(video.hasAttribute('controls')).toBe(true);
+    // Gra raz i zatrzymuje się na outro — powtarzający się w kółko film męczy przy czytaniu strony.
+    expect(video.loop).toBe(false);
     expect(video.getAttribute('poster')).toBeTruthy();
     expect(video.getAttribute('width')).toBeTruthy();
     expect(video.getAttribute('height')).toBeTruthy();
