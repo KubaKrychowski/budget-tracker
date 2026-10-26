@@ -124,6 +124,20 @@ describe('Landing', () => {
     }
   });
 
+  it('film w hero gra po cichu, ma poster, opis i wymiary', () => {
+    // Bez `muted` i `playsinline` telefon nie odtworzy go sam; bez postera pierwsza klatka mignie pustym polem;
+    // bez wymiarów strona skacze przy wczytywaniu; bez opisu czytnik ekranu nie wie, co pokazuje.
+    const video = fixture.nativeElement.querySelector('.hero video') as HTMLVideoElement;
+    expect(video).not.toBeNull();
+    expect(video.muted).toBe(true);
+    expect(video.hasAttribute('playsinline')).toBe(true);
+    expect(video.hasAttribute('controls')).toBe(true);
+    expect(video.getAttribute('poster')).toBeTruthy();
+    expect(video.getAttribute('width')).toBeTruthy();
+    expect(video.getAttribute('height')).toBeTruthy();
+    expect(video.getAttribute('aria-label')).toBeTruthy();
+  });
+
   it('mówi, kto za tym stoi, i nie zmyśla przy tym życiorysu', () => {
     expect(text()).toContain('Kto za tym stoi');
 

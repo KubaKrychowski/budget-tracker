@@ -22,7 +22,8 @@
 
   <!-- ── Hero ──────────────────────────────────────────────────────────────────────────
        Nagłówek nazywa to, co czytelnik chce wiedzieć, prostym językiem. Bez sloganu i bez żargonu:
-       strona ma być zrozumiała dla kogoś, kto nigdy nie widział kodu. Zrzut pokazuje prawdziwy ekran. -->
+       strona ma być zrozumiała dla kogoś, kto nigdy nie widział kodu. Film pokazuje prawdziwe ekrany
+       aplikacji (zrzuty z bazy demo) i drogę, jaką przechodzi wiersz wyciągu i paragon. Źródło: design/skan-paragonu. -->
   <section class="wrap hero">
     <div class="hero__text">
       <h1>Zobacz, na co idą Twoje pieniądze</h1>
@@ -39,14 +40,26 @@
       </p>
     </div>
 
+    <!-- `muted` + `playsinline` są warunkiem autoodtwarzania na telefonach. ⚠️ `[muted]` obok atrybutu nie jest
+         dublem: Angular ustawia sam atrybut, a właściwość `muted` zostaje false — Safari wtedy nie startuje filmu. Przy „ogranicz ruch” film nie startuje
+         sam (patrz `App`), a `controls` pozwala go zatrzymać albo przewinąć. Poster to kadr z filmu, więc
+         pierwsza klatka nie mignie pustym polem. -->
     <figure class="shot hero__shot">
-      <img
-        src="screens/dashboard.jpg"
-        width="1600"
-        height="1280"
-        fetchpriority="high"
-        alt="Ekran podsumowania: suma wydatków i przychodów, wykres podziału na kategorie oraz wykres stanu budżetu."
-      />
+      <video
+        #heroVideo
+        src="film/wydatki-landing.mp4"
+        poster="film/wydatki-landing-poster.jpg"
+        width="1280"
+        height="720"
+        autoplay
+        muted
+        [muted]="true"
+        loop
+        playsinline
+        controls
+        preload="metadata"
+        aria-label="Film: wiersz z wyciągu i zdjęcie paragonu przechodzą przez kolejne etapy aplikacji — odczyt pliku, porządkowanie opisu, kategorię, odczyt paragonu i dopasowanie go do transakcji."
+      ></video>
       <figcaption>Dane demonstracyjne — nazwy sprzedawców i kwoty są wymyślone.</figcaption>
     </figure>
   </section>
