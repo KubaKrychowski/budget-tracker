@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { afterNextRender, Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 
 /**
  * Landing — strona główna dla zwykłego użytkownika (makieta Figma: „Landing — strona główna v3, od produktu”).
@@ -19,7 +19,7 @@ import { Component, computed, inject, signal } from '@angular/core';
  *
  * <para>
  * ⚠️ Uczciwość jest wymogiem, nie ozdobą: strona nie obiecuje funkcji, których nie ma (łączenia z bankiem,
- * czytania paragonów, prognoz). Sekcja „Czego jeszcze nie ma” i testy w `app.spec.ts` tego pilnują.
+ * prognoz). Sekcja „Czego jeszcze nie ma” i testy w `app.spec.ts` tego pilnują.
  * </para>
  *
  * <para>
@@ -71,6 +71,20 @@ export class App {
   protected readonly releasesUrl = 'https://github.com/KubaKrychowski/budget-tracker/releases';
 
   private readonly document = inject(DOCUMENT);
+
+  private readonly heroVideo = viewChild<ElementRef<HTMLVideoElement>>('heroVideo');
+
+  constructor() {
+    // Film w hero startuje sam (`autoplay`), chyba że ktoś ustawił w systemie „ogranicz ruch” — wtedy stoi na
+    // posterze i rusza dopiero przyciskiem. Tylko w przeglądarce: przy prerenderze nie ma ani filmu, ani `matchMedia`.
+    afterNextRender(() => {
+      const video = this.heroVideo()?.nativeElement;
+      if (video && this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        video.autoplay = false;
+        video.pause();
+      }
+    });
+  }
 
   /**
    * Adres serwera tożsamości, do którego idzie prośba o dostęp do bety.
